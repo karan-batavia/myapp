@@ -291,7 +291,7 @@ def process_upgrade_payment(current_tier: PricingTier, target_tier: PricingTier,
                 user_info=user_info
             )
             
-            if result.get("success"):
+            if result and result.get("success"):
                 st.success("✅ Payment session created successfully!")
                 st.markdown(f"""
                 ### 🔐 Secure Payment Ready
@@ -300,7 +300,10 @@ def process_upgrade_payment(current_tier: PricingTier, target_tier: PricingTier,
                 """)
                 
                 # Payment button with external link
-                checkout_url = result["checkout_url"]
+                checkout_url = result.get("checkout_url", "") if result else ""
+                if not checkout_url:
+                    st.error("Error: Checkout URL not available")
+                    return
                 
                 # Create two buttons - one for new tab, one for redirect
                 col1, col2 = st.columns(2)
@@ -345,7 +348,7 @@ def process_upgrade_payment(current_tier: PricingTier, target_tier: PricingTier,
                 """)
                 
             else:
-                error_msg = result.get("error", "Unknown error occurred")
+                error_msg = result.get("error", "Unknown error occurred") if result else "Payment session failed"
                 st.error(f"❌ Unable to create payment session: {error_msg}")
                 
         except Exception as e:

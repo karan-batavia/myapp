@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.so
 .Python
+env/
+venv/
+ENV/
 build/
 develop-eggs/
 dist/
@@ -19,72 +22,58 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
 
-# Virtual environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-
-# OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Secrets (use environment variables instead)
+/secrets/
+*.secret
+.replit_auth
 
 # Logs
 *.log
 logs/
 *.pid
-*.seed
-*.pid.lock
-
-# DataGuardian Pro specific
-temp/
-temp_*/
-scan_temp_*/
-clone_temp_*/
-reports/
-static/uploads/
-.license_key
-*.zip
-*.tar.gz
-
-# Temporary scanning files
-*.tmp
-*.temp
-scan_results_*.json
-repo_cache/
-clone_cache/
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
 
-# Secrets
-.env.local
-.env.production
-secrets.json
+# Cache
+.cache/
+.pytest_cache/
+.mypy_cache/
+.streamlit/
 
-# Railway
-.railway/
+# Temporary
+tmp/
+temp/
+*.tmp
 
-# Replit
-.replit
-.upm
-replit.nix
+# OS
+Thumbs.db
+.DS_Store
+
+# Redis
+dump.rdb
+
+# Node (if any)
+node_modules/
+npm-debug.log
+
+# Exclude test keys (use real keys from environment)
+test_keys.txt
