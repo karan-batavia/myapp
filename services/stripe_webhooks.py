@@ -106,7 +106,7 @@ class StripeWebhookHandler:
         try:
             # Use existing license manager or create fallback
             try:
-                from utils.license_manager import LicenseManager
+                from services.license_manager import LicenseManager
                 license_manager = LicenseManager()
                 
                 # Grant subscription access
@@ -149,7 +149,7 @@ class StripeWebhookHandler:
         logger.info(f"Subscription updated: {subscription_id}")
         
         try:
-            from utils.license_manager import LicenseManager
+            from services.license_manager import LicenseManager
             license_manager = LicenseManager()
             
             # Update subscription access
@@ -159,9 +159,6 @@ class StripeWebhookHandler:
                 new_tier=self._get_subscription_tier(subscription),
                 new_plan=self._get_plan_name(subscription)
             )
-        except ImportError:
-            logger.warning("License manager not available")
-            # Continue without license manager for now
             
             self._log_subscription_activity(
                 customer_id, 'subscription_updated', {
@@ -175,7 +172,19 @@ class StripeWebhookHandler:
                 'action': 'subscription_updated',
                 'subscription_id': subscription_id
             }
-            
+        except ImportError:
+            logger.warning("License manager not available")
+            self._log_subscription_activity(
+                customer_id, 'subscription_updated', {
+                    'subscription_id': subscription_id,
+                    'new_plan': self._get_plan_name(subscription)
+                }
+            )
+            return {
+                'status': 'success',
+                'action': 'subscription_updated',
+                'subscription_id': subscription_id
+            }
         except Exception as e:
             logger.error(f"Failed to update subscription {subscription_id}: {str(e)}")
             return {'status': 'error', 'message': str(e)}
@@ -189,7 +198,7 @@ class StripeWebhookHandler:
         logger.info(f"Subscription cancelled: {subscription_id}")
         
         try:
-            from utils.license_manager import LicenseManager
+            from services.license_manager import LicenseManager
             license_manager = LicenseManager()
             
             # Deactivate subscription access
@@ -224,7 +233,7 @@ class StripeWebhookHandler:
         
         try:
             # Extend subscription period and reset usage limits
-            from utils.license_manager import LicenseManager
+            from services.license_manager import LicenseManager
             license_manager = LicenseManager()
             
             if subscription_id:
@@ -258,7 +267,7 @@ class StripeWebhookHandler:
         
         try:
             # Implement dunning management
-            from utils.license_manager import LicenseManager
+            from services.license_manager import LicenseManager
             license_manager = LicenseManager()
             
             if subscription_id:
@@ -292,7 +301,7 @@ class StripeWebhookHandler:
         
         try:
             # Initialize customer in license system
-            from utils.license_manager import LicenseManager
+            from services.license_manager import LicenseManager
             license_manager = LicenseManager()
             
             license_manager.create_customer_record(

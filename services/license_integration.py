@@ -48,12 +48,22 @@ class LicenseIntegration:
         """Get usage summary for the Downloads section"""
         try:
             usage_stats = get_usage_stats()
-            return {
-                'total_downloads': usage_stats.get('total_scans', 0),
-                'reports_generated': usage_stats.get('reports_generated', 0),
-                'scans_completed': usage_stats.get('scans_completed', 0),
-                'compliance_score': usage_stats.get('compliance_score', 0)
-            }
+            # Handle both dict and object types for usage_stats
+            if isinstance(usage_stats, dict):
+                return {
+                    'total_downloads': usage_stats.get('total_scans', 0),
+                    'reports_generated': usage_stats.get('reports_generated', 0),
+                    'scans_completed': usage_stats.get('scans_completed', 0),
+                    'compliance_score': usage_stats.get('compliance_score', 0)
+                }
+            else:
+                # Handle object type
+                return {
+                    'total_downloads': getattr(usage_stats, 'total_scans', 0),
+                    'reports_generated': getattr(usage_stats, 'reports_generated', 0),
+                    'scans_completed': getattr(usage_stats, 'scans_completed', 0),
+                    'compliance_score': getattr(usage_stats, 'compliance_score', 0)
+                }
         except Exception as e:
             logger.error(f"Error getting usage summary: {e}")
             return {

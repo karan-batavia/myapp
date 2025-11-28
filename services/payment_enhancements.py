@@ -12,7 +12,7 @@ import os
 import stripe
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Literal
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -66,7 +66,7 @@ def verify_payment_callback(session_id: str, expected_metadata: Optional[Dict[st
                         "message": "Metadata validation failed"
                     }
         
-        # Get payment intent
+        # Get payment intent - handle both string and object types
         if not checkout_session.payment_intent:
             return {
                 "status": "error",
@@ -74,7 +74,11 @@ def verify_payment_callback(session_id: str, expected_metadata: Optional[Dict[st
                 "message": "No payment intent found"
             }
         
-        payment_intent_id = str(checkout_session.payment_intent) if not hasattr(checkout_session.payment_intent, 'id') else checkout_session.payment_intent.id
+        payment_intent_id: str = (
+            checkout_session.payment_intent.id 
+            if hasattr(checkout_session.payment_intent, 'id') 
+            else str(checkout_session.payment_intent)
+        )
         payment_intent = stripe.PaymentIntent.retrieve(payment_intent_id)
         
         # Validate payment status
@@ -84,9 +88,9 @@ def verify_payment_callback(session_id: str, expected_metadata: Optional[Dict[st
             "status": "success",
             "valid": is_valid,
             "payment_status": payment_intent.status,
-            "amount": payment_intent.amount / 100,  # Convert cents to euros
-            "currency": payment_intent.currency.upper(),
-            "customer_email": checkout_session.customer_email,
+            "amount": payment_intent.amount / 100,
+            "currency": payment_intent.currency.upper() if payment_intent.currency else "EUR",
+            "customer_email": checkout_session.customer_email or "",
             "metadata": checkout_session.metadata or {},
             "created": datetime.fromtimestamp(payment_intent.created).isoformat(),
             "payment_method": payment_intent.payment_method_types[0] if payment_intent.payment_method_types else None,
@@ -153,8 +157,7 @@ def create_subscription(customer_email: str, plan_tier: str, billing_cycle: str 
             items=[{"price": price_id}],
             payment_behavior="default_incomplete",
             payment_settings={
-                "save_default_payment_method": "on_subscription",
-                "default_mandate": None
+                "save_default_payment_method": "on_subscription"
             },
             metadata={
                 "tier": plan_tier,
@@ -170,9 +173,9 @@ def create_subscription(customer_email: str, plan_tier: str, billing_cycle: str 
             "status": "success",
             "subscription_id": subscription.id,
             "customer_id": customer.id,
-            "status": subscription.status,
-            "current_period_start": datetime.fromtimestamp(subscription.current_period_start).isoformat(),
-            "current_period_end": datetime.fromtimestamp(subscription.current_period_end).isoformat(),
+            "subscription_status": subscription.status,
+            "current_period_start": datetime.fromtimestamp(int(subscription.current_period_start or 0)).isoformat(),
+            "current_period_end": datetime.fromtimestamp(int(subscription.current_period_end or 0)).isoformat(),
             "price_id": price_id,
             "message": "Subscription created successfully"
         }
@@ -198,10 +201,12 @@ def check_license_expiry_and_remind(subscription_id: str, days_before_expiry: in
     try:
         subscription = stripe.Subscription.retrieve(subscription_id)
         
-        current_period_end = datetime.fromtimestamp(subscription.current_period_end)
+        current_period_end = datetime.fromtimestamp(int(subscription.current_period_end or 0))
         days_remaining = (current_period_end - datetime.now()).days
         
         reminder_needed = 0 < days_remaining <= days_before_expiry
+        
+        status_enum = SubscriptionStatus.EXPIRING if reminder_needed else SubscriptionStatus.ACTIVE
         
         return {
             "status": "success",
@@ -209,7 +214,7 @@ def check_license_expiry_and_remind(subscription_id: str, days_before_expiry: in
             "expiry_date": current_period_end.isoformat(),
             "days_remaining": days_remaining,
             "reminder_needed": reminder_needed,
-            "status_enum": SubscriptionStatus.EXPIRING if reminder_needed else SubscriptionStatus.ACTIVE
+            "status_enum": status_enum
         }
     
     except stripe.StripeError as e:
@@ -219,38 +224,41 @@ def check_license_expiry_and_remind(subscription_id: str, days_before_expiry: in
             "message": "Failed to check expiry"
         }
 
-def process_refund(payment_intent_id: str, reason: str = "customer_request", 
+def process_refund(payment_intent_id: str, reason: Literal['duplicate', 'fraudulent', 'requested_by_customer'] = 'requested_by_customer', 
                    amount_cents: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """
     Process refund for a payment (with automatic cancellation option)
     
     Args:
         payment_intent_id: Stripe payment intent ID
-        reason: Refund reason ('customer_request', 'duplicate', 'fraudulent', etc.)
+        reason: Refund reason ('duplicate', 'fraudulent', 'requested_by_customer')
         amount_cents: Amount to refund in cents (None = full refund)
     
     Returns:
         Refund details or None if failed
     """
     try:
-        refund = stripe.Refund.create(
-            payment_intent=payment_intent_id,
-            reason=reason,
-            amount=amount_cents,  # None means full refund
-            metadata={
+        refund_kwargs: Dict[str, Any] = {
+            "payment_intent": payment_intent_id,
+            "reason": reason,
+            "metadata": {
                 "refund_date": datetime.now().isoformat(),
                 "reason_detail": reason
             }
-        )
+        }
+        if amount_cents is not None:
+            refund_kwargs["amount"] = amount_cents
+        
+        refund = stripe.Refund.create(**refund_kwargs)
         
         logger.info(f"Refund created: {refund.id} for payment intent {payment_intent_id}")
         
         return {
             "status": "success",
             "refund_id": refund.id,
-            "amount": refund.amount / 100,  # Convert to euros
-            "currency": refund.currency.upper(),
-            "status": refund.status,
+            "amount": refund.amount / 100 if refund.amount else 0,
+            "currency": (refund.currency or "eur").upper(),
+            "refund_status": refund.status,
             "reason": reason,
             "created": datetime.fromtimestamp(refund.created).isoformat()
         }
@@ -284,12 +292,12 @@ def cancel_subscription_with_refund(subscription_id: str, refund_reason: str = "
         
         if include_current_invoice and invoice_id:
             try:
-                invoice = stripe.Invoice.retrieve(invoice_id)
-                if invoice.paid and invoice.payment_intent:
-                    refund_result = process_refund(
-                        invoice.payment_intent,
-                        reason=refund_reason
-                    )
+                invoice_obj = stripe.Invoice.retrieve(str(invoice_id) if not isinstance(invoice_id, str) else invoice_id)
+                paid = getattr(invoice_obj, 'paid', False)
+                payment_intent = getattr(invoice_obj, 'payment_intent', None)
+                if paid and payment_intent:
+                    pi_str = str(payment_intent) if not isinstance(payment_intent, str) else payment_intent
+                    refund_result = process_refund(pi_str, reason='requested_by_customer')
             except Exception as e:
                 logger.warning(f"Could not refund current invoice: {str(e)}")
         
@@ -298,10 +306,14 @@ def cancel_subscription_with_refund(subscription_id: str, refund_reason: str = "
         
         logger.info(f"Subscription cancelled: {subscription_id}")
         
+        cancelled_at = None
+        if hasattr(cancelled_subscription, 'canceled_at') and cancelled_subscription.canceled_at:
+            cancelled_at = datetime.fromtimestamp(int(cancelled_subscription.canceled_at)).isoformat()
+        
         return {
             "status": "success",
             "subscription_id": subscription_id,
-            "cancelled_at": datetime.fromtimestamp(cancelled_subscription.canceled_at).isoformat() if cancelled_subscription.canceled_at else None,
+            "cancelled_at": cancelled_at,
             "refund": refund_result,
             "reason": refund_reason,
             "message": "Subscription cancelled successfully"

@@ -197,8 +197,8 @@ def send_expiry_reminder_email(customer_email: str, days_remaining: int,
         # This is a placeholder - integrate with your email service (SendGrid, Mailgun, etc.)
         # For now, log the action
         import logging
-        logger = logging.getLogger(__name__)
-        logger.info(f"Expiry reminder email triggered for {customer_email} - {days_remaining} days remaining")
+        email_logger = logging.getLogger(__name__)
+        email_logger.info(f"Expiry reminder email triggered for {customer_email} - {days_remaining} days remaining")
         
         # In production, call your email service:
         # from services.email_service import send_email
@@ -216,5 +216,6 @@ def send_expiry_reminder_email(customer_email: str, days_remaining: int,
         return True
     
     except Exception as e:
-        logger.error(f"Error sending expiry reminder email: {str(e)}")
+        email_logger = logging.getLogger(__name__)
+        email_logger.error(f"Error sending expiry reminder email: {str(e)}")
         return False
