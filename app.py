@@ -11475,7 +11475,7 @@ def render_settings_page():
     # Settings categories
     tabs = st.tabs([
         "👤 Profile", "🔐 API Keys", "⚖️ Compliance", 
-        "🔍 Scanners", "📊 Reports", "🔒 Security", "📥 Downloads"
+        "🔍 Scanners", "📊 Reports", "🔒 Security", "📥 Downloads", "💳 Billing"
     ])
     
     # Profile Settings
