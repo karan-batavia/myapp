@@ -537,6 +537,13 @@ def main():
             if not require_license_check():
                 return  # License check will handle showing upgrade prompt
             
+            # Show license expiry banner if needed
+            try:
+                from components.license_expiry_manager import show_license_expiry_banner
+                show_license_expiry_banner()
+            except Exception as e:
+                logger.debug(f"License expiry banner unavailable: {e}")
+            
             # Track page view activity
             if 'session_id' in st.session_state:
                 streamlit_session.track_scan_activity('page_view', {'page': 'dashboard'})
@@ -11738,6 +11745,56 @@ def render_settings_page():
             settings_manager.save_user_setting(username, "reports", "auto_download", auto_download)
             settings_manager.save_user_setting(username, "reports", "include_remediation", include_remediation)
             st.success("Report settings saved successfully!")
+    
+    # Billing Settings
+    with tabs[7]:
+        st.subheader("💳 Billing & Subscription")
+        
+        try:
+            from components.cancellation_policy import show_cancellation_interface
+            from services.payment_enhancements import get_refund_policy, get_cancellation_policy
+            
+            col1, col2 = st.columns([2, 1])
+            
+            with col1:
+                st.markdown("#### Subscription Management")
+                subscription_id = st.session_state.get('subscription_id', None)
+                if subscription_id:
+                    st.success("✅ Active Subscription")
+                    st.write(f"Subscription ID: `{subscription_id}`")
+                    show_cancellation_interface()
+                else:
+                    st.info("No active subscription. Upgrade to unlock premium features.")
+                    if st.button("🚀 Upgrade Now", type="primary", key="billing_upgrade"):
+                        st.session_state['show_pricing'] = True
+                        st.rerun()
+            
+            with col2:
+                st.markdown("#### Policies")
+                refund_policy = get_refund_policy()
+                cancellation_policy = get_cancellation_policy()
+                
+                with st.expander("💰 Refund Policy"):
+                    st.markdown(f"**{refund_policy['policy_name']}**")
+                    st.write(refund_policy['description'])
+                
+                with st.expander("❌ Cancellation Policy"):
+                    st.write(cancellation_policy['description'])
+            
+            st.markdown("---")
+            st.markdown("#### Payment Methods")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.write("💳 Credit/Debit Cards")
+            with col2:
+                st.write("🏦 iDEAL (Netherlands)")
+            with col3:
+                st.write("💶 SEPA Direct Debit")
+            
+            st.info("📧 Contact: billing@dataguardianpro.nl")
+            
+        except ImportError as e:
+            st.warning(f"Billing components unavailable: {str(e)}")
     
     # Security Settings
     with tabs[5]:
