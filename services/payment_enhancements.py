@@ -112,6 +112,44 @@ def verify_payment_callback(session_id: str, expected_metadata: Optional[Dict[st
             "message": "Verification failed"
         }
 
+def _load_price_ids() -> Dict[str, Dict[str, str]]:
+    """
+    Load price IDs from environment variables with sensible defaults
+    
+    Returns:
+        Dictionary mapping plan tiers to price IDs for monthly/annual billing
+    """
+    return {
+        "startup": {
+            "monthly": os.getenv("STRIPE_PRICE_STARTUP_MONTHLY", "price_startup_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_STARTUP_ANNUAL", "price_startup_annual"),
+        },
+        "professional": {
+            "monthly": os.getenv("STRIPE_PRICE_PROFESSIONAL_MONTHLY", "price_professional_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_PROFESSIONAL_ANNUAL", "price_professional_annual"),
+        },
+        "growth": {
+            "monthly": os.getenv("STRIPE_PRICE_GROWTH_MONTHLY", "price_growth_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_GROWTH_ANNUAL", "price_growth_annual"),
+        },
+        "scale": {
+            "monthly": os.getenv("STRIPE_PRICE_SCALE_MONTHLY", "price_scale_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_SCALE_ANNUAL", "price_scale_annual"),
+        },
+        "salesforce_premium": {
+            "monthly": os.getenv("STRIPE_PRICE_SALESFORCE_MONTHLY", "price_salesforce_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_SALESFORCE_ANNUAL", "price_salesforce_annual"),
+        },
+        "sap_enterprise": {
+            "monthly": os.getenv("STRIPE_PRICE_SAP_MONTHLY", "price_sap_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_SAP_ANNUAL", "price_sap_annual"),
+        },
+        "enterprise": {
+            "monthly": os.getenv("STRIPE_PRICE_ENTERPRISE_MONTHLY", "price_enterprise_monthly"),
+            "annual": os.getenv("STRIPE_PRICE_ENTERPRISE_ANNUAL", "price_enterprise_annual"),
+        },
+    }
+
 def create_subscription(customer_email: str, plan_tier: str, billing_cycle: str = "monthly", 
                        country_code: str = "NL") -> Optional[Dict[str, Any]]:
     """
@@ -127,16 +165,8 @@ def create_subscription(customer_email: str, plan_tier: str, billing_cycle: str 
         Subscription details or None if failed
     """
     try:
-        # Map plan tiers to Stripe price IDs
-        price_mapping = {
-            "startup": {"monthly": "price_startup_monthly", "annual": "price_startup_annual"},
-            "professional": {"monthly": "price_professional_monthly", "annual": "price_professional_annual"},
-            "growth": {"monthly": "price_growth_monthly", "annual": "price_growth_annual"},
-            "scale": {"monthly": "price_scale_monthly", "annual": "price_scale_annual"},
-            "salesforce_premium": {"monthly": "price_salesforce_monthly", "annual": "price_salesforce_annual"},
-            "sap_enterprise": {"monthly": "price_sap_monthly", "annual": "price_sap_annual"},
-            "enterprise": {"monthly": "price_enterprise_monthly", "annual": "price_enterprise_annual"},
-        }
+        # Load price mapping from environment variables
+        price_mapping = _load_price_ids()
         
         if plan_tier not in price_mapping or billing_cycle not in price_mapping[plan_tier]:
             logger.error(f"Invalid plan tier or billing cycle: {plan_tier}, {billing_cycle}")

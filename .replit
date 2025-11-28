@@ -100,3 +100,21 @@ localPort = 42247
 externalPort = 3002
 
 [agent]
+
+[userenv]
+
+[userenv.shared]
+STRIPE_PRICE_STARTUP_MONTHLY = "price_startup_monthly"
+STRIPE_PRICE_STARTUP_ANNUAL = "price_startup_annual"
+STRIPE_PRICE_PROFESSIONAL_MONTHLY = "price_professional_monthly"
+STRIPE_PRICE_PROFESSIONAL_ANNUAL = "price_professional_annual"
+STRIPE_PRICE_GROWTH_MONTHLY = "price_growth_monthly"
+STRIPE_PRICE_GROWTH_ANNUAL = "price_growth_annual"
+STRIPE_PRICE_SCALE_MONTHLY = "price_scale_monthly"
+STRIPE_PRICE_SCALE_ANNUAL = "price_scale_annual"
+STRIPE_PRICE_SALESFORCE_MONTHLY = "price_salesforce_monthly"
+STRIPE_PRICE_SALESFORCE_ANNUAL = "price_salesforce_annual"
+STRIPE_PRICE_SAP_MONTHLY = "price_sap_monthly"
+STRIPE_PRICE_SAP_ANNUAL = "price_sap_annual"
+STRIPE_PRICE_ENTERPRISE_MONTHLY = "price_enterprise_monthly"
+STRIPE_PRICE_ENTERPRISE_ANNUAL = "price_enterprise_annual"
