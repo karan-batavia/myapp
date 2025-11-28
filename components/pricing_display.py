@@ -18,7 +18,7 @@ def show_pricing_page():
     st.title(f"💰 {_('pricing.title', 'DataGuardian Pro Pricing')}")
     st.markdown(f"""
     **{_('pricing.subtitle', 'Enterprise-grade privacy compliance at breakthrough prices')}**  
-    {_('pricing.description', 'Save 85-90% vs OneTrust, BigID, and Varonis while getting Netherlands-specialized features')}
+    {_('pricing.description', 'Netherlands-specialized compliance with transparent, competitive pricing')}
     """)
     
     # Billing toggle with translations
@@ -285,31 +285,11 @@ def get_tier_premium_features(tier: PricingTier) -> List[str]:
     return premium_feature_mapping.get(tier, [])
 
 def show_competitive_comparison():
-    """Show competitive pricing comparison"""
+    """Show DataGuardian Pro's unique competitive advantages"""
     from utils.i18n import _
     
     st.markdown("## 💡 Why DataGuardian Pro?")
-    st.markdown("**Save 85-90% compared to international competitors**")
-    
-    config = get_pricing_config()
-    
-    # Comparison table
-    comparison_data = []
-    tiers = [PricingTier.GROWTH, PricingTier.SCALE, PricingTier.SALESFORCE_PREMIUM, PricingTier.SAP_ENTERPRISE, PricingTier.ENTERPRISE]
-    
-    for tier in tiers:
-        comparison = config.get_competitive_comparison(tier)
-        for comp in comparison["comparisons"]:
-            comparison_data.append({
-                "Our Plan": f"{tier.value.title()} - €{comparison['our_annual_price']:,}",
-                "Competitor": comp['competitor'],
-                "Competitor Price": f"€{comp['competitor_cost']:,}",
-                "Your Savings": f"€{comp['savings']:,}",
-                "Savings %": f"{comp['savings_percentage']}%"
-            })
-    
-    if comparison_data:
-        st.table(comparison_data)
+    st.markdown("**Enterprise-grade features built for the Netherlands market**")
     
     # Unique advantages
     col1, col2 = st.columns(2)
