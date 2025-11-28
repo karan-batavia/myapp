@@ -252,15 +252,16 @@ def get_webhook_url() -> str:
     base_url = get_base_url()
     return f"{base_url}/webhook/stripe"
 
-def create_checkout_session(scan_type: str, user_email: str, metadata: Optional[Dict[str, Any]] = None, country_code: str = "NL") -> Optional[Dict[str, Any]]:
+def create_checkout_session(scan_type: str, user_email: str, metadata: Optional[Dict[str, Any]] = None, country_code: str = "NL", subscription_plan: Optional[str] = None) -> Optional[Dict[str, Any]]:
     """
-    Create a secure Stripe checkout session with VAT calculation
+    Create a secure Stripe checkout session with VAT calculation and subscription support
     
     Args:
         scan_type: The type of scan to create a checkout session for
         user_email: Email of the user making the payment
         metadata: Additional metadata to attach to the checkout session
         country_code: Country code for VAT calculation (default: NL)
+        subscription_plan: Optional subscription plan tier for recurring billing
         
     Returns:
         Dictionary containing checkout session details if successful, None otherwise
@@ -289,14 +290,15 @@ def create_checkout_session(scan_type: str, user_email: str, metadata: Optional[
             "scan_type": scan_type,
             "user_email": user_email,
             "country_code": country_code,
-            "vat_rate": str(pricing["vat_rate"])
+            "vat_rate": str(pricing["vat_rate"]),
+            "subscription_plan": subscription_plan or "one_time"
         })
         
-        # Payment methods including iDEAL for Netherlands
+        # Payment methods including iDEAL for Netherlands (ENHANCED)
         from typing import cast, Any
         payment_methods: Any = ["card"]
         if country_code.upper() == "NL":
-            payment_methods.append("ideal")
+            payment_methods.extend(["ideal", "sepa_debit"])  # Added SEPA Direct Debit for EU
         
         # Get current user from session state for auto-login after redirect
         import streamlit as st
