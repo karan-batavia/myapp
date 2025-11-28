@@ -1,7 +1,7 @@
 # DataGuardian Pro - Enterprise Privacy Compliance Platform
 
 ## Overview
-DataGuardian Pro is a comprehensive enterprise privacy compliance platform built with Streamlit. Its primary purpose is to detect, analyze, and report on personally identifiable information (PII) across multiple data sources. The platform offers AI-powered risk assessment, multilingual support, and extensive reporting capabilities for GDPR and UAVG compliance, specifically targeting the Netherlands market. It aims to achieve €25K MRR through both SaaS and standalone enterprise licenses, offering significant cost savings compared to competitors while providing enterprise-grade features and Netherlands-specific compliance.
+DataGuardian Pro is a comprehensive enterprise privacy compliance platform built with Streamlit. Its primary purpose is to detect, analyze, and report on personally identifiable information (PII) across multiple data sources. The platform offers AI-powered risk assessment, multilingual support, and extensive reporting capabilities for GDPR and UAVG compliance, specifically targeting the Netherlands market. It aims to achieve €25K MRR through both SaaS and standalone enterprise licenses, offering enterprise-grade features and Netherlands-specific compliance with transparent, competitive pricing.
 
 ## User Preferences
 Preferred communication style: Simple, everyday language.

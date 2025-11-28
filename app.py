@@ -12322,7 +12322,7 @@ def generate_competitive_insights(scan_results, scan_config):
     elif compliance_score >= 70:
         insights.append({
             'category': 'Market Position',
-            'insight': 'Above-average GDPR compliance puts you ahead of 60% of competitors',
+            'insight': 'Above-average GDPR compliance exceeds industry standards',
             'market_position': 'Above Average',
             'opportunity': 'Small improvements could achieve industry leadership'
         })
@@ -12348,7 +12348,7 @@ def generate_competitive_insights(scan_results, scan_config):
     else:
         insights.append({
             'category': 'Content Opportunity',
-            'insight': 'Content enhancement could differentiate from 70% of competitors with thin content',
+            'insight': 'Content enhancement improves user engagement and trust',
             'market_position': 'Content Improvement Needed',
             'opportunity': 'Invest in content strategy for competitive advantage'
         })
@@ -12370,7 +12370,7 @@ def generate_competitive_insights(scan_results, scan_config):
     if dark_patterns == 0:
         insights.append({
             'category': 'User Experience',
-            'insight': 'Ethical user experience builds long-term customer loyalty vs competitors using dark patterns',
+            'insight': 'Ethical user experience builds long-term customer loyalty and trust',
             'market_position': 'UX Leader',
             'opportunity': 'Market transparent, user-first approach as brand differentiator'
         })
