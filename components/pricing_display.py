@@ -14,15 +14,33 @@ def show_pricing_page():
     # Import i18n for translations
     from utils.i18n import _
     
+    # Check if user is in checkout flow
+    if st.session_state.get('show_checkout_form', False):
+        tier = st.session_state.get('checkout_tier')
+        billing = st.session_state.get('checkout_billing')
+        pricing = st.session_state.get('checkout_pricing')
+        
+        if tier and billing and pricing:
+            # Show back button
+            if st.button("Back to Plans", key="back_to_plans"):
+                st.session_state['show_checkout_form'] = False
+                st.session_state.pop('checkout_tier', None)
+                st.session_state.pop('checkout_billing', None)
+                st.session_state.pop('checkout_pricing', None)
+                st.rerun()
+            
+            # Show checkout form
+            show_checkout_form(tier, billing, pricing)
+            return
+    
     # Header section
-    st.title(f"💰 {_('pricing.title', 'DataGuardian Pro Pricing')}")
+    st.title(f"{_('pricing.title', 'DataGuardian Pro Pricing')}")
     st.markdown(f"""
     **{_('pricing.subtitle', 'Enterprise-grade privacy compliance at breakthrough prices')}**  
     {_('pricing.description', 'Netherlands-specialized compliance with transparent, competitive pricing')}
     """)
     
     # Billing toggle with translations
-    from utils.i18n import _
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         billing_cycle = st.radio(
@@ -377,7 +395,7 @@ def handle_tier_selection(tier: PricingTier, billing_cycle: BillingCycle):
     st.session_state['selected_price'] = pricing['price']
     st.session_state['show_checkout'] = True
     
-    st.success(f"✅ Selected {pricing['name']} - €{pricing['price']} per {billing_cycle.value}")
+    st.success(f"Selected {pricing['name']} - €{pricing['price']} per {billing_cycle.value}")
     st.balloons()
     
     # Show next steps
@@ -394,20 +412,36 @@ def handle_tier_selection(tier: PricingTier, billing_cycle: BillingCycle):
     col1, col2 = st.columns(2)
     with col1:
         if st.button("💳 Proceed to Checkout", type="primary", key="proceed_checkout"):
-            show_checkout_form(tier, billing_cycle, pricing)
+            st.session_state['checkout_tier'] = tier
+            st.session_state['checkout_billing'] = billing_cycle
+            st.session_state['checkout_pricing'] = pricing
+            st.session_state['show_checkout_form'] = True
+            st.rerun()
     with col2:
         if st.button("📋 View Plan Details", key="view_details"):
             show_plan_details(tier, pricing)
 
 def show_checkout_form(tier: PricingTier, billing_cycle: BillingCycle, pricing: Dict[str, Any]):
-    """Show checkout form for selected plan"""
-    st.markdown("### 💳 Secure Checkout")
+    """Show checkout form for selected plan with Stripe integration"""
+    import os
+    import stripe
+    
+    st.markdown("### Secure Checkout")
+    
+    # Display order summary
+    st.markdown(f"""
+    **Order Summary:**
+    - **Plan**: {pricing['name']}
+    - **Price**: €{pricing['price']:,} per {billing_cycle.value}
+    - **Billing**: {'Annual (save 2 months)' if billing_cycle == BillingCycle.ANNUAL else 'Monthly'}
+    """)
+    
+    # Add 30-day money-back guarantee note
+    st.info("30-day money-back guarantee included with all plans")
     
     with st.form("checkout_form"):
-        st.markdown(f"**Plan**: {pricing['name']}")
-        st.markdown(f"**Price**: €{pricing['price']:,} per {billing_cycle.value}")
+        st.markdown("**Contact Information**")
         
-        # Customer information
         col1, col2 = st.columns(2)
         with col1:
             company_name = st.text_input("Company Name*", key="company_name")
@@ -428,26 +462,120 @@ def show_checkout_form(tier: PricingTier, billing_cycle: BillingCycle, pricing: 
         with col2:
             postal_code = st.text_input("Postal Code*", key="postal")
         with col3:
-            vat_number = st.text_input("VAT Number", key="vat")
+            vat_number = st.text_input("VAT Number (optional)", key="vat")
         
-        # Payment method
-        payment_method = st.selectbox("Payment Method", ["Credit Card", "SEPA Direct Debit", "Invoice (Enterprise only)"])
+        # Payment method info
+        st.markdown("**Payment Methods Available:**")
+        st.markdown("Credit Card, iDEAL (Netherlands), SEPA Direct Debit")
         
         # Terms
         terms_accepted = st.checkbox("I accept the Terms of Service and Privacy Policy*")
         
-        submitted = st.form_submit_button("Complete Purchase", type="primary")
+        submitted = st.form_submit_button("Continue to Payment", type="primary")
         
         if submitted:
             if not all([company_name, first_name, last_name, email, address, city, postal_code]) or not terms_accepted:
                 st.error("Please fill in all required fields and accept the terms.")
             else:
-                # Process the order (placeholder)
-                st.success("🎉 Order processed successfully!")
-                st.markdown("**Next Steps:**")
-                st.markdown("1. Check your email for login credentials")
-                st.markdown("2. Access your new DataGuardian Pro account")
-                st.markdown("3. Start your first compliance scan")
+                # Create Stripe checkout session
+                try:
+                    stripe_key = os.getenv('STRIPE_SECRET_KEY')
+                    if not stripe_key:
+                        st.error("Payment system not configured. Please contact support.")
+                        return
+                    
+                    stripe.api_key = stripe_key
+                    
+                    # Get country code for VAT
+                    country_codes = {"Netherlands": "NL", "Belgium": "BE", "Germany": "DE", "Other EU": "NL"}
+                    country_code = country_codes.get(country, "NL")
+                    
+                    # Calculate price in cents
+                    price_cents = int(pricing['price'] * 100)
+                    
+                    # Determine billing interval
+                    if billing_cycle == BillingCycle.ANNUAL:
+                        interval = "year"
+                        interval_count = 1
+                    else:
+                        interval = "month"
+                        interval_count = 1
+                    
+                    # Get base URL for redirects
+                    base_url = os.getenv('REPLIT_DEV_DOMAIN')
+                    if base_url:
+                        base_url = f"https://{base_url}"
+                    else:
+                        base_url = os.getenv('BASE_URL', 'http://localhost:5000')
+                    
+                    # Payment methods - include iDEAL for Netherlands
+                    from typing import cast, List, Any
+                    payment_methods: Any = ["card"]
+                    if country_code == "NL":
+                        payment_methods.extend(["ideal", "sepa_debit"])
+                    
+                    # Create checkout session for subscription
+                    checkout_session = stripe.checkout.Session.create(
+                        payment_method_types=payment_methods,
+                        line_items=[{
+                            "price_data": {
+                                "currency": "eur",
+                                "product_data": {
+                                    "name": f"DataGuardian Pro - {pricing['name']}",
+                                    "description": f"{tier.value.title()} plan with full GDPR compliance features",
+                                },
+                                "unit_amount": price_cents,
+                                "recurring": {
+                                    "interval": interval,
+                                    "interval_count": interval_count,
+                                }
+                            },
+                            "quantity": 1,
+                        }],
+                        mode="subscription",
+                        success_url=f"{base_url}?payment_success=true&session_id={{CHECKOUT_SESSION_ID}}",
+                        cancel_url=f"{base_url}?payment_cancelled=true",
+                        customer_email=email,
+                        metadata={
+                            "tier": tier.value,
+                            "billing_cycle": billing_cycle.value,
+                            "company_name": company_name,
+                            "first_name": first_name,
+                            "last_name": last_name,
+                            "country": country_code,
+                            "vat_number": vat_number or "",
+                        },
+                        billing_address_collection="required",
+                        tax_id_collection={"enabled": True},
+                    )
+                    
+                    # Store session ID
+                    st.session_state['stripe_session_id'] = checkout_session.id
+                    
+                    # Show redirect link
+                    st.success("Checkout session created successfully!")
+                    st.markdown(f"""
+                    <div style="text-align: center; padding: 20px;">
+                        <a href="{checkout_session.url}" target="_self" 
+                           style="display: inline-block; padding: 15px 30px; 
+                                  background: #635bff; color: white; text-decoration: none; 
+                                  border-radius: 8px; font-weight: bold; font-size: 18px;">
+                            Complete Payment Securely
+                        </a>
+                        <p style="font-size: 12px; color: #666; margin-top: 15px;">
+                            Secured by Stripe | SSL Encrypted | GDPR Compliant
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Also use Streamlit's link button as backup
+                    if checkout_session.url:
+                        st.link_button("Click here if not redirected", checkout_session.url, type="primary")
+                    
+                except stripe.StripeError as e:
+                    st.error(f"Payment service error. Please try again or contact support.")
+                except Exception as e:
+                    st.error(f"An error occurred. Please try again or contact support.")
 
 def show_plan_details(tier: PricingTier, pricing: Dict[str, Any]):
     """Show detailed plan information"""
