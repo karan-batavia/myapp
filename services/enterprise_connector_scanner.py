@@ -178,6 +178,20 @@ class EnterpriseConnectorScanner:
             'ap_authority_validation': True
         }
         
+        # Checkpoint state for resumable scans
+        self.checkpoint_id = None
+        self.completed_queries = set()  # Track which queries have completed
+        self.redis_client = None
+        
+        # Initialize Redis connection for checkpointing
+        try:
+            import redis
+            self.redis_client = redis.Redis(host='0.0.0.0', port=6379, decode_responses=True)
+            self.redis_client.ping()  # Test connection
+        except Exception as redis_err:
+            logger.warning(f"Redis not available for checkpointing: {redis_err}")
+            self.redis_client = None
+        
         logger.info(f"Initialized Enterprise Connector Scanner for {self.CONNECTOR_TYPES[self.connector_type]}")
     
     def _get_rate_config(self, api_type: str = 'default') -> Dict[str, int]:
@@ -323,6 +337,130 @@ class EnterpriseConnectorScanner:
             current_time = datetime.now()
             self.api_call_history.append(current_time)
             self.last_api_call = current_time
+    
+    def _generate_checkpoint_id(self) -> str:
+        """Generate a unique checkpoint ID for this scan session."""
+        import hashlib
+        unique_key = f"{self.connector_type}_{datetime.now().isoformat()}_{id(self)}"
+        return hashlib.sha256(unique_key.encode()).hexdigest()[:16]
+    
+    def _save_checkpoint(self, scan_config: Dict, partial_results: Dict) -> Optional[str]:
+        """
+        Save scan checkpoint for resumption after re-authentication.
+        
+        Args:
+            scan_config: Original scan configuration
+            partial_results: Results collected so far
+            
+        Returns:
+            Checkpoint ID if saved successfully, None otherwise
+        """
+        if not self.redis_client:
+            logger.warning("Redis not available - checkpoint not saved")
+            return None
+        
+        try:
+            if not self.checkpoint_id:
+                self.checkpoint_id = self._generate_checkpoint_id()
+            
+            checkpoint_data = {
+                'checkpoint_id': self.checkpoint_id,
+                'connector_type': self.connector_type,
+                'region': self.region,
+                'scan_config': scan_config,
+                'completed_queries': list(self.completed_queries),
+                'findings': self.findings,
+                'scanned_items': self.scanned_items,
+                'partial_results': partial_results,
+                'timestamp': datetime.now().isoformat(),
+                'credentials_hash': hashlib.sha256(str(self.credentials.get('client_id', '')).encode()).hexdigest()[:8]
+            }
+            
+            import json
+            checkpoint_key = f"scan_checkpoint:{self.checkpoint_id}"
+            self.redis_client.setex(
+                checkpoint_key,
+                timedelta(hours=24),  # Checkpoint expires in 24 hours
+                json.dumps(checkpoint_data, default=str)
+            )
+            
+            logger.info(f"Saved scan checkpoint: {self.checkpoint_id}")
+            return self.checkpoint_id
+            
+        except Exception as e:
+            logger.error(f"Failed to save checkpoint: {str(e)}")
+            return None
+    
+    def _load_checkpoint(self, checkpoint_id: str) -> Optional[Dict]:
+        """
+        Load a saved scan checkpoint.
+        
+        Args:
+            checkpoint_id: ID of the checkpoint to load
+            
+        Returns:
+            Checkpoint data if found, None otherwise
+        """
+        if not self.redis_client:
+            logger.warning("Redis not available - cannot load checkpoint")
+            return None
+        
+        try:
+            import json
+            checkpoint_key = f"scan_checkpoint:{checkpoint_id}"
+            checkpoint_data = self.redis_client.get(checkpoint_key)
+            
+            if checkpoint_data:
+                data = json.loads(checkpoint_data)
+                logger.info(f"Loaded scan checkpoint: {checkpoint_id}")
+                return data
+            else:
+                logger.warning(f"Checkpoint not found: {checkpoint_id}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Failed to load checkpoint: {str(e)}")
+            return None
+    
+    def _restore_from_checkpoint(self, checkpoint_id: str) -> bool:
+        """
+        Restore scanner state from a checkpoint.
+        
+        Args:
+            checkpoint_id: ID of the checkpoint to restore
+            
+        Returns:
+            True if restoration successful, False otherwise
+        """
+        checkpoint = self._load_checkpoint(checkpoint_id)
+        
+        if not checkpoint:
+            return False
+        
+        try:
+            self.checkpoint_id = checkpoint['checkpoint_id']
+            self.completed_queries = set(checkpoint.get('completed_queries', []))
+            self.findings = checkpoint.get('findings', [])
+            self.scanned_items = checkpoint.get('scanned_items', 0)
+            
+            logger.info(f"Restored from checkpoint: {len(self.findings)} findings, {self.scanned_items} items scanned")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to restore from checkpoint: {str(e)}")
+            return False
+    
+    def _delete_checkpoint(self, checkpoint_id: str) -> None:
+        """Delete a checkpoint after successful scan completion."""
+        if not self.redis_client:
+            return
+        
+        try:
+            checkpoint_key = f"scan_checkpoint:{checkpoint_id}"
+            self.redis_client.delete(checkpoint_key)
+            logger.info(f"Deleted checkpoint: {checkpoint_id}")
+        except Exception as e:
+            logger.warning(f"Failed to delete checkpoint: {str(e)}")
     
     def _is_token_expired(self) -> bool:
         """Check if the current access token has expired."""
@@ -1761,6 +1899,11 @@ class EnterpriseConnectorScanner:
             
             # Execute queries and analyze results with automatic token refresh
             for query_type, soql_query in queries:
+                # Skip queries already completed (when resuming from checkpoint)
+                if query_type in self.completed_queries:
+                    logger.info(f"Skipping {query_type} - already completed in previous session")
+                    continue
+                
                 self._update_progress(f"Scanning Salesforce {query_type}...", 30)
                 
                 try:
@@ -1777,12 +1920,16 @@ class EnterpriseConnectorScanner:
                         for record in records:
                             self._analyze_salesforce_record(record, query_type)
                         
+                        # Mark query as completed for checkpoint
+                        self.completed_queries.add(query_type)
                         logger.info(f"Scanned {len(records)} {query_type} from Salesforce")
                     
                     elif status == 'auth_required':
                         auth_failure_count += 1
                         auth_failed = True
                         logger.error(f"Salesforce authentication expired for {query_type} - token refresh failed")
+                        # Break loop on auth failure - save checkpoint for remaining queries
+                        break
                     
                     elif status == 'permission_denied':
                         logger.error(f"Salesforce access denied for {query_type} - insufficient permissions")
@@ -1795,13 +1942,20 @@ class EnterpriseConnectorScanner:
                     logger.error(f"Failed to query Salesforce {query_type}: {str(query_error)}")
                     # Continue with other queries even if one fails
             
-            # Handle authentication failure - mark scan as incomplete
+            # Handle authentication failure - mark scan as incomplete and save checkpoint
             if auth_failed:
                 results['auth_status'] = 'expired'
                 results['status'] = 'auth_required'
                 results['auth_message'] = 'Salesforce authentication has expired. Please re-authenticate to complete the scan.'
                 results['reauth_required'] = True
-                logger.error(f"Salesforce scan incomplete: {auth_failure_count} authentication failures. Token refresh required.")
+                
+                # Save checkpoint for resume after re-authentication
+                checkpoint_id = self._save_checkpoint(scan_config, results)
+                if checkpoint_id:
+                    results['checkpoint_id'] = checkpoint_id
+                    results['auth_message'] = 'Salesforce authentication has expired. Your partial results have been saved. Re-authenticate to resume from where you left off.'
+                
+                logger.error(f"Salesforce scan incomplete: {auth_failure_count} authentication failures. Checkpoint: {checkpoint_id}")
                 self._update_progress("Salesforce authentication expired - re-authentication required", 80)
             else:
                 # Count Netherlands-specific findings only if auth succeeded
@@ -1809,6 +1963,10 @@ class EnterpriseConnectorScanner:
                 results['kvk_fields_found'] = len([f for f in self.findings if any('KvK' in pii.get('type', '') for pii in f.get('pii_found', []))])
                 self._update_progress("Salesforce scan completed", 80)
                 logger.info(f"Salesforce scan completed: {self.scanned_items} items, {len(self.findings)} PII instances")
+                
+                # Clear checkpoint on successful completion
+                if self.checkpoint_id:
+                    self._delete_checkpoint(self.checkpoint_id)
             
         except Exception as e:
             logger.error(f"Salesforce scan failed: {str(e)}")
