@@ -1,0 +1,118 @@
+SYSTEM ARCHITECTURE AND PROCESSING FLOWCHART
+
+
+     PLUGIN INPUT          ->   LLM INTERPRETATION           ->   WORKFLOW GENERATION
+
+    GPU Metadata (.yaml)          Automatic Detection            Test Sequence: GPU
+
+    TPU Metadata (.yaml)         Semantic Understanding          Test Sequence: TPU
+
+    NPU Metadata (.yaml)          Context Extraction             Test Sequence: NPU
+
+   FPGA/ASIC (.yaml)              Workflow Mapping              Test Sequence: Custom
+
+
+
+             |                             |                                |
+
+
+
+   DIGITAL TWIN UPDATE     ->   MULTI-DOMAIN ANALYSIS        ->   CROSS-CORRELATION
+
+   EDA Simulation Merge           Safety: FMEDA/ISO26262         Safety-Yield Links
+
+   Manufacturing Merge            Yield: Predictions/SPC         Yield-Performance Links
+
+   Field Telemetry Merge          Performance: AI Accel          Root Cause Detection
+
+   Unified State Update           Metric Calculation             Pattern Identification
+
+
+
+             |                             |                                |
+
+
+
+   OTA RISK ASSESSMENT     ->    CI/CD GATE EVALUATION       ->   COMPLIANCE OUTPUT
+
+   Health Score (H)               Pre-Silicon Gate               Digital Verification
+
+   Aging Factor (A)               Post-Silicon Gate              Audit Trail
+
+   Thermal Stress (T)             Production Gate                Certification
+
+   Safety Margin (S)              Field Gate                     Dashboard
+
+   Performance (P)                Quantified Criteria            Stakeholder Reports
+
+   Error History (E)              Pass/Fail Decision             Regulatory Submission
+
+
+
+================================================================================
+DETAILED COMPONENT FLOWS
+================================================================================
+
+
+CHIP-AGNOSTIC PLUGIN FLOW:
+
++-------------+     +-------------+     +-------------+     +-------------+
+| Device YAML |---->| LLM Parse   |---->| Workflow    |---->| Validation  |
+| Metadata    |     | & Interpret |     | Generate    |     | Execute     |
++-------------+     +-------------+     +-------------+     +-------------+
+
+
+DIGITAL TWIN SYNCHRONIZATION FLOW:
+
++-------------+     +-------------+     +-------------+     +-------------+
+| EDA Tools   |---->| Data        |---->| State       |---->| Predictive  |
+| Manuf Sys   |---->| Aggregation |---->| Evolution   |---->| Simulation  |
+| Field Sensors|-->  | & Fusion    |     | & Update    |     | & Forecast  |
++-------------+     +-------------+     +-------------+     +-------------+
+
+
+MULTI-DOMAIN ANALYSIS FLOW:
+
++-------------+     +-------------+     +-------------+     +-------------+
+| Safety      |---->| Metric      |---->| Cross-Domain|---->| Root Cause  |
+| Yield       |---->| Calculation |---->| Correlation |---->| Analysis    |
+| Performance |---->|             |     |             |     |             |
++-------------+     +-------------+     +-------------+     +-------------+
+
+
+OTA RISK PREDICTION FLOW:
+
++-------------+     +-------------+     +-------------+     +-------------+
+| 6 Health    |---->| Weighted    |---->| Risk Score  |---->| Update      |
+| Signals     |     | Combination |     | 0.0 - 1.0   |     | Decision    |
+| (H,A,T,S,P,E)|    | ML Weights  |     | Threshold   |     | Recommend   |
++-------------+     +-------------+     +-------------+     +-------------+
+
+
+CI/CD PIPELINE FLOW:
+
++-------------+     +-------------+     +-------------+     +-------------+
+| Pre-Silicon |---->| Post-Silicon|---->| Production  |---->| Field       |
+| RTL Verify  |     | ATE Test    |     | Yield Mon   |     | OTA Risk    |
+| Gate        |     | Gate        |     | Gate        |     | Gate        |
++-------------+     +-------------+     +-------------+     +-------------+
+       |                 |                   |                   |
+       V                 V                   V                   V
+   Coverage          Pass Rate           Yield              Risk Score
+    >95%               >99%               >90%                <0.3
+
+
+
+================================================================================
+DATA FLOW SUMMARY
+================================================================================
+
+INPUT                          PROCESSING                         OUTPUT
+
+Plugin Metadata         ->     LLM Interpretation          ->     Workflows
+EDA Simulations         ->     Digital Twin Merge          ->     Unified State
+Manufacturing Data      ->     Multi-Domain Analysis       ->     Metrics
+Field Telemetry         ->     Cross-Correlation           ->     Root Causes
+Device Health           ->     OTA Risk Scoring            ->     Recommendations
+Gate Results            ->     CI/CD Evaluation            ->     Compliance Reports
+

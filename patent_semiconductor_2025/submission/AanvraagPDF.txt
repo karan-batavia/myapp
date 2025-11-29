@@ -1,0 +1,84 @@
+Octrooidocumenten                                                                                                     1/1
+
+Subtekst regels
+Korte subtekst over deze regeling
+
+  Aanvrager
+
+                                                                                       * Verplichte velden
+
+   Persoonsnaam *
+                                                             Vishaal
+
+
+
+   Tussenvoegsel(s)
+
+   Achternaam *                                              Kumar
+
+   Mobiel                                                    06 26175240
+
+   E-mail *                                                  vishaalnoord7@gmail.com
+
+   Referentie                                                SEMI-VAL-2025-001
+
+
+  Adres
+
+   Postcode *                                                2012 BX
+
+   Huisnummer *                                              275         Toevoeging
+
+   Straat *                                                  Bellevuelaan
+
+   Plaats *                                              HAARLEM
+
+   Land *                                                    Nederland
+
+  Octrooiaanvraag
+
+  Bijlagen
+   Bij de aanvraag te voegen stukken
+   Een bijlage is maximaal 50 Mb en moet een pdf-bestand zijn. Bij voorkeur een pdf-a bestand.
+
+
+
+  Checklist bijlagen
+
+
+       Aanvraagformulier                              Aanvraag_om_Octrooi.pdf                                29-11-2025
+
+       Beschrijving                                   Patent-Description.pdf                                 29-11-2025
+
+       Een of meer conclusies                         Patent-Conclusions.pdf                                 29-11-2025
+
+                                                      Patent-Extract.pdf                                     29-11-2025
+
+       Tekeningen/formulebladen                       Patent_Drawings.pdf                                    29-11-2025
+
+       Overig 1                                       Technical_Specifications.pdf                           29-11-2025
+
+       Overig 2                                       System_Architecture_Flowchart.pdf                      29-11-2025
+
+                                                      .pdf
+
+  Verklaring en ondertekening
+
+      Hierbij verklaart de indiener het volgende: *
+
+      - Ik ben bevoegd en/of gemachtigd om deze aanvraag te ondertekenen.
+      - Ik verklaar dat dit formulier en de bijlagen naar waarheid zijn ingevuld.
+
+
+
+  Gegevens indiener
+
+
+   Voorletter(s)                                             V
+
+   Tussenvoegsel(s)
+
+   Achternaam                                                Kumar
+
+   Datum                                                     29-11-2025
+
