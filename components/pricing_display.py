@@ -27,11 +27,18 @@ def show_pricing_page():
                 st.session_state.pop('checkout_tier', None)
                 st.session_state.pop('checkout_billing', None)
                 st.session_state.pop('checkout_pricing', None)
+                st.session_state.pop('selected_tier', None)
+                st.session_state.pop('show_checkout', None)
                 st.rerun()
             
             # Show checkout form
             show_checkout_form(tier, billing, pricing)
             return
+    
+    # Check if a tier has been selected (show the checkout confirmation)
+    if st.session_state.get('show_checkout', False) and st.session_state.get('selected_tier'):
+        show_checkout_confirmation()
+        return
     
     # Header section
     st.title(f"{_('pricing.title', 'DataGuardian Pro Pricing')}")
@@ -63,6 +70,76 @@ def show_pricing_page():
     
     # Contact section
     show_contact_section()
+
+
+def show_checkout_confirmation():
+    """Show the checkout confirmation page after tier selection"""
+    from utils.i18n import _
+    
+    tier_value = st.session_state.get('selected_tier')
+    billing_value = st.session_state.get('selected_billing')
+    price = st.session_state.get('selected_price')
+    
+    # Convert tier value to PricingTier enum
+    try:
+        tier = PricingTier(tier_value)
+        billing_cycle = BillingCycle(billing_value)
+    except (ValueError, KeyError):
+        st.error("Invalid plan selection. Please try again.")
+        st.session_state.pop('selected_tier', None)
+        st.session_state.pop('show_checkout', None)
+        return
+    
+    config = get_pricing_config()
+    pricing = config.get_tier_pricing(tier, billing_cycle)
+    tier_data = config.pricing_data["tiers"][tier.value]
+    
+    # Back button
+    if st.button("Back to Plans", key="back_from_confirmation"):
+        st.session_state.pop('selected_tier', None)
+        st.session_state.pop('selected_billing', None)
+        st.session_state.pop('selected_price', None)
+        st.session_state.pop('show_checkout', None)
+        st.rerun()
+    
+    st.success(f"Selected {pricing['name']} - €{pricing['price']:,} per {billing_cycle.value}")
+    
+    # Show order summary
+    st.markdown("### Order Summary")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"**Plan:** {pricing['name']}")
+        st.markdown(f"**Price:** €{pricing['price']:,} per {billing_cycle.value}")
+        if billing_cycle == BillingCycle.ANNUAL and 'savings' in pricing:
+            st.markdown(f"**Savings:** €{pricing['savings']:,} vs monthly")
+    
+    with col2:
+        st.markdown(f"**Scans:** {tier_data.get('max_scans_monthly', 'Unlimited')}/month")
+        st.markdown(f"**Data Sources:** {tier_data.get('max_data_sources', 'Unlimited')}")
+        st.markdown(f"**Support:** {tier_data.get('support_level', 'Standard').replace('_', ' ').title()}")
+    
+    st.markdown("---")
+    st.markdown("### Next Steps:")
+    st.markdown("- **Setup**: Instant activation")
+    st.markdown("- **Support**: Included in your plan")
+    st.markdown("- **Billing**: Secure payment processing via Stripe")
+    st.markdown("- **Guarantee**: 30-day money-back guarantee")
+    
+    st.markdown("---")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Proceed to Checkout", type="primary", key="proceed_to_checkout_btn"):
+            st.session_state['checkout_tier'] = tier
+            st.session_state['checkout_billing'] = billing_cycle
+            st.session_state['checkout_pricing'] = pricing
+            st.session_state['show_checkout_form'] = True
+            st.rerun()
+    
+    with col2:
+        if st.button("View Plan Details", key="view_plan_details_btn"):
+            show_plan_details(tier, pricing)
 
 def show_pricing_cards(billing_cycle: BillingCycle):
     """Display pricing cards for all tiers"""
@@ -390,36 +467,14 @@ def handle_tier_selection(tier: PricingTier, billing_cycle: BillingCycle):
     # Track pricing page view (revenue tracking)
     track_pricing_page_view(tier.value, page_path="/pricing")
     
+    # Store selection in session state
     st.session_state['selected_tier'] = tier.value
     st.session_state['selected_billing'] = billing_cycle.value
     st.session_state['selected_price'] = pricing['price']
     st.session_state['show_checkout'] = True
     
-    st.success(f"Selected {pricing['name']} - €{pricing['price']} per {billing_cycle.value}")
-    st.balloons()
-    
-    # Show next steps
-    st.markdown("### Next Steps:")
-    if billing_cycle == BillingCycle.ANNUAL:
-        st.markdown(f"• **Annual Price**: €{pricing['price']:,}")
-        if 'savings' in pricing:
-            st.markdown(f"• **Savings**: €{pricing['savings']:,} vs monthly billing")
-    
-    st.markdown("• **Setup**: Instant activation")
-    st.markdown("• **Support**: Included in your plan")
-    st.markdown("• **Billing**: Secure payment processing")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("💳 Proceed to Checkout", type="primary", key="proceed_checkout"):
-            st.session_state['checkout_tier'] = tier
-            st.session_state['checkout_billing'] = billing_cycle
-            st.session_state['checkout_pricing'] = pricing
-            st.session_state['show_checkout_form'] = True
-            st.rerun()
-    with col2:
-        if st.button("📋 View Plan Details", key="view_details"):
-            show_plan_details(tier, pricing)
+    # Trigger rerun to show checkout confirmation page
+    st.rerun()
 
 def show_checkout_form(tier: PricingTier, billing_cycle: BillingCycle, pricing: Dict[str, Any]):
     """Show checkout form for selected plan with Stripe integration"""
