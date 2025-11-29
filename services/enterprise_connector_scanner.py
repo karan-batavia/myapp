@@ -569,9 +569,39 @@ class EnterpriseConnectorScanner:
             # Perform connector-specific scanning
             scan_results = self._perform_connector_scan(scan_config)
             
+            # Check for authentication failures during scanning (e.g., token expiry mid-scan)
+            auth_required = scan_results.get('status') == 'auth_required' or scan_results.get('auth_status') == 'expired'
+            
+            if auth_required:
+                # Auth failed during scan - return incomplete results with N/A compliance
+                self._update_progress("Authentication expired - re-authentication required", 90)
+                
+                final_results = {
+                    'success': False,
+                    'status': 'auth_required',
+                    'auth_status': 'expired',
+                    'auth_message': scan_results.get('auth_message', 'Authentication expired. Please re-authenticate to complete the scan.'),
+                    'reauth_required': True,
+                    'connector_type': self.connector_type,
+                    'timestamp': datetime.now().isoformat(),
+                    'scan_duration': (datetime.now() - self.start_time).total_seconds(),
+                    'items_scanned': self.scanned_items,
+                    'findings': self.findings,
+                    'pii_findings': len(self.findings),
+                    'compliance_score': None,  # N/A - auth failed
+                    'compliance_score_display': 'N/A',
+                    'high_risk_count': 0,
+                    'scan_results': scan_results,
+                    'scan_summary': self.scan_summary,
+                    'warning': 'Scan incomplete due to authentication expiry. Please re-connect your account and retry.'
+                }
+                
+                logger.warning(f"Enterprise scan incomplete due to auth failure. Items scanned: {self.scanned_items}")
+                return final_results
+            
             self._update_progress("Analyzing findings for GDPR compliance", 90)
             
-            # Analyze findings for compliance
+            # Analyze findings for compliance (only if auth succeeded)
             compliance_analysis = self._analyze_compliance()
             
             # Generate final scan summary
@@ -1580,8 +1610,13 @@ class EnterpriseConnectorScanner:
             'leads_scanned': 0,
             'custom_objects_scanned': 0,
             'bsn_fields_found': 0,
-            'kvk_fields_found': 0
+            'kvk_fields_found': 0,
+            'auth_status': 'valid',
+            'status': 'success'
         }
+        
+        auth_failed = False
+        auth_failure_count = 0
         
         try:
             base_url = self.instance_url or 'https://login.salesforce.com'
@@ -1646,23 +1681,37 @@ class EnterpriseConnectorScanner:
                         logger.info(f"Scanned {len(records)} {query_type} from Salesforce")
                     
                     elif response.status_code == 401:
-                        logger.warning(f"Salesforce authentication expired for {query_type}")
-                        # In production, implement token refresh here
+                        auth_failure_count += 1
+                        auth_failed = True
+                        logger.error(f"Salesforce authentication expired for {query_type} - token refresh required")
+                    
+                    elif response.status_code == 403:
+                        logger.error(f"Salesforce access denied for {query_type} - insufficient permissions")
+                        results['permission_error'] = True
                     
                 except Exception as query_error:
                     logger.error(f"Failed to query Salesforce {query_type}: {str(query_error)}")
                     # Continue with other queries even if one fails
             
-            # Count Netherlands-specific findings
-            results['bsn_fields_found'] = len([f for f in self.findings if any('BSN' in pii.get('type', '') for pii in f.get('pii_found', []))])
-            results['kvk_fields_found'] = len([f for f in self.findings if any('KvK' in pii.get('type', '') for pii in f.get('pii_found', []))])
-            
-            self._update_progress("Salesforce scan completed", 80)
-            logger.info(f"Salesforce scan completed: {self.scanned_items} items, {len(self.findings)} PII instances")
+            # Handle authentication failure - mark scan as incomplete
+            if auth_failed:
+                results['auth_status'] = 'expired'
+                results['status'] = 'auth_required'
+                results['auth_message'] = 'Salesforce authentication has expired. Please re-authenticate to complete the scan.'
+                results['reauth_required'] = True
+                logger.error(f"Salesforce scan incomplete: {auth_failure_count} authentication failures. Token refresh required.")
+                self._update_progress("Salesforce authentication expired - re-authentication required", 80)
+            else:
+                # Count Netherlands-specific findings only if auth succeeded
+                results['bsn_fields_found'] = len([f for f in self.findings if any('BSN' in pii.get('type', '') for pii in f.get('pii_found', []))])
+                results['kvk_fields_found'] = len([f for f in self.findings if any('KvK' in pii.get('type', '') for pii in f.get('pii_found', []))])
+                self._update_progress("Salesforce scan completed", 80)
+                logger.info(f"Salesforce scan completed: {self.scanned_items} items, {len(self.findings)} PII instances")
             
         except Exception as e:
             logger.error(f"Salesforce scan failed: {str(e)}")
             results['error'] = str(e)
+            results['status'] = 'error'
         
         return results
     

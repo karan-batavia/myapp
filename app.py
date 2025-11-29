@@ -6389,7 +6389,37 @@ def render_salesforce_connector(region: str, username: str):
             with st.spinner("Scanning Salesforce CRM..."):
                 scan_results = scanner.scan_enterprise_source(scan_config)
             
-            if scan_results.get('success'):
+            # Check for authentication failure
+            if scan_results.get('status') == 'auth_required' or scan_results.get('auth_status') == 'expired':
+                st.error("🔐 **Salesforce Authentication Expired**")
+                st.warning(f"""
+                ⚠️ **Scan Incomplete** - Your Salesforce connection has expired.
+                
+                {scan_results.get('auth_message', 'Please re-authenticate to complete the scan.')}
+                
+                **To fix this:**
+                1. Go to your Salesforce account settings
+                2. Generate a new access token or refresh your OAuth connection
+                3. Update the credentials above and try again
+                """)
+                
+                # Show partial results if any
+                items_scanned = scan_results.get('items_scanned', 0)
+                if items_scanned > 0:
+                    st.info(f"📊 Partial scan: {items_scanned} items were scanned before authentication expired.")
+                
+                # Show N/A compliance score prominently
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Items Scanned", items_scanned)
+                with col2:
+                    st.metric("PII Findings", scan_results.get('pii_findings', 0))
+                with col3:
+                    st.metric("High Risk", scan_results.get('high_risk_count', 0))
+                with col4:
+                    st.metric("Compliance Score", "N/A", help="Cannot calculate - authentication expired")
+                    
+            elif scan_results.get('success'):
                 # Store results in aggregator database
                 try:
                     from services.results_aggregator import ResultsAggregator
