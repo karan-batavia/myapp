@@ -91,7 +91,8 @@ class EnterpriseConnectorScanner:
                  region: str = "Netherlands",
                  max_items: int = 1000,
                  enable_deep_scan: bool = True,
-                 progress_callback: Optional[Callable] = None):
+                 progress_callback: Optional[Callable] = None,
+                 checkpoint_id: Optional[str] = None):
         """
         Initialize the Enterprise Connector Scanner.
         
@@ -102,6 +103,7 @@ class EnterpriseConnectorScanner:
             max_items: Maximum number of items to scan per source
             enable_deep_scan: Enable deep content analysis for documents
             progress_callback: Optional callback for progress updates
+            checkpoint_id: Optional checkpoint ID to resume a previous scan
         """
         self.connector_type = connector_type.lower()
         self.credentials = credentials
@@ -179,7 +181,7 @@ class EnterpriseConnectorScanner:
         }
         
         # Checkpoint state for resumable scans
-        self.checkpoint_id = None
+        self.checkpoint_id = checkpoint_id
         self.completed_queries = set()  # Track which queries have completed
         self.redis_client = None
         
@@ -191,6 +193,11 @@ class EnterpriseConnectorScanner:
         except Exception as redis_err:
             logger.warning(f"Redis not available for checkpointing: {redis_err}")
             self.redis_client = None
+        
+        # Restore from checkpoint if resuming
+        if checkpoint_id and self.redis_client:
+            self._restore_from_checkpoint(checkpoint_id)
+            logger.info(f"Resuming scan from checkpoint: {checkpoint_id}")
         
         logger.info(f"Initialized Enterprise Connector Scanner for {self.CONNECTOR_TYPES[self.connector_type]}")
     

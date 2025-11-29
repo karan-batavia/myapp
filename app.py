@@ -5980,12 +5980,16 @@ def render_microsoft365_connector(region: str, username: str):
             # Track license usage
             track_scanner_usage('enterprise', region, success=True, duration_ms=0)
             
-            # Initialize scanner
+            # Check for resume from checkpoint
+            checkpoint_id = st.session_state.get('m365_checkpoint_id')
+            
+            # Initialize scanner with optional checkpoint for resume
             scanner = EnterpriseConnectorScanner(
                 connector_type='microsoft365',
                 credentials=credentials,
                 region=region,
-                max_items=max_items
+                max_items=max_items,
+                checkpoint_id=checkpoint_id
             )
             
             # Progress tracking
@@ -6014,8 +6018,32 @@ def render_microsoft365_connector(region: str, username: str):
             status_text.text("Scan completed!")
             
             # Display results
-            if scan_results.get('success'):
+            if scan_results.get('status') == 'auth_required':
+                # Authentication expired during scan - show resume option
+                st.warning("⚠️ Authentication expired during scan. Your partial results have been saved.")
+                
+                # Show partial results collected
+                if scan_results.get('total_items_scanned', 0) > 0:
+                    st.info(f"📊 Partial scan collected: {scan_results.get('total_items_scanned', 0)} items scanned before auth expired")
+                    display_enterprise_scan_results(scan_results, 'Microsoft 365 (Partial)')
+                
+                # Store checkpoint ID for resume
+                checkpoint_id = scan_results.get('checkpoint_id')
+                if checkpoint_id:
+                    st.session_state['m365_checkpoint_id'] = checkpoint_id
+                    st.success(f"💾 Checkpoint saved. Re-authenticate and click 'Resume Scan' to continue from where you left off.")
+                    
+                    if st.button("🔄 Resume Scan After Re-Authentication", key="resume_m365_scan"):
+                        st.info("Please refresh your credentials above and click 'Start Microsoft 365 Scan' to resume.")
+                
+                st.markdown(f"**Auth Message:** {scan_results.get('auth_message', 'Please re-authenticate')}")
+                
+            elif scan_results.get('success'):
                 display_enterprise_scan_results(scan_results, 'Microsoft 365')
+                
+                # Clear any saved checkpoint
+                if 'm365_checkpoint_id' in st.session_state:
+                    del st.session_state['m365_checkpoint_id']
                 
                 # Track successful completion
                 user_id = st.session_state.get('user_id', username)
@@ -6129,10 +6157,14 @@ def render_exact_online_connector(region: str, username: str):
     
     if st.button("🚀 Start Exact Online Scan", type="primary"):
         try:
+            # Check for resume from checkpoint
+            checkpoint_id = st.session_state.get('exact_checkpoint_id')
+            
             scanner = EnterpriseConnectorScanner(
                 connector_type='exact_online',
                 credentials=credentials,
-                region=region
+                region=region,
+                checkpoint_id=checkpoint_id
             )
             
             scan_config = {
@@ -6149,7 +6181,25 @@ def render_exact_online_connector(region: str, username: str):
             with st.spinner("Scanning Exact Online environment..."):
                 scan_results = scanner.scan_enterprise_source(scan_config)
             
-            if scan_results.get('success'):
+            if scan_results.get('status') == 'auth_required':
+                st.warning("⚠️ Authentication expired during scan. Your partial results have been saved.")
+                
+                if scan_results.get('total_items_scanned', 0) > 0:
+                    st.info(f"📊 Partial scan collected: {scan_results.get('total_items_scanned', 0)} items scanned before auth expired")
+                    display_enterprise_scan_results(scan_results, 'Exact Online (Partial)')
+                
+                checkpoint_id = scan_results.get('checkpoint_id')
+                if checkpoint_id:
+                    st.session_state['exact_checkpoint_id'] = checkpoint_id
+                    st.success("💾 Checkpoint saved. Re-authenticate and click 'Start Exact Online Scan' to resume.")
+                
+                st.markdown(f"**Auth Message:** {scan_results.get('auth_message', 'Please re-authenticate')}")
+                
+            elif scan_results.get('success'):
+                # Clear any saved checkpoint
+                if 'exact_checkpoint_id' in st.session_state:
+                    del st.session_state['exact_checkpoint_id']
+                
                 # Store results in aggregator database (like Code Scanner does)
                 try:
                     from services.results_aggregator import ResultsAggregator
@@ -6233,10 +6283,14 @@ def render_google_workspace_connector(region: str, username: str):
     
     if st.button("🚀 Start Google Workspace Scan", type="primary"):
         try:
+            # Check for resume from checkpoint
+            checkpoint_id = st.session_state.get('gworkspace_checkpoint_id')
+            
             scanner = EnterpriseConnectorScanner(
                 connector_type='google_workspace',
                 credentials=credentials,
-                region=region
+                region=region,
+                checkpoint_id=checkpoint_id
             )
             
             scan_config = {
@@ -6249,7 +6303,25 @@ def render_google_workspace_connector(region: str, username: str):
             with st.spinner("Scanning Google Workspace..."):
                 scan_results = scanner.scan_enterprise_source(scan_config)
             
-            if scan_results.get('success'):
+            if scan_results.get('status') == 'auth_required':
+                st.warning("⚠️ Authentication expired during scan. Your partial results have been saved.")
+                
+                if scan_results.get('total_items_scanned', 0) > 0:
+                    st.info(f"📊 Partial scan collected: {scan_results.get('total_items_scanned', 0)} items scanned before auth expired")
+                    display_enterprise_scan_results(scan_results, 'Google Workspace (Partial)')
+                
+                checkpoint_id = scan_results.get('checkpoint_id')
+                if checkpoint_id:
+                    st.session_state['gworkspace_checkpoint_id'] = checkpoint_id
+                    st.success("💾 Checkpoint saved. Re-authenticate and click 'Start Google Workspace Scan' to resume.")
+                
+                st.markdown(f"**Auth Message:** {scan_results.get('auth_message', 'Please re-authenticate')}")
+                
+            elif scan_results.get('success'):
+                # Clear any saved checkpoint
+                if 'gworkspace_checkpoint_id' in st.session_state:
+                    del st.session_state['gworkspace_checkpoint_id']
+                
                 # Store results in aggregator database (like Code Scanner does)
                 try:
                     from services.results_aggregator import ResultsAggregator
