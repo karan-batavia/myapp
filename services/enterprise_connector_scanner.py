@@ -351,6 +351,8 @@ class EnterpriseConnectorScanner:
                 return self._refresh_google_workspace_token()
             elif self.connector_type == 'exact_online':
                 return self._refresh_exact_online_token()
+            elif self.connector_type == 'salesforce':
+                return self._refresh_salesforce_token()
             else:
                 logger.warning(f"Token refresh not implemented for {self.connector_type}")
                 return False
@@ -466,6 +468,105 @@ class EnterpriseConnectorScanner:
         except Exception as e:
             logger.error(f"Failed to refresh Exact Online token: {str(e)}")
             return False
+    
+    def _refresh_salesforce_token(self) -> bool:
+        """Refresh Salesforce OAuth2 token."""
+        try:
+            # Salesforce uses the same token endpoint for refresh
+            token_url = f"{self.instance_url or 'https://login.salesforce.com'}/services/oauth2/token"
+            
+            token_data = {
+                'grant_type': 'refresh_token',
+                'refresh_token': self.refresh_token,
+                'client_id': self.credentials.get('client_id'),
+                'client_secret': self.credentials.get('client_secret')
+            }
+            
+            response = self.session.post(token_url, data=token_data)
+            response.raise_for_status()
+            
+            token_info = response.json()
+            
+            self.access_token = token_info['access_token']
+            # Salesforce may return a new refresh token
+            if 'refresh_token' in token_info:
+                self.refresh_token = token_info['refresh_token']
+            
+            # Salesforce tokens typically expire in 2 hours
+            expires_in = token_info.get('expires_in', 7200)
+            expires_seconds = int(expires_in) if isinstance(expires_in, (str, int)) else 7200
+            self.token_expires = datetime.now() + timedelta(seconds=expires_seconds)
+            
+            # Update session headers
+            self.session.headers['Authorization'] = f'Bearer {self.access_token}'
+            
+            logger.info("Salesforce access token refreshed successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to refresh Salesforce token: {str(e)}")
+            return False
+    
+    def _make_salesforce_query(self, api_url: str, soql_query: str) -> Tuple[Optional[Dict], str]:
+        """
+        Execute a Salesforce SOQL query with automatic token refresh.
+        
+        Args:
+            api_url: Salesforce API base URL
+            soql_query: SOQL query string
+            
+        Returns:
+            Tuple of (response data or None, status string: 'success'|'auth_required'|'error')
+        """
+        from urllib.parse import quote
+        
+        # Check and wait for rate limits
+        self._wait_for_rate_limit('salesforce')
+        
+        # Check if token needs refresh BEFORE making request
+        if self._is_token_expired():
+            logger.info("Salesforce access token expired, attempting refresh...")
+            if not self._refresh_access_token():
+                logger.error("Failed to refresh Salesforce access token")
+                return None, 'auth_required'
+        
+        # URL encode the SOQL query
+        query_url = f"{api_url}/query?q={quote(soql_query)}"
+        
+        try:
+            self._record_api_call()
+            response = self.session.get(query_url)
+            
+            if response.status_code == 200:
+                return response.json(), 'success'
+            
+            elif response.status_code == 401:
+                # Token expired mid-request, try refresh once
+                logger.warning("Salesforce returned 401, attempting token refresh...")
+                if self._refresh_access_token():
+                    logger.info("Token refreshed, retrying query...")
+                    self._record_api_call()
+                    retry_response = self.session.get(query_url)
+                    if retry_response.status_code == 200:
+                        return retry_response.json(), 'success'
+                    else:
+                        logger.error(f"Retry failed with status {retry_response.status_code}")
+                        return None, 'auth_required'
+                else:
+                    logger.error("Token refresh failed")
+                    return None, 'auth_required'
+            
+            elif response.status_code == 403:
+                logger.error("Salesforce access denied - insufficient permissions")
+                return None, 'permission_denied'
+            
+            else:
+                logger.error(f"Salesforce query failed with status {response.status_code}")
+                return None, 'error'
+                
+        except Exception as e:
+            logger.error(f"Salesforce query exception: {str(e)}")
+            return None, 'error'
     
     def _make_api_request(self, url: str, method: str = 'GET', data: Optional[Dict] = None, 
                          api_type: str = 'default') -> Optional[Dict]:
@@ -1658,17 +1759,15 @@ class EnterpriseConnectorScanner:
                 """
                 queries.append(('leads', lead_query))
             
-            # Execute queries and analyze results
+            # Execute queries and analyze results with automatic token refresh
             for query_type, soql_query in queries:
                 self._update_progress(f"Scanning Salesforce {query_type}...", 30)
                 
                 try:
-                    # Execute SOQL query
-                    query_url = f"{api_url}/query"
-                    response = self.session.get(query_url, params={'q': soql_query})
+                    # Execute SOQL query with automatic token refresh
+                    data, status = self._make_salesforce_query(api_url, soql_query)
                     
-                    if response.status_code == 200:
-                        data = response.json()
+                    if status == 'success' and data:
                         records = data.get('records', [])
                         
                         self.scanned_items += len(records)
@@ -1680,14 +1779,17 @@ class EnterpriseConnectorScanner:
                         
                         logger.info(f"Scanned {len(records)} {query_type} from Salesforce")
                     
-                    elif response.status_code == 401:
+                    elif status == 'auth_required':
                         auth_failure_count += 1
                         auth_failed = True
-                        logger.error(f"Salesforce authentication expired for {query_type} - token refresh required")
+                        logger.error(f"Salesforce authentication expired for {query_type} - token refresh failed")
                     
-                    elif response.status_code == 403:
+                    elif status == 'permission_denied':
                         logger.error(f"Salesforce access denied for {query_type} - insufficient permissions")
                         results['permission_error'] = True
+                    
+                    else:
+                        logger.error(f"Salesforce query failed for {query_type} with status: {status}")
                     
                 except Exception as query_error:
                     logger.error(f"Failed to query Salesforce {query_type}: {str(query_error)}")
