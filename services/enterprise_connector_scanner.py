@@ -1323,46 +1323,84 @@ class EnterpriseConnectorScanner:
             return scan_results
     
     def _scan_microsoft365(self, scan_config: Dict) -> Dict[str, Any]:
-        """Scan Microsoft 365 services for PII."""
+        """Scan Microsoft 365 services for PII with automatic token refresh."""
         results = {
             'sharepoint_sites': 0,
             'onedrive_files': 0,
             'exchange_emails': 0,
             'teams_messages': 0,
-            'office_documents': 0
+            'office_documents': 0,
+            'auth_status': 'valid',
+            'status': 'success'
         }
         
-        self._update_progress("Scanning SharePoint sites...", 20)
+        auth_failed = False
+        scan_sources = []
         
-        # Scan SharePoint sites
+        # Define scan sources with their methods
         if scan_config.get('scan_sharepoint', True):
-            sharepoint_results = self._scan_sharepoint_sites()
-            results['sharepoint_sites'] = len(sharepoint_results)
-            self.scanned_items += results['sharepoint_sites']
-        
-        self._update_progress("Scanning OneDrive files...", 40)
-        
-        # Scan OneDrive files
+            scan_sources.append(('sharepoint', 'sharepoint_sites', self._scan_sharepoint_sites, 20))
         if scan_config.get('scan_onedrive', True):
-            onedrive_results = self._scan_onedrive_files()
-            results['onedrive_files'] = len(onedrive_results)
-            self.scanned_items += results['onedrive_files']
-        
-        self._update_progress("Scanning Exchange emails...", 60)
-        
-        # Scan Exchange emails
+            scan_sources.append(('onedrive', 'onedrive_files', self._scan_onedrive_files, 40))
         if scan_config.get('scan_exchange', True):
-            exchange_results = self._scan_exchange_emails()
-            results['exchange_emails'] = len(exchange_results)
-            self.scanned_items += results['exchange_emails']
-        
-        self._update_progress("Scanning Teams messages...", 80)
-        
-        # Scan Teams messages
+            scan_sources.append(('exchange', 'exchange_emails', self._scan_exchange_emails, 60))
         if scan_config.get('scan_teams', True):
-            teams_results = self._scan_teams_messages()
-            results['teams_messages'] = len(teams_results)
-            self.scanned_items += results['teams_messages']
+            scan_sources.append(('teams', 'teams_messages', self._scan_teams_messages, 80))
+        
+        for source_name, result_key, scan_method, progress in scan_sources:
+            # Skip sources already completed (when resuming from checkpoint)
+            if source_name in self.completed_queries:
+                logger.info(f"Skipping {source_name} - already completed in previous session")
+                continue
+            
+            self._update_progress(f"Scanning {source_name.title()}...", progress)
+            
+            try:
+                # Check token before scanning
+                if self._is_token_expired():
+                    logger.info("Microsoft 365 token expired, attempting refresh...")
+                    if not self._refresh_access_token():
+                        auth_failed = True
+                        logger.error(f"Microsoft 365 token refresh failed for {source_name}")
+                        break
+                
+                source_results = scan_method()
+                
+                # Check if scan method returned auth error
+                if isinstance(source_results, dict) and source_results.get('auth_failed'):
+                    auth_failed = True
+                    logger.error(f"Microsoft 365 authentication expired during {source_name} scan")
+                    break
+                
+                results[result_key] = len(source_results) if source_results else 0
+                self.scanned_items += results[result_key]
+                self.completed_queries.add(source_name)
+                
+            except Exception as e:
+                if '401' in str(e) or 'unauthorized' in str(e).lower():
+                    auth_failed = True
+                    logger.error(f"Microsoft 365 auth error during {source_name}: {str(e)}")
+                    break
+                else:
+                    logger.error(f"Microsoft 365 {source_name} scan error: {str(e)}")
+        
+        # Handle authentication failure
+        if auth_failed:
+            results['auth_status'] = 'expired'
+            results['status'] = 'auth_required'
+            results['auth_message'] = 'Microsoft 365 authentication has expired. Please re-authenticate to complete the scan.'
+            results['reauth_required'] = True
+            
+            # Save checkpoint for resume
+            checkpoint_id = self._save_checkpoint(scan_config, results)
+            if checkpoint_id:
+                results['checkpoint_id'] = checkpoint_id
+            
+            logger.error("Microsoft 365 scan incomplete due to authentication failure")
+        else:
+            # Clear checkpoint on success
+            if self.checkpoint_id:
+                self._delete_checkpoint(self.checkpoint_id)
         
         return results
     
@@ -1563,38 +1601,82 @@ class EnterpriseConnectorScanner:
         return teams_findings
     
     def _scan_exact_online(self, scan_config: Dict) -> Dict[str, Any]:
-        """Scan Exact Online for PII (Dutch ERP system)."""
+        """Scan Exact Online for PII (Dutch ERP system) with automatic token refresh."""
         results = {
             'customers': 0,
             'employees': 0,
             'invoices': 0,
             'projects': 0,
-            'financial_records': 0
+            'financial_records': 0,
+            'auth_status': 'valid',
+            'status': 'success'
         }
         
-        self._update_progress("Scanning Exact Online customers...", 30)
+        auth_failed = False
+        scan_sources = []
         
-        # Scan customer records
+        # Define scan sources
         if scan_config.get('scan_customers', True):
-            customer_results = self._scan_exact_customers()
-            results['customers'] = len(customer_results)
-            self.scanned_items += results['customers']
-        
-        self._update_progress("Scanning employee records...", 50)
-        
-        # Scan employee records
+            scan_sources.append(('customers', 'customers', self._scan_exact_customers, 30))
         if scan_config.get('scan_employees', True):
-            employee_results = self._scan_exact_employees()
-            results['employees'] = len(employee_results)
-            self.scanned_items += results['employees']
-        
-        self._update_progress("Scanning financial records...", 70)
-        
-        # Scan financial records
+            scan_sources.append(('employees', 'employees', self._scan_exact_employees, 50))
         if scan_config.get('scan_financial', True):
-            financial_results = self._scan_exact_financial()
-            results['financial_records'] = len(financial_results)
-            self.scanned_items += results['financial_records']
+            scan_sources.append(('financial', 'financial_records', self._scan_exact_financial, 70))
+        
+        for source_name, result_key, scan_method, progress in scan_sources:
+            # Skip sources already completed (when resuming from checkpoint)
+            if source_name in self.completed_queries:
+                logger.info(f"Skipping {source_name} - already completed in previous session")
+                continue
+            
+            self._update_progress(f"Scanning Exact Online {source_name}...", progress)
+            
+            try:
+                # Check token before scanning
+                if self._is_token_expired():
+                    logger.info("Exact Online token expired, attempting refresh...")
+                    if not self._refresh_access_token():
+                        auth_failed = True
+                        logger.error(f"Exact Online token refresh failed for {source_name}")
+                        break
+                
+                source_results = scan_method()
+                
+                # Check for auth error response
+                if isinstance(source_results, dict) and source_results.get('auth_failed'):
+                    auth_failed = True
+                    logger.error(f"Exact Online authentication expired during {source_name} scan")
+                    break
+                
+                results[result_key] = len(source_results) if source_results else 0
+                self.scanned_items += results[result_key]
+                self.completed_queries.add(source_name)
+                
+            except Exception as e:
+                if '401' in str(e) or 'unauthorized' in str(e).lower():
+                    auth_failed = True
+                    logger.error(f"Exact Online auth error during {source_name}: {str(e)}")
+                    break
+                else:
+                    logger.error(f"Exact Online {source_name} scan error: {str(e)}")
+        
+        # Handle authentication failure
+        if auth_failed:
+            results['auth_status'] = 'expired'
+            results['status'] = 'auth_required'
+            results['auth_message'] = 'Exact Online authentication has expired. Please re-authenticate to complete the scan.'
+            results['reauth_required'] = True
+            
+            # Save checkpoint for resume
+            checkpoint_id = self._save_checkpoint(scan_config, results)
+            if checkpoint_id:
+                results['checkpoint_id'] = checkpoint_id
+            
+            logger.error("Exact Online scan incomplete due to authentication failure")
+        else:
+            # Clear checkpoint on success
+            if self.checkpoint_id:
+                self._delete_checkpoint(self.checkpoint_id)
         
         return results
     
@@ -1789,27 +1871,79 @@ class EnterpriseConnectorScanner:
         return financial_findings
     
     def _scan_google_workspace(self, scan_config: Dict) -> Dict[str, Any]:
-        """Scan Google Workspace for PII."""
+        """Scan Google Workspace for PII with automatic token refresh."""
         results = {
             'drive_files': 0,
             'gmail_messages': 0,
             'docs_sheets': 0,
-            'calendar_events': 0
+            'calendar_events': 0,
+            'auth_status': 'valid',
+            'status': 'success'
         }
         
-        self._update_progress("Scanning Google Drive...", 35)
+        auth_failed = False
+        scan_sources = []
         
+        # Define scan sources
         if scan_config.get('scan_drive', True):
-            drive_results = self._scan_google_drive()
-            results['drive_files'] = len(drive_results)
-            self.scanned_items += results['drive_files']
-        
-        self._update_progress("Scanning Gmail...", 65)
-        
+            scan_sources.append(('drive', 'drive_files', self._scan_google_drive, 35))
         if scan_config.get('scan_gmail', True):
-            gmail_results = self._scan_gmail()
-            results['gmail_messages'] = len(gmail_results)
-            self.scanned_items += results['gmail_messages']
+            scan_sources.append(('gmail', 'gmail_messages', self._scan_gmail, 65))
+        
+        for source_name, result_key, scan_method, progress in scan_sources:
+            # Skip sources already completed (when resuming from checkpoint)
+            if source_name in self.completed_queries:
+                logger.info(f"Skipping {source_name} - already completed in previous session")
+                continue
+            
+            self._update_progress(f"Scanning {source_name.title()}...", progress)
+            
+            try:
+                # Check token before scanning
+                if self._is_token_expired():
+                    logger.info("Google Workspace token expired, attempting refresh...")
+                    if not self._refresh_access_token():
+                        auth_failed = True
+                        logger.error(f"Google Workspace token refresh failed for {source_name}")
+                        break
+                
+                source_results = scan_method()
+                
+                # Check for auth error response
+                if isinstance(source_results, dict) and source_results.get('auth_failed'):
+                    auth_failed = True
+                    logger.error(f"Google Workspace authentication expired during {source_name} scan")
+                    break
+                
+                results[result_key] = len(source_results) if source_results else 0
+                self.scanned_items += results[result_key]
+                self.completed_queries.add(source_name)
+                
+            except Exception as e:
+                if '401' in str(e) or 'unauthorized' in str(e).lower():
+                    auth_failed = True
+                    logger.error(f"Google Workspace auth error during {source_name}: {str(e)}")
+                    break
+                else:
+                    logger.error(f"Google Workspace {source_name} scan error: {str(e)}")
+        
+        # Handle authentication failure
+        if auth_failed:
+            results['auth_status'] = 'expired'
+            results['status'] = 'auth_required'
+            results['auth_message'] = 'Google Workspace authentication has expired. Please re-authenticate to complete the scan.'
+            results['reauth_required'] = True
+            
+            # Save checkpoint for resume
+            checkpoint_id = self._save_checkpoint(scan_config, results)
+            if checkpoint_id:
+                results['checkpoint_id'] = checkpoint_id
+            
+            logger.error("Google Workspace scan incomplete due to authentication failure")
+        else:
+            # Clear checkpoint on success
+            if self.checkpoint_id:
+                self._delete_checkpoint(self.checkpoint_id)
         
         return results
     
