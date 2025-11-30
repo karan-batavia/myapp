@@ -6411,8 +6411,23 @@ def render_salesforce_connector(region: str, username: str):
             credentials['security_token'] = st.text_input("Security Token", type="password", help="Salesforce security token (optional)")
     
     elif auth_method == "Access Token":
-        credentials['access_token'] = st.text_input("Salesforce Access Token", type="password")
-        credentials['instance_url'] = st.text_input("Instance URL", value="https://your-instance.salesforce.com", help="Your Salesforce instance URL")
+        st.info("""
+        **How to get your Access Token:**
+        1. Log into Salesforce in your browser
+        2. Press **F12** → **Application** tab → **Cookies** → find `sid` value
+        3. Or use Developer Console: Debug → Execute Anonymous → `System.debug(UserInfo.getSessionId());`
+        """)
+        credentials['access_token'] = st.text_input(
+            "Salesforce Access Token", 
+            type="password",
+            help="Your Salesforce session ID or OAuth access token (starts with 00D...)"
+        )
+        credentials['instance_url'] = st.text_input(
+            "Instance URL", 
+            value="",
+            placeholder="https://your-org.my.salesforce.com",
+            help="Your Salesforce instance URL (find it in your browser address bar when logged in)"
+        )
     
     else:  # Demo Mode
         st.success("✅ Demo mode enabled - using sample Netherlands Salesforce data")

@@ -619,6 +619,15 @@ class EnterpriseConnectorScanner:
     def _refresh_salesforce_token(self) -> bool:
         """Refresh Salesforce OAuth2 token."""
         try:
+            # Check if we have a refresh token (not available in direct access token mode)
+            if not self.refresh_token:
+                # In direct access token mode, we can't refresh - need re-authentication
+                if hasattr(self, '_has_refresh_token') and not self._has_refresh_token:
+                    logger.warning("[TOKEN_REFRESH_SKIPPED] connector=salesforce reason=direct_access_token_mode")
+                    return False
+                logger.error("[TOKEN_REFRESH_FAILED] connector=salesforce reason=no_refresh_token")
+                return False
+            
             # Salesforce uses the same token endpoint for refresh
             token_url = f"{self.instance_url or 'https://login.salesforce.com'}/services/oauth2/token"
             
@@ -670,8 +679,11 @@ class EnterpriseConnectorScanner:
         # Check and wait for rate limits
         self._wait_for_rate_limit('salesforce')
         
-        # Check if token needs refresh BEFORE making request
-        if self._is_token_expired():
+        # In direct access token mode, skip proactive refresh checks - just use the token
+        is_direct_token_mode = hasattr(self, '_has_refresh_token') and not self._has_refresh_token
+        
+        # Only try proactive refresh if we have a refresh token
+        if not is_direct_token_mode and self._is_token_expired():
             logger.info("Salesforce access token expired, attempting refresh...")
             if not self._refresh_access_token():
                 logger.error("Failed to refresh Salesforce access token")
@@ -688,7 +700,13 @@ class EnterpriseConnectorScanner:
                 return response.json(), 'success'
             
             elif response.status_code == 401:
-                # Token expired mid-request, try refresh once
+                # Token expired or invalid
+                if is_direct_token_mode:
+                    # In direct token mode, can't refresh - need new token
+                    logger.error("Salesforce session expired - new access token required")
+                    return None, 'auth_required'
+                
+                # Try refresh once if we have a refresh token
                 logger.warning("Salesforce returned 401, attempting token refresh...")
                 if self._refresh_access_token():
                     logger.info("Token refreshed, retrying query...")
@@ -707,8 +725,25 @@ class EnterpriseConnectorScanner:
                 logger.error("Salesforce access denied - insufficient permissions")
                 return None, 'permission_denied'
             
+            elif response.status_code == 400:
+                # Bad request - likely SOQL query error or custom field not found
+                try:
+                    error_response = response.json()
+                    error_message = error_response[0].get('message', 'Unknown error') if isinstance(error_response, list) else str(error_response)
+                    logger.warning(f"Salesforce query error (non-fatal): {error_message}")
+                    # Return empty result but success status - custom fields may not exist
+                    return {'records': [], 'totalSize': 0, 'done': True}, 'success'
+                except:
+                    logger.error(f"Salesforce query failed with status 400")
+                    return {'records': [], 'totalSize': 0, 'done': True}, 'success'
+            
             else:
                 logger.error(f"Salesforce query failed with status {response.status_code}")
+                try:
+                    error_detail = response.json()
+                    logger.error(f"Error details: {error_detail}")
+                except:
+                    pass
                 return None, 'error'
                 
         except Exception as e:
@@ -1183,12 +1218,30 @@ class EnterpriseConnectorScanner:
         """
         try:
             # Check for required credentials
-            if 'access_token' in self.credentials:
-                # Use existing access token
-                self.access_token = self.credentials['access_token']
-                self.instance_url = self.credentials.get('instance_url', 'https://login.salesforce.com')
+            if 'access_token' in self.credentials and self.credentials['access_token']:
+                # Use existing access token (session ID or OAuth token)
+                self.access_token = self.credentials['access_token'].strip()
+                self.instance_url = self.credentials.get('instance_url', '').strip()
+                
+                # Validate instance URL
+                if not self.instance_url or self.instance_url == 'https://your-instance.salesforce.com':
+                    logger.error("Invalid Salesforce instance URL - please provide your actual instance URL")
+                    return False
+                
+                # Ensure instance URL has no trailing slash
+                self.instance_url = self.instance_url.rstrip('/')
+                
+                # Set Authorization header
                 self.session.headers['Authorization'] = f'Bearer {self.access_token}'
-                logger.info("Salesforce authentication using existing access token")
+                
+                # Set token_expires to 2 hours from now to prevent premature refresh attempts
+                # Session tokens typically last 2 hours
+                self.token_expires = datetime.now() + timedelta(hours=2)
+                
+                # Mark that we don't have a refresh token (direct access token mode)
+                self._has_refresh_token = False
+                
+                logger.info(f"Salesforce authentication using existing access token for {self.instance_url}")
                 return True
             
             # OAuth2 client credentials flow
@@ -2004,38 +2057,41 @@ class EnterpriseConnectorScanner:
             base_url = self.instance_url or 'https://login.salesforce.com'
             api_url = f"{base_url}/services/data/v58.0"
             
-            # SOQL queries for Netherlands-specific PII detection
+            # SOQL queries for PII detection using standard fields
+            # Note: We use only standard fields to ensure compatibility with all Salesforce orgs
+            # Custom Netherlands-specific fields (BSN__c, KvK_Number__c) are scanned separately if they exist
             queries = []
             
-            # Scan Accounts with Netherlands KvK numbers and BSN data
+            # Scan Accounts with standard PII fields
             if scan_config.get('scan_accounts', True):
                 account_query = """
-                SELECT Id, Name, BillingStreet, BillingCity, BillingPostalCode, Phone, Fax, Website,
-                       BSN__c, KvK_Number__c, IBAN__c, VAT_Number__c, Dutch_Address__c
+                SELECT Id, Name, BillingStreet, BillingCity, BillingPostalCode, BillingCountry,
+                       Phone, Fax, Website, Description
                 FROM Account 
-                WHERE (BSN__c != null OR KvK_Number__c != null OR IBAN__c != null)
+                WHERE Name != null
                 LIMIT 200
                 """
                 queries.append(('accounts', account_query))
             
-            # Scan Contacts with personal PII and BSN data
+            # Scan Contacts with personal PII data
             if scan_config.get('scan_contacts', True):
                 contact_query = """
-                SELECT Id, FirstName, LastName, Email, Phone, MobilePhone, MailingStreet, 
-                       MailingCity, MailingPostalCode, BSN__c, Dutch_ID__c, IBAN__c
+                SELECT Id, FirstName, LastName, Email, Phone, MobilePhone, 
+                       MailingStreet, MailingCity, MailingPostalCode, MailingCountry,
+                       Birthdate, Description
                 FROM Contact 
-                WHERE (BSN__c != null OR Dutch_ID__c != null OR Email != null)
+                WHERE Email != null OR Phone != null
                 LIMIT 200
                 """
                 queries.append(('contacts', contact_query))
             
-            # Scan Leads with potential Netherlands PII
+            # Scan Leads with potential PII
             if scan_config.get('scan_leads', True):
                 lead_query = """
-                SELECT Id, FirstName, LastName, Email, Phone, Street, City, PostalCode,
-                       Company, BSN__c, KvK_Number__c
+                SELECT Id, FirstName, LastName, Email, Phone, MobilePhone,
+                       Street, City, PostalCode, Country, Company, Description
                 FROM Lead 
-                WHERE (BSN__c != null OR KvK_Number__c != null OR Email != null)
+                WHERE Email != null OR Phone != null
                 LIMIT 100
                 """
                 queries.append(('leads', lead_query))
