@@ -888,32 +888,59 @@ class UnifiedHTMLReportGenerator:
         netherlands_findings = scan_result.get('netherlands_findings', {})
         uavg_compliance = scan_result.get('uavg_compliance', {})
         
-        # Build connector metrics section
+        # Metric labels for display
+        metric_labels = {
+            'sharepoint_sites': 'SharePoint Sites',
+            'onedrive_files': 'OneDrive Files',
+            'exchange_emails': 'Exchange Emails',
+            'teams_messages': 'Teams Messages',
+            'office_documents': 'Office Documents',
+            'drive_files': 'Drive Files',
+            'gmail_messages': 'Gmail Messages',
+            'docs_sheets': 'Docs/Sheets',
+            'calendar_events': 'Calendar Events',
+            'customers': 'Customers',
+            'employees': 'Employees',
+            'financial_records': 'Financial Records',
+            'invoices': 'Invoices',
+            'projects': 'Projects',
+            'hr_records_scanned': 'HR Records',
+            'customer_records_scanned': 'Customer Records',
+            'vendor_records_scanned': 'Vendor Records',
+            'bsn_instances_found': 'BSN Instances',
+            'financial_data_found': 'Financial Data',
+            'accounts_scanned': 'Accounts',
+            'contacts_scanned': 'Contacts',
+            'leads_scanned': 'Leads',
+            'custom_objects_scanned': 'Custom Objects',
+            'items_processed': 'Items Processed',
+        }
+        
+        # Build connector metrics section dynamically
         metrics_html = ""
         if connector_metrics:
-            metrics_html = f"""
-            <div class="scanner-specific">
-                <h3>📊 {connector_name} Scan Metrics</h3>
-                <div class="metrics-grid">
+            # Filter non-zero metrics
+            non_zero_metrics = {k: v for k, v in connector_metrics.items() if v > 0}
+            
+            if non_zero_metrics:
+                metric_cards = ""
+                for key, value in non_zero_metrics.items():
+                    label = metric_labels.get(key, key.replace('_', ' ').title())
+                    metric_cards += f"""
                     <div class="metric-card">
-                        <div class="metric-value">{connector_metrics.get('accounts_scanned', 0):,}</div>
-                        <div class="metric-label">Accounts Scanned</div>
+                        <div class="metric-value">{value:,}</div>
+                        <div class="metric-label">{label}</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-value">{connector_metrics.get('contacts_scanned', 0):,}</div>
-                        <div class="metric-label">Contacts Scanned</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value">{connector_metrics.get('leads_scanned', 0):,}</div>
-                        <div class="metric-label">Leads Scanned</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-value">{connector_metrics.get('custom_objects_scanned', 0):,}</div>
-                        <div class="metric-label">Custom Objects</div>
+                    """
+                
+                metrics_html = f"""
+                <div class="scanner-specific">
+                    <h3>📊 {connector_name} Scan Metrics</h3>
+                    <div class="metrics-grid">
+                        {metric_cards}
                     </div>
                 </div>
-            </div>
-            """
+                """
         
         # Build Netherlands-specific findings section
         netherlands_html = ""

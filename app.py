@@ -6676,6 +6676,53 @@ def render_sap_connector(region: str, username: str):
         except Exception as e:
             st.error(f"SAP connector failed: {str(e)}")
 
+def _build_connector_metrics(connector_name: str, scan_results: dict) -> dict:
+    """Build connector-specific metrics based on connector type."""
+    connector_lower = connector_name.lower().replace(' ', '_').replace('(partial)', '').strip()
+    
+    if 'microsoft' in connector_lower or 'microsoft365' in connector_lower:
+        return {
+            'sharepoint_sites': scan_results.get('sharepoint_sites', 0),
+            'onedrive_files': scan_results.get('onedrive_files', 0),
+            'exchange_emails': scan_results.get('exchange_emails', 0),
+            'teams_messages': scan_results.get('teams_messages', 0),
+            'office_documents': scan_results.get('office_documents', 0),
+        }
+    elif 'google' in connector_lower or 'workspace' in connector_lower:
+        return {
+            'drive_files': scan_results.get('drive_files', 0),
+            'gmail_messages': scan_results.get('gmail_messages', 0),
+            'docs_sheets': scan_results.get('docs_sheets', 0),
+            'calendar_events': scan_results.get('calendar_events', 0),
+        }
+    elif 'exact' in connector_lower:
+        return {
+            'customers': scan_results.get('customers', 0),
+            'employees': scan_results.get('employees', 0),
+            'financial_records': scan_results.get('financial_records', 0),
+            'invoices': scan_results.get('invoices', 0),
+            'projects': scan_results.get('projects', 0),
+        }
+    elif 'sap' in connector_lower:
+        return {
+            'hr_records_scanned': scan_results.get('hr_records_scanned', 0),
+            'customer_records_scanned': scan_results.get('customer_records_scanned', 0),
+            'vendor_records_scanned': scan_results.get('vendor_records_scanned', 0),
+            'bsn_instances_found': scan_results.get('bsn_instances_found', 0),
+            'financial_data_found': scan_results.get('financial_data_found', 0),
+        }
+    elif 'salesforce' in connector_lower:
+        return {
+            'accounts_scanned': scan_results.get('accounts_scanned', 0),
+            'contacts_scanned': scan_results.get('contacts_scanned', 0),
+            'leads_scanned': scan_results.get('leads_scanned', 0),
+            'custom_objects_scanned': scan_results.get('custom_objects_scanned', 0),
+        }
+    else:
+        return {
+            'items_processed': scan_results.get('total_items_scanned', 0),
+        }
+
 def display_enterprise_scan_results(scan_results: dict, connector_name: str):
     """Display enterprise connector scan results in a professional format"""
     from datetime import datetime
@@ -6709,6 +6756,48 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
             "Compliance Score",
             f"{scan_results.get('compliance_score', 0)}/100"
         )
+    
+    # Connector-specific metrics
+    connector_metrics = _build_connector_metrics(connector_name, scan_results)
+    if connector_metrics and any(v > 0 for v in connector_metrics.values()):
+        st.markdown(f"### 📈 {connector_name} Scan Details")
+        
+        # Format metric labels for display
+        metric_labels = {
+            'sharepoint_sites': 'SharePoint Sites',
+            'onedrive_files': 'OneDrive Files',
+            'exchange_emails': 'Exchange Emails',
+            'teams_messages': 'Teams Messages',
+            'office_documents': 'Office Documents',
+            'drive_files': 'Drive Files',
+            'gmail_messages': 'Gmail Messages',
+            'docs_sheets': 'Docs/Sheets',
+            'calendar_events': 'Calendar Events',
+            'customers': 'Customers',
+            'employees': 'Employees',
+            'financial_records': 'Financial Records',
+            'invoices': 'Invoices',
+            'projects': 'Projects',
+            'hr_records_scanned': 'HR Records',
+            'customer_records_scanned': 'Customer Records',
+            'vendor_records_scanned': 'Vendor Records',
+            'bsn_instances_found': 'BSN Instances',
+            'financial_data_found': 'Financial Data',
+            'accounts_scanned': 'Accounts',
+            'contacts_scanned': 'Contacts',
+            'leads_scanned': 'Leads',
+            'custom_objects_scanned': 'Custom Objects',
+            'items_processed': 'Items Processed',
+        }
+        
+        # Display metrics in columns
+        non_zero_metrics = {k: v for k, v in connector_metrics.items() if v > 0}
+        if non_zero_metrics:
+            cols = st.columns(min(len(non_zero_metrics), 4))
+            for idx, (key, value) in enumerate(non_zero_metrics.items()):
+                with cols[idx % len(cols)]:
+                    label = metric_labels.get(key, key.replace('_', ' ').title())
+                    st.metric(label, value)
     
     # Netherlands-specific metrics
     if scan_results.get('netherlands_specific_findings', 0) > 0:
@@ -6769,13 +6858,8 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
         'compliance_score': scan_results.get('compliance_score', scan_results.get('compliance_analysis', {}).get('compliance_score', 15)),
         'connector_name': connector_name,
         'findings': [],
-        # Connector-specific metrics
-        'connector_metrics': {
-            'accounts_scanned': scan_results.get('accounts_scanned', 0),
-            'contacts_scanned': scan_results.get('contacts_scanned', 0),
-            'leads_scanned': scan_results.get('leads_scanned', 0),
-            'custom_objects_scanned': scan_results.get('custom_objects_scanned', 0),
-        },
+        # Connector-specific metrics (dynamically based on connector type)
+        'connector_metrics': _build_connector_metrics(connector_name, scan_results),
         # Netherlands-specific findings
         'netherlands_findings': {
             'bsn_fields_found': scan_results.get('bsn_fields_found', 0),

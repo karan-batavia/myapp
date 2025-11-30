@@ -2805,11 +2805,40 @@ class EnterpriseConnectorScanner:
             'bsn_instances': len([f for f in self.findings if any('BSN' in pii.get('type', '') for pii in f.get('pii_found', []))]),
             'kvk_instances': len([f for f in self.findings if any('KvK' in pii.get('type', '') for pii in f.get('pii_found', []))]),
             
-            # Connector-specific metrics (Salesforce, SAP, etc.)
+            # Connector-specific metrics - Salesforce
             'accounts_scanned': scan_results.get('accounts_scanned', 0),
             'contacts_scanned': scan_results.get('contacts_scanned', 0),
             'leads_scanned': scan_results.get('leads_scanned', 0),
             'custom_objects_scanned': scan_results.get('custom_objects_scanned', 0),
+            
+            # Connector-specific metrics - Microsoft 365
+            'sharepoint_sites': scan_results.get('sharepoint_sites', 0),
+            'onedrive_files': scan_results.get('onedrive_files', 0),
+            'exchange_emails': scan_results.get('exchange_emails', 0),
+            'teams_messages': scan_results.get('teams_messages', 0),
+            'office_documents': scan_results.get('office_documents', 0),
+            
+            # Connector-specific metrics - Google Workspace
+            'drive_files': scan_results.get('drive_files', 0),
+            'gmail_messages': scan_results.get('gmail_messages', 0),
+            'docs_sheets': scan_results.get('docs_sheets', 0),
+            'calendar_events': scan_results.get('calendar_events', 0),
+            
+            # Connector-specific metrics - Exact Online
+            'customers': scan_results.get('customers', 0),
+            'employees': scan_results.get('employees', 0),
+            'invoices': scan_results.get('invoices', 0),
+            'projects': scan_results.get('projects', 0),
+            'financial_records': scan_results.get('financial_records', 0),
+            
+            # Connector-specific metrics - SAP
+            'hr_records_scanned': scan_results.get('hr_records_scanned', 0),
+            'customer_records_scanned': scan_results.get('customer_records_scanned', 0),
+            'vendor_records_scanned': scan_results.get('vendor_records_scanned', 0),
+            'bsn_instances_found': scan_results.get('bsn_instances_found', 0),
+            'financial_data_found': scan_results.get('financial_data_found', 0),
+            
+            # Netherlands-specific fields found
             'bsn_fields_found': scan_results.get('bsn_fields_found', 0),
             'kvk_fields_found': scan_results.get('kvk_fields_found', 0),
             'iban_fields_found': scan_results.get('iban_fields_found', 0),
