@@ -2805,6 +2805,15 @@ class EnterpriseConnectorScanner:
             'bsn_instances': len([f for f in self.findings if any('BSN' in pii.get('type', '') for pii in f.get('pii_found', []))]),
             'kvk_instances': len([f for f in self.findings if any('KvK' in pii.get('type', '') for pii in f.get('pii_found', []))]),
             
+            # Connector-specific metrics (Salesforce, SAP, etc.)
+            'accounts_scanned': scan_results.get('accounts_scanned', 0),
+            'contacts_scanned': scan_results.get('contacts_scanned', 0),
+            'leads_scanned': scan_results.get('leads_scanned', 0),
+            'custom_objects_scanned': scan_results.get('custom_objects_scanned', 0),
+            'bsn_fields_found': scan_results.get('bsn_fields_found', 0),
+            'kvk_fields_found': scan_results.get('kvk_fields_found', 0),
+            'iban_fields_found': scan_results.get('iban_fields_found', 0),
+            
             # Compliance
             'compliance_score': compliance_analysis.get('compliance_score', 0),
             'gdpr_violations': compliance_analysis.get('gdpr_violations', []),
