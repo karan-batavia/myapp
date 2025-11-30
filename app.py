@@ -6128,7 +6128,15 @@ def render_exact_online_connector(region: str, username: str):
         st.info(_('scan.exact_online_api_support', '💡 Contact Exact Online support to register your application for API access'))
     
     elif exact_auth == _('scan.access_token', 'Access Token'):
-        credentials['access_token'] = st.text_input("Exact Online API Token", type="password")
+        col1, col2 = st.columns(2)
+        with col1:
+            credentials['division_url'] = st.text_input(
+                "Exact Online Division URL", 
+                placeholder="https://start.exactonline.nl/api/v1/{division}",
+                help="Your Exact Online division URL (e.g., https://start.exactonline.nl/api/v1/123456)"
+            )
+        with col2:
+            credentials['access_token'] = st.text_input("Exact Online API Token", type="password")
     
     else:  # Demo Mode
         st.success("✅ Demo mode - using representative Dutch business data")

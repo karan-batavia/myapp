@@ -167,6 +167,19 @@ class EnterpriseConnectorScanner:
         # Initialize exact_divisions for Exact Online multi-company support
         self.exact_divisions = []
         
+        # Override Exact Online API base URL if division_url is provided
+        if self.connector_type == 'exact_online' and credentials.get('division_url'):
+            division_url = credentials['division_url'].strip()
+            if division_url:
+                # Extract base URL (remove trailing division number if present)
+                if '/api/v1/' in division_url:
+                    # Format: https://start.exactonline.nl/api/v1/123456 -> https://start.exactonline.nl/api/v1
+                    base_parts = division_url.split('/api/v1/')
+                    self.EXACT_API_BASE = f"{base_parts[0]}/api/v1"
+                else:
+                    self.EXACT_API_BASE = division_url.rstrip('/')
+                logger.info(f"Exact Online using custom API base: {self.EXACT_API_BASE}")
+        
         # Get GDPR rules for region
         self.region_rules = get_region_rules(region)
         
