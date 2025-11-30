@@ -391,11 +391,11 @@ class EnterpriseConnectorScanner:
                 json.dumps(checkpoint_data, default=str)
             )
             
-            logger.info(f"Saved scan checkpoint: {self.checkpoint_id}")
+            logger.info(f"[CHECKPOINT_SAVE] connector={self.connector_type} checkpoint_id={self.checkpoint_id} completed_queries={len(self.completed_queries)} findings={len(self.findings)} items_scanned={self.scanned_items}")
             return self.checkpoint_id
             
         except Exception as e:
-            logger.error(f"Failed to save checkpoint: {str(e)}")
+            logger.error(f"[CHECKPOINT_SAVE_FAILED] connector={self.connector_type} error={str(e)}")
             return None
     
     def _load_checkpoint(self, checkpoint_id: str) -> Optional[Dict]:
@@ -419,14 +419,14 @@ class EnterpriseConnectorScanner:
             
             if checkpoint_data:
                 data = json.loads(checkpoint_data)
-                logger.info(f"Loaded scan checkpoint: {checkpoint_id}")
+                logger.info(f"[CHECKPOINT_LOAD] checkpoint_id={checkpoint_id} connector={data.get('connector_type')} completed_queries={len(data.get('completed_queries', []))} findings={len(data.get('findings', []))}")
                 return data
             else:
-                logger.warning(f"Checkpoint not found: {checkpoint_id}")
+                logger.warning(f"[CHECKPOINT_NOT_FOUND] checkpoint_id={checkpoint_id}")
                 return None
                 
         except Exception as e:
-            logger.error(f"Failed to load checkpoint: {str(e)}")
+            logger.error(f"[CHECKPOINT_LOAD_FAILED] checkpoint_id={checkpoint_id} error={str(e)}")
             return None
     
     def _restore_from_checkpoint(self, checkpoint_id: str) -> bool:
@@ -450,11 +450,11 @@ class EnterpriseConnectorScanner:
             self.findings = checkpoint.get('findings', [])
             self.scanned_items = checkpoint.get('scanned_items', 0)
             
-            logger.info(f"Restored from checkpoint: {len(self.findings)} findings, {self.scanned_items} items scanned")
+            logger.info(f"[CHECKPOINT_RESTORE] checkpoint_id={checkpoint_id} connector={self.connector_type} completed_queries={len(self.completed_queries)} findings={len(self.findings)} items_scanned={self.scanned_items}")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to restore from checkpoint: {str(e)}")
+            logger.error(f"[CHECKPOINT_RESTORE_FAILED] checkpoint_id={checkpoint_id} error={str(e)}")
             return False
     
     def _delete_checkpoint(self, checkpoint_id: str) -> None:
@@ -465,9 +465,9 @@ class EnterpriseConnectorScanner:
         try:
             checkpoint_key = f"scan_checkpoint:{checkpoint_id}"
             self.redis_client.delete(checkpoint_key)
-            logger.info(f"Deleted checkpoint: {checkpoint_id}")
+            logger.info(f"[CHECKPOINT_DELETE] checkpoint_id={checkpoint_id} connector={self.connector_type} reason=scan_completed")
         except Exception as e:
-            logger.warning(f"Failed to delete checkpoint: {str(e)}")
+            logger.warning(f"[CHECKPOINT_DELETE_FAILED] checkpoint_id={checkpoint_id} error={str(e)}")
     
     def _is_token_expired(self) -> bool:
         """Check if the current access token has expired."""
@@ -486,8 +486,10 @@ class EnterpriseConnectorScanner:
             bool: True if token was successfully refreshed, False otherwise
         """
         if not self.refresh_token:
-            logger.warning("No refresh token available for automatic token refresh")
+            logger.warning(f"[TOKEN_REFRESH_SKIP] connector={self.connector_type} reason=no_refresh_token")
             return False
+        
+        logger.info(f"[TOKEN_REFRESH_ATTEMPT] connector={self.connector_type}")
         
         try:
             if self.connector_type in ['microsoft365', 'sharepoint', 'onedrive', 'exchange', 'teams']:
@@ -499,11 +501,11 @@ class EnterpriseConnectorScanner:
             elif self.connector_type == 'salesforce':
                 return self._refresh_salesforce_token()
             else:
-                logger.warning(f"Token refresh not implemented for {self.connector_type}")
+                logger.warning(f"[TOKEN_REFRESH_SKIP] connector={self.connector_type} reason=not_implemented")
                 return False
                 
         except Exception as e:
-            logger.error(f"Token refresh failed: {str(e)}")
+            logger.error(f"[TOKEN_REFRESH_FAILED] connector={self.connector_type} error={str(e)}")
             return False
     
     def _refresh_microsoft365_token(self) -> bool:
@@ -535,11 +537,11 @@ class EnterpriseConnectorScanner:
             # Update session headers
             self.session.headers['Authorization'] = f'Bearer {self.access_token}'
             
-            logger.info("Microsoft 365 access token refreshed successfully")
+            logger.info(f"[TOKEN_REFRESH_SUCCESS] connector=microsoft365 expires_in={expires_in}s")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to refresh Microsoft 365 token: {str(e)}")
+            logger.error(f"[TOKEN_REFRESH_FAILED] connector=microsoft365 error={str(e)}")
             return False
     
     def _refresh_google_workspace_token(self) -> bool:
@@ -572,11 +574,11 @@ class EnterpriseConnectorScanner:
             # Update session headers
             self.session.headers['Authorization'] = f'Bearer {self.access_token}'
             
-            logger.info("Google Workspace access token refreshed successfully")
+            logger.info(f"[TOKEN_REFRESH_SUCCESS] connector=google_workspace expires_in={expires_in}s")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to refresh Google Workspace token: {str(e)}")
+            logger.error(f"[TOKEN_REFRESH_FAILED] connector=google_workspace error={str(e)}")
             return False
     
     def _refresh_exact_online_token(self) -> bool:
@@ -607,11 +609,11 @@ class EnterpriseConnectorScanner:
             # Update session headers
             self.session.headers['Authorization'] = f'Bearer {self.access_token}'
             
-            logger.info("Exact Online access token refreshed successfully")
+            logger.info(f"[TOKEN_REFRESH_SUCCESS] connector=exact_online expires_in={expires_in}s")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to refresh Exact Online token: {str(e)}")
+            logger.error(f"[TOKEN_REFRESH_FAILED] connector=exact_online error={str(e)}")
             return False
     
     def _refresh_salesforce_token(self) -> bool:
@@ -645,11 +647,11 @@ class EnterpriseConnectorScanner:
             # Update session headers
             self.session.headers['Authorization'] = f'Bearer {self.access_token}'
             
-            logger.info("Salesforce access token refreshed successfully")
+            logger.info(f"[TOKEN_REFRESH_SUCCESS] connector=salesforce expires_in={expires_in}s")
             return True
             
         except Exception as e:
-            logger.error(f"Failed to refresh Salesforce token: {str(e)}")
+            logger.error(f"[TOKEN_REFRESH_FAILED] connector=salesforce error={str(e)}")
             return False
     
     def _make_salesforce_query(self, api_url: str, soql_query: str) -> Tuple[Optional[Dict], str]:
