@@ -6875,7 +6875,7 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
             'bsn_fields_found': scan_results.get('bsn_fields_found', 0),
             'kvk_fields_found': scan_results.get('kvk_fields_found', 0),
             'iban_fields_found': scan_results.get('iban_fields_found', 0),
-            'uavg_violations': scan_results.get('uavg_violations', 0),
+            'uavg_violations': len(scan_results.get('uavg_violations', [])) if isinstance(scan_results.get('uavg_violations'), list) else scan_results.get('uavg_violations', 0),
         },
         # UAVG Compliance analysis
         'uavg_compliance': {

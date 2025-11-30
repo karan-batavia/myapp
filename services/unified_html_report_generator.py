@@ -944,28 +944,42 @@ class UnifiedHTMLReportGenerator:
         
         # Build Netherlands-specific findings section
         netherlands_html = ""
-        if netherlands_findings and any(netherlands_findings.values()):
+        # Helper function to safely get numeric value (handles lists)
+        def safe_numeric(value, default=0):
+            if isinstance(value, list):
+                return len(value)
+            if isinstance(value, (int, float)):
+                return value
+            return default
+        
+        # Extract values safely
+        bsn_count = safe_numeric(netherlands_findings.get('bsn_fields_found', 0)) if netherlands_findings else 0
+        kvk_count = safe_numeric(netherlands_findings.get('kvk_fields_found', 0)) if netherlands_findings else 0
+        iban_count = safe_numeric(netherlands_findings.get('iban_fields_found', 0)) if netherlands_findings else 0
+        uavg_count = safe_numeric(netherlands_findings.get('uavg_violations', 0)) if netherlands_findings else 0
+        
+        if netherlands_findings and any(isinstance(v, (int, float)) and v > 0 or isinstance(v, list) and len(v) > 0 for v in netherlands_findings.values()):
             netherlands_html = f"""
             <div class="scanner-specific" style="background: linear-gradient(135deg, #fff7e6 0%, #ffe4b5 100%); border-left: 4px solid #ff9800;">
                 <h3>🇳🇱 Netherlands-Specific PII Findings</h3>
                 <div class="metrics-grid">
-                    <div class="metric-card" style="background: {'#ffebee' if netherlands_findings.get('bsn_fields_found', 0) > 0 else '#e8f5e9'};">
-                        <div class="metric-value" style="color: {'#c62828' if netherlands_findings.get('bsn_fields_found', 0) > 0 else '#2e7d32'};">{netherlands_findings.get('bsn_fields_found', 0)}</div>
+                    <div class="metric-card" style="background: {'#ffebee' if bsn_count > 0 else '#e8f5e9'};">
+                        <div class="metric-value" style="color: {'#c62828' if bsn_count > 0 else '#2e7d32'};">{bsn_count}</div>
                         <div class="metric-label">BSN Instances</div>
                         <div class="metric-subtitle">Social Security Numbers</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">{netherlands_findings.get('kvk_fields_found', 0)}</div>
+                        <div class="metric-value">{kvk_count}</div>
                         <div class="metric-label">KvK Numbers</div>
                         <div class="metric-subtitle">Business Registry</div>
                     </div>
                     <div class="metric-card">
-                        <div class="metric-value">{netherlands_findings.get('iban_fields_found', 0)}</div>
+                        <div class="metric-value">{iban_count}</div>
                         <div class="metric-label">IBAN Accounts</div>
                         <div class="metric-subtitle">Banking Information</div>
                     </div>
-                    <div class="metric-card" style="background: {'#ffebee' if netherlands_findings.get('uavg_violations', 0) > 0 else '#e8f5e9'};">
-                        <div class="metric-value" style="color: {'#c62828' if netherlands_findings.get('uavg_violations', 0) > 0 else '#2e7d32'};">{netherlands_findings.get('uavg_violations', 0)}</div>
+                    <div class="metric-card" style="background: {'#ffebee' if uavg_count > 0 else '#e8f5e9'};">
+                        <div class="metric-value" style="color: {'#c62828' if uavg_count > 0 else '#2e7d32'};">{uavg_count}</div>
                         <div class="metric-label">UAVG Violations</div>
                         <div class="metric-subtitle">Dutch Privacy Law</div>
                     </div>
