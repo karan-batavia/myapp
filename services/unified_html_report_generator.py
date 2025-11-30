@@ -919,8 +919,8 @@ class UnifiedHTMLReportGenerator:
         # Build connector metrics section dynamically
         metrics_html = ""
         if connector_metrics:
-            # Filter non-zero metrics
-            non_zero_metrics = {k: v for k, v in connector_metrics.items() if v > 0}
+            # Filter non-zero numeric metrics only (skip lists/dicts)
+            non_zero_metrics = {k: v for k, v in connector_metrics.items() if isinstance(v, (int, float)) and v > 0}
             
             if non_zero_metrics:
                 metric_cards = ""

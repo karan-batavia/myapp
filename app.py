@@ -6759,7 +6759,9 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
     
     # Connector-specific metrics
     connector_metrics = _build_connector_metrics(connector_name, scan_results)
-    if connector_metrics and any(v > 0 for v in connector_metrics.values()):
+    # Filter to only include numeric values and check for non-zero
+    numeric_metrics = {k: v for k, v in connector_metrics.items() if isinstance(v, (int, float))}
+    if numeric_metrics and any(v > 0 for v in numeric_metrics.values()):
         st.markdown(f"### 📈 {connector_name} Scan Details")
         
         # Format metric labels for display
@@ -6790,8 +6792,8 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
             'items_processed': 'Items Processed',
         }
         
-        # Display metrics in columns
-        non_zero_metrics = {k: v for k, v in connector_metrics.items() if v > 0}
+        # Display metrics in columns - only numeric values > 0
+        non_zero_metrics = {k: v for k, v in numeric_metrics.items() if isinstance(v, (int, float)) and v > 0}
         if non_zero_metrics:
             cols = st.columns(min(len(non_zero_metrics), 4))
             for idx, (key, value) in enumerate(non_zero_metrics.items()):
@@ -6841,7 +6843,15 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
     if scan_results.get('recommendations'):
         st.markdown("### 📋 Compliance Recommendations")
         for i, recommendation in enumerate(scan_results['recommendations'], 1):
-            st.write(f"{i}. {recommendation}")
+            if isinstance(recommendation, dict):
+                priority = recommendation.get('priority', 'Medium')
+                category = recommendation.get('category', 'General')
+                rec_text = recommendation.get('recommendation', str(recommendation))
+                impl_time = recommendation.get('implementation_time', 'TBD')
+                priority_color = '🔴' if priority == 'Critical' else ('🟠' if priority == 'High' else '🟡')
+                st.write(f"{i}. {priority_color} **[{priority}]** {rec_text} *(Category: {category}, Timeline: {impl_time})*")
+            else:
+                st.write(f"{i}. {recommendation}")
     
     # Generate properly formatted scan results for HTML report
     formatted_scan_results = {
