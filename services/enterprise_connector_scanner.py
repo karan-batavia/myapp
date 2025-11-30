@@ -128,6 +128,9 @@ class EnterpriseConnectorScanner:
         self.access_token = credentials.get('access_token')
         self.refresh_token = credentials.get('refresh_token')
         
+        # Track whether we have a refresh token (for direct access token mode detection)
+        self._has_refresh_token = bool(self.refresh_token)
+        
         # Set token expiration from credentials or default
         if 'expires_in' in credentials:
             expires_seconds = int(credentials['expires_in']) if isinstance(credentials['expires_in'], (str, int)) else 3600
@@ -142,6 +145,11 @@ class EnterpriseConnectorScanner:
                     self.token_expires = datetime.now() + timedelta(hours=1)
             else:
                 self.token_expires = datetime.fromtimestamp(expires_at) if expires_at else datetime.now() + timedelta(hours=1)
+        elif self.access_token and not self.refresh_token:
+            # Direct access token mode (no refresh token) - set token_expires to 2 hours from now
+            # This prevents unnecessary token refresh attempts
+            self.token_expires = datetime.now() + timedelta(hours=2)
+            logger.info("[AUTH_MODE] Direct access token mode - token valid for 2 hours")
         else:
             self.token_expires = None
         
