@@ -6137,6 +6137,42 @@ def render_exact_online_connector(region: str, username: str):
             )
         with col2:
             credentials['access_token'] = st.text_input("Exact Online API Token", type="password")
+        
+        with st.expander("📋 How to Get Your Exact Online Credentials", expanded=False):
+            st.markdown("""
+**Step 1: Find Your Division ID**
+1. Log in to your Exact Online account at [start.exactonline.nl](https://start.exactonline.nl)
+2. Look at the browser URL - it contains your division number:
+   ```
+   https://start.exactonline.nl/docs/MenuPortal.aspx?_Division_=123456
+   ```
+3. Copy the number after `_Division_=` (e.g., `123456`)
+4. Your Division URL is: `https://start.exactonline.nl/api/v1/123456`
+
+**Step 2: Get an API Access Token**
+1. Go to [Exact Online App Center](https://apps.exactonline.com/) and click **"Manage my apps"**
+2. Click **"Register a testing app"** or **"Register a product app"**
+3. Fill in your app name and redirect URI (e.g., `https://oauth.pstmn.io/v1/callback` for testing)
+4. Note your **Client ID** and **Client Secret**
+5. Build authorization URL:
+   ```
+   https://start.exactonline.nl/api/oauth2/auth?client_id={YOUR_CLIENT_ID}&redirect_uri={YOUR_REDIRECT_URI}&response_type=code
+   ```
+6. Open the URL, log in, and copy the `code` from the redirect URL
+7. Exchange the code for a token using a POST request to:
+   ```
+   https://start.exactonline.nl/api/oauth2/token
+   ```
+
+**⚠️ Important Notes:**
+- Access tokens expire in **10 minutes** - use the refresh token to renew
+- Rate limits: **60 calls/minute**, **5,000 calls/day** per company
+- For production use, consider OAuth2 Integration mode instead
+
+**🔗 Helpful Links:**
+- [Exact Online API Docs](https://support.exactonline.com/community/s/article/All-All-DNO-Content-restintro)
+- [App Center (NL)](https://apps.exactonline.com/)
+            """)
     
     else:  # Demo Mode
         st.success("✅ Demo mode - using representative Dutch business data")
