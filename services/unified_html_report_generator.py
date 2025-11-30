@@ -876,8 +876,115 @@ class UnifiedHTMLReportGenerator:
             return self._generate_ai_model_content(scan_result)
         elif 'dpia' in scan_type:
             return self._generate_dpia_content(scan_result)
+        elif 'enterprise' in scan_type or 'connector' in scan_type:
+            return self._generate_enterprise_connector_content(scan_result)
         else:
             return ""
+    
+    def _generate_enterprise_connector_content(self, scan_result: Dict[str, Any]) -> str:
+        """Generate enterprise connector-specific metrics and Netherlands compliance."""
+        connector_name = scan_result.get('connector_name', 'Unknown')
+        connector_metrics = scan_result.get('connector_metrics', {})
+        netherlands_findings = scan_result.get('netherlands_findings', {})
+        uavg_compliance = scan_result.get('uavg_compliance', {})
+        
+        # Build connector metrics section
+        metrics_html = ""
+        if connector_metrics:
+            metrics_html = f"""
+            <div class="scanner-specific">
+                <h3>📊 {connector_name} Scan Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">{connector_metrics.get('accounts_scanned', 0):,}</div>
+                        <div class="metric-label">Accounts Scanned</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{connector_metrics.get('contacts_scanned', 0):,}</div>
+                        <div class="metric-label">Contacts Scanned</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{connector_metrics.get('leads_scanned', 0):,}</div>
+                        <div class="metric-label">Leads Scanned</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{connector_metrics.get('custom_objects_scanned', 0):,}</div>
+                        <div class="metric-label">Custom Objects</div>
+                    </div>
+                </div>
+            </div>
+            """
+        
+        # Build Netherlands-specific findings section
+        netherlands_html = ""
+        if netherlands_findings and any(netherlands_findings.values()):
+            netherlands_html = f"""
+            <div class="scanner-specific" style="background: linear-gradient(135deg, #fff7e6 0%, #ffe4b5 100%); border-left: 4px solid #ff9800;">
+                <h3>🇳🇱 Netherlands-Specific PII Findings</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card" style="background: {'#ffebee' if netherlands_findings.get('bsn_fields_found', 0) > 0 else '#e8f5e9'};">
+                        <div class="metric-value" style="color: {'#c62828' if netherlands_findings.get('bsn_fields_found', 0) > 0 else '#2e7d32'};">{netherlands_findings.get('bsn_fields_found', 0)}</div>
+                        <div class="metric-label">BSN Instances</div>
+                        <div class="metric-subtitle">Social Security Numbers</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{netherlands_findings.get('kvk_fields_found', 0)}</div>
+                        <div class="metric-label">KvK Numbers</div>
+                        <div class="metric-subtitle">Business Registry</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">{netherlands_findings.get('iban_fields_found', 0)}</div>
+                        <div class="metric-label">IBAN Accounts</div>
+                        <div class="metric-subtitle">Banking Information</div>
+                    </div>
+                    <div class="metric-card" style="background: {'#ffebee' if netherlands_findings.get('uavg_violations', 0) > 0 else '#e8f5e9'};">
+                        <div class="metric-value" style="color: {'#c62828' if netherlands_findings.get('uavg_violations', 0) > 0 else '#2e7d32'};">{netherlands_findings.get('uavg_violations', 0)}</div>
+                        <div class="metric-label">UAVG Violations</div>
+                        <div class="metric-subtitle">Dutch Privacy Law</div>
+                    </div>
+                </div>
+            </div>
+            """
+        
+        # Build UAVG compliance section
+        uavg_html = ""
+        if uavg_compliance.get('applicable'):
+            data_min_status = uavg_compliance.get('data_minimization', 'Not assessed')
+            data_min_color = '#2e7d32' if data_min_status == 'Adequate' else '#ff9800'
+            
+            uavg_html = f"""
+            <div class="scanner-specific" style="border-left: 4px solid #1976d2;">
+                <h3>⚖️ UAVG/GDPR Compliance Assessment</h3>
+                <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                    <tr style="background: #f5f5f5;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Requirement</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Status</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Data Minimization (Art. 5)</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: {data_min_color}; font-weight: bold;">{data_min_status}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Lawful Basis (Art. 6)</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: #ff9800;">{uavg_compliance.get('lawful_basis', 'Not assessed')}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Retention Policy (Art. 5(e))</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">{uavg_compliance.get('retention_policy', 'Not assessed')}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd;"><strong>Data Subject Rights (Art. 15-22)</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd; color: #2e7d32;">{uavg_compliance.get('data_subject_rights', 'Not assessed')}</td>
+                    </tr>
+                </table>
+                <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
+                    <strong>Note:</strong> UAVG is the Dutch implementation of GDPR with additional requirements for BSN processing.
+                    BSN may only be processed when specifically required by law (Art. 46 UAVG).
+                </p>
+            </div>
+            """
+        
+        return metrics_html + netherlands_html + uavg_html
     
     def _generate_sustainability_content(self, scan_result: Dict[str, Any]) -> str:
         """Generate sustainability-specific metrics."""

@@ -1,0 +1,920 @@
+🛡️ DataGuardian Pro Report
+Scan Type: Enterprise Connector - Salesforce
+
+Scan ID: ENT-SAL-...
+
+Generated: 2025-11-30 18:17:33
+
+Region: Netherlands
+
+📊 Executive Summary
+53
+Files Scanned
+52
+Total Findings
+0
+Critical Issues
+0
+High Risk Issues
+Compliance Score: 15%
+🎯 Compliance Score Analysis
+15.0%
+📊 Current Compliance Score
+🔴 Critical
+🚨 Risk Level
+Financial Services: 78.5%
+🏢 Industry Benchmark
+📊 Compliance Score Analysis
+📊 Current Status: Your compliance score of 15.0% indicates critical compliance posture.
+🏢 Industry Comparison: Below average compared to industry benchmarks.
+📈 Recommendations: Focus on addressing critical findings.
+💡 Pro Tip: Advanced AI-powered compliance forecasting is available with full system dependencies installed.
+
+🔍 Detailed Findings
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (Edge Communications)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDmQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (Burlington Textiles Corp of America)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDnQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (Pyramid Construction Inc.)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDoQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (Dickenson plc)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDpQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (Grand Hotels & Resorts Ltd)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDqQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (United Oil & Gas Corp.)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDrQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (Express Logistics and Transport)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDsQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (University of Arizona)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDtQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Phone numbers, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (United Oil & Gas, UK)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDuQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (United Oil & Gas, Singapore)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDvQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (GenePoint)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDwQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Accounts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Accounts (sForce)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 001gK00000SyFDxQAN
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Rose Gonzalez)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJFQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Sean Forbes)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJGQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Jack Rogers)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJHQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Pat Stumuller)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJIQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Andy Young)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJJQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Tim Barr)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJKQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (John Bond)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJLQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Stella Pavlova)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJMQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Lauren Boyle)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJNQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Babara Levy)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJOQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Josh Davis)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJPQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Jane Grey)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJQQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Arthur Song)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJRQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Phone numbers, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Ashley James)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJSQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Tom Ripley)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJTQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Liz D'Cruz)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJUQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Edna Frank)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJVQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Contacts Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Phone numbers, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Contacts (Avi Green)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 003gK00000GviJWQAZ
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Bertha Boxer)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgnUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Phyllis Cotton)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgoUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, KvK Number (Dutch Business Registry), Physical addresses, Physical addresses found in Salesforce Leads (Jeff Glimpse)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgpUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Medical Data found in Salesforce Leads (Mike Braund)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgqUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Patricia Feager)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgrUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Brenda Mcclure)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgsUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Violet Maccleod)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgtUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Kathy Snyder)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhguUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Tom James)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgvUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Shelly Brownell)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgwUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Pamela Owenby)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgxUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Norm May)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgyUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers found in Salesforce Leads (Pat Stumuller)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhgzUAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Andy Young)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh0UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Kristen Akin)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh1UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (David Monaco)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh2UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Carolyn Crenshaw)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh3UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Jack Rogers)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh4UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Bill Dadio Jr)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh5UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Eugena Luce)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh6UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Sandra Eberhard)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh7UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Security Finding: Salesforce Leads Data Exposure
+Medium
+Description: Email addresses, Phone numbers, Physical addresses, Physical addresses, Physical addresses found in Salesforce Leads (Betty Bair)
+Context: Generic security or privacy finding requiring review
+Location: Salesforce Record ID: 00QgK000007hhh8UAA
+Data Classification: Unknown
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-2 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+General security best practices
+💡 Actionable Recommendations
+Review and assess finding Medium
+Description: Conduct detailed analysis of this security finding
+Implementation: Investigate the specific issue and determine appropriate remediation
+Effort: 1-2 hours | Verification: Confirm issue is properly addressed
+Generated by DataGuardian Pro - Enterprise Privacy & Sustainability Compliance Platform
+
+Report ID: ENT-SAL-20251130-181733 | Generated: 2025-11-30 18:17:33

@@ -6768,30 +6768,72 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
         'low_risk_findings': scan_results.get('low_risk_findings', 0),
         'compliance_score': scan_results.get('compliance_score', scan_results.get('compliance_analysis', {}).get('compliance_score', 15)),
         'connector_name': connector_name,
-        'findings': []
+        'findings': [],
+        # Connector-specific metrics
+        'connector_metrics': {
+            'accounts_scanned': scan_results.get('accounts_scanned', 0),
+            'contacts_scanned': scan_results.get('contacts_scanned', 0),
+            'leads_scanned': scan_results.get('leads_scanned', 0),
+            'custom_objects_scanned': scan_results.get('custom_objects_scanned', 0),
+        },
+        # Netherlands-specific findings
+        'netherlands_findings': {
+            'bsn_fields_found': scan_results.get('bsn_fields_found', 0),
+            'kvk_fields_found': scan_results.get('kvk_fields_found', 0),
+            'iban_fields_found': scan_results.get('iban_fields_found', 0),
+            'uavg_violations': scan_results.get('uavg_violations', 0),
+        },
+        # UAVG Compliance analysis
+        'uavg_compliance': {
+            'applicable': True,
+            'data_minimization': 'Review required' if scan_results.get('total_findings', 0) > 20 else 'Adequate',
+            'lawful_basis': 'Requires documentation',
+            'retention_policy': 'Not assessed',
+            'data_subject_rights': 'CRM supports DSAR requests' if connector_name == 'Salesforce' else 'To be verified',
+        }
     }
     
     # Process findings with rich, specific details from enterprise scanner
     for finding in scan_results.get('findings', []):
-        # Extract specific PII types and create detailed description
-        pii_summary = []
+        # Extract specific PII types and create detailed description with counts
+        pii_type_counts = {}  # Track counts of each PII type
         if finding.get('pii_found'):
             for pii in finding.get('pii_found', []):
                 pii_type = pii.get('type', 'Personal Information')
+                # Map to display-friendly names
                 if 'BSN' in pii_type:
-                    pii_summary.append('BSN (Netherlands Social Security)')
+                    display_name = 'BSN (Netherlands Social Security)'
                 elif 'KvK' in pii_type or 'Chamber of Commerce' in pii_type:
-                    pii_summary.append('KvK Number (Dutch Business Registry)')
+                    display_name = 'KvK Number (Dutch Business Registry)'
                 elif 'email' in pii_type.lower():
-                    pii_summary.append('Email addresses')
+                    display_name = 'Email Address'
                 elif 'phone' in pii_type.lower():
-                    pii_summary.append('Phone numbers')  
-                elif 'address' in pii_type.lower():
-                    pii_summary.append('Physical addresses')
+                    display_name = 'Phone Number'
+                elif 'address' in pii_type.lower() or 'street' in pii_type.lower() or 'city' in pii_type.lower() or 'postal' in pii_type.lower():
+                    display_name = 'Physical Address'
                 elif 'bank' in pii_type.lower() or 'iban' in pii_type.lower():
-                    pii_summary.append('Banking information')
+                    display_name = 'Banking Information (IBAN)'
+                elif 'name' in pii_type.lower() and 'first' not in pii_type.lower() and 'last' not in pii_type.lower():
+                    display_name = 'Personal Name'
+                elif 'first' in pii_type.lower() or 'last' in pii_type.lower():
+                    display_name = 'Personal Name'
+                elif 'birth' in pii_type.lower():
+                    display_name = 'Date of Birth'
+                elif 'mobile' in pii_type.lower():
+                    display_name = 'Mobile Number'
                 else:
-                    pii_summary.append(pii_type)
+                    display_name = pii_type
+                
+                # Count occurrences
+                pii_type_counts[display_name] = pii_type_counts.get(display_name, 0) + 1
+        
+        # Format PII types with counts for clarity
+        pii_summary = []
+        for pii_type, count in pii_type_counts.items():
+            if count > 1:
+                pii_summary.append(f"{pii_type} ({count})")
+            else:
+                pii_summary.append(pii_type)
         
         # Create enterprise-grade description with business context
         source_context = finding.get('source', 'Unknown Source')
