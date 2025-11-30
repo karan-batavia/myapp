@@ -6,17 +6,16 @@ Generates downloadable DSAR requests, compliance reports, and evidence exports.
 """
 
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 import json
-import base64
-import io
 
 try:
     from utils.event_bus import EventType, publish_event
     ENTERPRISE_EVENTS_AVAILABLE = True
 except ImportError:
     ENTERPRISE_EVENTS_AVAILABLE = False
+
 
 def show_enterprise_actions(scan_result: Dict[str, Any], scan_type: str = "code", 
                           username: str = "unknown"):
@@ -32,7 +31,6 @@ def show_enterprise_actions(scan_result: Dict[str, Any], scan_type: str = "code"
     user_id = st.session_state.get('user_id', username)
     
     findings = scan_result.get('findings', [])
-    high_risk_findings = [f for f in findings if f.get('risk_level') in ['Critical', 'High'] or f.get('severity') in ['Critical', 'High']]
     pii_findings = [f for f in findings if 'pii' in str(f).lower() or 'personal' in str(f).lower() or f.get('pii_found')]
     
     with st.expander("🔧 Enterprise Actions", expanded=False):
@@ -41,38 +39,56 @@ def show_enterprise_actions(scan_result: Dict[str, Any], scan_type: str = "code"
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            if st.button("📝 Create DSAR", help="Create Data Subject Access Request document", 
-                       key=f"dsar_action_{scan_result.get('scan_id', 'unknown')}"):
-                _generate_dsar_document(scan_result, pii_findings, username)
+            dsar_content = _generate_dsar_html(scan_result, pii_findings, username)
+            st.download_button(
+                label="📝 Create DSAR",
+                data=dsar_content,
+                file_name=f"DSAR_Request_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
+                mime="text/html",
+                help="Download Data Subject Access Request document",
+                key=f"dsar_btn_{scan_result.get('scan_id', 'unknown')}"
+            )
         
         with col2:
-            if st.button("📋 Generate Report", help="Generate compliance report",
-                        key=f"report_action_{scan_result.get('scan_id', 'unknown')}"):
-                _generate_compliance_report(scan_result, scan_type, username)
+            report_content = _generate_report_html(scan_result, scan_type, username)
+            st.download_button(
+                label="📋 Generate Report",
+                data=report_content,
+                file_name=f"Compliance_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
+                mime="text/html",
+                help="Download compliance report",
+                key=f"report_btn_{scan_result.get('scan_id', 'unknown')}"
+            )
         
         with col3:
-            if st.button("📊 Export Evidence", help="Export compliance evidence for audit purposes",
-                        key=f"evidence_action_{scan_result.get('scan_id', 'unknown')}"):
-                _generate_evidence_export(scan_result, scan_type, username)
+            evidence_content = _generate_evidence_json(scan_result, scan_type, username)
+            st.download_button(
+                label="📊 Export Evidence",
+                data=evidence_content,
+                file_name=f"Evidence_Package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                mime="application/json",
+                help="Download compliance evidence package",
+                key=f"evidence_btn_{scan_result.get('scan_id', 'unknown')}"
+            )
 
 
-def _generate_dsar_document(scan_result: Dict[str, Any], pii_findings: List[Dict], username: str):
-    """Generate and download a DSAR document"""
-    try:
-        scan_id = scan_result.get('scan_id', f'SCAN-{datetime.now().strftime("%Y%m%d%H%M%S")}')
-        timestamp = datetime.now()
-        
-        pii_types = set()
-        for finding in pii_findings:
-            if finding.get('pii_found'):
-                for pii in finding.get('pii_found', []):
-                    pii_types.add(pii.get('type', 'Personal Information'))
-            if finding.get('pii_type'):
-                pii_types.add(finding.get('pii_type'))
-        
-        pii_types = list(pii_types) if pii_types else ['Personal Information detected']
-        
-        html_content = f"""<!DOCTYPE html>
+def _generate_dsar_html(scan_result: Dict[str, Any], pii_findings: List[Dict], username: str) -> str:
+    """Generate DSAR document HTML content"""
+    scan_id = scan_result.get('scan_id', f'SCAN-{datetime.now().strftime("%Y%m%d%H%M%S")}')
+    timestamp = datetime.now()
+    deadline = timestamp + timedelta(days=30)
+    
+    pii_types = set()
+    for finding in pii_findings:
+        if finding.get('pii_found'):
+            for pii in finding.get('pii_found', []):
+                pii_types.add(pii.get('type', 'Personal Information'))
+        if finding.get('pii_type'):
+            pii_types.add(finding.get('pii_type'))
+    
+    pii_types = list(pii_types) if pii_types else ['Personal Information detected']
+    
+    html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -107,12 +123,12 @@ def _generate_dsar_document(scan_result: Dict[str, Any], pii_findings: List[Dict
         <h2>Request Information</h2>
         <table>
             <tr><th>Field</th><th>Value</th></tr>
-            <tr><td>DSAR Reference</td><td><strong>DSAR-{timestamp.strftime('%Y%m%d')}-{scan_id[:8].upper()}</strong></td></tr>
+            <tr><td>DSAR Reference</td><td><strong>DSAR-{timestamp.strftime('%Y%m%d')}-{scan_id[:8].upper() if len(scan_id) >= 8 else scan_id.upper()}</strong></td></tr>
             <tr><td>Request Date</td><td>{timestamp.strftime('%d %B %Y, %H:%M')}</td></tr>
             <tr><td>Generated By</td><td>{username}</td></tr>
             <tr><td>Source Scan ID</td><td>{scan_id}</td></tr>
             <tr><td>Status</td><td><span class="status status-pending">Pending Review</span></td></tr>
-            <tr><td>Response Deadline</td><td>{(timestamp.replace(day=timestamp.day) + __import__('datetime').timedelta(days=30)).strftime('%d %B %Y')} (30 days per GDPR)</td></tr>
+            <tr><td>Response Deadline</td><td>{deadline.strftime('%d %B %Y')} (30 days per GDPR)</td></tr>
         </table>
     </div>
     
@@ -162,69 +178,43 @@ def _generate_dsar_document(scan_result: Dict[str, Any], pii_findings: List[Dict
     </div>
 </body>
 </html>"""
-        
-        b64 = base64.b64encode(html_content.encode()).decode()
-        filename = f"DSAR_Request_{timestamp.strftime('%Y%m%d_%H%M%S')}.html"
-        
-        st.success("✅ DSAR document generated successfully!")
-        st.markdown(
-            f'<a href="data:text/html;base64,{b64}" download="{filename}" '
-            f'style="display: inline-block; padding: 10px 20px; background: #1e3a5f; color: white; '
-            f'text-decoration: none; border-radius: 5px; font-weight: bold;">📥 Download DSAR Document</a>',
-            unsafe_allow_html=True
-        )
-        
-        if ENTERPRISE_EVENTS_AVAILABLE:
-            publish_event(
-                event_type=EventType.DSAR_REQUEST_SUBMITTED,
-                source="enterprise_actions",
-                user_id=st.session_state.get('user_id', 'unknown'),
-                session_id=st.session_state.get('session_id', 'unknown'),
-                data={
-                    'source_scan_id': scan_id,
-                    'pii_findings_count': len(pii_findings),
-                    'pii_types': list(pii_types),
-                    'timestamp': timestamp.isoformat()
-                }
-            )
-        
-    except Exception as e:
-        st.error(f"Failed to generate DSAR document: {str(e)}")
+    
+    return html_content
 
 
-def _generate_compliance_report(scan_result: Dict[str, Any], scan_type: str, username: str):
-    """Generate and download a compliance report"""
-    try:
-        scan_id = scan_result.get('scan_id', f'SCAN-{datetime.now().strftime("%Y%m%d%H%M%S")}')
-        timestamp = datetime.now()
+def _generate_report_html(scan_result: Dict[str, Any], scan_type: str, username: str) -> str:
+    """Generate compliance report HTML content"""
+    scan_id = scan_result.get('scan_id', f'SCAN-{datetime.now().strftime("%Y%m%d%H%M%S")}')
+    timestamp = datetime.now()
+    
+    total_findings = scan_result.get('total_findings', len(scan_result.get('findings', [])))
+    high_risk = scan_result.get('high_risk_findings', 0)
+    medium_risk = scan_result.get('medium_risk_findings', 0)
+    low_risk = max(0, total_findings - high_risk - medium_risk) if total_findings > 0 else 0
+    compliance_score = scan_result.get('compliance_score', 85)
+    
+    findings_html = ""
+    for i, finding in enumerate(scan_result.get('findings', [])[:20], 1):
+        risk = finding.get('risk_level', finding.get('severity', 'Medium'))
+        risk_color = '#dc3545' if risk in ['Critical', 'High'] else ('#ffc107' if risk == 'Medium' else '#28a745')
+        source = finding.get('source', finding.get('location', 'Unknown'))
+        source_display = source[:50] + '...' if len(str(source)) > 50 else source
         
-        total_findings = scan_result.get('total_findings', len(scan_result.get('findings', [])))
-        high_risk = scan_result.get('high_risk_findings', 0)
-        medium_risk = scan_result.get('medium_risk_findings', 0)
-        low_risk = scan_result.get('low_risk_findings', total_findings - high_risk - medium_risk if total_findings > 0 else 0)
-        compliance_score = scan_result.get('compliance_score', 85)
+        pii_types = []
+        if finding.get('pii_found'):
+            pii_types = [p.get('type', 'PII') for p in finding.get('pii_found', [])]
         
-        findings_html = ""
-        for i, finding in enumerate(scan_result.get('findings', [])[:20], 1):
-            risk = finding.get('risk_level', finding.get('severity', 'Medium'))
-            risk_color = '#dc3545' if risk in ['Critical', 'High'] else ('#ffc107' if risk == 'Medium' else '#28a745')
-            source = finding.get('source', finding.get('location', 'Unknown'))
-            
-            pii_types = []
-            if finding.get('pii_found'):
-                pii_types = [p.get('type', 'PII') for p in finding.get('pii_found', [])]
-            
-            findings_html += f"""
-            <tr>
-                <td>{i}</td>
-                <td>{source[:50]}...</td>
-                <td>{'<br>'.join(pii_types[:3]) if pii_types else 'PII Detected'}</td>
-                <td style="color: {risk_color}; font-weight: bold;">{risk}</td>
-            </tr>"""
-        
-        score_color = '#28a745' if compliance_score >= 80 else ('#ffc107' if compliance_score >= 60 else '#dc3545')
-        
-        html_content = f"""<!DOCTYPE html>
+        findings_html += f"""
+        <tr>
+            <td>{i}</td>
+            <td>{source_display}</td>
+            <td>{'<br>'.join(pii_types[:3]) if pii_types else 'PII Detected'}</td>
+            <td style="color: {risk_color}; font-weight: bold;">{risk}</td>
+        </tr>"""
+    
+    score_color = '#28a745' if compliance_score >= 80 else ('#ffc107' if compliance_score >= 60 else '#dc3545')
+    
+    html_content = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -338,125 +328,65 @@ def _generate_compliance_report(scan_result: Dict[str, Any], scan_type: str, use
     </div>
 </body>
 </html>"""
-        
-        b64 = base64.b64encode(html_content.encode()).decode()
-        filename = f"Compliance_Report_{timestamp.strftime('%Y%m%d_%H%M%S')}.html"
-        
-        st.success("✅ Compliance report generated successfully!")
-        st.markdown(
-            f'<a href="data:text/html;base64,{b64}" download="{filename}" '
-            f'style="display: inline-block; padding: 10px 20px; background: #28a745; color: white; '
-            f'text-decoration: none; border-radius: 5px; font-weight: bold;">📥 Download Compliance Report</a>',
-            unsafe_allow_html=True
-        )
-        
-        if ENTERPRISE_EVENTS_AVAILABLE:
-            publish_event(
-                event_type=EventType.COMPLIANCE_EVIDENCE_ADDED,
-                source="enterprise_actions",
-                user_id=st.session_state.get('user_id', 'unknown'),
-                session_id=st.session_state.get('session_id', 'unknown'),
-                data={
-                    'report_type': 'compliance_summary',
-                    'source_scan_id': scan_id,
-                    'timestamp': timestamp.isoformat()
-                }
-            )
-        
-    except Exception as e:
-        st.error(f"Failed to generate compliance report: {str(e)}")
+    
+    return html_content
 
 
-def _generate_evidence_export(scan_result: Dict[str, Any], scan_type: str, username: str):
-    """Generate and download compliance evidence package"""
-    try:
-        scan_id = scan_result.get('scan_id', f'SCAN-{datetime.now().strftime("%Y%m%d%H%M%S")}')
-        timestamp = datetime.now()
-        
-        evidence_data = {
-            'evidence_package': {
-                'package_id': f'EVD-{timestamp.strftime("%Y%m%d")}-{scan_id[:8].upper()}',
-                'generated_at': timestamp.isoformat(),
-                'generated_by': username,
-                'retention_period': '7 years (per GDPR Art. 5(2))',
-                'classification': 'Internal - Compliance Evidence'
-            },
-            'scan_metadata': {
-                'scan_id': scan_id,
-                'scan_type': scan_type,
-                'scan_date': scan_result.get('timestamp', timestamp.isoformat()),
-                'region': scan_result.get('region', 'Netherlands'),
-                'compliance_framework': 'GDPR / UAVG'
-            },
-            'compliance_metrics': {
-                'total_items_scanned': scan_result.get('files_scanned', scan_result.get('total_items_scanned', 0)),
-                'total_findings': scan_result.get('total_findings', len(scan_result.get('findings', []))),
-                'high_risk_count': scan_result.get('high_risk_findings', 0),
-                'medium_risk_count': scan_result.get('medium_risk_findings', 0),
-                'low_risk_count': scan_result.get('low_risk_findings', 0),
-                'compliance_score': scan_result.get('compliance_score', 0)
-            },
-            'netherlands_specific': {
-                'bsn_instances': scan_result.get('bsn_fields_found', 0),
-                'kvk_numbers': scan_result.get('kvk_fields_found', 0),
-                'iban_fields': scan_result.get('iban_fields_found', 0),
-                'uavg_applicable': True
-            },
-            'findings_summary': [],
-            'audit_trail': {
-                'action': 'evidence_export',
-                'performed_by': username,
-                'timestamp': timestamp.isoformat(),
-                'ip_address': 'Logged separately for security',
-                'session_id': st.session_state.get('session_id', 'unknown')
-            }
+def _generate_evidence_json(scan_result: Dict[str, Any], scan_type: str, username: str) -> str:
+    """Generate evidence package JSON content"""
+    scan_id = scan_result.get('scan_id', f'SCAN-{datetime.now().strftime("%Y%m%d%H%M%S")}')
+    timestamp = datetime.now()
+    
+    total_findings = scan_result.get('total_findings', len(scan_result.get('findings', [])))
+    
+    evidence_data = {
+        'evidence_package': {
+            'package_id': f'EVD-{timestamp.strftime("%Y%m%d")}-{scan_id[:8].upper() if len(scan_id) >= 8 else scan_id.upper()}',
+            'generated_at': timestamp.isoformat(),
+            'generated_by': username,
+            'retention_period': '7 years (per GDPR Art. 5(2))',
+            'classification': 'Internal - Compliance Evidence'
+        },
+        'scan_metadata': {
+            'scan_id': scan_id,
+            'scan_type': scan_type,
+            'scan_date': scan_result.get('timestamp', timestamp.isoformat()),
+            'region': scan_result.get('region', 'Netherlands'),
+            'compliance_framework': 'GDPR / UAVG'
+        },
+        'compliance_metrics': {
+            'total_items_scanned': scan_result.get('files_scanned', scan_result.get('total_items_scanned', 0)),
+            'total_findings': total_findings,
+            'high_risk_count': scan_result.get('high_risk_findings', 0),
+            'medium_risk_count': scan_result.get('medium_risk_findings', 0),
+            'low_risk_count': scan_result.get('low_risk_findings', 0),
+            'compliance_score': scan_result.get('compliance_score', 0)
+        },
+        'netherlands_specific': {
+            'bsn_instances': scan_result.get('bsn_fields_found', 0),
+            'kvk_numbers': scan_result.get('kvk_fields_found', 0),
+            'iban_fields': scan_result.get('iban_fields_found', 0),
+            'uavg_applicable': True
+        },
+        'findings_summary': [],
+        'audit_trail': {
+            'action': 'evidence_export',
+            'performed_by': username,
+            'timestamp': timestamp.isoformat(),
+            'ip_address': 'Logged separately for security',
+            'session_id': 'See audit log'
         }
-        
-        for finding in scan_result.get('findings', [])[:50]:
-            evidence_data['findings_summary'].append({
-                'source': finding.get('source', finding.get('location', 'Unknown')),
-                'risk_level': finding.get('risk_level', finding.get('severity', 'Medium')),
-                'data_types': [p.get('type', 'PII') for p in finding.get('pii_found', [])] if finding.get('pii_found') else ['Personal Data'],
-                'netherlands_specific': finding.get('netherlands_specific', False)
-            })
-        
-        json_content = json.dumps(evidence_data, indent=2, default=str)
-        b64 = base64.b64encode(json_content.encode()).decode()
-        filename = f"Evidence_Package_{timestamp.strftime('%Y%m%d_%H%M%S')}.json"
-        
-        st.success("✅ Evidence package generated successfully!")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown(
-                f'<a href="data:application/json;base64,{b64}" download="{filename}" '
-                f'style="display: inline-block; padding: 10px 20px; background: #6c757d; color: white; '
-                f'text-decoration: none; border-radius: 5px; font-weight: bold;">📥 Download Evidence (JSON)</a>',
-                unsafe_allow_html=True
-            )
-        
-        with col2:
-            st.info(f"📁 Package ID: {evidence_data['evidence_package']['package_id']}")
-        
-        with st.expander("Preview Evidence Data"):
-            st.json(evidence_data)
-        
-        if ENTERPRISE_EVENTS_AVAILABLE:
-            publish_event(
-                event_type=EventType.COMPLIANCE_EVIDENCE_ADDED,
-                source="enterprise_actions",
-                user_id=st.session_state.get('user_id', 'unknown'),
-                session_id=st.session_state.get('session_id', 'unknown'),
-                data={
-                    'evidence_type': 'scan_result',
-                    'package_id': evidence_data['evidence_package']['package_id'],
-                    'source_scan_id': scan_id,
-                    'timestamp': timestamp.isoformat()
-                }
-            )
-        
-    except Exception as e:
-        st.error(f"Failed to generate evidence package: {str(e)}")
+    }
+    
+    for finding in scan_result.get('findings', [])[:50]:
+        evidence_data['findings_summary'].append({
+            'source': finding.get('source', finding.get('location', 'Unknown')),
+            'risk_level': finding.get('risk_level', finding.get('severity', 'Medium')),
+            'data_types': [p.get('type', 'PII') for p in finding.get('pii_found', [])] if finding.get('pii_found') else ['Personal Data'],
+            'netherlands_specific': finding.get('netherlands_specific', False)
+        })
+    
+    return json.dumps(evidence_data, indent=2, default=str)
 
 
 def show_quick_enterprise_sidebar():
