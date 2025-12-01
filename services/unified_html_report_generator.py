@@ -1537,16 +1537,16 @@ class UnifiedHTMLReportGenerator:
         # Build comprehensive coverage section if available
         comprehensive_html = ""
         if coverage_version and ('2.0' in str(coverage_version) or '3.0' in str(coverage_version)):
-            # Get Phase 2-10 data
+            # Get Phase 2-10 data - use correct keys from advanced_ai_scanner
             annex_iii = scan_result.get('annex_iii_classification', {})
-            transparency = scan_result.get('transparency_compliance', {})
-            provider_deployer = scan_result.get('provider_deployer_obligations', {})
-            conformity = scan_result.get('conformity_assessment', {})
-            gpai = scan_result.get('gpai_compliance', {})
-            post_market = scan_result.get('post_market_monitoring', {})
-            ai_literacy = scan_result.get('ai_literacy', {})
-            enforcement = scan_result.get('enforcement_rights', {})
-            governance = scan_result.get('governance_structures', {})
+            transparency = scan_result.get('transparency_compliance_article_50', scan_result.get('transparency_compliance', {}))
+            provider_deployer = scan_result.get('provider_deployer_obligations_articles_16_27', scan_result.get('provider_deployer_obligations', {}))
+            conformity = scan_result.get('conformity_assessment_articles_38_46', scan_result.get('conformity_assessment', {}))
+            gpai = scan_result.get('complete_gpai_compliance_articles_52_56', scan_result.get('gpai_compliance', {}))
+            post_market = scan_result.get('post_market_monitoring_articles_85_87', scan_result.get('post_market_monitoring', {}))
+            ai_literacy = scan_result.get('ai_literacy_article_4', scan_result.get('ai_literacy', {}))
+            enforcement = scan_result.get('enforcement_rights_articles_88_94', scan_result.get('enforcement_rights', {}))
+            governance = scan_result.get('governance_structures_articles_60_75', scan_result.get('governance_structures', {}))
             
             phase_cards = ""
             phases = [
@@ -1563,21 +1563,57 @@ class UnifiedHTMLReportGenerator:
             
             for title, phase_data in phases:
                 if phase_data:
-                    # Determine status and display text
-                    is_compliant = phase_data.get('compliant', phase_data.get('is_compliant', False))
-                    is_applicable = phase_data.get('applicable', phase_data.get('is_applicable', True))
-                    compliance_pct = phase_data.get('compliance_percentage', 0)
+                    # Extract compliance percentage from various data structures
+                    compliance_pct = 0
+                    is_compliant = False
+                    is_applicable = True
+                    
+                    # Handle different data formats from advanced_ai_scanner
+                    if isinstance(phase_data, dict):
+                        # Direct compliance_percentage
+                        compliance_pct = phase_data.get('compliance_percentage', 0)
+                        
+                        # Conformity assessment uses different key
+                        if compliance_pct == 0:
+                            compliance_pct = phase_data.get('conformity_progress_percentage', 0)
+                        
+                        # Provider/deployer has nested structure
+                        if compliance_pct == 0 and 'provider' in phase_data:
+                            provider_pct = phase_data.get('provider', {}).get('compliance_percentage', 0)
+                            deployer_pct = phase_data.get('deployer', {}).get('compliance_percentage', 0)
+                            if provider_pct > 0 or deployer_pct > 0:
+                                compliance_pct = (provider_pct + deployer_pct) / 2 if deployer_pct > 0 else provider_pct
+                        
+                        # GPAI may have compliance score
+                        if compliance_pct == 0:
+                            compliance_pct = phase_data.get('compliance_score', 0)
+                        
+                        # Check for compliance boolean flags
+                        is_compliant = phase_data.get('overall_compliant', 
+                                        phase_data.get('compliant', 
+                                        phase_data.get('is_compliant', 
+                                        phase_data.get('market_ready', False))))
+                        
+                        is_applicable = phase_data.get('applicable', 
+                                        phase_data.get('is_applicable', 
+                                        phase_data.get('article_50_applicable', True)))
+                        
+                        # Annex III: check if high risk
+                        if 'is_high_risk' in phase_data:
+                            is_applicable = phase_data.get('is_high_risk', False)
+                            compliance_pct = 100 if phase_data.get('is_high_risk') else 0
                     
                     # Choose icon and display based on data available
                     if compliance_pct > 0:
+                        compliance_pct = round(compliance_pct, 0)
                         if compliance_pct >= 80:
-                            icon, color, display = '✅', '#10b981', f'{compliance_pct}% Compliant'
+                            icon, color, display = '✅', '#10b981', f'{int(compliance_pct)}% Compliant'
                         elif compliance_pct >= 50:
-                            icon, color, display = '⚠️', '#f59e0b', f'{compliance_pct}% Partial'
+                            icon, color, display = '⚠️', '#f59e0b', f'{int(compliance_pct)}% Partial'
                         else:
-                            icon, color, display = '🔍', '#ef4444', f'{compliance_pct}% Coverage'
+                            icon, color, display = '🔍', '#ef4444', f'{int(compliance_pct)}% Coverage'
                     elif is_compliant:
-                        icon, color, display = '✅', '#10b981', 'Assessed'
+                        icon, color, display = '✅', '#10b981', 'Compliant'
                     elif not is_applicable:
                         icon, color, display = '➖', '#9ca3af', 'Not Applicable'
                     else:
