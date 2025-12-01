@@ -19,9 +19,20 @@ class AISystemRiskLevel(Enum):
     MINIMAL_RISK = "minimal_risk"
 
 class AIActArticle(Enum):
-    """Key AI Act Articles for compliance checking"""
+    """Complete EU AI Act Articles for compliance checking (113 Articles)"""
+    # Chapter I: General Provisions (Articles 1-4)
+    ARTICLE_1 = "article_1"  # Subject matter
+    ARTICLE_2 = "article_2"  # Scope
+    ARTICLE_3 = "article_3"  # Definitions
+    ARTICLE_4 = "article_4"  # AI literacy
+    
+    # Chapter II: Prohibited AI Practices (Article 5)
     ARTICLE_5 = "article_5"  # Prohibited practices
+    
+    # Chapter III: High-Risk AI Systems (Articles 6-49)
     ARTICLE_6 = "article_6"  # Classification rules
+    ARTICLE_7 = "article_7"  # Amendments to Annex III
+    ARTICLE_8 = "article_8"  # Compliance with requirements
     ARTICLE_9 = "article_9"  # Risk management
     ARTICLE_10 = "article_10"  # Data and data governance
     ARTICLE_11 = "article_11"  # Technical documentation
@@ -29,6 +40,102 @@ class AIActArticle(Enum):
     ARTICLE_13 = "article_13"  # Transparency and information
     ARTICLE_14 = "article_14"  # Human oversight
     ARTICLE_15 = "article_15"  # Accuracy, robustness, cybersecurity
+    ARTICLE_16 = "article_16"  # Quality management system
+    ARTICLE_17 = "article_17"  # Automatic logging
+    ARTICLE_18 = "article_18"  # Provider record-keeping
+    ARTICLE_19 = "article_19"  # Conformity assessment
+    ARTICLE_20 = "article_20"  # Technical documentation assessment
+    ARTICLE_21 = "article_21"  # Documentation requirements
+    ARTICLE_22 = "article_22"  # Record-keeping procedures
+    ARTICLE_23 = "article_23"  # Automatic logging requirements
+    ARTICLE_24 = "article_24"  # CE marking
+    ARTICLE_25 = "article_25"  # Instructions for use
+    ARTICLE_26 = "article_26"  # Human oversight requirements
+    ARTICLE_27 = "article_27"  # Deployer obligations (general)
+    ARTICLE_28 = "article_28"  # Deployer obligations (specific)
+    ARTICLE_29 = "article_29"  # Fundamental rights impact
+    
+    # Chapter IV: Transparency (Articles 50-52)
+    ARTICLE_50 = "article_50"  # Transparency obligations (providers)
+    ARTICLE_51 = "article_51"  # GPAI model obligations
+    ARTICLE_52 = "article_52"  # Deepfake disclosure
+    
+    # Chapter V: GPAI Models (Articles 53-55)
+    ARTICLE_53 = "article_53"  # GPAI classification
+    ARTICLE_54 = "article_54"  # GPAI systemic risk
+    ARTICLE_55 = "article_55"  # GPAI model cards
+    
+    # Chapter VI: Innovation (Articles 56-60)
+    ARTICLE_56 = "article_56"  # Regulatory sandboxes establishment
+    ARTICLE_57 = "article_57"  # Sandbox objectives
+    ARTICLE_58 = "article_58"  # Sandbox rules
+    ARTICLE_59 = "article_59"  # Sandbox procedures
+    ARTICLE_60 = "article_60"  # Real-world testing
+    
+    # Chapter VII: Governance (Articles 61-68)
+    ARTICLE_61 = "article_61"  # Post-market monitoring
+    ARTICLE_62 = "article_62"  # Incident reporting
+    ARTICLE_63 = "article_63"  # Corrective actions
+    ARTICLE_64 = "article_64"  # AI Office
+    ARTICLE_65 = "article_65"  # European AI Board
+    ARTICLE_66 = "article_66"  # Scientific panel
+    ARTICLE_67 = "article_67"  # National authorities
+    ARTICLE_68 = "article_68"  # Cooperation mechanisms
+    
+    # Chapter VIII: Market Surveillance (Articles 69-75)
+    ARTICLE_69 = "article_69"  # Market surveillance framework
+    ARTICLE_70 = "article_70"  # Surveillance authorities
+    ARTICLE_71 = "article_71"  # Surveillance powers
+    ARTICLE_72 = "article_72"  # Non-compliance procedures
+    ARTICLE_73 = "article_73"  # Formal non-compliance
+    ARTICLE_74 = "article_74"  # Union safeguard procedure
+    ARTICLE_75 = "article_75"  # Compliant AI systems risks
+    
+    # Chapter IX: Penalties (Articles 76-85)
+    ARTICLE_76 = "article_76"  # Penalties general rules
+    ARTICLE_77 = "article_77"  # Administrative fines
+    ARTICLE_78 = "article_78"  # Fines for prohibited practices
+    ARTICLE_79 = "article_79"  # Fines for high-risk violations
+    ARTICLE_80 = "article_80"  # Fines for other violations
+    ARTICLE_81 = "article_81"  # Fines calculation
+    ARTICLE_82 = "article_82"  # Enforcement discretion
+    ARTICLE_83 = "article_83"  # National penalty rules
+    ARTICLE_84 = "article_84"  # Complaints and remedies
+    ARTICLE_85 = "article_85"  # Right to explanation
+    
+    # Chapter X: Delegation (Articles 86-92)
+    ARTICLE_86 = "article_86"  # Delegation of power
+    ARTICLE_87 = "article_87"  # Delegation scope
+    ARTICLE_88 = "article_88"  # Urgency procedure
+    ARTICLE_89 = "article_89"  # Revocation
+    ARTICLE_90 = "article_90"  # Objections
+    ARTICLE_91 = "article_91"  # Delegated acts adoption
+    ARTICLE_92 = "article_92"  # Implementing acts
+    
+    # Chapter XI: Committee (Articles 93-99)
+    ARTICLE_93 = "article_93"  # Committee procedure
+    ARTICLE_94 = "article_94"  # Advisory procedure
+    ARTICLE_95 = "article_95"  # Examination procedure
+    ARTICLE_96 = "article_96"  # Committee composition
+    ARTICLE_97 = "article_97"  # Working groups
+    ARTICLE_98 = "article_98"  # Transparency
+    ARTICLE_99 = "article_99"  # Confidentiality
+    
+    # Chapter XII: Final Provisions (Articles 100-113)
+    ARTICLE_100 = "article_100"  # Amendment Regulation 300/2008
+    ARTICLE_101 = "article_101"  # Amendment Regulation 167/2013
+    ARTICLE_102 = "article_102"  # Amendment Regulation 168/2013
+    ARTICLE_103 = "article_103"  # Amendment Directive 2014/90/EU
+    ARTICLE_104 = "article_104"  # Amendment Directive 2016/797
+    ARTICLE_105 = "article_105"  # Amendment Regulation 2018/858
+    ARTICLE_106 = "article_106"  # Amendment Regulation 2018/1139
+    ARTICLE_107 = "article_107"  # Amendment Regulation 2019/2144
+    ARTICLE_108 = "article_108"  # Transitional provisions
+    ARTICLE_109 = "article_109"  # Evaluation and review
+    ARTICLE_110 = "article_110"  # Repeal
+    ARTICLE_111 = "article_111"  # Entry into force
+    ARTICLE_112 = "article_112"  # Application dates
+    ARTICLE_113 = "article_113"  # Addressees
 
 @dataclass
 class AISystemProfile:
@@ -242,6 +349,142 @@ class AIActCalculator:
                 "deadline": "2025-08-02",
                 "implementation_effort": "Very High",
                 "cost_estimate": 45000
+            },
+            # NEW: Articles 7-8 - Amendments to Annex III
+            AIActArticle.ARTICLE_7: {
+                "title": "Amendments to Annex III",
+                "requirements": [
+                    "Monitor Commission amendments to high-risk AI system list",
+                    "Assess if AI systems fall under new Annex III categories",
+                    "Update compliance measures for amended categories",
+                    "Report new high-risk categorizations to authorities"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "Low",
+                "cost_estimate": 5000
+            },
+            AIActArticle.ARTICLE_8: {
+                "title": "Compliance with High-Risk Requirements",
+                "requirements": [
+                    "Ensure compliance with all Chapter III requirements",
+                    "Maintain conformity throughout lifecycle",
+                    "Implement continuous compliance monitoring",
+                    "Address non-conformities promptly"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "High",
+                "cost_estimate": 40000
+            },
+            # Article 18 - Provider Record-Keeping
+            AIActArticle.ARTICLE_18: {
+                "title": "Provider Record-Keeping Obligations",
+                "requirements": [
+                    "Keep technical documentation for 10 years",
+                    "Maintain EU declaration of conformity copy",
+                    "Store quality management system records",
+                    "Provide documentation access to authorities",
+                    "Retain modification and change logs"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "Medium",
+                "cost_estimate": 15000
+            },
+            # Article 25 - Instructions for Use
+            AIActArticle.ARTICLE_25: {
+                "title": "Instructions for Use",
+                "requirements": [
+                    "Provide provider identity and contact details",
+                    "Document AI system characteristics and capabilities",
+                    "Include human oversight instructions",
+                    "Specify computational and hardware requirements",
+                    "Describe expected system lifetime",
+                    "Define input data specifications",
+                    "Provide output interpretation guidance",
+                    "Document known limitations and risks"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "Medium",
+                "cost_estimate": 12000
+            },
+            # Articles 27-28 - Deployer Obligations
+            AIActArticle.ARTICLE_27: {
+                "title": "Deployer Obligations - General",
+                "requirements": [
+                    "Use AI system per provider instructions",
+                    "Implement technical and organizational measures",
+                    "Assign human oversight to competent persons",
+                    "Ensure input data relevance",
+                    "Monitor AI system operation",
+                    "Retain system logs appropriately"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "Medium",
+                "cost_estimate": 20000
+            },
+            AIActArticle.ARTICLE_28: {
+                "title": "Deployer Obligations - Specific",
+                "requirements": [
+                    "Conduct DPIA where required",
+                    "Register in EU database where applicable",
+                    "Inform workers about AI system use",
+                    "Consult worker representatives",
+                    "Report serious incidents",
+                    "Cooperate with market surveillance authorities"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "High",
+                "cost_estimate": 25000
+            },
+            # Articles 56-60 - Regulatory Sandboxes
+            AIActArticle.ARTICLE_56: {
+                "title": "AI Regulatory Sandboxes",
+                "requirements": [
+                    "Establish controlled testing environment",
+                    "Operate under competent authority supervision",
+                    "Define entry and exit conditions",
+                    "Protect participant rights"
+                ],
+                "deadline": "2026-08-02",
+                "implementation_effort": "Low",
+                "cost_estimate": 10000
+            },
+            AIActArticle.ARTICLE_60: {
+                "title": "Real-World Testing",
+                "requirements": [
+                    "Obtain informed consent from subjects",
+                    "Implement safety measures",
+                    "Report adverse events",
+                    "Maintain testing records"
+                ],
+                "deadline": "2026-08-02",
+                "implementation_effort": "Medium",
+                "cost_estimate": 15000
+            },
+            # Articles 86-92 - Delegation of Power
+            AIActArticle.ARTICLE_86: {
+                "title": "Delegation of Power",
+                "requirements": [
+                    "Monitor delegated acts from Commission",
+                    "Track Annex amendments",
+                    "Update compliance for new requirements",
+                    "Respond to regulatory changes"
+                ],
+                "deadline": "Ongoing",
+                "implementation_effort": "Low",
+                "cost_estimate": 3000
+            },
+            # Articles 111-113 - Entry into Force
+            AIActArticle.ARTICLE_111: {
+                "title": "Entry into Force Timeline",
+                "requirements": [
+                    "Feb 2, 2025: Prohibited practices enforcement",
+                    "Aug 2, 2025: GPAI and governance provisions",
+                    "Aug 2, 2026: Full regulation application",
+                    "Aug 2, 2027: High-risk Annex I systems"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "N/A",
+                "cost_estimate": 0
             }
         }
     

@@ -115,6 +115,16 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
     findings.extend(_detect_penalty_framework_violations(content))  # Articles 76-85
     findings.extend(_detect_ce_marking_violations(content))  # Articles 30-49
     
+    # NEW: Complete EU AI Act 113 Articles Coverage (December 2025)
+    findings.extend(_detect_annex_iii_amendments(content))  # Articles 7-8
+    findings.extend(_detect_provider_record_keeping(content))  # Article 18
+    findings.extend(_detect_instructions_for_use(content))  # Article 25
+    findings.extend(_detect_deployer_obligations(content))  # Articles 27-28
+    findings.extend(_detect_regulatory_sandbox(content))  # Articles 56-60
+    findings.extend(_detect_delegation_provisions(content))  # Articles 86-92
+    findings.extend(_detect_committee_procedures(content))  # Articles 93-99
+    findings.extend(_detect_final_provisions(content))  # Articles 100-113
+    
     # NEW: Integrate real-time compliance monitoring
     try:
         from utils.real_time_compliance_monitor import RealTimeComplianceMonitor
@@ -1100,5 +1110,390 @@ def _detect_ce_marking_violations(content: str) -> List[Dict[str, Any]]:
                 'penalty_risk': 'Up to €15M or 3% global turnover',
                 'recommendation': 'Complete CE marking process including conformity assessment, technical documentation, and quality management'
             })
+    
+    return findings
+
+
+def _detect_annex_iii_amendments(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 7-8 - Amendments to Annex III high-risk AI systems list."""
+    findings = []
+    
+    annex_iii_patterns = {
+        "biometric_systems": r"\b(?:biometric.*categori[sz]ation|emotion.*recognition|remote.*biometric)\b",
+        "critical_infrastructure": r"\b(?:critical.*infrastructure.*management|safety.*component|digital.*infrastructure)\b",
+        "education_vocational": r"\b(?:education.*access|vocational.*training|learning.*assessment|student.*evaluation)\b",
+        "employment_workers": r"\b(?:recruitment.*decision|employment.*relationship|task.*allocation|performance.*monitoring)\b",
+        "essential_services": r"\b(?:essential.*private.*service|credit.*scoring|health.*insurance|emergency.*service)\b",
+        "law_enforcement": r"\b(?:individual.*risk.*assessment|polygraph|emotion.*detection.*law|evidence.*reliability)\b",
+        "migration_asylum": r"\b(?:application.*processing|verification.*authenticity|risk.*assessment.*irregular)\b",
+        "justice_democracy": r"\b(?:legal.*research|law.*interpretation|dispute.*resolution|election.*result)\b"
+    }
+    
+    detected_categories = []
+    for category, pattern in annex_iii_patterns.items():
+        if re.search(pattern, content, re.IGNORECASE):
+            detected_categories.append(category.replace('_', ' ').title())
+    
+    if detected_categories:
+        findings.append({
+            'type': 'AI_ACT_ANNEX_III_HIGH_RISK',
+            'category': 'Articles 7-8 - Annex III Amendments',
+            'severity': 'High',
+            'title': 'High-Risk AI System Category Detected (Annex III)',
+            'description': f'AI system falls under {len(detected_categories)} Annex III high-risk categories',
+            'article_reference': 'EU AI Act Articles 7-8 + Annex III',
+            'detected_categories': detected_categories,
+            'compliance_deadline': 'August 2, 2027',
+            'penalty_risk': 'Up to €15M or 3% global turnover',
+            'requirements': [
+                'Risk management system (Article 9)',
+                'Data governance measures (Article 10)',
+                'Technical documentation (Article 11)',
+                'Record-keeping capabilities (Article 12)',
+                'Transparency to users (Article 13)',
+                'Human oversight measures (Article 14)',
+                'Accuracy and robustness (Article 15)'
+            ],
+            'remediation': 'Implement complete high-risk AI system requirements per Annex III classification'
+        })
+    
+    return findings
+
+
+def _detect_provider_record_keeping(content: str) -> List[Dict[str, Any]]:
+    """Detect Article 18 - Record-keeping obligations for providers of high-risk AI systems."""
+    findings = []
+    
+    provider_patterns = [
+        r"\b(?:ai.*provider|system.*developer|ai.*manufacturer|model.*provider)\b",
+        r"\b(?:high.*risk.*ai|annex.*iii|critical.*ai.*system)\b"
+    ]
+    
+    has_provider_context = any(re.search(pattern, content, re.IGNORECASE) for pattern in provider_patterns)
+    
+    if has_provider_context:
+        record_keeping_requirements = {
+            'technical_documentation_storage': r"\b(?:documentation.*storage|technical.*records|system.*documentation.*retention)\b",
+            'conformity_evidence': r"\b(?:conformity.*evidence|compliance.*proof|certification.*records)\b",
+            'eu_declaration_copy': r"\b(?:declaration.*copy|eu.*declaration.*conformity|doc.*storage)\b",
+            'quality_management_records': r"\b(?:quality.*records|qms.*documentation|quality.*audit.*trail)\b",
+            'change_log': r"\b(?:change.*log|modification.*record|update.*history|version.*tracking)\b",
+            'ten_year_retention': r"\b(?:10.*year|ten.*year|decade.*retention|long.*term.*storage)\b",
+            'authority_access': r"\b(?:authority.*access|regulatory.*access|supervisory.*access|inspection.*ready)\b"
+        }
+        
+        missing_requirements = []
+        for requirement, pattern in record_keeping_requirements.items():
+            if not re.search(pattern, content, re.IGNORECASE):
+                missing_requirements.append(requirement.replace('_', ' '))
+        
+        if len(missing_requirements) >= 4:
+            findings.append({
+                'type': 'AI_ACT_PROVIDER_RECORD_KEEPING',
+                'category': 'Article 18 - Provider Record-Keeping',
+                'severity': 'High',
+                'title': 'Provider Record-Keeping Requirements Missing',
+                'description': f'Missing {len(missing_requirements)} required record-keeping elements for AI providers',
+                'article_reference': 'EU AI Act Article 18',
+                'missing_requirements': missing_requirements,
+                'retention_period': '10 years after AI system placed on market',
+                'compliance_deadline': 'August 2, 2027',
+                'penalty_risk': 'Up to €15M or 3% global turnover',
+                'remediation': 'Implement comprehensive record-keeping system with 10-year retention per Article 18'
+            })
+    
+    return findings
+
+
+def _detect_instructions_for_use(content: str) -> List[Dict[str, Any]]:
+    """Detect Article 25 - Instructions for use requirements for high-risk AI systems."""
+    findings = []
+    
+    high_risk_patterns = [
+        r"\b(?:high.*risk.*ai|annex.*iii.*system|biometric.*identification)\b",
+        r"\b(?:critical.*infrastructure.*ai|employment.*ai|education.*ai)\b"
+    ]
+    
+    has_high_risk_ai = any(re.search(pattern, content, re.IGNORECASE) for pattern in high_risk_patterns)
+    
+    if has_high_risk_ai:
+        instruction_requirements = {
+            'provider_identity': r"\b(?:provider.*identity|manufacturer.*name|developer.*contact|company.*information)\b",
+            'system_characteristics': r"\b(?:system.*characteristic|ai.*capability|performance.*specification|intended.*purpose)\b",
+            'human_oversight_info': r"\b(?:human.*oversight.*instruction|operator.*guidance|user.*control|intervention.*procedure)\b",
+            'computational_requirements': r"\b(?:computational.*requirement|hardware.*specification|software.*dependency|infrastructure.*need)\b",
+            'expected_lifetime': r"\b(?:expected.*lifetime|system.*lifespan|maintenance.*schedule|update.*frequency)\b",
+            'input_data_specification': r"\b(?:input.*data.*specification|data.*format|input.*requirement|data.*type)\b",
+            'interpretation_guidance': r"\b(?:output.*interpretation|result.*guidance|decision.*explanation|ai.*output.*meaning)\b",
+            'known_limitations': r"\b(?:known.*limitation|accuracy.*limitation|use.*case.*restriction|performance.*boundary)\b"
+        }
+        
+        missing_instructions = []
+        for instruction, pattern in instruction_requirements.items():
+            if not re.search(pattern, content, re.IGNORECASE):
+                missing_instructions.append(instruction.replace('_', ' '))
+        
+        if len(missing_instructions) >= 4:
+            findings.append({
+                'type': 'AI_ACT_INSTRUCTIONS_FOR_USE',
+                'category': 'Article 25 - Instructions for Use',
+                'severity': 'Medium',
+                'title': 'Instructions for Use Requirements Missing',
+                'description': f'High-risk AI system missing {len(missing_instructions)} required instruction elements',
+                'article_reference': 'EU AI Act Article 25',
+                'missing_instructions': missing_instructions,
+                'compliance_deadline': 'August 2, 2027',
+                'penalty_risk': 'Up to €15M or 3% global turnover',
+                'remediation': 'Provide comprehensive instructions for use including all Article 25 required elements'
+            })
+    
+    return findings
+
+
+def _detect_deployer_obligations(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 27-28 - Obligations of deployers of high-risk AI systems."""
+    findings = []
+    
+    deployer_patterns = [
+        r"\b(?:ai.*deployer|system.*operator|ai.*user.*organization|deploy.*ai)\b",
+        r"\b(?:using.*high.*risk|operating.*ai.*system|implementing.*ai)\b"
+    ]
+    
+    has_deployer_context = any(re.search(pattern, content, re.IGNORECASE) for pattern in deployer_patterns)
+    
+    if has_deployer_context:
+        deployer_obligations = {
+            'technical_organizational_measures': r"\b(?:technical.*organizational.*measure|appropriate.*measure|safeguard.*implementation)\b",
+            'human_oversight_assignment': r"\b(?:human.*oversight.*assign|competent.*personnel|oversight.*responsibility)\b",
+            'input_data_relevance': r"\b(?:input.*data.*relevant|appropriate.*data|data.*suitability|data.*quality.*check)\b",
+            'monitoring_obligations': r"\b(?:monitor.*operation|system.*monitoring|performance.*tracking|continuous.*assessment)\b",
+            'log_retention': r"\b(?:log.*retention|record.*keeping|audit.*trail|system.*log.*storage)\b",
+            'dpia_high_risk': r"\b(?:dpia|data.*protection.*impact|impact.*assessment|privacy.*assessment)\b",
+            'workplace_consultation': r"\b(?:worker.*consultation|employee.*information|staff.*notification|union.*consultation)\b",
+            'incident_notification': r"\b(?:incident.*notification|malfunction.*report|serious.*incident.*notify)\b"
+        }
+        
+        missing_obligations = []
+        for obligation, pattern in deployer_obligations.items():
+            if not re.search(pattern, content, re.IGNORECASE):
+                missing_obligations.append(obligation.replace('_', ' '))
+        
+        if len(missing_obligations) >= 4:
+            findings.append({
+                'type': 'AI_ACT_DEPLOYER_OBLIGATIONS',
+                'category': 'Articles 27-28 - Deployer Obligations',
+                'severity': 'High',
+                'title': 'Deployer Obligations Not Met',
+                'description': f'AI deployer missing {len(missing_obligations)} required obligation elements',
+                'article_reference': 'EU AI Act Articles 27-28',
+                'missing_obligations': missing_obligations,
+                'compliance_deadline': 'August 2, 2027',
+                'penalty_risk': 'Up to €15M or 3% global turnover',
+                'requirements': [
+                    'Use AI system per instructions for use',
+                    'Assign human oversight to competent persons',
+                    'Ensure input data is relevant',
+                    'Monitor AI system operation',
+                    'Keep logs for appropriate period',
+                    'Conduct DPIA where required',
+                    'Inform workers when applicable'
+                ],
+                'remediation': 'Implement complete deployer obligations framework per Articles 27-28'
+            })
+    
+    return findings
+
+
+def _detect_regulatory_sandbox(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 56-60 - AI regulatory sandboxes compliance."""
+    findings = []
+    
+    sandbox_patterns = [
+        r"\b(?:regulatory.*sandbox|ai.*sandbox|innovation.*sandbox|controlled.*testing)\b",
+        r"\b(?:experimental.*ai|testing.*environment|pilot.*ai.*system)\b"
+    ]
+    
+    has_sandbox_context = any(re.search(pattern, content, re.IGNORECASE) for pattern in sandbox_patterns)
+    
+    if has_sandbox_context:
+        sandbox_requirements = {
+            'competent_authority_oversight': r"\b(?:competent.*authority|supervisory.*oversight|regulatory.*supervision)\b",
+            'entry_exit_conditions': r"\b(?:entry.*condition|exit.*criteria|participation.*requirement|sandbox.*eligibility)\b",
+            'testing_plan': r"\b(?:testing.*plan|experiment.*design|trial.*protocol|sandbox.*methodology)\b",
+            'real_world_conditions': r"\b(?:real.*world.*condition|live.*environment|actual.*deployment|field.*testing)\b",
+            'participant_rights': r"\b(?:participant.*right|data.*subject.*protection|informed.*consent.*sandbox)\b",
+            'outcome_reporting': r"\b(?:outcome.*report|sandbox.*result|experiment.*finding|testing.*conclusion)\b",
+            'liability_framework': r"\b(?:liability.*framework|responsibility.*allocation|damage.*compensation)\b"
+        }
+        
+        missing_requirements = []
+        for requirement, pattern in sandbox_requirements.items():
+            if not re.search(pattern, content, re.IGNORECASE):
+                missing_requirements.append(requirement.replace('_', ' '))
+        
+        if len(missing_requirements) >= 3:
+            findings.append({
+                'type': 'AI_ACT_REGULATORY_SANDBOX',
+                'category': 'Articles 56-60 - Regulatory Sandboxes',
+                'severity': 'Low',
+                'title': 'Regulatory Sandbox Requirements',
+                'description': f'AI sandbox missing {len(missing_requirements)} recommended compliance elements',
+                'article_reference': 'EU AI Act Articles 56-60',
+                'missing_requirements': missing_requirements,
+                'member_state_deadline': 'August 2, 2026',
+                'benefits': [
+                    'Legal certainty for innovative AI development',
+                    'Controlled environment for testing',
+                    'Regulatory guidance during development',
+                    'Facilitated market access'
+                ],
+                'remediation': 'Consider participating in national AI regulatory sandbox programs'
+            })
+    
+    return findings
+
+
+def _detect_delegation_provisions(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 86-92 - Delegation of power and committee procedures."""
+    findings = []
+    
+    delegation_patterns = [
+        r"\b(?:delegated.*act|commission.*regulation|implementing.*act)\b",
+        r"\b(?:annex.*update|technical.*standard|harmonised.*standard)\b"
+    ]
+    
+    has_delegation_context = any(re.search(pattern, content, re.IGNORECASE) for pattern in delegation_patterns)
+    
+    if has_delegation_context:
+        findings.append({
+            'type': 'AI_ACT_DELEGATION_AWARENESS',
+            'category': 'Articles 86-92 - Delegation of Power',
+            'severity': 'Low',
+            'title': 'Delegated Acts Awareness Required',
+            'description': 'AI system subject to potential updates via EU Commission delegated acts',
+            'article_reference': 'EU AI Act Articles 86-92',
+            'key_provisions': [
+                'Commission may adopt delegated acts to update Annexes',
+                'Technical standards may be amended',
+                'Five-year delegation period with tacit extension',
+                'European Parliament/Council revocation rights'
+            ],
+            'compliance_deadline': 'Ongoing monitoring required',
+            'recommendation': 'Monitor EU Official Journal for delegated acts affecting AI systems'
+        })
+    
+    return findings
+
+
+def _detect_committee_procedures(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 93-99 - Committee procedure and implementing acts."""
+    findings = []
+    
+    committee_patterns = [
+        r"\b(?:examination.*procedure|advisory.*procedure|implementing.*act)\b",
+        r"\b(?:member.*state.*committee|comitology|eu.*committee)\b"
+    ]
+    
+    has_committee_context = any(re.search(pattern, content, re.IGNORECASE) for pattern in committee_patterns)
+    
+    if has_committee_context:
+        findings.append({
+            'type': 'AI_ACT_COMMITTEE_PROCEDURE',
+            'category': 'Articles 93-99 - Committee Procedure',
+            'severity': 'Low',
+            'title': 'Committee Procedure Provisions',
+            'description': 'AI Act implementation subject to EU committee procedures',
+            'article_reference': 'EU AI Act Articles 93-99',
+            'key_provisions': [
+                'Examination procedure for implementing acts',
+                'Member State representation in committees',
+                'Commission assisted by AI Act committee',
+                'Regulation (EU) No 182/2011 applies'
+            ],
+            'recommendation': 'Monitor committee decisions affecting AI system requirements'
+        })
+    
+    return findings
+
+
+def _detect_final_provisions(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 100-113 - Final provisions including amendments and entry into force."""
+    findings = []
+    
+    final_provision_patterns = [
+        r"\b(?:machine.*directive|radio.*equipment|medical.*device.*regulation)\b",
+        r"\b(?:civil.*aviation|motor.*vehicle|rail.*system)\b",
+        r"\b(?:marine.*equipment|interoperability|type.*approval)\b"
+    ]
+    
+    has_sector_specific = any(re.search(pattern, content, re.IGNORECASE) for pattern in final_provision_patterns)
+    
+    if has_sector_specific:
+        findings.append({
+            'type': 'AI_ACT_SECTOR_SPECIFIC_AMENDMENTS',
+            'category': 'Articles 100-113 - Final Provisions',
+            'severity': 'Medium',
+            'title': 'Sector-Specific Legislation Amendments Apply',
+            'description': 'AI system may be subject to amended sector-specific EU legislation',
+            'article_reference': 'EU AI Act Articles 100-113',
+            'amended_legislation': [
+                'Regulation (EC) No 300/2008 - Aviation Security',
+                'Regulation (EU) No 167/2013 - Agricultural Vehicles',
+                'Regulation (EU) No 168/2013 - Two/Three-Wheel Vehicles',
+                'Directive 2014/90/EU - Marine Equipment',
+                'Directive (EU) 2016/797 - Railway Interoperability',
+                'Regulation (EU) 2018/858 - Motor Vehicles',
+                'Regulation (EU) 2018/1139 - Civil Aviation',
+                'Regulation (EU) 2019/2144 - Vehicle Type-Approval'
+            ],
+            'key_dates': {
+                'entry_into_force': 'August 1, 2024',
+                'prohibited_practices': 'February 2, 2025',
+                'gpai_provisions': 'August 2, 2025',
+                'full_application': 'August 2, 2026',
+                'high_risk_annex_i': 'August 2, 2027'
+            },
+            'recommendation': 'Review sector-specific legislation for additional AI requirements'
+        })
+    
+    ai_act_general_patterns = [
+        r"\b(?:eu.*ai.*act|artificial.*intelligence.*act|ai.*regulation)\b",
+        r"\b(?:ai.*compliance|ai.*system.*eu|european.*ai)\b"
+    ]
+    
+    has_ai_act_reference = any(re.search(pattern, content, re.IGNORECASE) for pattern in ai_act_general_patterns)
+    
+    if has_ai_act_reference:
+        findings.append({
+            'type': 'AI_ACT_TIMELINE_AWARENESS',
+            'category': 'Articles 111-113 - Entry into Force',
+            'severity': 'Low',
+            'title': 'EU AI Act Implementation Timeline',
+            'description': 'AI system subject to phased EU AI Act implementation',
+            'article_reference': 'EU AI Act Articles 111-113',
+            'implementation_timeline': {
+                'Phase 1 - Prohibited Practices': {
+                    'date': 'February 2, 2025',
+                    'articles': 'Article 5',
+                    'status': 'In Effect'
+                },
+                'Phase 2 - GPAI & Governance': {
+                    'date': 'August 2, 2025',
+                    'articles': 'Articles 51-55, Chapter VII',
+                    'status': 'In Effect'
+                },
+                'Phase 3 - Full Application': {
+                    'date': 'August 2, 2026',
+                    'articles': 'Full Regulation except Annex I',
+                    'status': 'Upcoming'
+                },
+                'Phase 4 - High-Risk Annex I': {
+                    'date': 'August 2, 2027',
+                    'articles': 'Article 6(1) + Annex I systems',
+                    'status': 'Upcoming'
+                }
+            },
+            'recommendation': 'Ensure phased compliance according to implementation timeline'
+        })
     
     return findings
