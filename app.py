@@ -7186,9 +7186,9 @@ def render_model_analysis_interface(region: str, username: str):
     
     if model_source == "Model Repository":
         repo_url = st.text_input(
-            "Hugging Face Model Repository",
+            "Model Repository URL",
             placeholder="https://huggingface.co/username/model-name",
-            help="Enter Hugging Face model repository URL",
+            help="Enter model repository URL (e.g., Hugging Face, GitHub)",
             disabled=uploaded_model is not None
         )
         
