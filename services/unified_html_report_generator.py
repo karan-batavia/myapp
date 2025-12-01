@@ -1536,7 +1536,7 @@ class UnifiedHTMLReportGenerator:
         
         # Build comprehensive coverage section if available
         comprehensive_html = ""
-        if coverage_version and '2.0' in str(coverage_version):
+        if coverage_version and ('2.0' in str(coverage_version) or '3.0' in str(coverage_version)):
             # Get Phase 2-10 data
             annex_iii = scan_result.get('annex_iii_classification', {})
             transparency = scan_result.get('transparency_compliance', {})
@@ -1668,19 +1668,6 @@ def get_unified_generator() -> UnifiedHTMLReportGenerator:
     if _unified_generator is None:
         _unified_generator = UnifiedHTMLReportGenerator()
     return _unified_generator
-
-def generate_unified_html_report(scan_result: Dict[str, Any]) -> str:
-    """
-    Generate a unified HTML report using the global generator.
-    
-    Args:
-        scan_result: Scan result data
-        
-    Returns:
-        Complete HTML report as string
-    """
-    generator = get_unified_generator()
-    return generator.generate_html_report(scan_result)
 
 def generate_unified_html_report(scan_result: Dict[str, Any]) -> str:
     """
