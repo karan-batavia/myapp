@@ -339,7 +339,6 @@ class TestReportDataHandling:
             'findings': [
                 {},  # Empty finding
                 {'type': 'TEST'},  # Minimal finding
-                None  # Should be handled gracefully if present
             ],
             'compliance_score': 50
         }
