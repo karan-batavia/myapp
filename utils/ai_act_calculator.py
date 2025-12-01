@@ -485,6 +485,119 @@ class AIActCalculator:
                 "deadline": "2027-08-02",
                 "implementation_effort": "N/A",
                 "cost_estimate": 0
+            },
+            # Article 16 - Quality Management System
+            AIActArticle.ARTICLE_16: {
+                "title": "Quality Management System",
+                "requirements": [
+                    "Implement compliance strategy for AI Act",
+                    "Establish design and development procedures",
+                    "Implement testing and validation procedures",
+                    "Create data management and governance systems",
+                    "Integrate risk management into QMS",
+                    "Establish post-market monitoring procedures",
+                    "Create incident handling and reporting procedures",
+                    "Establish communication channels with authorities",
+                    "Implement record-keeping within QMS",
+                    "Ensure resource and competence management",
+                    "Define accountability and responsibility",
+                    "Implement corrective and preventive actions"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "Very High",
+                "cost_estimate": 50000
+            },
+            # Article 17 - Automatic Logging
+            AIActArticle.ARTICLE_17: {
+                "title": "Automatic Logging",
+                "requirements": [
+                    "Enable automatic logging of operation periods",
+                    "Log reference databases used",
+                    "Record input data for verification",
+                    "Log anomaly detection events",
+                    "Ensure automatic recording capability",
+                    "Maintain traceability of operations",
+                    "Protect log integrity against tampering",
+                    "Define appropriate retention periods"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "High",
+                "cost_estimate": 25000
+            },
+            # Article 26 - Human Oversight Requirements
+            AIActArticle.ARTICLE_26: {
+                "title": "Human Oversight Measures",
+                "requirements": [
+                    "Assign competent oversight persons",
+                    "Provide AI literacy training",
+                    "Enable understanding of AI capabilities",
+                    "Provide monitoring tools and interfaces",
+                    "Enable output interpretation",
+                    "Ensure intervention capability",
+                    "Implement stop/halt functionality",
+                    "Address automation bias awareness",
+                    "Document oversight procedures"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "High",
+                "cost_estimate": 30000
+            },
+            # Article 29 - Fundamental Rights Impact Assessment
+            AIActArticle.ARTICLE_29: {
+                "title": "Fundamental Rights Impact Assessment",
+                "requirements": [
+                    "Identify deployer processes affected",
+                    "Identify categories of affected persons",
+                    "Assess specific fundamental rights risks",
+                    "Implement human oversight measures",
+                    "Establish governance measures",
+                    "Implement monitoring mechanisms",
+                    "Notify market surveillance authority",
+                    "Assess proportionality of measures"
+                ],
+                "deadline": "2027-08-02",
+                "implementation_effort": "High",
+                "cost_estimate": 20000
+            },
+            # Article 50 - Provider Transparency Obligations
+            AIActArticle.ARTICLE_50: {
+                "title": "Provider Transparency Obligations",
+                "requirements": [
+                    "Disclose AI interaction to natural persons",
+                    "Notify persons of emotion recognition use",
+                    "Disclose biometric categorisation use",
+                    "Mark synthetic/AI-generated content",
+                    "Use machine-readable marking where required",
+                    "Ensure accessible disclosure methods"
+                ],
+                "deadline": "2025-08-02",
+                "implementation_effort": "Medium",
+                "cost_estimate": 12000
+            },
+            # Articles 51-55 - GPAI Models
+            AIActArticle.ARTICLE_51: {
+                "title": "GPAI Model Obligations",
+                "requirements": [
+                    "Provide technical documentation",
+                    "Provide information for downstream providers",
+                    "Comply with copyright directive",
+                    "Publish training data summary"
+                ],
+                "deadline": "2025-08-02",
+                "implementation_effort": "High",
+                "cost_estimate": 35000
+            },
+            AIActArticle.ARTICLE_54: {
+                "title": "GPAI Systemic Risk",
+                "requirements": [
+                    "Perform model evaluation",
+                    "Assess and mitigate systemic risks",
+                    "Track and report serious incidents",
+                    "Ensure adequate cybersecurity"
+                ],
+                "deadline": "2025-08-02",
+                "implementation_effort": "Very High",
+                "cost_estimate": 75000
             }
         }
     
