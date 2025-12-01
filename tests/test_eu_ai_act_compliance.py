@@ -65,11 +65,26 @@ class TestAIActArticleCoverage:
                 except ValueError:
                     pass
         
-        key_articles = [1, 2, 3, 4, 5, 6, 9, 10, 13, 14, 16, 17, 50, 51, 53, 61, 69, 76, 86, 93, 100, 113]
-        for article in key_articles:
-            assert article in covered_articles, f"Missing key article {article} in enum"
+        key_articles_by_chapter = {
+            'Chapter I (1-4)': [1, 2, 3, 4],
+            'Chapter II (5)': [5],
+            'Chapter III (6-49)': [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
+            'Chapter IV (50-52)': [50, 51, 52],
+            'Chapter V (53-55)': [53, 54, 55],
+            'Chapter VI (56-60)': [56, 57, 58, 59, 60],
+            'Chapter VII (61-68)': [61, 62, 63, 64, 65, 66, 67, 68],
+            'Chapter VIII (69-75)': [69, 70, 71, 72, 73, 74, 75],
+            'Chapter IX (76-85)': [76, 77, 78, 79, 80, 81, 82, 83, 84, 85],
+            'Chapter X (86-92)': [86, 87, 88, 89, 90, 91, 92],
+            'Chapter XI (93-99)': [93, 94, 95, 96, 97, 98, 99],
+            'Chapter XII (100-113)': [100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113],
+        }
         
-        assert len(covered_articles) >= 50, f"Expected at least 50 enumerated articles, found {len(covered_articles)}"
+        for chapter, articles in key_articles_by_chapter.items():
+            for article in articles:
+                assert article in covered_articles, f"Missing article {article} from {chapter} in enum"
+        
+        assert len(covered_articles) >= 80, f"Expected at least 80 enumerated articles, found {len(covered_articles)}"
     
     def test_coverage_summary_completeness(self):
         """Verify coverage summary reports 100% coverage."""
@@ -81,6 +96,9 @@ class TestAIActArticleCoverage:
         
         for chapter, data in summary['chapters'].items():
             assert data['covered'] == True, f"Chapter {chapter} not covered"
+        
+        total_articles_in_chapters = sum(data['articles'] for data in summary['chapters'].values())
+        assert total_articles_in_chapters == 113, f"Chapter articles sum should be 113, got {total_articles_in_chapters}"
     
     def test_all_chapters_covered(self):
         """Verify all 12 EU AI Act chapters are covered."""
@@ -102,6 +120,8 @@ class TestAIActArticleCoverage:
         ]
         
         chapter_names = list(summary['chapters'].keys())
+        assert len(chapter_names) == 12, f"Expected 12 chapters, got {len(chapter_names)}"
+        
         for pattern in expected_chapter_patterns:
             found = any(pattern in chapter for chapter in chapter_names)
             assert found, f"Missing chapter containing: {pattern}"
@@ -124,7 +144,7 @@ class TestArticle5ProhibitedPractices:
         content = "The government AI performs social credit scoring and trustworthiness evaluation of citizens based on their behavior patterns for governmental purposes."
         findings = _detect_prohibited_practices(content)
         
-        assert len(findings) >= 0, "Should handle social scoring content"
+        assert isinstance(findings, list), "Should return list of findings"
     
     def test_detect_real_time_biometric(self):
         """Test detection of real-time biometric identification."""
@@ -156,14 +176,14 @@ class TestArticles6to15HighRiskRequirements:
         content = "AI managing critical infrastructure including power grid, water supply systems and essential services."
         findings = _detect_high_risk_systems(content)
         
-        assert len(findings) >= 0, "Should handle critical infrastructure content"
+        assert isinstance(findings, list), "Should return list of findings for infrastructure content"
     
     def test_detect_education_assessment(self):
         """Test detection of education/assessment AI."""
         content = "AI system determines student grades and educational outcomes through automated assessment in schools."
         findings = _detect_high_risk_systems(content)
         
-        assert len(findings) >= 0, "Should handle education content"
+        assert isinstance(findings, list), "Should return list of findings for education content"
 
 
 class TestArticle16QualityManagement:
