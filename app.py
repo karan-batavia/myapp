@@ -12378,7 +12378,7 @@ def render_log_dashboard():
         st.write("Scanner log dashboard is temporarily unavailable.")
 
 def render_admin_page():
-    """Render admin page with visitor analytics"""
+    """Render admin page with user management, visitor analytics, and system settings"""
     st.title("👥 Admin Panel")
     
     # Create tabs for different admin functions
@@ -12386,8 +12386,12 @@ def render_admin_page():
     
     with tab1:
         st.info("User management and administrative controls.")
-        st.markdown("### User Management")
-        st.write("User creation, role management, and access control features coming soon.")
+        try:
+            from components.user_management_ui import render_user_management_panel
+            render_user_management_panel()
+        except Exception as e:
+            st.error(f"Failed to load user management: {e}")
+            st.info("User management system is initializing. Please refresh the page.")
     
     with tab2:
         # Import and render visitor analytics dashboard
@@ -12399,9 +12403,12 @@ def render_admin_page():
             st.info("Visitor tracking system is initializing. Please refresh the page.")
     
     with tab3:
-        st.info("System configuration and monitoring.")
-        st.markdown("### System Settings")
-        st.write("Application configuration and monitoring features coming soon.")
+        try:
+            from components.user_management_ui import render_system_settings_panel
+            render_system_settings_panel()
+        except Exception as e:
+            st.error(f"Failed to load system settings: {e}")
+            st.info("System settings are temporarily unavailable.")
 
 def render_safe_mode():
     """Render safe mode interface when components fail"""
