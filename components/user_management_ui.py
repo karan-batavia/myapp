@@ -12,6 +12,16 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
+def format_datetime(dt, format_str='%Y-%m-%d %H:%M:%S', default='Never'):
+    """Safely format a datetime object to string"""
+    if dt is None:
+        return default
+    if isinstance(dt, datetime):
+        return dt.strftime(format_str)
+    return str(dt)[:19] if dt else default
+
+
 def render_user_management_panel():
     """Render the complete user management panel"""
     try:
@@ -91,15 +101,25 @@ def render_user_list(ums):
     # Display users in a table
     user_data = []
     for user in users:
+        # Handle datetime conversion for last_login
+        last_login = user.get('last_login')
+        if last_login:
+            if isinstance(last_login, datetime):
+                last_login_str = last_login.strftime('%Y-%m-%d')
+            else:
+                last_login_str = str(last_login)[:10]
+        else:
+            last_login_str = 'Never'
+        
         user_data.append({
             "ID": user['id'],
             "Username": user['username'],
             "Email": user['email'],
             "Role": user['role'].replace('_', ' ').title(),
             "Tier": user['license_tier'].title(),
-            "Company": user.get('company_name', '-'),
+            "Company": user.get('company_name', '-') or '-',
             "Status": "✅ Active" if user['is_active'] else "❌ Inactive",
-            "Last Login": user.get('last_login', 'Never')[:10] if user.get('last_login') else 'Never',
+            "Last Login": last_login_str,
             "Logins": user.get('login_count', 0)
         })
     
@@ -171,10 +191,11 @@ def render_user_details(user: Dict, ums):
         """)
     
     with col2:
+        last_login_display = format_datetime(user.get('last_login'), '%Y-%m-%d %H:%M', 'Never')
         st.markdown(f"""
         **License Tier:** {user['license_tier'].title()}  
         **Status:** {'Active' if user['is_active'] else 'Inactive'}  
-        **Last Login:** {str(user.get('last_login', 'Never'))[:19]}  
+        **Last Login:** {last_login_display}  
         **Total Logins:** {user.get('login_count', 0)}
         """)
     
@@ -183,7 +204,8 @@ def render_user_details(user: Dict, ums):
     activity = ums.get_user_activity(user['id'], limit=5)
     if activity:
         for act in activity:
-            st.text(f"• {act['action_type']}: {act.get('action_details', '')} ({str(act['created_at'])[:16]})")
+            created_at_display = format_datetime(act.get('created_at'), '%Y-%m-%d %H:%M', '-')
+            st.text(f"• {act['action_type']}: {act.get('action_details', '')} ({created_at_display})")
     else:
         st.text("No recent activity")
 

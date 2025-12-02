@@ -14,6 +14,9 @@ import base64
 USERS_FILE = "users.json"
 USERS_ENCRYPTION_KEY_FILE = "users.key"
 
+# Main logger
+logger = logging.getLogger(__name__)
+
 # Security logger (separate from main app logging)
 security_logger = logging.getLogger('security_audit')
 security_handler = logging.FileHandler('security_audit.log')
