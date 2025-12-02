@@ -500,10 +500,12 @@ class UserManagementService:
                 is_compliant = False
                 issues.append(f"Scan limit exceeded: {total_scans}/{scan_limit}")
             
-            # Check scanner access
+            # Check scanner access - normalize scanner names (remove _scanner suffix)
             allowed_scanners = tier_limits['scanners']
             if 'all' not in allowed_scanners:
-                used_scanners = set(usage.get('scanner_breakdown', {}).keys())
+                used_scanners_raw = set(usage.get('scanner_breakdown', {}).keys())
+                # Normalize scanner names: 'document_scanner' -> 'document', 'website_scanner' -> 'website'
+                used_scanners = {s.replace('_scanner', '') for s in used_scanners_raw}
                 unauthorized = used_scanners - set(allowed_scanners)
                 if unauthorized:
                     is_compliant = False
