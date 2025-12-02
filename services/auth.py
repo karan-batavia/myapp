@@ -433,6 +433,8 @@ def authenticate(username_or_email: str, password: str) -> Optional[Dict[str, An
             # Return user data without password hash
             user_data = users[username_or_email].copy()
             user_data.pop("password_hash", None)
+            # Record login in database
+            _record_user_login(username_or_email)
             return user_data
     
     # Check if email match
@@ -445,9 +447,24 @@ def authenticate(username_or_email: str, password: str) -> Optional[Dict[str, An
                     # Return user data without password hash
                     result = user_data.copy()
                     result.pop("password_hash", None)
+                    # Record login in database
+                    _record_user_login(username)
                     return result
     
     return None
+
+
+def _record_user_login(username: str):
+    """Record user login in the database for tracking"""
+    try:
+        from services.user_management_service import get_user_management_service
+        ums = get_user_management_service()
+        user = ums.get_user(username=username)
+        if user:
+            ums.record_login(user['id'])
+    except Exception as e:
+        # Don't fail authentication if tracking fails
+        logger.warning(f"Failed to record login for {username}: {e}")
 
 def get_user(username: str) -> Optional[Dict[str, Any]]:
     """
