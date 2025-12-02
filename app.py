@@ -11402,26 +11402,39 @@ def render_results_page():
         table_data = []
         for scan in recent_scans:
             result = scan.get('result', {})
-            findings = result.get('findings', [])
-            pii_count = 0
-            risk_high = 0
             
-            # Calculate actual PII count from findings
-            for finding in findings:
-                if isinstance(finding, dict):
-                    pii_count += finding.get('pii_count', 0)
-                    risk_summary = finding.get('risk_summary', {})
-                    if isinstance(risk_summary, dict):
-                        risk_high += risk_summary.get('High', 0)
+            # Use stored values from database (already calculated during scan)
+            pii_count = scan.get('total_pii_found', 0)
+            risk_high = scan.get('high_risk_count', 0)
+            
+            # Fallback: if not in scan object, try the result object
+            if pii_count == 0:
+                pii_count = result.get('total_pii_found', 0)
+            if risk_high == 0:
+                risk_high = result.get('high_risk_count', 0)
+            
+            # Format timestamp properly
+            timestamp = scan.get('timestamp', 'N/A')
+            if timestamp and hasattr(timestamp, 'strftime'):
+                date_str = timestamp.strftime('%Y-%m-%d')
+            elif timestamp:
+                date_str = str(timestamp)[:10]
+            else:
+                date_str = 'N/A'
+            
+            # Get compliance score
+            compliance = result.get('compliance_score', 0)
+            if compliance == 0:
+                compliance = scan.get('compliance_score', 0)
             
             table_data.append({
                 'Scan ID': scan.get('scan_id', 'N/A')[:12],
-                'Date': scan.get('timestamp', 'N/A')[:10] if scan.get('timestamp') else 'N/A',
-                'Type': scan.get('scan_type', 'N/A').title(),
+                'Date': date_str,
+                'Type': scan.get('scan_type', 'N/A').replace('_', ' ').title(),
                 'Files': scan.get('file_count', 0),
                 'PII Found': pii_count,
                 'High Risk': risk_high,
-                'Compliance': f"{result.get('compliance_score', 0):.1f}%"
+                'Compliance': f"{compliance:.1f}%"
             })
         
         if table_data:
