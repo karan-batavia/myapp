@@ -1472,23 +1472,63 @@ def render_predictive_analytics():
         
         st.markdown("---")
         
-        # Top 3 Actions - Most Important Section
-        st.subheader("Recommended Actions")
+        # Actionable Steps Section
+        st.subheader("Take Action Now")
         
-        actions = []
+        # Build specific actionable items based on prediction data
+        action_items = []
+        
+        # Map risk factors to specific actions
+        risk_action_map = {
+            'declining compliance scores': ('Run a full PII scan', 'Scanners', 'Identify new data exposure risks'),
+            'increasing pii exposure': ('Review data handling procedures', 'Settings > Compliance', 'Update data processing agreements'),
+            'high risk findings': ('Address critical findings first', 'Results', 'Prioritize high-severity items'),
+            'data breach risk': ('Conduct security assessment', 'DPIA Scanner', 'Document risk mitigation'),
+            'regulatory changes': ('Review GDPR Article updates', 'Compliance Reports', 'Update policies'),
+        }
+        
         if prediction.risk_factors:
-            for factor in prediction.risk_factors[:3]:
-                actions.append(f"Address: {factor}")
+            for factor in prediction.risk_factors[:2]:
+                factor_lower = factor.lower()
+                for key, (action, location, benefit) in risk_action_map.items():
+                    if key in factor_lower:
+                        action_items.append({
+                            'action': action,
+                            'location': location,
+                            'benefit': benefit
+                        })
+                        break
+                else:
+                    action_items.append({
+                        'action': f"Investigate: {factor}",
+                        'location': 'Dashboard',
+                        'benefit': 'Prevent compliance degradation'
+                    })
         
         if prediction.predicted_violations:
-            for v in prediction.predicted_violations[:2]:
-                actions.append(f"Prevent: {v['type'].replace('_', ' ').title()} ({v['probability']:.0%} risk)")
+            for v in prediction.predicted_violations[:1]:
+                action_items.append({
+                    'action': f"Prevent {v['type'].replace('_', ' ').title()}",
+                    'location': 'Scanners',
+                    'benefit': f"Reduce {v['probability']:.0%} violation risk"
+                })
         
-        if not actions:
-            actions = ["Continue current compliance practices", "Schedule quarterly review", "Monitor for emerging risks"]
+        # Default actions if none found
+        if not action_items:
+            action_items = [
+                {'action': 'Run weekly compliance scan', 'location': 'Scanners', 'benefit': 'Maintain visibility'},
+                {'action': 'Review scan history trends', 'location': 'History', 'benefit': 'Identify patterns'},
+                {'action': 'Update data inventory', 'location': 'Settings', 'benefit': 'Stay current'}
+            ]
         
-        for i, action in enumerate(actions[:3], 1):
-            st.markdown(f"**{i}.** {action}")
+        # Display as clear action cards
+        for i, item in enumerate(action_items[:3], 1):
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.markdown(f"**{i}. {item['action']}**")
+                st.caption(f"{item['benefit']}")
+            with col2:
+                st.markdown(f"📍 *{item['location']}*")
         
         # Simplified Compliance Forecast Chart
         st.subheader("Compliance Forecast")
