@@ -11530,31 +11530,44 @@ def render_history_page():
         history_data = []
         for scan in filtered_scans:
             result = scan.get('result', {})
-            findings = result.get('findings', [])
             
-            # Calculate metrics from actual findings
-            total_pii = sum(f.get('pii_count', 0) for f in findings if isinstance(f, dict))
-            high_risk = sum(f.get('risk_summary', {}).get('High', 0) for f in findings if isinstance(f, dict))
+            # Use stored values from database (already calculated during scan)
+            total_pii = scan.get('total_pii_found', 0)
+            high_risk = scan.get('high_risk_count', 0)
             
-            # Format timestamp
+            # Fallback to result object if not in scan
+            if total_pii == 0:
+                total_pii = result.get('total_pii_found', 0)
+            if high_risk == 0:
+                high_risk = result.get('high_risk_count', 0)
+            
+            # Format timestamp properly (handle datetime objects)
             timestamp = scan.get('timestamp', '')
             if timestamp:
                 try:
-                    dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
-                    formatted_time = dt.strftime("%Y-%m-%d %H:%M")
+                    if hasattr(timestamp, 'strftime'):
+                        formatted_time = timestamp.strftime("%Y-%m-%d %H:%M")
+                    else:
+                        dt = datetime.fromisoformat(str(timestamp).replace('Z', '+00:00'))
+                        formatted_time = dt.strftime("%Y-%m-%d %H:%M")
                 except:
-                    formatted_time = timestamp[:16]
+                    formatted_time = str(timestamp)[:16]
             else:
                 formatted_time = 'Unknown'
+            
+            # Get compliance score from result or scan object
+            compliance = result.get('compliance_score', 0)
+            if compliance == 0:
+                compliance = scan.get('compliance_score', 0)
             
             history_data.append({
                 'Timestamp': formatted_time,
                 'Scan ID': scan.get('scan_id', 'N/A'),
-                'Type': scan.get('scan_type', 'unknown').title(),
+                'Type': scan.get('scan_type', 'unknown').replace('_', ' ').title(),
                 'Files Scanned': scan.get('file_count', 0),
                 'PII Found': total_pii,
                 'High Risk': high_risk,
-                'Compliance Score': f"{result.get('compliance_score', 0):.1f}%",
+                'Compliance Score': f"{compliance:.1f}%",
                 'Region': scan.get('region', 'N/A')
             })
         
@@ -11713,16 +11726,27 @@ def render_history_trends(scans_data):
             try:
                 timestamp = scan.get('timestamp', '')
                 if timestamp:
-                    dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                    # Handle both datetime objects and strings
+                    if hasattr(timestamp, 'strftime'):
+                        dt = timestamp
+                    else:
+                        dt = datetime.fromisoformat(str(timestamp).replace('Z', '+00:00'))
                     dates.append(dt)
                     
-                    # Calculate actual PII from findings
+                    # Use stored values from database (already calculated during scan)
+                    total_pii = scan.get('total_pii_found', 0)
                     result = scan.get('result', {})
-                    findings = result.get('findings', [])
-                    total_pii = sum(f.get('pii_count', 0) for f in findings if isinstance(f, dict))
+                    
+                    # Fallback to result object if not in scan
+                    if total_pii == 0:
+                        total_pii = result.get('total_pii_found', 0)
                     pii_counts.append(total_pii)
                     
-                    compliance_scores.append(result.get('compliance_score', 0))
+                    # Get compliance score from result or scan
+                    compliance = result.get('compliance_score', 0)
+                    if compliance == 0:
+                        compliance = scan.get('compliance_score', 0)
+                    compliance_scores.append(compliance)
             except:
                 continue
         
