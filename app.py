@@ -1401,428 +1401,217 @@ def generate_predictive_analytics_html_report(prediction, scan_history, username
 
 def render_predictive_analytics():
     """Render the predictive analytics dashboard with ML-powered insights"""
-    st.title("🤖 Predictive Compliance Analytics")
-    st.markdown("### AI-Powered Risk Forecasting & Compliance Prediction")
+    st.title("Predictive Compliance Analytics")
     
     try:
         from services.predictive_compliance_engine import PredictiveComplianceEngine
         from services.results_aggregator import ResultsAggregator
         from datetime import datetime, timedelta
         import plotly.graph_objects as go
-        import plotly.express as px
         
-        # Initialize the predictive engine
+        # Initialize engine and get data
         engine = PredictiveComplianceEngine(region="Netherlands")
-        
-        # Get historical scan data - same as Dashboard Recent Scan Activity
         username = st.session_state.get('username', 'anonymous')
         aggregator = ResultsAggregator()
         
-        # Initialize with a clean status container
-        status_container = st.container()
+        # Get scan history efficiently
+        org_id = 'default_org'
+        scan_metadata = aggregator.get_user_scans(username, limit=15, organization_id=org_id)
         
-        with status_container:
-            with st.spinner("🔍 Analyzing scan history..."):
-                # Use 'default_org' to match how scans are stored (same as Dashboard)
-                org_id = 'default_org'
-                logger.info(f"Predictive Analytics: Requesting scans for user={username}, org={org_id}, limit=15")
-                scan_metadata = aggregator.get_user_scans(username, limit=15, organization_id=org_id)
-                logger.info(f"Predictive Analytics: Retrieved {len(scan_metadata)} scan metadata records")
-                
-                # Use metadata directly for predictive analysis (no enrichment needed)
-                scan_history = []
-                for scan in scan_metadata:
-                    # Calculate compliance score from metadata
-                    # Higher PII/risk = lower compliance score
-                    base_score = 85
-                    pii_penalty = min(scan.get('total_pii_found', 0) * 0.5, 30)
-                    risk_penalty = min(scan.get('high_risk_count', 0) * 2, 20)
-                    calculated_score = max(base_score - pii_penalty - risk_penalty, 40)
-                    
-                    enriched_scan = {
-                        'scan_id': scan['scan_id'],
-                        'timestamp': scan['timestamp'],
-                        'scan_type': scan['scan_type'],
-                        'region': scan.get('region', 'Netherlands'),
-                        'file_count': scan.get('file_count', 0),
-                        'total_pii_found': scan.get('total_pii_found', 0),
-                        'high_risk_count': scan.get('high_risk_count', 0),
-                        'compliance_score': calculated_score,
-                        'findings': []  # Predictions work without detailed findings
-                    }
-                    scan_history.append(enriched_scan)
-                
-                logger.info(f"Predictive Analytics: Prepared {len(scan_history)} scans for analysis")
-        
-        # Clean success message
-        if scan_history:
-            st.info(f"📊 Analyzing {len(scan_history)} scans for predictive insights")
+        # Process scan data once
+        scan_history = []
+        for scan in scan_metadata:
+            base_score = 85
+            pii_penalty = min(scan.get('total_pii_found', 0) * 0.5, 30)
+            risk_penalty = min(scan.get('high_risk_count', 0) * 2, 20)
+            calculated_score = max(base_score - pii_penalty - risk_penalty, 40)
+            
+            scan_history.append({
+                'scan_id': scan['scan_id'],
+                'timestamp': scan['timestamp'],
+                'scan_type': scan['scan_type'],
+                'region': scan.get('region', 'Netherlands'),
+                'file_count': scan.get('file_count', 0),
+                'total_pii_found': scan.get('total_pii_found', 0),
+                'high_risk_count': scan.get('high_risk_count', 0),
+                'compliance_score': calculated_score,
+                'findings': []
+            })
         
         if not scan_history:
-            logger.warning(f"Predictive Analytics: No scan history after enrichment (metadata count: {len(scan_metadata)})")
-            st.warning("📊 No scan history found. Perform some scans first to generate predictive insights.")
+            st.warning("No scan history found. Run some scans first to generate predictions.")
             
-            # Show demo predictions with sample data
-            st.subheader("🔮 Demo Predictions (Sample Data)")
-            
+            # Use sample data for demo
             sample_data = [
-                {
-                    'timestamp': (datetime.now() - timedelta(days=30)).isoformat(),
-                    'compliance_score': 72,
-                    'findings': [{'severity': 'High', 'type': 'data_exposure'}, {'severity': 'Medium', 'type': 'consent_missing'}]
-                },
-                {
-                    'timestamp': (datetime.now() - timedelta(days=15)).isoformat(), 
-                    'compliance_score': 78,
-                    'findings': [{'severity': 'Critical', 'type': 'bsn_exposure'}, {'severity': 'Low', 'type': 'logging_insufficient'}]
-                },
-                {
-                    'timestamp': datetime.now().isoformat(),
-                    'compliance_score': 81,
-                    'findings': [{'severity': 'Medium', 'type': 'encryption_weak'}]
-                }
+                {'timestamp': (datetime.now() - timedelta(days=30)).isoformat(), 'compliance_score': 72, 'findings': []},
+                {'timestamp': (datetime.now() - timedelta(days=15)).isoformat(), 'compliance_score': 78, 'findings': []},
+                {'timestamp': datetime.now().isoformat(), 'compliance_score': 81, 'findings': []}
             ]
-            
             prediction = engine.predict_compliance_trajectory(sample_data, forecast_days=30)
+            is_demo = True
         else:
-            # Generate real predictions with clean spinner
-            with st.spinner("🤖 Computing AI predictions..."):
-                prediction = engine.predict_compliance_trajectory(scan_history, forecast_days=30)
+            prediction = engine.predict_compliance_trajectory(scan_history, forecast_days=30)
+            is_demo = False
         
-        # Display prediction results
-        col1, col2, col3, col4 = st.columns(4)
+        # Calculate trend delta
+        current_score = scan_history[-1].get('compliance_score', 75) if scan_history else 75
+        score_delta = prediction.future_score - current_score
         
+        # Key Metrics Row - Clean 2x2 grid for mobile
+        col1, col2 = st.columns(2)
         with col1:
-            # Calculate proper trend delta
-            if scan_history and len(scan_history) > 0:
-                current_score = scan_history[-1].get('compliance_score', 75)
-                score_delta = prediction.future_score - current_score
-                delta_str = f"{score_delta:+.1f}"
-            else:
-                # For sample data, use a reasonable delta
-                delta_str = "+6.1"
-            
-            st.metric(
-                "Predicted Score",
-                f"{prediction.future_score:.1f}/100",
-                delta_str
-            )
-            
+            st.metric("Predicted Score", f"{prediction.future_score:.0f}%", f"{score_delta:+.1f}")
         with col2:
-            trend_emoji = {
-                "Improving": "📈",
-                "Stable": "🔄", 
-                "Deteriorating": "📉",
-                "Critical": "⚠️"
-            }.get(prediction.trend.value, "❓")
-            st.metric("Trend", f"{trend_emoji} {prediction.trend.value}")
-            
+            st.metric("Trend", prediction.trend.value)
+        
+        col3, col4 = st.columns(2)
         with col3:
-            confidence = f"{prediction.confidence_interval[0]:.1f}-{prediction.confidence_interval[1]:.1f}"
-            st.metric("Confidence Range", confidence)
-            
+            st.metric("Priority", prediction.recommendation_priority)
         with col4:
-            priority_emoji = {
-                "Critical": "🔴",
-                "High": "🟠",
-                "Medium": "🟡", 
-                "Low": "🟢"
-            }.get(prediction.recommendation_priority, "⚙️")
-            st.metric("Action Priority", f"{priority_emoji} {prediction.recommendation_priority}")
+            st.metric("Action Window", prediction.time_to_action)
         
-        # Time to Action Alert
-        st.info(f"⏰ **Action Timeline:** {prediction.time_to_action}")
+        st.markdown("---")
         
-        # Risk Factors Analysis
+        # Top 3 Actions - Most Important Section
+        st.subheader("Recommended Actions")
+        
+        actions = []
         if prediction.risk_factors:
-            st.subheader("🚨 Key Risk Factors Identified")
-            for i, factor in enumerate(prediction.risk_factors, 1):
-                st.warning(f"{i}. {factor}")
-        else:
-            st.success("✅ No significant risk factors detected")
+            for factor in prediction.risk_factors[:3]:
+                actions.append(f"Address: {factor}")
         
-        # Predicted Violations
         if prediction.predicted_violations:
-            st.subheader("🔮 Predicted Future Violations")
-            
-            for violation in prediction.predicted_violations:
-                with st.expander(f"⚠️ {violation['type'].replace('_', ' ').title()} (Probability: {violation['probability']:.1%})"):
-                    st.write(f"**Expected Severity:** {violation['expected_severity']}")
-                    st.write(f"**Timeline:** {violation['timeline']}")
-                    st.write(f"**Description:** {violation['description']}")
+            for v in prediction.predicted_violations[:2]:
+                actions.append(f"Prevent: {v['type'].replace('_', ' ').title()} ({v['probability']:.0%} risk)")
         
-        # Enhanced Interactive Compliance Dashboard
-        st.subheader("📊 Interactive Compliance Forecast & Trends")
+        if not actions:
+            actions = ["Continue current compliance practices", "Schedule quarterly review", "Monitor for emerging risks"]
+        
+        for i, action in enumerate(actions[:3], 1):
+            st.markdown(f"**{i}.** {action}")
+        
+        # Simplified Compliance Forecast Chart
+        st.subheader("Compliance Forecast")
         
         if scan_history:
-            # Process data for enhanced visualization
+            # Process data for visualization
             dates = [datetime.fromisoformat(scan['timestamp'][:19]) for scan in scan_history[-15:]]
             scores = [scan.get('compliance_score', 70) for scan in scan_history[-15:]]
             
-            # Weekly aggregation for bars (using Python built-ins)
-            from collections import defaultdict
-            weekly_data = defaultdict(list)
-            for date, score in zip(dates, scores):
-                monday = date - timedelta(days=date.weekday())
-                week_key = monday.strftime('%Y-%m-%d')
-                weekly_data[week_key].append(score)
-            
-            weekly_dates = sorted(weekly_data.keys())
-            weekly_scores = [sum(weekly_data[week])/len(weekly_data[week]) for week in weekly_dates]
-            
-            # Add prediction point
+            # Add forecast point
             future_date = datetime.now() + timedelta(days=30)
-            dates.append(future_date)
-            scores.append(prediction.future_score)
             
             fig = go.Figure()
             
-            # Enhanced risk zone backgrounds with better colors
-            fig.add_hrect(y0=90, y1=100, fillcolor="rgba(76, 175, 80, 0.1)", layer="below", line_width=0)
-            fig.add_hrect(y0=75, y1=90, fillcolor="rgba(139, 195, 74, 0.08)", layer="below", line_width=0)
+            # Risk zone backgrounds (simplified)
+            fig.add_hrect(y0=75, y1=100, fillcolor="rgba(76, 175, 80, 0.08)", layer="below", line_width=0)
             fig.add_hrect(y0=50, y1=75, fillcolor="rgba(255, 193, 7, 0.08)", layer="below", line_width=0)
             fig.add_hrect(y0=0, y1=50, fillcolor="rgba(244, 67, 54, 0.08)", layer="below", line_width=0)
             
-            # 1. Weekly compliance bars with color coding
-            fig.add_trace(go.Bar(
-                x=weekly_dates,
-                y=weekly_scores,
-                name='📊 Weekly Compliance',
-                marker=dict(
-                    color=weekly_scores,
-                    colorscale=[
-                        [0, '#F44336'],     # Red
-                        [0.25, '#FF9800'],  # Orange  
-                        [0.5, '#FFC107'],   # Amber
-                        [0.75, '#8BC34A'],  # Light Green
-                        [1, '#4CAF50']      # Green
-                    ],
-                    cmin=0,
-                    cmax=100,
-                    line=dict(color='white', width=1)
-                ),
-                hovertemplate='<b>Week of %{x}</b><br>Compliance: <b>%{y:.1f}%</b><extra></extra>',
-                opacity=0.8
-            ))
-            
-            # 2. Smoothed trend line overlay
+            # Historical trend line
             fig.add_trace(go.Scatter(
-                x=dates[:-1],
-                y=scores[:-1],
-                mode='lines',
-                name='📈 Trend Line',
-                line=dict(color='#1976D2', width=4, shape='spline'),
-                hovertemplate='<b>%{x}</b><br>Trend: <b>%{y:.1f}%</b><extra></extra>'
-            ))
-            
-            # 3. Enhanced AI forecast with confidence bands
-            fig.add_trace(go.Scatter(
-                x=[dates[-2], dates[-1]],
-                y=[scores[-2], scores[-1]],
+                x=dates,
+                y=scores,
                 mode='lines+markers',
-                name='🔮 AI Forecast',
+                name='Historical',
+                line=dict(color='#1976D2', width=3),
+                marker=dict(size=6),
+                hovertemplate='%{x|%b %d}: %{y:.0f}%<extra></extra>'
+            ))
+            
+            # Forecast point with confidence band
+            forecast_x = [dates[-1], future_date]
+            forecast_y = [scores[-1], prediction.future_score]
+            
+            fig.add_trace(go.Scatter(
+                x=forecast_x,
+                y=forecast_y,
+                mode='lines+markers',
+                name='Forecast',
                 line=dict(color='#FF6B35', dash='dash', width=3),
-                marker=dict(size=12, color='#FF6B35', line=dict(width=2, color='white')),
-                hovertemplate='<b>%{x}</b><br>Forecast: <b>%{y:.1f}%</b><extra></extra>'
+                marker=dict(size=10),
+                hovertemplate='%{x|%b %d}: %{y:.0f}%<extra></extra>'
             ))
             
-            # 4. Forecast confidence band
+            # Confidence band (single trace)
             fig.add_trace(go.Scatter(
-                x=[dates[-2], dates[-1]],
-                y=[scores[-2], prediction.confidence_interval[1]],
+                x=[future_date, future_date],
+                y=[prediction.confidence_interval[0], prediction.confidence_interval[1]],
                 mode='lines',
-                line=dict(color='rgba(255, 107, 53, 0.3)', width=0),
-                showlegend=False,
-                hoverinfo='skip'
+                name=f'Range: {prediction.confidence_interval[0]:.0f}-{prediction.confidence_interval[1]:.0f}%',
+                line=dict(color='#FF6B35', width=8),
+                opacity=0.3
             ))
             
-            fig.add_trace(go.Scatter(
-                x=[dates[-2], dates[-1]],
-                y=[scores[-2], prediction.confidence_interval[0]],
-                mode='lines',
-                name='Confidence Band',
-                line=dict(color='rgba(255, 107, 53, 0.3)', width=0),
-                fill='tonexty',
-                fillcolor='rgba(255, 107, 53, 0.2)',
-                hovertemplate='<b>Confidence Range</b><br>%{x}: %{y:.1f}%<extra></extra>'
-            ))
-            
-            # Professional benchmark lines
-            fig.add_hline(y=90, line_dash="dash", line_color="rgba(76, 175, 80, 0.7)", line_width=2)
-            fig.add_hline(y=75, line_dash="dash", line_color="rgba(255, 193, 7, 0.7)", line_width=2)
-            fig.add_hline(y=50, line_dash="dash", line_color="rgba(244, 67, 54, 0.7)", line_width=2)
-            
-            # Enhanced risk level annotations
-            fig.add_annotation(
-                x=dates[-1], y=95, text="Excellent (90%+)", 
-                showarrow=False, font=dict(size=11, color="#4CAF50"),
-                xanchor="left", bgcolor="rgba(255,255,255,0.9)"
-            )
-            fig.add_annotation(
-                x=dates[-1], y=82, text="Good (75-90%)", 
-                showarrow=False, font=dict(size=11, color="#8BC34A"),
-                xanchor="left", bgcolor="rgba(255,255,255,0.9)"
-            )
-            fig.add_annotation(
-                x=dates[-1], y=62, text="Attention Needed (50-75%)", 
-                showarrow=False, font=dict(size=11, color="#FF9800"),
-                xanchor="left", bgcolor="rgba(255,255,255,0.9)"
-            )
-            fig.add_annotation(
-                x=dates[-1], y=25, text="Critical (<50%)", 
-                showarrow=False, font=dict(size=11, color="#F44336"),
-                xanchor="left", bgcolor="rgba(255,255,255,0.9)"
-            )
-            
-            # Professional interactive layout
+            # Clean layout
             fig.update_layout(
-                title=dict(
-                    text='📊 Interactive Compliance Forecast & Trends',
-                    font=dict(size=20, color='#333', family='Arial, sans-serif'),
-                    x=0.5
-                ),
-                xaxis=dict(
-                    title='Timeline',
-                    showgrid=True,
-                    gridwidth=0.5,
-                    gridcolor='rgba(0,0,0,0.1)',
-                    tickformat='%b %d',
-                    showline=True,
-                    linecolor='rgba(0,0,0,0.2)'
-                ),
-                yaxis=dict(
-                    title='Compliance Score (%)',
-                    range=[0, 100],
-                    showgrid=True,
-                    gridwidth=0.5,
-                    gridcolor='rgba(0,0,0,0.1)',
-                    ticksuffix='%',
-                    showline=True,
-                    linecolor='rgba(0,0,0,0.2)'
-                ),
+                xaxis=dict(title='', tickformat='%b %d', showgrid=False),
+                yaxis=dict(title='Compliance %', range=[0, 100], showgrid=True, gridcolor='rgba(0,0,0,0.05)'),
                 plot_bgcolor='white',
                 paper_bgcolor='white',
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="center",
-                    x=0.5,
-                    font=dict(size=12, family='Arial'),
-                    bgcolor='rgba(255,255,255,0.8)'
-                ),
-                height=500,
-                margin=dict(t=120, b=80, l=80, r=80),
+                legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
+                height=350,
+                margin=dict(t=40, b=40, l=50, r=20),
                 hovermode='x unified'
             )
             
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Chart explanation
-            with st.expander("📊 Understanding Your Compliance Forecast"):
-                st.markdown("""
-                **Chart Features:**
-                - **📈 Historical Compliance**: Your actual compliance scores over time (blue line)
-                - **🔮 AI Prediction**: Machine learning forecast for next 30 days (orange dashed line)
-                - **📊 Confidence Interval**: Range of possible outcomes based on data uncertainty
-                - **🏢 Industry Benchmarks**: Dotted lines showing average scores for Financial Services and Technology sectors
-                - **🚨 Risk Zones**: Color-coded background areas indicating compliance health levels
-                
-                **Risk Zone Guide:**
-                - 🟢 **Excellent (90%+)**: Outstanding compliance posture
-                - 🟡 **Good (80-89%)**: Solid compliance with minor improvements needed  
-                - 🟠 **Needs Attention (70-79%)**: Moderate risk requiring focused action
-                - 🔴 **Critical (<60%)**: High risk requiring immediate intervention
-                
-                **Trend Indicators:**
-                - ↗️ **Improving**: Compliance score trending upward
-                - → **Stable**: Compliance score remaining steady
-                - ↘️ **Declining**: Compliance score trending downward (action needed)
-                """)
         
-        # Industry Benchmarking
-        st.subheader("🏢 Industry Benchmarking")
-        
-        industry_benchmarks = {
-            "Your Organization": prediction.future_score,
-            "Financial Services": 78.5,
-            "Healthcare": 72.1,
-            "Technology": 81.2
-        }
-        
-        benchmark_fig = px.bar(
-            x=list(industry_benchmarks.keys()),
-            y=list(industry_benchmarks.values()),
-            title="Predicted vs Industry Average",
-            color=list(industry_benchmarks.values()),
-            color_continuous_scale="RdYlGn"
-        )
-        benchmark_fig.update_layout(showlegend=False, yaxis=dict(range=[0, 100]))
-        st.plotly_chart(benchmark_fig, use_container_width=True)
-        
-        # Regulatory Risk Assessment
-        st.subheader("⚖️ Regulatory Risk Forecast")
-        
-        business_context = {
-            'data_processing_volume': 'high',
-            'industry': 'technology',
-            'uses_ai_systems': True,
-            'processes_bsn': True,
-            'healthcare_data': False
-        }
-        
-        current_state = {
-            'critical_findings': len([v for v in prediction.predicted_violations if v.get('expected_severity') == 'Critical']),
-            'security_score': prediction.future_score,
-            'vulnerability_count': len(prediction.risk_factors)
-        }
-        
-        risk_forecasts = engine.forecast_regulatory_risk(current_state, business_context)
-        
-        if risk_forecasts:
-            for risk in risk_forecasts:
-                with st.expander(f"⚠️ {risk.risk_level} Risk: {risk.probability:.1%} probability"):
-                    st.write(f"**Impact Severity:** {risk.impact_severity}")
-                    st.write(f"**Timeline:** {risk.timeline}")
-                    st.write(f"**Mitigation Window:** {risk.mitigation_window}")
-                    
-                    if risk.cost_of_inaction:
-                        st.write("**Cost of Inaction:**")
-                        for cost_type, amount in risk.cost_of_inaction.items():
-                            if amount > 0:
-                                st.write(f"- {cost_type.replace('_', ' ').title()}: €{amount:,.0f}")
-        
-        # HTML Report Download
+        # Collapsible Details Section
         st.markdown("---")
-        st.subheader("📄 Export Predictions Report")
         
-        col_report1, col_report2 = st.columns([1, 2])
-        with col_report1:
-            if st.button("📥 Download HTML Report", type="primary"):
+        # Industry Benchmarks - Compact inline display
+        with st.expander("Industry Comparison"):
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Your Score", f"{prediction.future_score:.0f}%")
+            with col2:
+                st.metric("Financial", "78%")
+            with col3:
+                st.metric("Healthcare", "72%")
+            with col4:
+                st.metric("Technology", "81%")
+        
+        # Regulatory Risk - Collapsed by default
+        with st.expander("Regulatory Risk Details"):
+            business_context = {
+                'data_processing_volume': 'high',
+                'industry': 'technology',
+                'uses_ai_systems': True,
+                'processes_bsn': True,
+                'healthcare_data': False
+            }
+            
+            current_state = {
+                'critical_findings': len([v for v in prediction.predicted_violations if v.get('expected_severity') == 'Critical']),
+                'security_score': prediction.future_score,
+                'vulnerability_count': len(prediction.risk_factors)
+            }
+            
+            risk_forecasts = engine.forecast_regulatory_risk(current_state, business_context)
+            
+            if risk_forecasts:
+                for risk in risk_forecasts:
+                    st.markdown(f"**{risk.risk_level}** - {risk.probability:.0%} probability | Impact: {risk.impact_severity}")
+                    if risk.cost_of_inaction:
+                        costs = [f"€{v:,.0f}" for k, v in risk.cost_of_inaction.items() if v > 0]
+                        if costs:
+                            st.caption(f"Potential cost: {', '.join(costs[:2])}")
+        
+        # Export - Simple button
+        with st.expander("Export Report"):
+            if st.button("Download HTML Report", type="primary"):
                 html_report = generate_predictive_analytics_html_report(prediction, scan_history, username)
                 st.download_button(
-                    label="💾 Save Report",
+                    label="Save Report",
                     data=html_report,
                     file_name=f"predictive_analytics_{username}_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
                     mime="text/html"
                 )
-                st.success("✅ Report generated! Click 'Save Report' to download.")
-                
-        with col_report2:
-            st.info("📊 Comprehensive HTML report with all predictions, charts, and ML insights for stakeholders")
         
-        # ML Model Information
-        with st.expander("🤖 Machine Learning Model Details"):
-            st.write("**Predictive Models Used:**")
-            st.write("- GDPR Compliance Forecasting (85% accuracy)")
-            st.write("- Risk Pattern Recognition (78% accuracy)")  
-            st.write("- Violation Probability Analysis (15% false positive rate)")
-            st.write("- Netherlands UAVG Compliance Specialization")
-            
-            st.write("\n**Data Sources:**")
-            st.write(f"- Historical Scans: {len(scan_history)} records")
-            st.write("- Industry Benchmarks: Financial, Healthcare, Technology")
-            st.write("- Netherlands Regulatory Data: AP enforcement patterns")
+        # Model Details - Compact
+        with st.expander("About This Analysis"):
+            st.caption(f"Based on {len(scan_history)} scans | GDPR model: 85% accuracy | Netherlands UAVG specialized")
         
     except ImportError as e:
         st.error(f"Predictive engine not available: {e}")
