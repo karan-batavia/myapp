@@ -1089,7 +1089,7 @@ def render_authenticated_interface():
             "💳 iDEAL Payment Test"
         ]
         if user_role == "admin":
-            nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard", "🔍 Scanner Logs"])
+            nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard"])
         
         selected_nav = st.selectbox(_('sidebar.navigation', 'Navigation'), nav_options, key="navigation")
         
