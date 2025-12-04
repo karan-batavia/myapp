@@ -179,40 +179,79 @@ def render_visitor_analytics_dashboard():
         )
         st.plotly_chart(fig_countries, use_container_width=True)
     
-    # Real-time events table
-    st.markdown("### 📋 Recent Events")
+    # Visitor Sessions section
+    st.markdown("### 👤 Visitor Sessions")
+    st.caption("Who visited which pages (anonymized, GDPR-compliant)")
     
-    # Fetch recent events from database
-    if hasattr(tracker, 'events') and tracker.events:
-        recent_events = sorted(
-            tracker.events[-50:],
-            key=lambda e: e.timestamp,
-            reverse=True
-        )
-        
-        events_data = []
-        for event in recent_events[:20]:
-            # GDPR Compliance: Never display raw usernames
-            # Show anonymized user_id (hashed) or "Anonymous"
-            user_display = 'Anonymous'
-            if event.user_id:
-                # Show truncated hash for authenticated events
-                user_display = f"User-{event.user_id[:8]}"
+    sessions = tracker.get_visitor_sessions(days=period, limit=50)
+    
+    if sessions:
+        sessions_data = []
+        for session in sessions:
+            user_display = 'Anonymous Visitor'
+            if session.get('user_id'):
+                user_display = f"User-{session['user_id'][:8]}"
+            if session.get('logged_in'):
+                user_display += " 🔐"
             
-            events_data.append({
-                'Time': event.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                'Event': event.event_type.value.replace('_', ' ').title(),
-                'Page': event.page_path,
-                'User': user_display,  # GDPR-compliant: no raw usernames
-                'Status': '✅ Success' if event.success else '❌ Failed'
+            pages = session.get('pages_visited', [])
+            if pages:
+                pages_str = ', '.join([p for p in pages if p][:5])
+                if len(pages) > 5:
+                    pages_str += f" (+{len(pages)-5} more)"
+            else:
+                pages_str = "N/A"
+            
+            session_start = session.get('session_start')
+            if hasattr(session_start, 'strftime'):
+                start_str = session_start.strftime('%Y-%m-%d %H:%M')
+            else:
+                start_str = str(session_start)[:16] if session_start else 'N/A'
+            
+            sessions_data.append({
+                'Session Start': start_str,
+                'Visitor': user_display,
+                'Pages Viewed': session.get('page_views', 0),
+                'Pages Visited': pages_str,
+                'Total Actions': session.get('total_events', 0)
             })
         
-        if events_data:
-            st.dataframe(events_data, use_container_width=True)
-        else:
-            st.info("No recent events")
+        st.dataframe(sessions_data, use_container_width=True)
     else:
-        st.info("No event data available yet")
+        st.info("No visitor session data available yet")
+    
+    # Recent Events section
+    st.markdown("### 📋 Recent Events")
+    
+    recent_events = tracker.get_recent_events(limit=30, days=period)
+    
+    if recent_events:
+        events_data = []
+        for event in recent_events:
+            user_display = 'Anonymous'
+            if event.get('user_id'):
+                user_display = f"User-{event['user_id'][:8]}"
+            
+            timestamp = event.get('timestamp')
+            if hasattr(timestamp, 'strftime'):
+                time_str = timestamp.strftime('%Y-%m-%d %H:%M:%S')
+            else:
+                time_str = str(timestamp)[:19] if timestamp else 'N/A'
+            
+            event_type = event.get('event_type', 'unknown')
+            event_display = event_type.replace('_', ' ').title()
+            
+            events_data.append({
+                'Time': time_str,
+                'Event': event_display,
+                'Page': event.get('page_path', '/'),
+                'Visitor': user_display,
+                'Status': '✅ Success' if event.get('success', True) else '❌ Failed'
+            })
+        
+        st.dataframe(events_data, use_container_width=True)
+    else:
+        st.info("No recent events recorded yet")
     
     # GDPR compliance notice
     st.markdown("---")

@@ -480,6 +480,107 @@ class VisitorTracker:
             
         except Exception as e:
             logger.error(f"Failed to cleanup old events: {e}")
+    
+    def get_recent_events(self, limit: int = 50, days: int = 7) -> List[Dict[str, Any]]:
+        """
+        Get recent events from database for display
+        
+        Args:
+            limit: Maximum number of events to return
+            days: Number of days to look back
+            
+        Returns:
+            List of event dictionaries
+        """
+        try:
+            db_url = os.getenv('DATABASE_URL')
+            if not db_url:
+                return self._get_memory_recent_events(limit)
+            
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            since = datetime.now() - timedelta(days=days)
+            
+            cursor.execute("""
+                SELECT 
+                    event_id, session_id, event_type, timestamp,
+                    page_path, user_id, success, error_message
+                FROM visitor_events
+                WHERE timestamp >= %s
+                ORDER BY timestamp DESC
+                LIMIT %s
+            """, (since, limit))
+            
+            events = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            
+            return [dict(e) for e in events] if events else []
+            
+        except Exception as e:
+            logger.error(f"Failed to get recent events: {e}")
+            return self._get_memory_recent_events(limit)
+    
+    def _get_memory_recent_events(self, limit: int) -> List[Dict[str, Any]]:
+        """Fallback to in-memory events"""
+        recent = sorted(self.events, key=lambda e: e.timestamp, reverse=True)[:limit]
+        return [
+            {
+                'event_id': e.event_id,
+                'session_id': e.session_id,
+                'event_type': e.event_type.value,
+                'timestamp': e.timestamp,
+                'page_path': e.page_path,
+                'user_id': e.user_id,
+                'success': e.success,
+                'error_message': e.error_message
+            }
+            for e in recent
+        ]
+    
+    def get_visitor_sessions(self, days: int = 7, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Get detailed visitor sessions with pages visited
+        
+        Returns list of sessions with their page views
+        """
+        try:
+            db_url = os.getenv('DATABASE_URL')
+            if not db_url:
+                return []
+            
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            
+            since = datetime.now() - timedelta(days=days)
+            
+            cursor.execute("""
+                SELECT 
+                    session_id,
+                    MIN(timestamp) as session_start,
+                    MAX(timestamp) as last_activity,
+                    COUNT(*) as total_events,
+                    COUNT(CASE WHEN event_type = 'page_view' THEN 1 END) as page_views,
+                    ARRAY_AGG(DISTINCT page_path) as pages_visited,
+                    MAX(user_id) as user_id,
+                    BOOL_OR(event_type = 'login_success') as logged_in
+                FROM visitor_events
+                WHERE timestamp >= %s
+                GROUP BY session_id
+                ORDER BY session_start DESC
+                LIMIT %s
+            """, (since, limit))
+            
+            sessions = cursor.fetchall()
+            cursor.close()
+            conn.close()
+            
+            return [dict(s) for s in sessions] if sessions else []
+            
+        except Exception as e:
+            logger.error(f"Failed to get visitor sessions: {e}")
+            return []
 
 # Global instance
 _visitor_tracker = None
