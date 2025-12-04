@@ -66,6 +66,42 @@ def get_session_id() -> str:
     except Exception:
         return str(uuid.uuid4())
 
+def get_country_from_ip(ip_address: str) -> Optional[str]:
+    """
+    Get country code from IP address using free geolocation API
+    GDPR-compliant: Only stores 2-letter country code, not the IP
+    
+    Returns:
+        2-letter country code (e.g., 'NL', 'DE', 'US') or None
+    """
+    try:
+        import streamlit as st
+        
+        # Check cache first (stored in session)
+        cache_key = 'visitor_country'
+        if cache_key in st.session_state:
+            return st.session_state[cache_key]
+        
+        if not ip_address or ip_address == 'unknown':
+            return None
+        
+        import requests
+        
+        # Use ipapi.co free tier (1000 requests/day)
+        response = requests.get(f'https://ipapi.co/{ip_address}/country/', timeout=2)
+        
+        if response.status_code == 200:
+            country_code = response.text.strip()[:2].upper()
+            if len(country_code) == 2 and country_code.isalpha():
+                st.session_state[cache_key] = country_code
+                return country_code
+        
+        return None
+        
+    except Exception as e:
+        logger.debug(f"Country detection failed: {e}")
+        return None
+
 def authenticate_with_tracking(username: str, password: str) -> Optional[Dict[str, Any]]:
     """
     Authenticate user and track the attempt (success or failure)
@@ -243,6 +279,7 @@ def track_page_view(page_path: str = "/", referrer: Optional[str] = None):
         tracker = get_visitor_tracker()
         session_id = get_session_id()
         ip_address = get_client_ip_from_streamlit()
+        country = get_country_from_ip(ip_address)
         
         tracker.track_event(
             session_id=session_id,
@@ -250,6 +287,7 @@ def track_page_view(page_path: str = "/", referrer: Optional[str] = None):
             page_path=page_path,
             ip_address=ip_address,
             referrer=referrer,
+            country=country,
             success=True
         )
         
@@ -268,6 +306,7 @@ def track_login_success(user_id: str = None, role: str = None):
         tracker = get_visitor_tracker()
         session_id = get_session_id()
         ip_address = get_client_ip_from_streamlit()
+        country = get_country_from_ip(ip_address)
         
         hashed_user_id = hashlib.sha256(str(user_id).encode()).hexdigest()[:16] if user_id else None
         
@@ -276,6 +315,7 @@ def track_login_success(user_id: str = None, role: str = None):
             event_type=VisitorEventType.LOGIN_SUCCESS,
             page_path="/login",
             ip_address=ip_address,
+            country=country,
             user_id=hashed_user_id,
             details={'role': role, 'method': 'password'},
             success=True
@@ -319,12 +359,14 @@ def track_registration_success(role: str = None):
         tracker = get_visitor_tracker()
         session_id = get_session_id()
         ip_address = get_client_ip_from_streamlit()
+        country = get_country_from_ip(ip_address)
         
         tracker.track_event(
             session_id=session_id,
             event_type=VisitorEventType.REGISTRATION_SUCCESS,
             page_path="/register",
             ip_address=ip_address,
+            country=country,
             details={'role': role or 'user', 'method': 'signup_form'},
             success=True
         )
@@ -341,12 +383,14 @@ def track_registration_failure(reason: str = None):
         tracker = get_visitor_tracker()
         session_id = get_session_id()
         ip_address = get_client_ip_from_streamlit()
+        country = get_country_from_ip(ip_address)
         
         tracker.track_event(
             session_id=session_id,
             event_type=VisitorEventType.REGISTRATION_FAILURE,
             page_path="/register",
             ip_address=ip_address,
+            country=country,
             details={'method': 'signup_form'},
             success=False,
             error_message=reason or "Registration failed"
