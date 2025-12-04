@@ -603,30 +603,24 @@ def render_freemium_registration():
                         'show_registration': False
                     })
                     
+                    # Track successful registration
+                    try:
+                        from services.auth_tracker import track_registration_success
+                        track_registration_success(role='freemium')
+                    except Exception:
+                        pass
+                    
                     st.success("🎉 Welcome to DataGuardian Pro! Your free AI Model scan is ready.")
                     st.info("👉 Navigate to 'AI Model Scan' to start your complimentary analysis")
                     st.balloons()
-                    
-                    # Track conversion for analytics
-                    try:
-                        from utils.activity_tracker import get_activity_tracker, ActivityType
-                        tracker = get_activity_tracker()
-                        tracker.track_activity(
-                            session_id=str(uuid.uuid4()),
-                            user_id=email,
-                            username=email,
-                            activity_type=ActivityType.LOGIN,
-                            details={
-                                'name': name,
-                                'country': country,
-                                'source': 'landing_page',
-                                'signup_type': 'freemium'
-                            }
-                        )
-                    except Exception:
-                        pass  # Analytics failure shouldn't block registration
                         
                 except Exception as e:
+                    # Track failed registration
+                    try:
+                        from services.auth_tracker import track_registration_failure
+                        track_registration_failure(reason=str(e))
+                    except Exception:
+                        pass
                     st.error(f"Registration failed: {str(e)}")
 
 def render_full_registration():
@@ -703,10 +697,24 @@ def render_landing_page():
                         st.session_state.user_role = auth_result.role
                         st.session_state.user_id = auth_result.user_id
                         st.session_state.auth_token = auth_result.token
+                        
+                        # Track successful login
+                        try:
+                            from services.auth_tracker import track_login_success
+                            track_login_success(user_id=auth_result.user_id, role=auth_result.role)
+                        except Exception:
+                            pass
+                        
                         st.success(_('login.success', 'Login successful!'))
                         # Force immediate rerun after successful login
                         st.rerun()
                     else:
+                        # Track failed login
+                        try:
+                            from services.auth_tracker import track_login_failure
+                            track_login_failure(reason=auth_result.message)
+                        except Exception:
+                            pass
                         st.error(f"{_('login.error.invalid_credentials', 'Authentication failed')}: {auth_result.message}")
                 else:
                     st.error(_('login.error.missing_fields', 'Please enter username and password'))
@@ -1060,7 +1068,9 @@ def render_authenticated_interface():
     try:
         from services.auth_tracker import track_page_view
         current_page = st.session_state.get('navigation', 'dashboard')
-        track_page_view(page_path=f"/{current_page}")
+        # Try to get referrer from session (set on first visit)
+        referrer = st.session_state.get('http_referrer', None)
+        track_page_view(page_path=f"/{current_page}", referrer=referrer)
     except Exception:
         pass  # Silent fail - tracking is optional
     

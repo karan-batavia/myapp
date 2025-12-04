@@ -256,6 +256,106 @@ def track_page_view(page_path: str = "/", referrer: Optional[str] = None):
     except Exception as e:
         logger.debug(f"Failed to track page view: {e}")
 
+def track_login_success(user_id: str = None, role: str = None):
+    """
+    Track successful login (GDPR-compliant, no PII stored)
+    
+    Args:
+        user_id: User ID (will be hashed)
+        role: User role
+    """
+    try:
+        tracker = get_visitor_tracker()
+        session_id = get_session_id()
+        ip_address = get_client_ip_from_streamlit()
+        
+        hashed_user_id = hashlib.sha256(str(user_id).encode()).hexdigest()[:16] if user_id else None
+        
+        tracker.track_event(
+            session_id=session_id,
+            event_type=VisitorEventType.LOGIN_SUCCESS,
+            page_path="/login",
+            ip_address=ip_address,
+            user_id=hashed_user_id,
+            details={'role': role, 'method': 'password'},
+            success=True
+        )
+        logger.info("✅ Login success tracked")
+        
+    except Exception as e:
+        logger.debug(f"Failed to track login success: {e}")
+
+def track_login_failure(reason: str = None):
+    """
+    Track failed login attempt (GDPR-compliant, no PII stored)
+    
+    Args:
+        reason: Failure reason (generic, no usernames)
+    """
+    try:
+        tracker = get_visitor_tracker()
+        session_id = get_session_id()
+        ip_address = get_client_ip_from_streamlit()
+        
+        tracker.track_event(
+            session_id=session_id,
+            event_type=VisitorEventType.LOGIN_FAILURE,
+            page_path="/login",
+            ip_address=ip_address,
+            details={'method': 'password'},
+            success=False,
+            error_message=reason or "Invalid credentials"
+        )
+        logger.info("❌ Login failure tracked")
+        
+    except Exception as e:
+        logger.debug(f"Failed to track login failure: {e}")
+
+def track_registration_success(role: str = None):
+    """
+    Track successful registration (GDPR-compliant)
+    """
+    try:
+        tracker = get_visitor_tracker()
+        session_id = get_session_id()
+        ip_address = get_client_ip_from_streamlit()
+        
+        tracker.track_event(
+            session_id=session_id,
+            event_type=VisitorEventType.REGISTRATION_SUCCESS,
+            page_path="/register",
+            ip_address=ip_address,
+            details={'role': role or 'user', 'method': 'signup_form'},
+            success=True
+        )
+        logger.info("✅ Registration success tracked")
+        
+    except Exception as e:
+        logger.debug(f"Failed to track registration success: {e}")
+
+def track_registration_failure(reason: str = None):
+    """
+    Track failed registration (GDPR-compliant)
+    """
+    try:
+        tracker = get_visitor_tracker()
+        session_id = get_session_id()
+        ip_address = get_client_ip_from_streamlit()
+        
+        tracker.track_event(
+            session_id=session_id,
+            event_type=VisitorEventType.REGISTRATION_FAILURE,
+            page_path="/register",
+            ip_address=ip_address,
+            details={'method': 'signup_form'},
+            success=False,
+            error_message=reason or "Registration failed"
+        )
+        logger.info("❌ Registration failure tracked")
+        
+    except Exception as e:
+        logger.debug(f"Failed to track registration failure: {e}")
+
 def track_logout(user_id: str, username: str):
     """
     Track user logout event (GDPR-compliant, no PII stored)
