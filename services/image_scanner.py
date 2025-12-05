@@ -38,10 +38,19 @@ try:
     import cv2
     import numpy as np
     from PIL import Image, ImageEnhance
+    from PIL.ExifTags import TAGS, GPSTAGS
     CV_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"OpenCV/NumPy not available: {e}")
     CV_AVAILABLE = False
+
+# Check for QR/Barcode scanning capability
+try:
+    from pyzbar import pyzbar
+    BARCODE_AVAILABLE = True
+except ImportError:
+    BARCODE_AVAILABLE = False
+    logging.info("pyzbar not available - QR/barcode scanning disabled")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -69,10 +78,16 @@ class ImageScanner:
         self.use_face_detection = True
         self.use_document_detection = True
         self.use_card_detection = True
-        self.use_deepfake_detection = True  # NEW: Deepfake detection
+        self.use_deepfake_detection = True
+        self.use_exif_extraction = True      # NEW: EXIF metadata extraction
+        self.use_qr_barcode_detection = True # NEW: QR/Barcode scanning
+        self.use_watermark_detection = True  # NEW: Watermark detection
+        self.use_screenshot_detection = True # NEW: Screenshot detection
+        self.use_signature_detection = True  # NEW: Signature detection
+        self.use_steganography_detection = True # NEW: Steganography detection
         self.min_confidence = 0.6  # Minimum confidence threshold for detections
         
-        logger.info(f"Initialized ImageScanner with region: {region}, deepfake detection: {self.use_deepfake_detection}")
+        logger.info(f"Initialized ImageScanner with region: {region}, all 6 enhanced detection features enabled")
     
     def _get_ocr_languages(self) -> List[str]:
         """
@@ -221,6 +236,36 @@ class ImageScanner:
         if self.use_deepfake_detection:
             deepfake_findings = self._detect_deepfake(image_path)
             findings.extend(deepfake_findings)
+        
+        # NEW: Extract EXIF metadata (GPS, timestamps, camera info)
+        if self.use_exif_extraction:
+            exif_findings = self._extract_exif_metadata(image_path)
+            findings.extend(exif_findings)
+        
+        # NEW: Detect QR codes and barcodes
+        if self.use_qr_barcode_detection:
+            qr_findings = self._detect_qr_barcodes(image_path)
+            findings.extend(qr_findings)
+        
+        # NEW: Detect watermarks (visible and invisible)
+        if self.use_watermark_detection:
+            watermark_findings = self._detect_watermarks(image_path)
+            findings.extend(watermark_findings)
+        
+        # NEW: Detect screenshots (UI elements, personal data)
+        if self.use_screenshot_detection:
+            screenshot_findings = self._detect_screenshots(image_path)
+            findings.extend(screenshot_findings)
+        
+        # NEW: Detect signatures in documents
+        if self.use_signature_detection:
+            signature_findings = self._detect_signatures(image_path)
+            findings.extend(signature_findings)
+        
+        # NEW: Detect steganography (hidden data)
+        if self.use_steganography_detection:
+            stego_findings = self._detect_steganography(image_path)
+            findings.extend(stego_findings)
         
         # Get scan metadata
         metadata = {
@@ -465,6 +510,931 @@ class ImageScanner:
             findings.append(finding)
         
         return findings
+    
+    # =========================================================================
+    # NEW FEATURE 1: EXIF METADATA EXTRACTION
+    # =========================================================================
+    def _extract_exif_metadata(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Extract EXIF metadata from images including GPS coordinates, timestamps,
+        camera info, and author information - all privacy-sensitive data.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of EXIF metadata findings
+        """
+        findings = []
+        
+        if not CV_AVAILABLE:
+            return findings
+        
+        try:
+            from PIL import Image
+            from PIL.ExifTags import TAGS, GPSTAGS
+            
+            img = Image.open(image_path)
+            exif_data = img._getexif()
+            
+            if not exif_data:
+                return findings
+            
+            privacy_sensitive_tags = {}
+            gps_data = {}
+            
+            for tag_id, value in exif_data.items():
+                tag_name = TAGS.get(tag_id, tag_id)
+                
+                # GPS Information - Critical privacy concern
+                if tag_name == 'GPSInfo':
+                    for gps_tag_id, gps_value in value.items():
+                        gps_tag_name = GPSTAGS.get(gps_tag_id, gps_tag_id)
+                        gps_data[gps_tag_name] = str(gps_value)
+                
+                # Camera/Device info
+                elif tag_name in ['Make', 'Model', 'Software', 'HostComputer']:
+                    privacy_sensitive_tags[tag_name] = str(value)
+                
+                # Timestamps
+                elif tag_name in ['DateTime', 'DateTimeOriginal', 'DateTimeDigitized']:
+                    privacy_sensitive_tags[tag_name] = str(value)
+                
+                # Author/Copyright info
+                elif tag_name in ['Artist', 'Copyright', 'ImageDescription', 'XPAuthor', 'XPComment']:
+                    privacy_sensitive_tags[tag_name] = str(value)
+                
+                # Serial numbers and unique identifiers
+                elif tag_name in ['BodySerialNumber', 'LensSerialNumber', 'ImageUniqueID']:
+                    privacy_sensitive_tags[tag_name] = str(value)
+            
+            # Create GPS finding if GPS data exists
+            if gps_data:
+                lat_lon = self._convert_gps_to_decimal(gps_data)
+                finding = {
+                    "type": "EXIF_GPS_LOCATION",
+                    "source": image_path,
+                    "source_type": "image_metadata",
+                    "confidence": 0.95,
+                    "context": f"GPS coordinates embedded in image: {lat_lon if lat_lon else 'Raw GPS data present'}",
+                    "extraction_method": "exif_extraction",
+                    "risk_level": "Critical",
+                    "location": "exif_metadata",
+                    "reason": "GPS location data reveals exact physical location of photo capture. Under GDPR Article 9, location data combined with other data can identify individuals. Must be stripped before public sharing.",
+                    "gdpr_articles": ["Article 4(1) - Personal Data Definition", "Article 9 - Special Categories"],
+                    "metadata_details": gps_data,
+                    "remediation": "Remove EXIF GPS data using image stripping tools before sharing"
+                }
+                findings.append(finding)
+            
+            # Create device/camera info finding
+            device_info = {k: v for k, v in privacy_sensitive_tags.items() 
+                         if k in ['Make', 'Model', 'Software', 'HostComputer', 'BodySerialNumber', 'LensSerialNumber']}
+            if device_info:
+                finding = {
+                    "type": "EXIF_DEVICE_INFO",
+                    "source": image_path,
+                    "source_type": "image_metadata",
+                    "confidence": 0.90,
+                    "context": f"Device identification data: {', '.join([f'{k}={v}' for k,v in device_info.items()])}",
+                    "extraction_method": "exif_extraction",
+                    "risk_level": "High",
+                    "location": "exif_metadata",
+                    "reason": "Device serial numbers and camera identifiers can be used to track and identify individuals across multiple images. This creates a persistent identifier under GDPR.",
+                    "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
+                    "metadata_details": device_info,
+                    "remediation": "Strip device identification metadata before distribution"
+                }
+                findings.append(finding)
+            
+            # Create timestamp finding
+            timestamp_info = {k: v for k, v in privacy_sensitive_tags.items() 
+                           if 'DateTime' in k or 'Date' in k}
+            if timestamp_info:
+                finding = {
+                    "type": "EXIF_TIMESTAMP",
+                    "source": image_path,
+                    "source_type": "image_metadata",
+                    "confidence": 0.85,
+                    "context": f"Timestamps found: {', '.join([f'{k}={v}' for k,v in timestamp_info.items()])}",
+                    "extraction_method": "exif_extraction",
+                    "risk_level": "Medium",
+                    "location": "exif_metadata",
+                    "reason": "Timestamps can reveal patterns of behavior and location when combined with other data.",
+                    "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
+                    "metadata_details": timestamp_info,
+                    "remediation": "Consider removing timestamps for sensitive images"
+                }
+                findings.append(finding)
+            
+            # Create author/copyright finding
+            author_info = {k: v for k, v in privacy_sensitive_tags.items() 
+                         if k in ['Artist', 'Copyright', 'XPAuthor', 'XPComment', 'ImageDescription']}
+            if author_info:
+                finding = {
+                    "type": "EXIF_AUTHOR_INFO",
+                    "source": image_path,
+                    "source_type": "image_metadata",
+                    "confidence": 0.92,
+                    "context": f"Author/creator information: {', '.join([f'{k}={v}' for k,v in author_info.items()])}",
+                    "extraction_method": "exif_extraction",
+                    "risk_level": "High",
+                    "location": "exif_metadata",
+                    "reason": "Author names and comments directly identify individuals. This is PII under GDPR.",
+                    "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
+                    "metadata_details": author_info,
+                    "remediation": "Remove author information if anonymity is required"
+                }
+                findings.append(finding)
+            
+            logger.info(f"EXIF extraction completed for {image_path}: {len(findings)} privacy findings")
+            
+        except Exception as e:
+            logger.debug(f"EXIF extraction skipped for {image_path}: {e}")
+        
+        return findings
+    
+    def _convert_gps_to_decimal(self, gps_data: Dict) -> Optional[str]:
+        """Convert GPS EXIF data to decimal coordinates."""
+        try:
+            def convert_to_degrees(value):
+                d = float(value[0])
+                m = float(value[1])
+                s = float(value[2])
+                return d + (m / 60.0) + (s / 3600.0)
+            
+            if 'GPSLatitude' in gps_data and 'GPSLongitude' in gps_data:
+                lat = gps_data.get('GPSLatitude')
+                lon = gps_data.get('GPSLongitude')
+                lat_ref = gps_data.get('GPSLatitudeRef', 'N')
+                lon_ref = gps_data.get('GPSLongitudeRef', 'E')
+                
+                # Handle string representation
+                if isinstance(lat, str) and isinstance(lon, str):
+                    return f"GPS data present (requires parsing)"
+                
+                return f"{lat}, {lon} ({lat_ref}, {lon_ref})"
+        except:
+            pass
+        return None
+    
+    # =========================================================================
+    # NEW FEATURE 2: QR CODE AND BARCODE DETECTION
+    # =========================================================================
+    def _detect_qr_barcodes(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect and decode QR codes and barcodes in images.
+        Analyzes decoded content for PII (URLs, emails, phone numbers, etc.)
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of QR/barcode findings
+        """
+        findings = []
+        
+        if not CV_AVAILABLE:
+            return findings
+        
+        try:
+            # First check filename for QR/barcode indicators
+            lower_filename = os.path.basename(image_path).lower()
+            qr_keywords = ['qr', 'barcode', 'code', 'scan']
+            
+            if any(keyword in lower_filename for keyword in qr_keywords):
+                finding = {
+                    "type": "QR_BARCODE_DETECTED",
+                    "source": image_path,
+                    "source_type": "image_code",
+                    "confidence": 0.80,
+                    "context": "QR code or barcode detected based on filename",
+                    "extraction_method": "filename_analysis",
+                    "risk_level": "Medium",
+                    "location": "image_content",
+                    "reason": "QR codes and barcodes may contain PII such as URLs with tracking parameters, personal contact info (vCards), or encoded credentials.",
+                    "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
+                    "remediation": "Review QR/barcode content for PII before sharing"
+                }
+                findings.append(finding)
+            
+            # Try actual QR detection with pyzbar if available
+            if BARCODE_AVAILABLE:
+                image = cv2.imread(image_path)
+                if image is not None:
+                    decoded_objects = pyzbar.decode(image)
+                    
+                    for obj in decoded_objects:
+                        data = obj.data.decode('utf-8', errors='ignore')
+                        code_type = obj.type
+                        
+                        # Analyze content for PII
+                        pii_indicators = self._analyze_qr_content(data)
+                        
+                        if pii_indicators:
+                            risk_level = "High" if any(p in ['email', 'phone', 'url_tracking', 'vcard'] for p in pii_indicators) else "Medium"
+                            
+                            finding = {
+                                "type": "QR_BARCODE_WITH_PII",
+                                "source": image_path,
+                                "source_type": "image_code",
+                                "confidence": 0.95,
+                                "context": f"{code_type} detected with {', '.join(pii_indicators)}",
+                                "extraction_method": "qr_barcode_scan",
+                                "risk_level": risk_level,
+                                "location": "encoded_data",
+                                "decoded_content": data[:200] + "..." if len(data) > 200 else data,
+                                "pii_types_found": pii_indicators,
+                                "reason": f"QR/Barcode contains potentially sensitive data: {', '.join(pii_indicators)}",
+                                "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
+                                "remediation": "Review and sanitize encoded content before distribution"
+                            }
+                            findings.append(finding)
+            else:
+                # Fallback: Use OpenCV to detect QR patterns
+                image = cv2.imread(image_path)
+                if image is not None:
+                    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                    detector = cv2.QRCodeDetector()
+                    data, bbox, _ = detector.detectAndDecode(gray)
+                    
+                    if data:
+                        pii_indicators = self._analyze_qr_content(data)
+                        
+                        finding = {
+                            "type": "QR_CODE_DETECTED",
+                            "source": image_path,
+                            "source_type": "image_code",
+                            "confidence": 0.90,
+                            "context": f"QR code decoded: {data[:100]}..." if len(data) > 100 else f"QR code decoded: {data}",
+                            "extraction_method": "opencv_qr_detection",
+                            "risk_level": "High" if pii_indicators else "Medium",
+                            "location": "encoded_data",
+                            "decoded_content": data[:200] if len(data) > 200 else data,
+                            "pii_types_found": pii_indicators if pii_indicators else ["content_review_needed"],
+                            "reason": "QR code content requires privacy review",
+                            "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
+                            "remediation": "Review QR code content for sensitive information"
+                        }
+                        findings.append(finding)
+            
+            logger.info(f"QR/Barcode detection completed for {image_path}: {len(findings)} findings")
+            
+        except Exception as e:
+            logger.debug(f"QR/Barcode detection error for {image_path}: {e}")
+        
+        return findings
+    
+    def _analyze_qr_content(self, data: str) -> List[str]:
+        """Analyze QR/barcode content for PII indicators."""
+        indicators = []
+        
+        # Email detection
+        if re.search(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}', data):
+            indicators.append('email')
+        
+        # Phone detection
+        if re.search(r'[\+]?[0-9]{10,15}|tel:', data, re.IGNORECASE):
+            indicators.append('phone')
+        
+        # URL with tracking parameters
+        if re.search(r'https?://.*[?&](utm_|fbclid|gclid|ref=|user|id=|token)', data, re.IGNORECASE):
+            indicators.append('url_tracking')
+        
+        # vCard (contact info)
+        if 'BEGIN:VCARD' in data.upper():
+            indicators.append('vcard')
+        
+        # WiFi credentials
+        if 'WIFI:' in data.upper():
+            indicators.append('wifi_credentials')
+        
+        # Potential authentication tokens/secrets
+        if re.search(r'(token|secret|key|password|auth)[=:]', data, re.IGNORECASE):
+            indicators.append('credentials')
+        
+        # Dutch BSN pattern
+        if re.search(r'\b[0-9]{9}\b', data):
+            indicators.append('potential_bsn')
+        
+        return indicators
+    
+    # =========================================================================
+    # NEW FEATURE 3: WATERMARK DETECTION
+    # =========================================================================
+    def _detect_watermarks(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect visible and invisible watermarks in images.
+        Watermarks may contain ownership info, tracking IDs, or copyright notices.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of watermark findings
+        """
+        findings = []
+        
+        if not CV_AVAILABLE:
+            return findings
+        
+        try:
+            image = cv2.imread(image_path)
+            if image is None:
+                return findings
+            
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            height, width = gray.shape
+            
+            # 1. Check for visible watermarks (text in corners/edges)
+            visible_watermark_score = self._detect_visible_watermark(gray, image)
+            
+            # 2. Check for invisible/frequency-domain watermarks
+            invisible_watermark_score = self._detect_invisible_watermark(gray)
+            
+            # 3. Check for semi-transparent overlays
+            overlay_score = self._detect_watermark_overlay(image)
+            
+            total_score = (visible_watermark_score + invisible_watermark_score + overlay_score) / 3
+            
+            if visible_watermark_score >= 0.4:
+                finding = {
+                    "type": "VISIBLE_WATERMARK",
+                    "source": image_path,
+                    "source_type": "image_watermark",
+                    "confidence": visible_watermark_score,
+                    "context": "Visible watermark detected in image corners or edges",
+                    "extraction_method": "watermark_detection",
+                    "risk_level": "Medium",
+                    "location": "image_overlay",
+                    "reason": "Watermarks may contain company names, tracking IDs, or copyright info that could identify source/ownership.",
+                    "gdpr_articles": ["Article 4(1) - If watermark identifies creator"],
+                    "analysis_scores": {
+                        "visible_score": round(visible_watermark_score, 3),
+                        "invisible_score": round(invisible_watermark_score, 3),
+                        "overlay_score": round(overlay_score, 3)
+                    },
+                    "remediation": "Review watermark content for PII or tracking identifiers"
+                }
+                findings.append(finding)
+            
+            if invisible_watermark_score >= 0.5:
+                finding = {
+                    "type": "INVISIBLE_WATERMARK",
+                    "source": image_path,
+                    "source_type": "image_watermark",
+                    "confidence": invisible_watermark_score,
+                    "context": "Potential invisible/steganographic watermark detected in frequency domain",
+                    "extraction_method": "frequency_analysis",
+                    "risk_level": "High",
+                    "location": "image_data",
+                    "reason": "Invisible watermarks can embed tracking identifiers, user IDs, or device fingerprints without user knowledge. This is a privacy concern under GDPR transparency requirements.",
+                    "gdpr_articles": ["Article 5(1)(a) - Transparency", "Article 13 - Information to be provided"],
+                    "analysis_scores": {
+                        "invisible_score": round(invisible_watermark_score, 3)
+                    },
+                    "remediation": "Consider re-encoding image to remove invisible watermarks if transparency is required"
+                }
+                findings.append(finding)
+            
+            logger.info(f"Watermark detection completed for {image_path}: {len(findings)} findings")
+            
+        except Exception as e:
+            logger.debug(f"Watermark detection error for {image_path}: {e}")
+        
+        return findings
+    
+    def _detect_visible_watermark(self, gray: np.ndarray, color_image: np.ndarray) -> float:
+        """Detect visible watermarks in image corners and edges."""
+        try:
+            height, width = gray.shape
+            score = 0.0
+            
+            # Check corners for text-like patterns (common watermark locations)
+            corners = [
+                gray[0:height//6, 0:width//4],           # Top-left
+                gray[0:height//6, 3*width//4:width],     # Top-right
+                gray[5*height//6:height, 0:width//4],    # Bottom-left
+                gray[5*height//6:height, 3*width//4:width] # Bottom-right
+            ]
+            
+            for i, corner in enumerate(corners):
+                # Look for high contrast text patterns
+                edges = cv2.Canny(corner, 50, 150)
+                edge_density = np.sum(edges > 0) / edges.size
+                
+                if edge_density > 0.05:  # Significant edge content
+                    score += 0.15
+                
+                # Check for semi-transparent overlay (common in watermarks)
+                if len(color_image.shape) == 3:
+                    corner_color = color_image[
+                        [0, 0, 5*height//6, 5*height//6][i]:[height//6, height//6, height, height][i],
+                        [0, 3*width//4, 0, 3*width//4][i]:[width//4, width, width//4, width][i]
+                    ]
+                    variance = np.var(corner_color)
+                    if variance < 500:  # Low variance = possible overlay
+                        score += 0.1
+            
+            return min(score, 1.0)
+            
+        except Exception:
+            return 0.0
+    
+    def _detect_invisible_watermark(self, gray: np.ndarray) -> float:
+        """Detect invisible watermarks using frequency domain analysis."""
+        try:
+            # Compute 2D DFT
+            dft = cv2.dft(np.float32(gray), flags=cv2.DFT_COMPLEX_OUTPUT)
+            dft_shift = np.fft.fftshift(dft)
+            
+            magnitude = cv2.magnitude(dft_shift[:,:,0], dft_shift[:,:,1])
+            magnitude_log = 20 * np.log(magnitude + 1)
+            
+            # Normalize
+            magnitude_normalized = (magnitude_log - magnitude_log.min()) / (magnitude_log.max() - magnitude_log.min() + 1e-8)
+            
+            # Look for unusual peaks that could indicate embedded data
+            height, width = magnitude_normalized.shape
+            center_y, center_x = height // 2, width // 2
+            
+            # Check for periodic patterns outside the center (common in watermarks)
+            outer_region = magnitude_normalized.copy()
+            outer_region[center_y-height//8:center_y+height//8, center_x-width//8:center_x+width//8] = 0
+            
+            peaks = np.sum(outer_region > 0.7)
+            total_pixels = outer_region.size
+            peak_ratio = peaks / total_pixels
+            
+            # High peak ratio outside center suggests embedded patterns
+            if peak_ratio > 0.001:
+                return min(peak_ratio * 100, 1.0)
+            
+            return 0.0
+            
+        except Exception:
+            return 0.0
+    
+    def _detect_watermark_overlay(self, image: np.ndarray) -> float:
+        """Detect semi-transparent watermark overlays."""
+        try:
+            # Check for consistent semi-transparent patterns
+            hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+            
+            # Low saturation areas might be watermarks
+            low_sat_mask = hsv[:,:,1] < 30
+            low_sat_ratio = np.sum(low_sat_mask) / low_sat_mask.size
+            
+            # High value (brightness) with low saturation = potential white overlay
+            high_val_mask = hsv[:,:,2] > 200
+            combined = np.logical_and(low_sat_mask, high_val_mask)
+            combined_ratio = np.sum(combined) / combined.size
+            
+            if combined_ratio > 0.02:  # More than 2% of image
+                return min(combined_ratio * 10, 0.8)
+            
+            return 0.0
+            
+        except Exception:
+            return 0.0
+    
+    # =========================================================================
+    # NEW FEATURE 4: SCREENSHOT DETECTION
+    # =========================================================================
+    def _detect_screenshots(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect screenshots which may contain UI elements with personal data
+        (notifications, emails, chat messages, browser content).
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of screenshot findings
+        """
+        findings = []
+        
+        if not CV_AVAILABLE:
+            return findings
+        
+        try:
+            # Check filename for screenshot indicators
+            lower_filename = os.path.basename(image_path).lower()
+            screenshot_keywords = ['screenshot', 'screen', 'capture', 'snap', 'print']
+            
+            if any(keyword in lower_filename for keyword in screenshot_keywords):
+                finding = {
+                    "type": "SCREENSHOT_DETECTED",
+                    "source": image_path,
+                    "source_type": "image_screenshot",
+                    "confidence": 0.85,
+                    "context": "Screenshot detected based on filename pattern",
+                    "extraction_method": "filename_analysis",
+                    "risk_level": "High",
+                    "location": "image_content",
+                    "reason": "Screenshots often contain visible PII: usernames, emails, chat messages, notifications, browser URLs, and personal content. GDPR requires consent for sharing such content.",
+                    "gdpr_articles": ["Article 6 - Lawfulness of processing", "Article 7 - Consent"],
+                    "potential_pii": ["usernames", "email_addresses", "chat_messages", "notifications", "browser_history"],
+                    "remediation": "Review and redact personal information before sharing"
+                }
+                findings.append(finding)
+            
+            # Analyze image for screenshot characteristics
+            image = cv2.imread(image_path)
+            if image is not None:
+                screenshot_score = self._analyze_screenshot_characteristics(image)
+                
+                if screenshot_score >= 0.5 and not any(keyword in lower_filename for keyword in screenshot_keywords):
+                    finding = {
+                        "type": "SCREENSHOT_CHARACTERISTICS",
+                        "source": image_path,
+                        "source_type": "image_screenshot",
+                        "confidence": screenshot_score,
+                        "context": "Image shows characteristics of a screenshot (UI elements, status bars, navigation)",
+                        "extraction_method": "visual_analysis",
+                        "risk_level": "Medium",
+                        "location": "image_content",
+                        "reason": "Image appears to be a screenshot which may contain personal information from apps, browsers, or system notifications.",
+                        "gdpr_articles": ["Article 6 - Lawfulness of processing"],
+                        "analysis_score": round(screenshot_score, 3),
+                        "remediation": "Review image content for visible personal information"
+                    }
+                    findings.append(finding)
+            
+            logger.info(f"Screenshot detection completed for {image_path}: {len(findings)} findings")
+            
+        except Exception as e:
+            logger.debug(f"Screenshot detection error for {image_path}: {e}")
+        
+        return findings
+    
+    def _analyze_screenshot_characteristics(self, image: np.ndarray) -> float:
+        """Analyze image for screenshot characteristics."""
+        try:
+            height, width = image.shape[:2]
+            score = 0.0
+            
+            # 1. Check for status bar regions (top of screen - consistent color band)
+            top_strip = image[0:height//15, :]
+            top_variance = np.var(top_strip)
+            if top_variance < 1000:  # Low variance = status bar
+                score += 0.2
+            
+            # 2. Check for navigation bar (bottom of screen)
+            bottom_strip = image[14*height//15:height, :]
+            bottom_variance = np.var(bottom_strip)
+            if bottom_variance < 1000:
+                score += 0.15
+            
+            # 3. Check aspect ratio (common screen ratios)
+            aspect_ratio = width / height
+            common_ratios = [16/9, 9/16, 4/3, 3/4, 19.5/9, 9/19.5, 18/9, 9/18]
+            for ratio in common_ratios:
+                if abs(aspect_ratio - ratio) < 0.05:
+                    score += 0.15
+                    break
+            
+            # 4. Check for rectangular UI elements
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            edges = cv2.Canny(gray, 50, 150)
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            rectangular_count = 0
+            for contour in contours:
+                approx = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
+                if len(approx) == 4:  # Rectangular
+                    rectangular_count += 1
+            
+            if rectangular_count > 5:  # Multiple UI elements
+                score += 0.2
+            
+            # 5. Check for text-like regions
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            text_density = np.sum(thresh == 255) / thresh.size
+            if 0.1 < text_density < 0.5:  # Typical text density
+                score += 0.15
+            
+            return min(score, 1.0)
+            
+        except Exception:
+            return 0.0
+    
+    # =========================================================================
+    # NEW FEATURE 5: SIGNATURE DETECTION
+    # =========================================================================
+    def _detect_signatures(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect handwritten signatures in document images.
+        Signatures are biometric data and highly sensitive PII.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of signature findings
+        """
+        findings = []
+        
+        if not CV_AVAILABLE:
+            return findings
+        
+        try:
+            # Check filename for signature indicators
+            lower_filename = os.path.basename(image_path).lower()
+            signature_keywords = ['signature', 'signed', 'sign', 'contract', 'agreement', 'consent']
+            
+            if any(keyword in lower_filename for keyword in signature_keywords):
+                finding = {
+                    "type": "SIGNATURE_DETECTED",
+                    "source": image_path,
+                    "source_type": "image_signature",
+                    "confidence": 0.85,
+                    "context": "Document with signature detected based on filename",
+                    "extraction_method": "filename_analysis",
+                    "risk_level": "Critical",
+                    "location": "document_signature",
+                    "reason": "Handwritten signatures are biometric data under GDPR Article 9 (special categories). They uniquely identify individuals and require explicit consent for processing.",
+                    "gdpr_articles": ["Article 9(1) - Biometric Data", "Article 9(2)(a) - Explicit Consent"],
+                    "remediation": "Ensure explicit consent exists for signature processing. Redact signatures if sharing with unauthorized parties."
+                }
+                findings.append(finding)
+            
+            # Analyze image for signature characteristics
+            image = cv2.imread(image_path)
+            if image is not None:
+                signature_score = self._analyze_signature_characteristics(image)
+                
+                if signature_score >= 0.4:
+                    finding = {
+                        "type": "SIGNATURE_PATTERN",
+                        "source": image_path,
+                        "source_type": "image_signature",
+                        "confidence": signature_score,
+                        "context": "Handwritten signature pattern detected in image",
+                        "extraction_method": "visual_analysis",
+                        "risk_level": "Critical" if signature_score >= 0.6 else "High",
+                        "location": "document_content",
+                        "reason": "Potential handwritten signature detected. Signatures are biometric identifiers under GDPR and require special handling.",
+                        "gdpr_articles": ["Article 9(1) - Biometric Data"],
+                        "analysis_score": round(signature_score, 3),
+                        "remediation": "Verify consent for signature processing. Consider redaction for non-essential sharing."
+                    }
+                    findings.append(finding)
+            
+            logger.info(f"Signature detection completed for {image_path}: {len(findings)} findings")
+            
+        except Exception as e:
+            logger.debug(f"Signature detection error for {image_path}: {e}")
+        
+        return findings
+    
+    def _analyze_signature_characteristics(self, image: np.ndarray) -> float:
+        """Analyze image for handwritten signature characteristics."""
+        try:
+            height, width = image.shape[:2]
+            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            score = 0.0
+            
+            # Focus on bottom third of image (common signature location)
+            signature_region = gray[2*height//3:height, :]
+            
+            # 1. Look for continuous curved strokes (signature characteristics)
+            edges = cv2.Canny(signature_region, 50, 150)
+            
+            # Find contours
+            contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            
+            # Analyze stroke characteristics
+            long_strokes = 0
+            curved_strokes = 0
+            
+            for contour in contours:
+                # Calculate arc length
+                perimeter = cv2.arcLength(contour, False)
+                area = cv2.contourArea(contour)
+                
+                # Long, thin strokes are signature-like
+                if perimeter > 50 and area < perimeter * 5:
+                    long_strokes += 1
+                
+                # Curved strokes (approximation requires more points)
+                epsilon = 0.02 * perimeter
+                approx = cv2.approxPolyDP(contour, epsilon, False)
+                if len(approx) > 5:  # Many points = curved
+                    curved_strokes += 1
+            
+            if long_strokes > 3:
+                score += 0.3
+            if curved_strokes > 2:
+                score += 0.3
+            
+            # 2. Check for ink-like density
+            _, thresh = cv2.threshold(signature_region, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+            ink_density = np.sum(thresh == 255) / thresh.size
+            
+            if 0.01 < ink_density < 0.15:  # Typical signature density
+                score += 0.2
+            
+            # 3. Check for horizontal baseline (signatures often above a line)
+            horizontal_lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, minLineLength=width//4, maxLineGap=10)
+            if horizontal_lines is not None and len(horizontal_lines) > 0:
+                score += 0.2
+            
+            return min(score, 1.0)
+            
+        except Exception:
+            return 0.0
+    
+    # =========================================================================
+    # NEW FEATURE 6: STEGANOGRAPHY DETECTION
+    # =========================================================================
+    def _detect_steganography(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect potential steganography (hidden data embedded in images).
+        This could hide sensitive data, malware, or covert communications.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of steganography findings
+        """
+        findings = []
+        
+        if not CV_AVAILABLE:
+            return findings
+        
+        try:
+            image = cv2.imread(image_path)
+            if image is None:
+                return findings
+            
+            # Multiple steganography detection techniques
+            lsb_score = self._analyze_lsb_patterns(image)
+            chi_square_score = self._analyze_chi_square(image)
+            histogram_score = self._analyze_histogram_anomalies(image)
+            
+            overall_score = (lsb_score + chi_square_score + histogram_score) / 3
+            
+            if overall_score >= 0.3:
+                risk_level = "Critical" if overall_score >= 0.6 else "High" if overall_score >= 0.4 else "Medium"
+                
+                finding = {
+                    "type": "STEGANOGRAPHY_INDICATORS",
+                    "source": image_path,
+                    "source_type": "image_steganography",
+                    "confidence": overall_score,
+                    "context": "Potential hidden data detected in image using statistical analysis",
+                    "extraction_method": "steganography_detection",
+                    "risk_level": risk_level,
+                    "location": "image_data",
+                    "reason": "Image shows statistical anomalies consistent with steganographic data hiding. Hidden data could contain PII, credentials, or other sensitive information that bypasses normal security controls.",
+                    "gdpr_articles": ["Article 32 - Security of Processing"],
+                    "analysis_details": {
+                        "overall_score": round(overall_score, 3),
+                        "lsb_anomaly_score": round(lsb_score, 3),
+                        "chi_square_score": round(chi_square_score, 3),
+                        "histogram_anomaly_score": round(histogram_score, 3)
+                    },
+                    "remediation": "Investigate image origin. Consider re-encoding to remove potential hidden data. Report if malicious content suspected."
+                }
+                findings.append(finding)
+            
+            logger.info(f"Steganography detection completed for {image_path}: {len(findings)} findings")
+            
+        except Exception as e:
+            logger.debug(f"Steganography detection error for {image_path}: {e}")
+        
+        return findings
+    
+    def _analyze_lsb_patterns(self, image: np.ndarray) -> float:
+        """Analyze Least Significant Bit patterns for steganography indicators."""
+        try:
+            # Extract LSB plane
+            lsb = image & 1
+            
+            # In natural images, LSB should be relatively random
+            # Steganography often creates patterns
+            
+            score = 0.0
+            
+            for channel in range(3):
+                channel_lsb = lsb[:,:,channel]
+                
+                # Check randomness using runs test
+                flattened = channel_lsb.flatten()
+                
+                # Count runs (sequences of same value)
+                runs = 1
+                for i in range(1, len(flattened)):
+                    if flattened[i] != flattened[i-1]:
+                        runs += 1
+                
+                # Expected runs for random data
+                n0 = np.sum(flattened == 0)
+                n1 = np.sum(flattened == 1)
+                n = len(flattened)
+                
+                if n0 > 0 and n1 > 0:
+                    expected_runs = 1 + (2 * n0 * n1) / n
+                    
+                    # If runs significantly different from expected, suspicious
+                    run_ratio = runs / expected_runs
+                    if run_ratio < 0.8 or run_ratio > 1.2:
+                        score += 0.15
+            
+            # Check for unusual correlations between adjacent pixels
+            for channel in range(3):
+                channel_data = image[:,:,channel].astype(float)
+                
+                # Horizontal correlation
+                h_corr = np.corrcoef(channel_data[:, :-1].flatten(), channel_data[:, 1:].flatten())[0,1]
+                
+                # Very low correlation might indicate hidden data
+                if not np.isnan(h_corr) and h_corr < 0.9:
+                    score += 0.1
+            
+            return min(score, 1.0)
+            
+        except Exception:
+            return 0.0
+    
+    def _analyze_chi_square(self, image: np.ndarray) -> float:
+        """Chi-square analysis for detecting LSB embedding."""
+        try:
+            score = 0.0
+            
+            for channel in range(3):
+                channel_data = image[:,:,channel].flatten()
+                
+                # Create histogram of pairs (2k, 2k+1)
+                pair_hist = {}
+                for val in channel_data:
+                    pair_key = val // 2
+                    if pair_key not in pair_hist:
+                        pair_hist[pair_key] = [0, 0]
+                    pair_hist[pair_key][val % 2] += 1
+                
+                # Chi-square statistic
+                chi_sq = 0
+                total_pairs = 0
+                
+                for pair_key, counts in pair_hist.items():
+                    if sum(counts) > 0:
+                        expected = sum(counts) / 2
+                        if expected > 0:
+                            chi_sq += ((counts[0] - expected) ** 2) / expected
+                            chi_sq += ((counts[1] - expected) ** 2) / expected
+                            total_pairs += 1
+                
+                if total_pairs > 0:
+                    normalized_chi_sq = chi_sq / total_pairs
+                    
+                    # Very low chi-square indicates LSB embedding
+                    if normalized_chi_sq < 0.5:
+                        score += 0.3
+                    elif normalized_chi_sq < 1.0:
+                        score += 0.1
+            
+            return min(score, 1.0)
+            
+        except Exception:
+            return 0.0
+    
+    def _analyze_histogram_anomalies(self, image: np.ndarray) -> float:
+        """Analyze histogram for steganography-induced anomalies."""
+        try:
+            score = 0.0
+            
+            for channel in range(3):
+                # Calculate histogram
+                hist = cv2.calcHist([image], [channel], None, [256], [0, 256])
+                hist = hist.flatten()
+                
+                # Look for unusual patterns
+                # 1. Pairs of adjacent bins with similar counts (PoV indicator)
+                pair_similarity = 0
+                for i in range(0, 256, 2):
+                    if hist[i] > 0 and hist[i+1] > 0:
+                        ratio = min(hist[i], hist[i+1]) / max(hist[i], hist[i+1])
+                        if ratio > 0.95:  # Very similar
+                            pair_similarity += 1
+                
+                if pair_similarity > 100:  # Many similar pairs
+                    score += 0.2
+                
+                # 2. Look for unusual smoothness in histogram
+                hist_diff = np.diff(hist)
+                smoothness = np.std(hist_diff)
+                
+                # Very smooth histogram might indicate manipulation
+                if smoothness < 50:
+                    score += 0.15
+            
+            return min(score, 1.0)
+            
+        except Exception:
+            return 0.0
     
     def _detect_deepfake(self, image_path: str) -> List[Dict[str, Any]]:
         """
