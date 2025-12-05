@@ -724,7 +724,14 @@ class UnifiedHTMLReportGenerator:
             severity = finding.get('risk_level', 'Medium')
             confidence = finding.get('confidence', 0)
             context = finding.get('context', '')
-            source = finding.get('source', 'Unknown')
+            
+            # Extract filename from source path
+            import os
+            source_path = finding.get('source', '')
+            source = os.path.basename(source_path) if source_path else 'Unknown'
+            if not source or source == '':
+                source = 'Uploaded Image'
+            
             reason = finding.get('reason', '')
             
             # Extract analysis details
@@ -752,11 +759,29 @@ class UnifiedHTMLReportGenerator:
             }
             severity_color = severity_colors.get(severity, '#868e96')
             
+            # Determine detection status based on score
+            if overall_score >= 0.6:
+                detection_title = "🎭 Synthetic Media Detected - High Confidence"
+                detection_context = context if context else f"High likelihood ({overall_score:.1%}) of AI-generated or manipulated content detected through multi-factor analysis."
+            elif overall_score >= 0.4:
+                detection_title = "🎭 Potential Synthetic Media"
+                detection_context = context if context else f"Moderate indicators ({overall_score:.1%}) suggest possible AI-generated content. Further verification recommended."
+            elif overall_score >= 0.2:
+                detection_title = "🎭 Synthetic Media Indicators"
+                detection_context = context if context else f"Some indicators ({overall_score:.1%}) of potential synthetic content. Review recommended."
+            else:
+                detection_title = "🎭 Low Synthetic Indicators"
+                detection_context = context if context else "Minimal indicators detected. Image appears authentic but was flagged for review."
+            
+            # Generate default recommendation if missing
+            if not recommendation:
+                recommendation = "(1) Verify content authenticity with source, (2) Add AI disclosure labels if confirmed synthetic, (3) Document verification in compliance records"
+            
             section_html += f"""
             <div class="deepfake-finding" style="background: white; border: 2px solid {severity_color}; padding: 20px; margin: 15px 0; border-radius: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h4 style="margin: 0; color: {severity_color};">
-                        🎭 Synthetic Media Detected
+                        {detection_title}
                     </h4>
                     <span style="background: {severity_color}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.9em;">
                         {severity} Risk
@@ -770,7 +795,7 @@ class UnifiedHTMLReportGenerator:
                 
                 <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
                     <strong style="color: #495057;">📊 {t_report('detection_analysis', 'Detection Analysis')}:</strong>
-                    <p style="margin: 10px 0 5px 0;">{context}</p>
+                    <p style="margin: 10px 0 5px 0;">{detection_context}</p>
                     <div style="margin-top: 10px;">
                         <div style="margin: 5px 0;">
                             <strong>{t_report('overall_likelihood', 'Overall Likelihood')}:</strong> 
@@ -791,7 +816,7 @@ class UnifiedHTMLReportGenerator:
                     <h5 style="margin: 0 0 10px 0; color: #1864ab;">
                         ⚖️ {article}: {article_title}
                     </h5>
-                    <p style="margin: 10px 0; font-size: 0.9em; color: #495057;">{reason}</p>
+                    <p style="margin: 10px 0; font-size: 0.9em; color: #495057;">{reason if reason else 'EU AI Act Article 50(2) requires transparency labeling for AI-generated content to prevent misinformation and protect user rights.'}</p>
                     
                     {self._generate_compliance_requirements_html(requirements)}
                     

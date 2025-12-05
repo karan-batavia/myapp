@@ -117,6 +117,14 @@ class EnhancedFindingGenerator:
                     'risk_calculator': self._calculate_ai_pii_risk,
                     'recommendation_generator': self._generate_ai_pii_remediation
                 }
+            },
+            'image_scanner': {
+                'DEEPFAKE_SYNTHETIC_MEDIA': {
+                    'title': 'Potential Deepfake/Synthetic Media',
+                    'context_analyzer': self._analyze_deepfake_context,
+                    'risk_calculator': self._calculate_deepfake_risk,
+                    'recommendation_generator': self._generate_deepfake_remediation
+                }
             }
         }
     
@@ -479,15 +487,106 @@ class EnhancedFindingGenerator:
         )
     
     # Placeholder methods for other scanner types
-    def _analyze_bias_context(self, finding): return {'detailed_description': 'AI bias detected', 'business_context': 'AI fairness issue'}
-    def _calculate_ai_bias_risk(self, finding, context): return {'risk_level': 'High', 'severity': 'High'}
+    def _analyze_bias_context(self, finding): return {'detailed_description': 'AI bias detected', 'business_context': 'AI fairness issue', 'gdpr_articles': [], 'compliance_requirements': [], 'affected_systems': [], 'data_classification': 'Unknown'}
+    def _calculate_ai_bias_risk(self, finding, context): return {'risk_level': 'High', 'severity': 'High', 'business_impact': 'AI fairness concerns', 'remediation_priority': 'High', 'estimated_effort': '4-8 hours', 'exposure_risk': 'Medium'}
     def _generate_bias_remediation(self, finding, context, risk): return []
-    def _analyze_ai_pii_context(self, finding): return {'detailed_description': 'AI PII leak', 'business_context': 'Privacy issue'}
-    def _calculate_ai_pii_risk(self, finding, context): return {'risk_level': 'High', 'severity': 'High'}
+    def _analyze_ai_pii_context(self, finding): return {'detailed_description': 'AI PII leak', 'business_context': 'Privacy issue', 'gdpr_articles': [], 'compliance_requirements': [], 'affected_systems': [], 'data_classification': 'Unknown'}
+    def _calculate_ai_pii_risk(self, finding, context): return {'risk_level': 'High', 'severity': 'High', 'business_impact': 'Privacy violation', 'remediation_priority': 'High', 'estimated_effort': '2-4 hours', 'exposure_risk': 'High'}
     def _generate_ai_pii_remediation(self, finding, context, risk): return []
-    def _analyze_dark_pattern_context(self, finding): return {'detailed_description': 'Dark pattern', 'business_context': 'UX issue'}
-    def _calculate_consent_risk(self, finding, context): return {'risk_level': 'High', 'severity': 'High'}
+    def _analyze_dark_pattern_context(self, finding): return {'detailed_description': 'Dark pattern', 'business_context': 'UX issue', 'gdpr_articles': [], 'compliance_requirements': [], 'affected_systems': [], 'data_classification': 'Unknown'}
+    def _calculate_consent_risk(self, finding, context): return {'risk_level': 'High', 'severity': 'High', 'business_impact': 'Consent violation', 'remediation_priority': 'High', 'estimated_effort': '2-4 hours', 'exposure_risk': 'Medium'}
     def _generate_consent_remediation(self, finding, context, risk): return []
+    
+    def _analyze_deepfake_context(self, finding: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze deepfake/synthetic media context"""
+        import os
+        source = finding.get('source', '')
+        filename = os.path.basename(source) if source else 'Unknown file'
+        analysis = finding.get('analysis_details', {})
+        overall_score = analysis.get('overall_score', 0)
+        
+        likelihood = "high likelihood" if overall_score >= 0.6 else "moderate likelihood" if overall_score >= 0.4 else "potential indicators"
+        
+        return {
+            'detailed_description': f'Synthetic/AI-generated media detected in "{filename}" with {likelihood} ({overall_score:.1%} confidence). This content may require transparency labeling under EU AI Act Article 50(2).',
+            'business_context': f'Under EU AI Act 2025, synthetic media must be clearly disclosed. Failure to label AI-generated content can result in fines up to €15M or 3% of global turnover.',
+            'gdpr_articles': ['EU AI Act Article 50(2) - Transparency obligations for AI-generated content'],
+            'compliance_requirements': [
+                'EU AI Act Article 50(2) - Synthetic media transparency',
+                'Label AI-generated content clearly',
+                'Maintain records of AI-generated materials'
+            ],
+            'affected_systems': ['Media Content', 'Marketing Materials', 'Communications'],
+            'data_classification': 'AI-Generated Content'
+        }
+    
+    def _calculate_deepfake_risk(self, finding: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+        """Calculate risk for deepfake detection"""
+        analysis = finding.get('analysis_details', {})
+        overall_score = analysis.get('overall_score', 0)
+        
+        if overall_score >= 0.6:
+            return {
+                'risk_level': 'Critical',
+                'severity': 'High',
+                'business_impact': 'High probability of synthetic media requiring immediate transparency labeling. Non-compliance with EU AI Act can result in penalties up to €15M.',
+                'remediation_priority': 'Immediate - Verify and label within 24 hours',
+                'estimated_effort': '1-2 hours - Verify authenticity and add disclosures',
+                'exposure_risk': 'Public-facing content may violate transparency requirements'
+            }
+        elif overall_score >= 0.4:
+            return {
+                'risk_level': 'High',
+                'severity': 'Medium',
+                'business_impact': 'Moderate probability of synthetic media. Verify content origin and consider adding transparency labels.',
+                'remediation_priority': 'High - Verify within 48 hours',
+                'estimated_effort': '2-4 hours - Investigation and verification',
+                'exposure_risk': 'Potential compliance gap if content is AI-generated'
+            }
+        else:
+            return {
+                'risk_level': 'Medium',
+                'severity': 'Low',
+                'business_impact': 'Low probability but some indicators present. Document verification for compliance records.',
+                'remediation_priority': 'Medium - Review within 7 days',
+                'estimated_effort': '1-2 hours - Quick verification',
+                'exposure_risk': 'Low risk but worth monitoring'
+            }
+    
+    def _generate_deepfake_remediation(self, finding: Dict[str, Any], context: Dict[str, Any], risk: Dict[str, Any]) -> List[ActionableRecommendation]:
+        """Generate remediation for deepfake findings"""
+        return [
+            ActionableRecommendation(
+                action="Verify content authenticity",
+                description="Determine if content is genuinely AI-generated or false positive",
+                implementation="(1) Check content origin and creation records, (2) Contact content creator for verification, (3) Use additional forensic tools if needed",
+                effort_estimate="1-2 hours",
+                priority="High",
+                verification="Document verification results with evidence",
+                business_impact="Avoid false disclosures while ensuring compliance",
+                compliance_requirement="EU AI Act Article 50(2)"
+            ),
+            ActionableRecommendation(
+                action="Add transparency labels if confirmed",
+                description="Clearly disclose AI-generated content to viewers",
+                implementation="(1) Add visible label 'AI-Generated' or 'Synthetic Media', (2) Update metadata with AI disclosure, (3) Document in content registry",
+                effort_estimate="30 minutes",
+                priority="Critical" if risk.get('risk_level') == 'Critical' else "High",
+                verification="Verify label is visible and compliant with EU AI Act requirements",
+                business_impact="Avoid €15M penalties for non-disclosure",
+                compliance_requirement="EU AI Act Article 50(2) transparency"
+            ),
+            ActionableRecommendation(
+                action="Update content management policy",
+                description="Establish procedures for AI-generated content handling",
+                implementation="(1) Create AI content registry, (2) Define labeling standards, (3) Train team on compliance requirements",
+                effort_estimate="4-8 hours",
+                priority="Medium",
+                verification="Policy documented and team trained",
+                business_impact="Prevent future compliance issues",
+                compliance_requirement="EU AI Act organizational compliance"
+            )
+        ]
 
 def enhance_findings_for_report(scanner_type: str, findings: List[Dict[str, Any]], region: str = "Netherlands") -> List[Dict[str, Any]]:
     """
