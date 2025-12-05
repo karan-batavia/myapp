@@ -519,6 +519,8 @@ class ImageScanner:
         Extract EXIF metadata from images including GPS coordinates, timestamps,
         camera info, and author information - all privacy-sensitive data.
         
+        Note: This only requires PIL/Pillow, not OpenCV.
+        
         Args:
             image_path: Path to the image file
             
@@ -526,9 +528,6 @@ class ImageScanner:
             List of EXIF metadata findings
         """
         findings = []
-        
-        if not CV_AVAILABLE:
-            return findings
         
         try:
             from PIL import Image
@@ -658,24 +657,54 @@ class ImageScanner:
         """Convert GPS EXIF data to decimal coordinates."""
         try:
             def convert_to_degrees(value):
-                d = float(value[0])
-                m = float(value[1])
-                s = float(value[2])
-                return d + (m / 60.0) + (s / 3600.0)
+                """Convert GPS coordinate tuple/IFDRational to decimal degrees."""
+                try:
+                    # Handle IFDRational or tuple of rationals
+                    if hasattr(value[0], 'numerator'):
+                        # IFDRational objects
+                        d = float(value[0].numerator) / float(value[0].denominator) if value[0].denominator else 0
+                        m = float(value[1].numerator) / float(value[1].denominator) if value[1].denominator else 0
+                        s = float(value[2].numerator) / float(value[2].denominator) if value[2].denominator else 0
+                    elif isinstance(value[0], tuple):
+                        # Tuple format (numerator, denominator)
+                        d = value[0][0] / value[0][1] if value[0][1] else 0
+                        m = value[1][0] / value[1][1] if value[1][1] else 0
+                        s = value[2][0] / value[2][1] if value[2][1] else 0
+                    else:
+                        # Direct float/int values
+                        d = float(value[0])
+                        m = float(value[1])
+                        s = float(value[2])
+                    return d + (m / 60.0) + (s / 3600.0)
+                except:
+                    return None
             
             if 'GPSLatitude' in gps_data and 'GPSLongitude' in gps_data:
-                lat = gps_data.get('GPSLatitude')
-                lon = gps_data.get('GPSLongitude')
+                lat_raw = gps_data.get('GPSLatitude')
+                lon_raw = gps_data.get('GPSLongitude')
                 lat_ref = gps_data.get('GPSLatitudeRef', 'N')
                 lon_ref = gps_data.get('GPSLongitudeRef', 'E')
                 
-                # Handle string representation
-                if isinstance(lat, str) and isinstance(lon, str):
-                    return f"GPS data present (requires parsing)"
+                # Handle string representation (already parsed elsewhere)
+                if isinstance(lat_raw, str) and isinstance(lon_raw, str):
+                    return f"GPS data present: {lat_raw}, {lon_raw}"
                 
-                return f"{lat}, {lon} ({lat_ref}, {lon_ref})"
-        except:
-            pass
+                # Convert to decimal degrees
+                lat_decimal = convert_to_degrees(lat_raw)
+                lon_decimal = convert_to_degrees(lon_raw)
+                
+                if lat_decimal is not None and lon_decimal is not None:
+                    # Apply N/S/E/W reference
+                    if lat_ref == 'S':
+                        lat_decimal = -lat_decimal
+                    if lon_ref == 'W':
+                        lon_decimal = -lon_decimal
+                    
+                    return f"{lat_decimal:.6f}, {lon_decimal:.6f}"
+                
+                return f"GPS data present ({lat_ref}, {lon_ref})"
+        except Exception as e:
+            logger.debug(f"GPS conversion error: {e}")
         return None
     
     # =========================================================================
