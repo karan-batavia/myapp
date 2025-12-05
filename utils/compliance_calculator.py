@@ -128,16 +128,30 @@ class ComplianceCalculator:
         
         return result
     
-    def get_compliance_status(self, score: float) -> str:
-        """Get compliance status text based on score."""
-        if score >= 90:
-            return "Excellent"
-        elif score >= 75:
-            return "Good"
-        elif score >= 50:
-            return "Needs Improvement"
+    def get_compliance_status(self, score: float, total_findings: int = 0) -> str:
+        """Get compliance status text based on score and findings."""
+        # Cannot be "Excellent" if there are any findings
+        if total_findings > 0:
+            if score >= 85:
+                return "Good"
+            elif score >= 70:
+                return "Acceptable"
+            elif score >= 50:
+                return "Needs Improvement"
+            else:
+                return "Critical"
         else:
-            return "Critical"
+            # No findings - score-based only
+            if score >= 95:
+                return "Excellent"
+            elif score >= 85:
+                return "Very Good"
+            elif score >= 75:
+                return "Good"
+            elif score >= 50:
+                return "Needs Improvement"
+            else:
+                return "Critical"
     
     def get_risk_level(self, score: float) -> str:
         """Get risk level based on compliance score."""

@@ -179,15 +179,24 @@ class UnifiedHTMLReportGenerator:
         if not findings:
             return 100
         
-        # Count severity levels
-        critical = len([f for f in findings if f.get('severity') == 'Critical'])
-        high = len([f for f in findings if f.get('severity') == 'High'])
-        medium = len([f for f in findings if f.get('severity') == 'Medium'])
-        low = len([f for f in findings if f.get('severity') == 'Low'])
+        # Count severity levels - also check risk_level as fallback
+        critical = len([f for f in findings if f.get('severity') == 'Critical' or f.get('risk_level') == 'Critical'])
+        high = len([f for f in findings if f.get('severity') == 'High' or f.get('risk_level') == 'High'])
+        medium = len([f for f in findings if f.get('severity') == 'Medium' or f.get('risk_level') == 'Medium'])
+        low = len([f for f in findings if f.get('severity') == 'Low' or f.get('risk_level') == 'Low'])
         
-        # Calculate penalty
-        penalty = (critical * 25) + (high * 15) + (medium * 10) + (low * 5)
-        score = max(0, 100 - penalty)
+        # Count unclassified findings as Medium
+        unclassified = len(findings) - (critical + high + medium + low)
+        medium += unclassified
+        
+        # Calculate penalty - more aggressive penalties
+        # Critical: 40 points, High: 25 points, Medium: 15 points, Low: 10 points
+        penalty = (critical * 40) + (high * 25) + (medium * 15) + (low * 10)
+        
+        # Base penalty: any finding means not 100% compliant
+        base_penalty = min(len(findings) * 5, 20)  # Up to 20 points for having findings
+        
+        score = max(0, 100 - penalty - base_penalty)
         
         return score
     

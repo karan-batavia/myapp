@@ -99,11 +99,21 @@ def calculate_compliance_score(scan_results: Dict[str, Any], weights: Optional[D
     overall_score = round(max(0, min(100, overall_score)))
     category_scores = {k: round(max(0, min(100, v))) for k, v in category_scores.items()}
     
-    # Determine score label based on range
-    score_label = "Excellent" if overall_score >= 80 else \
-                 "Good" if overall_score >= 60 else \
-                 "Moderate" if overall_score >= 40 else \
-                 "Poor" if overall_score >= 20 else "Critical"
+    # Determine score label based on range AND findings
+    total_findings = scan_results.get('total_findings', high_risk + medium_risk + low_risk)
+    if total_findings > 0:
+        # Cannot be "Excellent" with any findings
+        score_label = "Good" if overall_score >= 80 else \
+                     "Acceptable" if overall_score >= 60 else \
+                     "Moderate" if overall_score >= 40 else \
+                     "Poor" if overall_score >= 20 else "Critical"
+    else:
+        # No findings - can be Excellent
+        score_label = "Excellent" if overall_score >= 90 else \
+                     "Very Good" if overall_score >= 80 else \
+                     "Good" if overall_score >= 60 else \
+                     "Moderate" if overall_score >= 40 else \
+                     "Poor" if overall_score >= 20 else "Critical"
     
     # Get score color based on range
     score_color = SCORE_COLORS["excellent"] if overall_score >= 80 else \
@@ -119,7 +129,8 @@ def calculate_compliance_score(scan_results: Dict[str, Any], weights: Optional[D
     }
 
 def display_compliance_gauge(score: int, title: str = "Compliance Score", size: int = 200, 
-                            show_label: bool = True, key_suffix: str = None) -> None:
+                            show_label: bool = True, key_suffix: str = None,
+                            total_findings: int = 0) -> None:
     """
     Display an animated gauge chart for compliance score.
     
@@ -129,6 +140,7 @@ def display_compliance_gauge(score: int, title: str = "Compliance Score", size: 
         size: Size of the gauge in pixels
         show_label: Whether to show the score label
         key_suffix: Optional suffix for unique keys
+        total_findings: Number of findings (affects label)
     """
     # Determine color based on score
     color = SCORE_COLORS["excellent"] if score >= 80 else \
@@ -136,11 +148,18 @@ def display_compliance_gauge(score: int, title: str = "Compliance Score", size: 
             SCORE_COLORS["moderate"] if score >= 40 else \
             SCORE_COLORS["serious"] if score >= 20 else SCORE_COLORS["critical"]
     
-    # Determine label
-    label = "Excellent" if score >= 80 else \
-            "Good" if score >= 60 else \
-            "Moderate" if score >= 40 else \
-            "Poor" if score >= 20 else "Critical"
+    # Determine label - cannot be "Excellent" with findings
+    if total_findings > 0:
+        label = "Good" if score >= 80 else \
+                "Acceptable" if score >= 60 else \
+                "Moderate" if score >= 40 else \
+                "Poor" if score >= 20 else "Critical"
+    else:
+        label = "Excellent" if score >= 90 else \
+                "Very Good" if score >= 80 else \
+                "Good" if score >= 60 else \
+                "Moderate" if score >= 40 else \
+                "Poor" if score >= 20 else "Critical"
     
     # Create the gauge chart
     fig = go.Figure(go.Indicator(
