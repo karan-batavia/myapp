@@ -154,6 +154,9 @@ class IntelligentWebsiteScanner:
                 pages_to_scan, scan_results, progress_callback
             )
             
+            # Step 5: Deduplicate findings (same tracker/cookie on multiple pages)
+            findings = self._deduplicate_findings(findings)
+            
             scan_results['findings'] = findings
             scan_results['cookies_found'] = len(all_cookies)
             scan_results['trackers_found'] = len(all_trackers)
@@ -269,7 +272,7 @@ class IntelligentWebsiteScanner:
                         links = soup.find_all('a', href=True)
                         internal_links = [
                             link for link in links 
-                            if self._is_internal_link(link['href'], analysis['base_domain'])
+                            if self._is_internal_link(str(link['href']), analysis['base_domain'])
                         ]
                         analysis['estimated_pages'] = min(len(internal_links) * 2, 500)  # Rough estimate
                     except:
@@ -442,7 +445,7 @@ class IntelligentWebsiteScanner:
                     # Extract all links
                     links = soup.find_all('a', href=True)
                     for link in links:
-                        href = link['href']
+                        href = str(link['href'])
                         absolute_url = urljoin(current_url, href)
                         
                         if (self._is_internal_link(absolute_url, base_domain) and 
@@ -557,6 +560,62 @@ class IntelligentWebsiteScanner:
                     logger.warning(f"Page scan error: {str(e)}")
         
         return all_findings, metrics, all_cookies, all_trackers
+
+    def _deduplicate_findings(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Deduplicate findings that appear across multiple pages.
+        
+        Groups identical trackers/cookies and consolidates them with page counts.
+        """
+        if not findings:
+            return []
+        
+        unique_findings = {}
+        
+        for finding in findings:
+            finding_type = finding.get('type', '')
+            description = finding.get('description', '')
+            location = finding.get('location', '')
+            
+            pattern_match = ''
+            if 'Pattern:' in location:
+                pattern_match = location.split('Pattern:')[-1].strip()
+            
+            key = f"{finding_type}|{pattern_match or description[:50]}"
+            
+            if key not in unique_findings:
+                consolidated = finding.copy()
+                consolidated['pages_affected'] = []
+                consolidated['occurrence_count'] = 0
+                unique_findings[key] = consolidated
+            
+            found_on = finding.get('found_on', finding.get('location', ''))
+            if found_on and found_on not in unique_findings[key]['pages_affected']:
+                unique_findings[key]['pages_affected'].append(found_on)
+            unique_findings[key]['occurrence_count'] += 1
+        
+        result = []
+        for key, finding in unique_findings.items():
+            count = finding['occurrence_count']
+            pages = finding['pages_affected']
+            
+            if count > 1:
+                finding['context'] = f"Found on {count} pages across the website"
+                if len(pages) > 0:
+                    finding['location'] = f"{finding.get('location', '')} (affects {len(pages)} pages)"
+            else:
+                tracker_name = finding.get('description', '').replace('Inline tracker script for ', '')
+                if 'tracker' in finding.get('type', '').lower():
+                    finding['context'] = f"Third-party tracking script detected: {tracker_name}"
+                elif 'consent' in finding.get('type', '').lower():
+                    finding['context'] = f"Consent management platform: {tracker_name}"
+                else:
+                    finding['context'] = finding.get('description', 'Privacy-related finding requiring review')
+            
+            del finding['occurrence_count']
+            result.append(finding)
+        
+        logger.info(f"Deduplicated {len(findings)} findings to {len(result)} unique findings")
+        return result
 
     def _scan_single_page(self, page_url: str) -> Optional[tuple]:
         """Scan a single page for privacy compliance issues."""
