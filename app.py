@@ -530,6 +530,25 @@ def main():
             
             # Check authentication status with JWT validation
             if not is_authenticated():
+                # Hide sidebar page navigation for unauthenticated users
+                st.markdown("""
+                <style>
+                    /* Hide multi-page navigation in sidebar before login */
+                    [data-testid="stSidebarNav"] {
+                        display: none !important;
+                    }
+                    section[data-testid="stSidebar"] > div:first-child > div:first-child > div[data-testid="stSidebarNav"] {
+                        display: none !important;
+                    }
+                    /* Also hide via attribute selectors for newer Streamlit versions */
+                    nav[aria-label="Main menu"] {
+                        display: none !important;
+                    }
+                    ul[data-testid="stSidebarNavItems"] {
+                        display: none !important;
+                    }
+                </style>
+                """, unsafe_allow_html=True)
                 render_landing_page()
                 return
             
