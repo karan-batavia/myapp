@@ -7895,6 +7895,15 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             # Store scan results in session state for download access
             st.session_state['last_scan_results'] = scan_results
             
+            # CRITICAL: Save scan results to database for dashboard and history display
+            try:
+                from services.results_aggregator import ResultsAggregator
+                aggregator = ResultsAggregator()
+                aggregator.save_scan_result(username=username, result=scan_results)
+                logger.info(f"SOC2 scan results saved to database: {scan_results.get('scan_id', 'unknown')}")
+            except Exception as save_error:
+                logger.error(f"Failed to save SOC2 scan results: {save_error}")
+            
             # Generate and offer HTML report using unified report generator
             # This ensures SOC2 TSC criteria and NIS2 articles are properly displayed
             try:
