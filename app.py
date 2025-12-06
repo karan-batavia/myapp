@@ -3011,18 +3011,13 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         files_to_scan = []
         
         if repo_url:
-            status_text.text("📥 Cloning repository with fast scanner...")
-            from services.fast_repo_scanner import FastRepoScanner
+            status_text.text("📥 Cloning repository for analysis...")
+            from services.repo_scanner import RepoScanner
+            from services.code_scanner import CodeScanner
             
-            # Use existing fast repo scanner for cloning
-            class DummyScanner:
-                def __init__(self):
-                    pass
-                def scan_file(self, file_path):
-                    return {"findings": [], "lines_analyzed": 0}
-            
-            dummy_scanner = DummyScanner()
-            repo_scanner = FastRepoScanner(dummy_scanner)
+            # Initialize scanners
+            code_scanner = CodeScanner()
+            repo_scanner = RepoScanner(code_scanner)
             repo_results = repo_scanner.scan_repository(repo_url)
             
             # Extract files from cloned repository
@@ -7762,10 +7757,13 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             status.update(label="Cloning repository for analysis...")
             progress_bar.progress(25)
             
-            # Use fast repository scanner for SOC2 analysis
-            from services.fast_repo_scanner import FastRepoScanner
-            repo_scanner = FastRepoScanner(None)
-            repo_analysis = repo_scanner.scan_repository(repo_url, branch)
+            # Use SOC2 scanner for GitHub/Azure DevOps analysis
+            from services.soc2_scanner import scan_github_repo_for_soc2, scan_azure_repo_for_soc2
+            
+            if repo_source == "GitHub Repository":
+                repo_analysis = scan_github_repo_for_soc2(repo_url, branch)
+            else:
+                repo_analysis = scan_azure_repo_for_soc2(repo_url, project="", branch=branch)
             
             # Map findings to SOC2 TSC criteria
             status.update(label="Mapping findings to Trust Service Criteria...")
