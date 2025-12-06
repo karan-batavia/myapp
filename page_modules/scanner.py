@@ -391,22 +391,138 @@ def _render_website_scanner(region: str, username: str):
     st.write("**Scan Options**")
     col1, col2 = st.columns(2)
     with col1:
-        st.checkbox("Cookie analysis", value=True)
-        st.checkbox("Privacy policy check", value=True)
-        st.checkbox("Form analysis", value=True)
+        cookie_analysis = st.checkbox("Cookie analysis", value=True)
+        privacy_policy = st.checkbox("Privacy policy check", value=True)
+        form_analysis = st.checkbox("Form analysis", value=True)
     with col2:
-        st.checkbox("Third-party tracker detection", value=True)
-        st.checkbox("GDPR consent check", value=True)
-        st.checkbox("Multi-page crawl", value=False)
+        tracker_detection = st.checkbox("Third-party tracker detection", value=True)
+        gdpr_consent = st.checkbox("GDPR consent check", value=True)
+        multi_page = st.checkbox("Multi-page crawl", value=False)
     
     scan_depth = st.selectbox("Scan Depth", ["Light (homepage only)", "Standard (5 pages)", "Deep (20+ pages)"])
     
+    scan_mode_map = {
+        "Light (homepage only)": "fast",
+        "Standard (5 pages)": "smart", 
+        "Deep (20+ pages)": "deep"
+    }
+    max_pages_map = {
+        "Light (homepage only)": 1,
+        "Standard (5 pages)": 5,
+        "Deep (20+ pages)": 25
+    }
+    
     if st.button("🔍 Start Website Scan", type="primary"):
         if url:
-            with st.spinner("Scanning website..."):
-                import time
-                time.sleep(3)
+            if not url.startswith(('http://', 'https://')):
+                url = 'https://' + url
+            
+            try:
+                from services.website_scanner import WebsiteScanner
+                from services.intelligent_website_scanner import IntelligentWebsiteScanner
+                from services.results_aggregator import ResultsAggregator
+                
+                progress_bar = st.progress(0)
+                status_text = st.empty()
+                
+                def progress_callback(current, total, message=""):
+                    progress = min(current / max(total, 1), 1.0)
+                    progress_bar.progress(progress)
+                    if message:
+                        status_text.text(message)
+                
+                with st.spinner("Scanning website..."):
+                    status_text.text("Initializing website scanner...")
+                    
+                    website_scanner = WebsiteScanner(region=region)
+                    intelligent_scanner = IntelligentWebsiteScanner(website_scanner)
+                    
+                    scan_mode = scan_mode_map.get(scan_depth, "smart")
+                    max_pages = max_pages_map.get(scan_depth, 5)
+                    
+                    status_text.text(f"Scanning {url}...")
+                    
+                    scan_result = intelligent_scanner.scan_website_intelligent(
+                        base_url=url,
+                        scan_mode=scan_mode,
+                        max_pages=max_pages,
+                        progress_callback=progress_callback
+                    )
+                    
+                    progress_bar.progress(1.0)
+                    status_text.text("Processing results...")
+                    
+                    scan_result['region'] = region
+                    scan_result['scan_type'] = 'Intelligent Website Scanner'
+                    
+                    st.session_state['last_scan_results'] = scan_result
+                    st.session_state['latest_scan_type'] = 'website'
+                    
+                    try:
+                        aggregator = ResultsAggregator()
+                        aggregator.save_scan_result(username=username, result=scan_result)
+                    except Exception as e:
+                        logger.warning(f"Could not save scan result: {e}")
+                    
+                    status_text.empty()
+                    progress_bar.empty()
+                
                 st.success("✅ Website scan completed!")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Pages Scanned", scan_result.get('pages_scanned', 0))
+                with col2:
+                    st.metric("Cookies Found", scan_result.get('cookies_found', 0))
+                with col3:
+                    st.metric("Trackers Detected", scan_result.get('trackers_found', 0))
+                with col4:
+                    st.metric("Findings", len(scan_result.get('findings', [])))
+                
+                cookies = scan_result.get('cookies_detected', [])
+                if cookies:
+                    st.subheader("🍪 Cookies Found")
+                    for cookie in cookies[:10]:
+                        if isinstance(cookie, dict):
+                            cookie_name = cookie.get('name', 'Unknown')
+                            cookie_type = cookie.get('category', 'Unknown')
+                            st.write(f"- **{cookie_name}** ({cookie_type})")
+                        else:
+                            st.write(f"- {cookie}")
+                
+                trackers = scan_result.get('trackers_detected', [])
+                if trackers:
+                    st.subheader("📡 Trackers Detected")
+                    for tracker in trackers[:10]:
+                        if isinstance(tracker, dict):
+                            st.write(f"- **{tracker.get('name', 'Unknown')}**: {tracker.get('description', '')}")
+                        else:
+                            st.write(f"- {tracker}")
+                
+                findings = scan_result.get('findings', [])
+                if findings:
+                    st.subheader("🔍 Privacy Findings")
+                    for finding in findings[:10]:
+                        severity = finding.get('severity', 'Medium')
+                        severity_color = {'Critical': '🔴', 'High': '🟠', 'Medium': '🟡', 'Low': '🟢'}.get(severity, '⚪')
+                        st.write(f"{severity_color} **{finding.get('type', 'Finding')}**: {finding.get('description', finding.get('message', 'No description'))}")
+                
+                try:
+                    from services.download_reports import generate_html_report
+                    html_report = generate_html_report(scan_result)
+                    if html_report:
+                        st.download_button(
+                            label="📥 Download Full Report (HTML)",
+                            data=html_report,
+                            file_name=f"website_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
+                            mime="text/html"
+                        )
+                except Exception as e:
+                    logger.warning(f"Could not generate HTML report: {e}")
+                
+            except Exception as e:
+                logger.error(f"Website scan error: {e}")
+                st.error(f"Scan failed: {str(e)}")
         else:
             st.error("Please enter a website URL.")
 
