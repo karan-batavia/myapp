@@ -73,6 +73,14 @@ class TestFixtures:
         return path
     
     @staticmethod
+    def create_temp_file(content: str, suffix: str) -> str:
+        """Create a temporary file with given content and suffix"""
+        fd, path = tempfile.mkstemp(suffix=suffix)
+        with os.fdopen(fd, 'w') as f:
+            f.write(content)
+        return path
+    
+    @staticmethod
     def generate_large_terraform_content(resource_count: int) -> str:
         """Generate a large Terraform file with many resources"""
         content = 'provider "aws" {\n  region = "us-west-2"\n}\n\n'
@@ -612,6 +620,190 @@ app.listen(3000);
             assert isinstance(findings, list)
         finally:
             os.unlink(path)
+    
+    def test_azure_terraform_scanning(self):
+        """Test Azure Terraform scanning"""
+        content = '''
+provider "azurerm" {
+  features {}
+}
+
+resource "azurerm_storage_account" "example" {
+  name                     = "examplestorage"
+  resource_group_name      = "example-rg"
+  location                 = "westeurope"
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  
+  enable_https_traffic_only = false
+  allow_blob_public_access  = true
+}
+
+resource "azurerm_network_security_rule" "allow_all" {
+  source_address_prefix = "0.0.0.0/0"
+  direction             = "Inbound"
+  access                = "Allow"
+}
+'''
+        path = TestFixtures.create_temp_file(content, ".tf")
+        
+        try:
+            tech = identify_iac_technology(path)
+            findings = scan_iac_file(path)
+            
+            assert tech == "terraform", f"Expected terraform, got {tech}"
+            assert isinstance(findings, list)
+            assert len(findings) >= 2, "Expected at least 2 Azure-specific findings"
+            
+            descriptions = [f.get('description', '') for f in findings]
+            assert any('Azure' in d or 'NSG' in d or 'HTTPS' in d or 'blob' in d.lower() for d in descriptions)
+        finally:
+            os.unlink(path)
+    
+    def test_gcp_terraform_scanning(self):
+        """Test GCP Terraform scanning"""
+        content = '''
+provider "google" {
+  project = "my-project"
+  region  = "europe-west1"
+}
+
+resource "google_compute_firewall" "allow_all" {
+  name    = "allow-all"
+  network = "default"
+  
+  allow {
+    protocol = "tcp"
+    ports    = ["0-65535"]
+  }
+  
+  source_ranges = ["0.0.0.0/0"]
+}
+
+resource "google_storage_bucket" "public" {
+  name     = "my-bucket"
+  location = "EU"
+  
+  uniform_bucket_level_access = false
+  public_access_prevention    = "inherited"
+}
+
+resource "google_container_cluster" "insecure" {
+  name     = "my-cluster"
+  location = "europe-west1"
+  
+  enable_legacy_abac = true
+}
+'''
+        path = TestFixtures.create_temp_file(content, ".tf")
+        
+        try:
+            tech = identify_iac_technology(path)
+            findings = scan_iac_file(path)
+            
+            assert tech == "terraform", f"Expected terraform, got {tech}"
+            assert isinstance(findings, list)
+            assert len(findings) >= 3, f"Expected at least 3 GCP-specific findings, got {len(findings)}"
+            
+            descriptions = [f.get('description', '') for f in findings]
+            assert any('GCP' in d or 'GKE' in d or 'firewall' in d.lower() for d in descriptions)
+        finally:
+            os.unlink(path)
+    
+    def test_azure_arm_template_scanning(self):
+        """Test Azure ARM template scanning"""
+        content = '''{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2021-02-01",
+      "name": "mystorageaccount",
+      "properties": {
+        "supportsHttpsTrafficOnly": false,
+        "allowBlobPublicAccess": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups/securityRules",
+      "properties": {
+        "sourceAddressPrefix": "*",
+        "destinationAddressPrefix": "*"
+      }
+    }
+  ]
+}'''
+        path = TestFixtures.create_temp_file(content, ".json")
+        
+        try:
+            tech = identify_iac_technology(path)
+            findings = scan_iac_file(path)
+            
+            assert tech == "azure_arm", f"Expected azure_arm, got {tech}"
+            assert isinstance(findings, list)
+            assert len(findings) >= 2, f"Expected at least 2 ARM findings, got {len(findings)}"
+        finally:
+            os.unlink(path)
+
+
+class TestMultiCloudCoverage:
+    """Tests to verify comprehensive multi-cloud compliance coverage"""
+    
+    def test_aws_terraform_patterns_exist(self):
+        """Verify AWS-specific patterns exist in Terraform patterns"""
+        from services.soc2_scanner import TERRAFORM_RISK_PATTERNS
+        
+        patterns_str = str(TERRAFORM_RISK_PATTERNS.keys())
+        assert "aws" in patterns_str.lower() or any("access_key" in p or "secret" in p for p in TERRAFORM_RISK_PATTERNS.keys())
+    
+    def test_azure_terraform_patterns_exist(self):
+        """Verify Azure-specific patterns exist in Terraform patterns"""
+        from services.soc2_scanner import TERRAFORM_RISK_PATTERNS
+        
+        azure_count = sum(1 for p in TERRAFORM_RISK_PATTERNS.keys() if "azurerm" in p)
+        assert azure_count >= 5, f"Expected at least 5 Azure Terraform patterns, found {azure_count}"
+    
+    def test_gcp_terraform_patterns_exist(self):
+        """Verify GCP-specific patterns exist in Terraform patterns"""
+        from services.soc2_scanner import TERRAFORM_RISK_PATTERNS
+        
+        gcp_count = sum(1 for p in TERRAFORM_RISK_PATTERNS.keys() if "google_" in p)
+        assert gcp_count >= 5, f"Expected at least 5 GCP Terraform patterns, found {gcp_count}"
+    
+    def test_azure_arm_patterns_exist(self):
+        """Verify Azure ARM template patterns exist"""
+        from services.soc2_scanner import AZURE_ARM_RISK_PATTERNS
+        
+        assert len(AZURE_ARM_RISK_PATTERNS) >= 5, f"Expected at least 5 Azure ARM patterns, found {len(AZURE_ARM_RISK_PATTERNS)}"
+    
+    def test_gcp_deployment_patterns_exist(self):
+        """Verify GCP Deployment Manager patterns exist"""
+        from services.soc2_scanner import GCP_DEPLOYMENT_MANAGER_RISK_PATTERNS
+        
+        assert len(GCP_DEPLOYMENT_MANAGER_RISK_PATTERNS) >= 5, f"Expected at least 5 GCP DM patterns, found {len(GCP_DEPLOYMENT_MANAGER_RISK_PATTERNS)}"
+    
+    def test_azure_findings_have_tsc_mappings(self):
+        """Verify Azure findings have SOC2 TSC mappings"""
+        from services.soc2_scanner import FINDING_TO_TSC_MAP
+        
+        azure_mappings = [k for k in FINDING_TO_TSC_MAP.keys() if "Azure" in k]
+        assert len(azure_mappings) >= 5, f"Expected at least 5 Azure TSC mappings, found {len(azure_mappings)}"
+    
+    def test_gcp_findings_have_tsc_mappings(self):
+        """Verify GCP findings have SOC2 TSC mappings"""
+        from services.soc2_scanner import FINDING_TO_TSC_MAP
+        
+        gcp_mappings = [k for k in FINDING_TO_TSC_MAP.keys() if "GCP" in k or "GKE" in k]
+        assert len(gcp_mappings) >= 5, f"Expected at least 5 GCP TSC mappings, found {len(gcp_mappings)}"
+    
+    def test_iac_patterns_include_all_clouds(self):
+        """Verify IaC patterns dict includes all major cloud providers"""
+        from services.soc2_scanner import IaC_RISK_PATTERNS
+        
+        expected_techs = ["terraform", "cloudformation", "azure_arm", "gcp_deployment"]
+        for tech in expected_techs:
+            assert tech in IaC_RISK_PATTERNS, f"Missing {tech} in IaC_RISK_PATTERNS"
 
 
 if __name__ == "__main__":

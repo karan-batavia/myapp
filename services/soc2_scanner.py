@@ -341,13 +341,44 @@ FINDING_TO_TSC_MAP = {
     
     # JavaScript/Node.js Availability mappings
     "Database connection without proper error handling": ["A1.1", "CC7.2", "CC7.5"],
-    "Hardcoded port in server configuration": ["CC3.2", "A1.1"]
+    "Hardcoded port in server configuration": ["CC3.2", "A1.1"],
+    
+    # Azure-specific mappings
+    "Azure Storage without HTTPS enforcement": ["CC6.6", "CC6.7", "C1.1"],
+    "Azure Storage blob public access enabled": ["CC6.6", "C1.1"],
+    "Azure Key Vault without purge protection": ["A1.2", "A1.3"],
+    "Azure SQL using outdated TLS version": ["CC6.6", "CC6.7"],
+    "Azure NSG with unrestricted access": ["CC6.6", "CC6.7"],
+    "Azure NSG with unrestricted source access": ["CC6.6", "CC6.7"],
+    "Azure NSG with unrestricted destination access": ["CC6.6", "CC6.7"],
+    "Azure Storage without infrastructure encryption": ["C1.1", "CC6.1"],
+    "Azure SQL Database without TDE": ["C1.1", "CC6.1"],
+    "Azure VM disk deleted on termination": ["A1.2", "A1.3"],
+    "Azure resource using outdated TLS version": ["CC6.6", "CC6.7"],
+    "Azure resource without infrastructure encryption": ["C1.1", "CC6.1"],
+    "Azure resource with public network access enabled": ["CC6.6", "CC6.7"],
+    
+    # GCP-specific mappings
+    "GCP firewall with unrestricted access": ["CC6.6", "CC6.7"],
+    "GCP bucket without uniform access control": ["CC6.1", "CC6.3"],
+    "GCP bucket without public access prevention": ["CC6.6", "C1.1"],
+    "GCP Cloud SQL without SSL requirement": ["CC6.6", "CC6.7", "C1.1"],
+    "GCP instance without deletion protection": ["A1.2"],
+    "GCP KMS key rotation configured": ["CC6.1"],
+    "GKE cluster with legacy ABAC enabled": ["CC6.1", "CC6.3"],
+    "GKE cluster with master authorized networks": ["CC6.6"],
+    "GCP BigQuery dataset with public access": ["C1.1", "CC6.6"],
+    "GCP project with owner role binding": ["CC6.1", "CC6.3"],
+    "GCP IAM binding with owner role": ["CC6.1", "CC6.3"],
+    "GCP bucket without explicit public access settings": ["CC6.6", "C1.1"]
 }
 
 # IaC file patterns to identify
 IaC_FILE_PATTERNS = {
     "terraform": [r"\.tf$", r"\.tfvars$", r"terraform\..*\.json$"],
     "cloudformation": [r"\.yaml$", r"\.yml$", r"\.json$"],
+    "azure_arm": [r"azuredeploy\.json$", r"mainTemplate\.json$", r"\.arm\.json$", r"parameters\.json$"],
+    "gcp_deployment": [r"\.jinja$", r"\.jinja2$", r"deployment\.yaml$", r"\.dm\.yaml$"],
     "ansible": [r"\.ya?ml$", r"playbook\..*\.ya?ml$", r"inventory\..*"],
     "kubernetes": [r"\.ya?ml$", r"kustomization\.ya?ml$"],
     "docker": [r"Dockerfile$", r"docker-compose\.ya?ml$"],
@@ -438,6 +469,116 @@ TERRAFORM_RISK_PATTERNS = {
         "Enable monitoring for effective operational oversight",
         "availability"
     ),
+    # Azure Terraform patterns
+    r"azurerm_storage_account[^}]*enable_https_traffic_only\s*=\s*false": (
+        "Azure Storage without HTTPS enforcement",
+        "high",
+        "Enable HTTPS-only traffic for Azure Storage accounts",
+        "security"
+    ),
+    r"azurerm_storage_account[^}]*allow_blob_public_access\s*=\s*true": (
+        "Azure Storage blob public access enabled",
+        "high",
+        "Disable public blob access for Azure Storage accounts",
+        "confidentiality"
+    ),
+    r"azurerm_key_vault[^}]*purge_protection_enabled\s*=\s*false": (
+        "Azure Key Vault without purge protection",
+        "high",
+        "Enable purge protection for Azure Key Vault",
+        "availability"
+    ),
+    r"azurerm_sql_server[^}]*minimum_tls_version\s*=\s*\"1\.[01]\"": (
+        "Azure SQL using outdated TLS version",
+        "high",
+        "Use TLS 1.2 or higher for Azure SQL Server",
+        "security"
+    ),
+    r"azurerm_network_security_rule[^}]*0\.0\.0\.0/0": (
+        "Azure NSG with unrestricted access",
+        "high",
+        "Restrict network security group access to specific IP ranges",
+        "security"
+    ),
+    r"azurerm_storage_account[^}]*infrastructure_encryption_enabled\s*=\s*false": (
+        "Azure Storage without infrastructure encryption",
+        "high",
+        "Enable infrastructure encryption for Azure Storage",
+        "confidentiality"
+    ),
+    r"azurerm_mssql_database[^}]*transparent_data_encryption_enabled\s*=\s*false": (
+        "Azure SQL Database without TDE",
+        "high",
+        "Enable Transparent Data Encryption for Azure SQL Database",
+        "confidentiality"
+    ),
+    r"azurerm_virtual_machine[^}]*delete_os_disk_on_termination\s*=\s*true": (
+        "Azure VM disk deleted on termination",
+        "medium",
+        "Consider retaining OS disk for data recovery",
+        "availability"
+    ),
+    # Google Cloud Platform (GCP) Terraform patterns
+    r"google_compute_firewall[^}]*0\.0\.0\.0/0": (
+        "GCP firewall with unrestricted access",
+        "high",
+        "Restrict GCP firewall rules to specific IP ranges",
+        "security"
+    ),
+    r"google_storage_bucket[^}]*uniform_bucket_level_access\s*=\s*false": (
+        "GCP bucket without uniform access control",
+        "medium",
+        "Enable uniform bucket-level access for GCP Storage",
+        "security"
+    ),
+    r"google_storage_bucket[^}]*public_access_prevention\s*=\s*\"inherited\"": (
+        "GCP bucket without public access prevention",
+        "high",
+        "Set public access prevention to enforced for GCP Storage",
+        "confidentiality"
+    ),
+    r"google_sql_database_instance[^}]*require_ssl\s*=\s*false": (
+        "GCP Cloud SQL without SSL requirement",
+        "high",
+        "Enable SSL for GCP Cloud SQL connections",
+        "security"
+    ),
+    r"google_compute_instance[^}]*deletion_protection\s*=\s*false": (
+        "GCP instance without deletion protection",
+        "medium",
+        "Enable deletion protection for critical GCP instances",
+        "availability"
+    ),
+    r"google_kms_crypto_key[^}]*rotation_period": (
+        "GCP KMS key rotation configured",
+        "low",
+        "Verify key rotation period meets compliance requirements",
+        "security"
+    ),
+    r"google_container_cluster[^}]*enable_legacy_abac\s*=\s*true": (
+        "GKE cluster with legacy ABAC enabled",
+        "high",
+        "Disable legacy ABAC in favor of RBAC for GKE",
+        "security"
+    ),
+    r"google_container_cluster[^}]*master_authorized_networks_config": (
+        "GKE cluster with master authorized networks",
+        "low",
+        "Good practice: Master authorized networks configured",
+        "security"
+    ),
+    r"google_bigquery_dataset[^}]*access[^}]*\"allUsers\"": (
+        "GCP BigQuery dataset with public access",
+        "high",
+        "Remove public access from BigQuery datasets",
+        "confidentiality"
+    ),
+    r"google_project_iam_binding[^}]*\"roles/owner\"": (
+        "GCP project with owner role binding",
+        "high",
+        "Use more granular IAM roles instead of owner",
+        "security"
+    ),
 }
 
 CLOUDFORMATION_RISK_PATTERNS = {
@@ -470,6 +611,116 @@ CLOUDFORMATION_RISK_PATTERNS = {
         "high",
         "Enable encryption for data protection",
         "confidentiality"
+    ),
+}
+
+# Azure ARM Template patterns
+AZURE_ARM_RISK_PATTERNS = {
+    r"\"properties\"[^}]*\"supportsHttpsTrafficOnly\":\s*false": (
+        "Azure Storage without HTTPS enforcement",
+        "high",
+        "Enable HTTPS-only traffic for Azure Storage accounts",
+        "security"
+    ),
+    r"\"properties\"[^}]*\"allowBlobPublicAccess\":\s*true": (
+        "Azure Storage blob public access enabled",
+        "high",
+        "Disable public blob access for Azure Storage accounts",
+        "confidentiality"
+    ),
+    r"\"properties\"[^}]*\"enablePurgeProtection\":\s*false": (
+        "Azure Key Vault without purge protection",
+        "high",
+        "Enable purge protection for Azure Key Vault",
+        "availability"
+    ),
+    r"\"properties\"[^}]*\"minimalTlsVersion\":\s*\"TLS1_[01]\"": (
+        "Azure resource using outdated TLS version",
+        "high",
+        "Use TLS 1.2 or higher for Azure resources",
+        "security"
+    ),
+    r"\"sourceAddressPrefix\":\s*\"\*\"": (
+        "Azure NSG with unrestricted source access",
+        "high",
+        "Restrict network security group access to specific IP ranges",
+        "security"
+    ),
+    r"\"destinationAddressPrefix\":\s*\"\*\"": (
+        "Azure NSG with unrestricted destination access",
+        "high",
+        "Restrict network security group destination to specific ranges",
+        "security"
+    ),
+    r"\"properties\"[^}]*\"transparentDataEncryption\"[^}]*\"status\":\s*\"Disabled\"": (
+        "Azure SQL Database without TDE",
+        "high",
+        "Enable Transparent Data Encryption for Azure SQL Database",
+        "confidentiality"
+    ),
+    r"\"properties\"[^}]*\"infrastructureEncryption\":\s*\"Disabled\"": (
+        "Azure resource without infrastructure encryption",
+        "high",
+        "Enable infrastructure encryption for Azure resources",
+        "confidentiality"
+    ),
+    r"\"publicNetworkAccess\":\s*\"Enabled\"": (
+        "Azure resource with public network access enabled",
+        "medium",
+        "Consider disabling public network access and using private endpoints",
+        "security"
+    ),
+}
+
+# GCP Deployment Manager patterns
+GCP_DEPLOYMENT_MANAGER_RISK_PATTERNS = {
+    r"sourceRanges:\s*-\s*0\.0\.0\.0/0": (
+        "GCP firewall with unrestricted access",
+        "high",
+        "Restrict GCP firewall rules to specific IP ranges",
+        "security"
+    ),
+    r"\"uniformBucketLevelAccess\"[^}]*\"enabled\":\s*false": (
+        "GCP bucket without uniform access control",
+        "medium",
+        "Enable uniform bucket-level access for GCP Storage",
+        "security"
+    ),
+    r"\"publicAccessPrevention\":\s*\"inherited\"": (
+        "GCP bucket without public access prevention",
+        "high",
+        "Set public access prevention to enforced for GCP Storage",
+        "confidentiality"
+    ),
+    r"\"requireSsl\":\s*false": (
+        "GCP Cloud SQL without SSL requirement",
+        "high",
+        "Enable SSL for GCP Cloud SQL connections",
+        "security"
+    ),
+    r"\"deletionProtection\":\s*false": (
+        "GCP instance without deletion protection",
+        "medium",
+        "Enable deletion protection for critical GCP instances",
+        "availability"
+    ),
+    r"\"legacyAbac\"[^}]*\"enabled\":\s*true": (
+        "GKE cluster with legacy ABAC enabled",
+        "high",
+        "Disable legacy ABAC in favor of RBAC for GKE",
+        "security"
+    ),
+    r"\"bindings\"[^}]*\"role\":\s*\"roles/owner\"": (
+        "GCP IAM binding with owner role",
+        "high",
+        "Use more granular IAM roles instead of owner",
+        "security"
+    ),
+    r"\"iamConfiguration\"[^}]*\"publicAccessPrevention\":\s*\"unspecified\"": (
+        "GCP bucket without explicit public access settings",
+        "medium",
+        "Explicitly configure public access prevention",
+        "security"
     ),
 }
 
@@ -637,10 +888,11 @@ JAVASCRIPT_RISK_PATTERNS = {
 IaC_RISK_PATTERNS = {
     "terraform": TERRAFORM_RISK_PATTERNS,
     "cloudformation": CLOUDFORMATION_RISK_PATTERNS,
+    "azure_arm": AZURE_ARM_RISK_PATTERNS,
+    "gcp_deployment": GCP_DEPLOYMENT_MANAGER_RISK_PATTERNS,
     "kubernetes": KUBERNETES_RISK_PATTERNS,
     "docker": DOCKER_RISK_PATTERNS,
     "javascript": JAVASCRIPT_RISK_PATTERNS,
-    # Add more as needed
 }
 
 def identify_iac_technology(file_path: str) -> Optional[str]:
@@ -663,8 +915,8 @@ def identify_iac_technology(file_path: str) -> Optional[str]:
     for tech, patterns in IaC_FILE_PATTERNS.items():
         for pattern in patterns:
             if re.search(pattern, file_name, re.IGNORECASE):
-                # For ambiguous patterns (like .yaml), check content
-                if tech in ["cloudformation", "kubernetes", "ansible"] and file_name.endswith((".yaml", ".yml")):
+                # For ambiguous patterns (like .yaml, .json), check content
+                if tech in ["cloudformation", "kubernetes", "ansible"] and file_name.endswith((".yaml", ".yml", ".json")):
                     # Load content if not already loaded
                     if file_content is None:
                         try:
@@ -672,9 +924,16 @@ def identify_iac_technology(file_path: str) -> Optional[str]:
                                 file_content = f.read()
                         except:
                             return None
-                                
+                    
+                    # Check for Azure ARM template first (takes precedence over CloudFormation for JSON)
+                    if file_name.endswith(".json"):
+                        if "$schema" in file_content and ("deploymentTemplate.json" in file_content or "Microsoft." in file_content):
+                            return "azure_arm"
+                        if "contentVersion" in file_content and "Microsoft." in file_content:
+                            return "azure_arm"
+                    
                     # Additional checks for specific technologies
-                    if tech == "cloudformation" and ("AWSTemplateFormatVersion" in file_content or "Resources" in file_content):
+                    if tech == "cloudformation" and ("AWSTemplateFormatVersion" in file_content or ("Resources" in file_content and "AWS::" in file_content)):
                         return "cloudformation"
                     elif tech == "kubernetes" and ("apiVersion" in file_content and "kind" in file_content):
                         return "kubernetes"
@@ -693,9 +952,24 @@ def identify_iac_technology(file_path: str) -> Optional[str]:
             
     # Content-based checks
     if "resource" in file_content and "provider" in file_content:
+        # Check if it's Terraform with Azure or GCP provider
+        if "azurerm" in file_content or "provider \"azure" in file_content.lower():
+            return "terraform"  # Azure Terraform
+        elif "google" in file_content or "provider \"google" in file_content.lower():
+            return "terraform"  # GCP Terraform
         return "terraform"
-    elif "AWSTemplateFormatVersion" in file_content or "Resources" in file_content:
+    # Azure ARM Template detection (check BEFORE CloudFormation for JSON files)
+    elif "$schema" in file_content and ("deploymentTemplate.json" in file_content or "Microsoft." in file_content):
+        return "azure_arm"
+    elif "contentVersion" in file_content and ("Microsoft." in file_content or ("resources" in file_content and "type" in file_content.lower())):
+        return "azure_arm"
+    elif "AWSTemplateFormatVersion" in file_content or ("Resources" in file_content and "Type" in file_content and "AWS::" in file_content):
         return "cloudformation"
+    # GCP Deployment Manager detection
+    elif "type:" in file_content and ("compute.v1.instance" in file_content or "storage.v1.bucket" in file_content):
+        return "gcp_deployment"
+    elif "imports:" in file_content and (".jinja" in file_content or ".py" in file_content) and "resources:" in file_content:
+        return "gcp_deployment"
     elif "apiVersion" in file_content and "kind" in file_content:
         return "kubernetes"
     elif "FROM" in file_content and ("RUN" in file_content or "CMD" in file_content):
