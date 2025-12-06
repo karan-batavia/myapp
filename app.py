@@ -887,12 +887,12 @@ def render_landing_page():
         {
             "icon": "🛡️", 
             "title": _('landing.scanner.soc2_title', 'SOC2 & NIS2 Scanner'),
-            "description": _('landing.scanner.soc2_desc', 'SOC2 + NIS2 EU Directive compliance with dual framework coverage'),
+            "description": _('landing.scanner.soc2_desc', 'Multi-cloud (AWS/Azure/GCP) SOC2 + NIS2 EU Directive compliance'),
             "features": [
-                _('landing.scanner.soc2_f1', 'SOC2 TSC framework analysis'),
-                _('landing.scanner.soc2_f2', 'NIS2 Article 21 risk management'),
-                _('landing.scanner.soc2_f3', 'Incident handling (Article 23)'),
-                _('landing.scanner.soc2_f4', 'Business continuity compliance')
+                _('landing.scanner.soc2_f1', 'Multi-cloud IaC scanning'),
+                _('landing.scanner.soc2_f2', 'SOC2 TSC framework analysis'),
+                _('landing.scanner.soc2_f3', 'NIS2 Article 20-26 compliance'),
+                _('landing.scanner.soc2_f4', 'AWS, Azure, GCP support')
             ],
             "color": "#607D8B"
         },
@@ -7603,9 +7603,9 @@ def render_soc2_scanner_interface(region: str, username: str):
     
     st.subheader("🛡️ SOC2 & NIS2 Compliance Scanner")
     
-    # Enhanced description with NIS2
+    # Enhanced description with NIS2 and multi-cloud support
     st.write(
-        "Scan Infrastructure as Code (IaC) repositories for SOC2 and NIS2 compliance issues. "
+        "Scan Infrastructure as Code (IaC) repositories for SOC2 and NIS2 compliance issues across **all major cloud providers**. "
         "This scanner identifies security, availability, processing integrity, "
         "confidentiality, and privacy issues aligned with both frameworks."
     )
@@ -7614,6 +7614,16 @@ def render_soc2_scanner_interface(region: str, username: str):
         "**Dual Framework Coverage:**\n\n"
         "**SOC2** - Trust Services Criteria (TSC) mapping for security, availability, processing integrity, confidentiality, and privacy.\n\n"
         "**NIS2** - EU Directive 2022/2555 compliance with Articles 20-23 covering risk management, incident handling, business continuity, and supply chain security."
+    )
+    
+    # Multi-cloud support info
+    st.info(
+        "**☁️ Multi-Cloud Support:**\n\n"
+        "• **AWS** - Terraform, CloudFormation templates\n\n"
+        "• **Azure** - Terraform (azurerm), ARM templates\n\n"
+        "• **Google Cloud** - Terraform (google), Deployment Manager\n\n"
+        "• **Kubernetes** - YAML manifests, Helm charts\n\n"
+        "• **Docker** - Dockerfiles, Compose files"
     )
     
     # Repository source selection
@@ -7668,7 +7678,7 @@ def render_soc2_scanner_interface(region: str, username: str):
     # Output information
     st.markdown("""
     <div style="padding: 10px; border-radius: 5px; background-color: #f0f8ff; margin: 10px 0;">
-        <span style="font-weight: bold;">Output:</span> SOC2 TSC checklist + NIS2 Article mapping + dual framework compliance report with remediation recommendations
+        <span style="font-weight: bold;">📋 Output:</span> SOC2 TSC checklist + NIS2 Article mapping + cloud-specific findings (AWS/Azure/GCP) + dual framework compliance report with remediation recommendations
     </div>
     """, unsafe_allow_html=True)
     
