@@ -7083,31 +7083,14 @@ def render_model_analysis_interface(region: str, username: str):
             check_human_oversight = st.checkbox("Human Oversight", value=True, help="Verify human oversight mechanisms")
             check_documentation = st.checkbox("Technical Documentation", value=True, help="Review technical documentation compliance")
     
-    # Analysis scope
-    st.subheader("Analysis Scope")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.write("**Privacy Risks to Detect:**")
-        pii_exposure = st.checkbox("PII Exposure", value=True, help="Personal identifiable information in model")
-        training_data_leak = st.checkbox("Training Data Leakage", value=True, help="Model memorizing training data")
-        inference_attacks = st.checkbox("Inference Attacks", value=True, help="Model vulnerable to membership inference")
-        
-    with col2:
-        st.write("**Bias Categories:**")
-        demographic_bias = st.checkbox("Demographic Bias", value=True, help="Bias based on age, gender, race")
-        algorithmic_bias = st.checkbox("Algorithmic Bias", value=True, help="Systematic errors in predictions")
-        representation_bias = st.checkbox("Representation Bias", value=True, help="Underrepresentation of groups")
-    
-    # Sample data for testing (optional)
-    st.subheader("Test Data (Optional)")
-    test_data_option = st.radio("Test Data Source", ["None", "Upload CSV", "Generate Synthetic"], horizontal=True)
-    
-    test_data = None
-    if test_data_option == "Upload CSV":
-        test_data = st.file_uploader("Upload test dataset (CSV)", type=['csv'])
-    elif test_data_option == "Generate Synthetic":
-        st.info("Synthetic test data will be generated automatically based on model type")
+    # All analysis options enabled by default (no user selection needed)
+    pii_exposure = True
+    training_data_leak = True
+    inference_attacks = True
+    demographic_bias = True
+    algorithmic_bias = True
+    representation_bias = True
+    test_data = None  # Auto-generated when needed
     
     # Output information
     st.markdown("""
