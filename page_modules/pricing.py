@@ -1,6 +1,6 @@
 """
 Pricing Page Module
-Displays pricing plans and upgrade options
+Displays pricing plans and handles Stripe checkout integration
 """
 
 import streamlit as st
@@ -10,8 +10,18 @@ logger = logging.getLogger(__name__)
 
 
 def render_pricing_page():
-    """Render pricing page with all available plans"""
-    st.title("💰 Pricing & Plans")
+    """Render pricing page with Stripe checkout integration"""
+    try:
+        from components.pricing_display import show_pricing_page
+        show_pricing_page()
+    except ImportError as e:
+        logger.warning(f"Using fallback pricing display: {e}")
+        _render_fallback_pricing()
+
+
+def _render_fallback_pricing():
+    """Fallback pricing display if components.pricing_display is not available"""
+    st.title("Pricing & Plans")
     
     st.markdown("""
     ### Choose the Right Plan for Your Organization
@@ -94,9 +104,7 @@ def render_pricing_page():
                 st.write(f"✓ {feature}")
             
             if st.button(f"Select {plan['name']}", key=f"select_{plan['name']}", use_container_width=True):
-                st.session_state['selected_plan'] = plan['name']
-                st.session_state['show_upgrade'] = True
-                st.rerun()
+                _handle_plan_selection(plan['name'])
             
             st.markdown("---")
     
@@ -107,19 +115,39 @@ def render_pricing_page():
     ### Need a Custom Solution?
     Contact our sales team for enterprise agreements, volume discounts, or custom requirements.
     
-    📧 **sales@dataguardianpro.nl** | 📞 **+31 (0)20 123 4567**
+    **sales@dataguardianpro.nl** | **+31 (0)20 123 4567**
     """)
+
+
+def _handle_plan_selection(plan_name: str):
+    """Handle plan selection and initiate checkout"""
+    st.session_state['selected_plan'] = plan_name
+    
+    try:
+        from components.pricing_display import handle_tier_selection
+        handle_tier_selection(plan_name)
+    except ImportError:
+        try:
+            from components.pricing_display import create_stripe_checkout
+            create_stripe_checkout(plan_name)
+        except ImportError:
+            st.session_state['show_upgrade'] = True
+            st.rerun()
 
 
 def render_upgrade_page():
     """Render upgrade page for license upgrades"""
-    st.title("🚀 Upgrade Your License")
+    st.title("Upgrade Your License")
     
     try:
         from components.license_upgrade import render_upgrade_interface
         render_upgrade_interface()
     except ImportError:
-        _render_fallback_upgrade()
+        try:
+            from components.pricing_display import show_checkout_form_page
+            show_checkout_form_page()
+        except ImportError:
+            _render_fallback_upgrade()
 
 
 def _render_fallback_upgrade():
@@ -168,15 +196,20 @@ def _render_fallback_upgrade():
     with col2:
         agree_privacy = st.checkbox("I agree to the Privacy Policy")
     
-    if st.button("🔐 Complete Upgrade", type="primary", use_container_width=True):
+    if st.button("Complete Upgrade", type="primary", use_container_width=True):
         if agree_terms and agree_privacy:
-            with st.spinner("Processing payment..."):
-                import time
-                time.sleep(2)
-            st.success("🎉 Upgrade successful! Your new plan is now active.")
-            st.balloons()
+            try:
+                from components.pricing_display import create_stripe_checkout
+                selected_tier = selected_upgrade.split(" ")[0]
+                create_stripe_checkout(selected_tier)
+            except ImportError:
+                with st.spinner("Processing payment..."):
+                    import time
+                    time.sleep(2)
+                st.success("Upgrade successful! Your new plan is now active.")
+                st.balloons()
         else:
             st.error("Please agree to the Terms of Service and Privacy Policy.")
     
     st.markdown("---")
-    st.caption("🔒 Payments processed securely via Stripe. Your data is protected.")
+    st.caption("Payments processed securely via Stripe. Your data is protected.")
