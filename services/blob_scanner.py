@@ -23,6 +23,14 @@ from utils.netherlands_gdpr import detect_nl_violations
 from utils.comprehensive_gdpr_validator import validate_comprehensive_gdpr_compliance
 from utils.eu_ai_act_compliance import detect_ai_act_violations, generate_ai_act_compliance_report
 
+# Import Advanced Document Analyzer for comprehensive document analysis
+try:
+    from services.advanced_document_analyzer import AdvancedDocumentAnalyzer
+    ADVANCED_ANALYZER_AVAILABLE = True
+except ImportError:
+    ADVANCED_ANALYZER_AVAILABLE = False
+    logger.warning("Advanced Document Analyzer not available")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -30,6 +38,20 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 class BlobScanner:
     """
     A scanner that detects PII in document files (PDFs, Word documents, text files, etc.)
+    
+    Enhanced with 12 advanced document analysis features:
+    - Document Metadata Extraction (author, creation date, company, software)
+    - Document Tampering/Integrity Detection
+    - Language Detection for proper PII matching
+    - Document Classification (contract, invoice, medical, HR, legal)
+    - Hidden Content Detection (hidden layers, rows, columns)
+    - Embedded Object Detection (macros, scripts, OLE objects)
+    - Digital Signature Detection and Validation
+    - Redaction Detection
+    - Version/Revision History Analysis
+    - Enhanced Table/Form Data Extraction
+    - Document Forensics (authorship, timeline analysis)
+    - Cross-Reference Detection (linked documents, URLs)
     """
     
     def __init__(self, file_types: Optional[List[str]] = None, region: str = "Netherlands"):
@@ -47,6 +69,15 @@ class BlobScanner:
         ]
         self.region = region
         self.region_rules = get_region_rules(region)
+        
+        # Initialize Advanced Document Analyzer
+        self.advanced_analyzer = None
+        if ADVANCED_ANALYZER_AVAILABLE:
+            try:
+                self.advanced_analyzer = AdvancedDocumentAnalyzer(region=region)
+                logger.info("Advanced Document Analyzer initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Advanced Document Analyzer: {e}")
         
         # Expanded mapping of file extensions to their types
         self.extension_map = {
@@ -256,6 +287,23 @@ class BlobScanner:
                 print(f"AI Act report generation failed: {str(e)}")
                 ai_act_report = {'compliance_score': 100, 'compliance_status': 'Compliant', 'risk_distribution': {}, 'recommendations': []}
             
+            # Advanced Document Analysis (12 features)
+            advanced_analysis = {}
+            if self.advanced_analyzer:
+                try:
+                    advanced_analysis = self.advanced_analyzer.analyze_document(file_path, text)
+                    logger.info(f"Advanced document analysis completed for {os.path.basename(file_path)}")
+                    
+                    # Add advanced findings to all findings
+                    advanced_findings = advanced_analysis.get('findings', [])
+                    if advanced_findings:
+                        all_findings.extend(advanced_findings)
+                        # Recalculate risk with new findings
+                        risk_assessment = self._calculate_risk_score(all_findings)
+                except Exception as e:
+                    logger.warning(f"Advanced document analysis failed: {str(e)}")
+                    advanced_analysis = {'error': str(e)}
+            
             # Create comprehensive results
             result = {
                 'file_name': os.path.basename(file_path),
@@ -294,7 +342,24 @@ class BlobScanner:
                     'recommendations': ai_act_report.get('recommendations', [])
                 },
                 'all_compliance_findings': all_compliance_findings,
-                'fraud_analysis': ai_fraud_analysis or {}
+                'fraud_analysis': ai_fraud_analysis or {},
+                # NEW: Advanced Document Analysis (12 features)
+                'advanced_analysis': {
+                    'metadata': advanced_analysis.get('metadata', {}),
+                    'integrity': advanced_analysis.get('integrity', {}),
+                    'language': advanced_analysis.get('language', {}),
+                    'classification': advanced_analysis.get('classification', {}),
+                    'hidden_content': advanced_analysis.get('hidden_content', {}),
+                    'embedded_objects': advanced_analysis.get('embedded_objects', {}),
+                    'digital_signatures': advanced_analysis.get('digital_signatures', {}),
+                    'redaction': advanced_analysis.get('redaction', {}),
+                    'version_history': advanced_analysis.get('version_history', {}),
+                    'table_data': advanced_analysis.get('table_data', {}),
+                    'forensics': advanced_analysis.get('forensics', {}),
+                    'cross_references': advanced_analysis.get('cross_references', {}),
+                    'advanced_findings': advanced_analysis.get('findings', []),
+                    'risk_indicators': advanced_analysis.get('risk_indicators', [])
+                }
             }
             
             return result

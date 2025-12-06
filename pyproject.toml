@@ -56,6 +56,8 @@ xlrd = ">=2.0.1"
 python-magic = ">=0.4.27"
 pymysql = "^1.1.2"
 pymssql = "^2.3.9"
+langdetect = "^1.0.9"
+olefile = "^0.47"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.4.0"
