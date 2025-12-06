@@ -7792,6 +7792,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                         'description': 'Encryption not enabled for data at rest',
                         'recommendation': 'Enable encryption for all storage resources',
                         'tsc_criteria': ['CC6.1', 'CC6.7'],
+                        'nis2_articles': ['Article 21(2)(d)', 'Article 21(2)(e)'],
                         'category': 'security'
                     },
                     {
@@ -7802,6 +7803,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                         'description': 'Multi-factor authentication not enforced',
                         'recommendation': 'Implement MFA for all user accounts',
                         'tsc_criteria': ['CC6.2', 'CC6.3'],
+                        'nis2_articles': ['Article 21(2)(j)', 'Article 21(2)(a)'],
                         'category': 'security'
                     }
                 ])
@@ -7816,6 +7818,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                         'description': 'Automated backup procedures documented',
                         'recommendation': 'Verify backup restoration procedures',
                         'tsc_criteria': ['A1.1', 'A1.2'],
+                        'nis2_articles': ['Article 21(2)(c)', 'Article 21(2)(g)'],
                         'category': 'availability'
                     }
                 ])
@@ -7830,6 +7833,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                         'description': 'Input validation controls incomplete',
                         'recommendation': 'Implement comprehensive input validation',
                         'tsc_criteria': ['PI1.1', 'PI1.2'],
+                        'nis2_articles': ['Article 21(2)(b)', 'Article 21(2)(d)'],
                         'category': 'processing_integrity'
                     }
                 ])
@@ -7844,6 +7848,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                         'description': 'Sensitive data not properly classified',
                         'recommendation': 'Implement data classification controls',
                         'tsc_criteria': ['C1.1', 'C1.2'],
+                        'nis2_articles': ['Article 21(2)(d)', 'Article 21(2)(e)'],
                         'category': 'confidentiality'
                     }
                 ])
@@ -7858,6 +7863,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                         'description': 'Data retention policy needs review',
                         'recommendation': 'Define clear data retention periods',
                         'tsc_criteria': ['P1.1', 'P2.1'],
+                        'nis2_articles': ['Article 21(2)(f)', 'Article 20'],
                         'category': 'privacy'
                     }
                 ])
@@ -10836,17 +10842,48 @@ def generate_html_report(scan_results):
         quick_wins_html = ""
         
     elif scan_results.get('scan_type') == 'SOC2 Scanner':
-        files_scanned = scan_results.get('controls_evaluated', 0)
-        lines_analyzed = scan_results.get('evidence_reviewed', 0)
+        files_scanned = scan_results.get('files_scanned', scan_results.get('controls_evaluated', 0))
+        lines_analyzed = scan_results.get('lines_analyzed', scan_results.get('evidence_reviewed', 0))
         region = scan_results.get('region', 'Global')
         
-        # SOC2 scanner specific content
+        # Get TSC criteria from scan results
+        tsc_criteria = scan_results.get('tsc_criteria', [])
+        tsc_criteria_str = ', '.join(tsc_criteria) if tsc_criteria else 'All'
+        
+        # SOC2 scanner specific content with dual framework coverage
         soc2_metrics = f"""
-        <div class="soc2-metrics">
-            <h2>🛡️ {t('report.soc2_scanner_report', 'SOC2 Scanner Analysis')}</h2>
+        <div class="soc2-metrics" style="background: linear-gradient(135deg, #e8f5e9, #e3f2fd); padding: 25px; border-radius: 10px; margin: 20px 0;">
+            <h2>🛡️ {t('report.soc2_scanner_report', 'SOC2 & NIS2 Dual Framework Analysis')}</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #4caf50;">
+                    <h3 style="color: #4caf50;">📋 SOC2 Trust Service Criteria</h3>
+                    <p><strong>Criteria Assessed:</strong> {tsc_criteria_str}</p>
+                    <p><strong>SOC2 Type:</strong> {scan_results.get('soc2_type', 'Type II')}</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>CC - Common Criteria (Security)</li>
+                        <li>A - Availability</li>
+                        <li>PI - Processing Integrity</li>
+                        <li>C - Confidentiality</li>
+                        <li>P - Privacy</li>
+                    </ul>
+                </div>
+                <div style="background: #fff; padding: 20px; border-radius: 8px; border-left: 4px solid #2196f3;">
+                    <h3 style="color: #2196f3;">🇪🇺 NIS2 EU Directive 2022/2555</h3>
+                    <p><strong>Compliance Articles:</strong> 20-26, 38</p>
+                    <p><strong>Scope:</strong> Critical Infrastructure</p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>Article 20 - Corporate Accountability</li>
+                        <li>Article 21 - Risk Management Measures</li>
+                        <li>Article 23 - Incident Reporting</li>
+                        <li>Article 25-26 - Vulnerability Disclosure</li>
+                    </ul>
+                </div>
+            </div>
+            
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <h3>{t('report.controls_evaluated', 'Controls Evaluated')}</h3>
+                    <h3>{t('report.files_scanned', 'Files Scanned')}</h3>
                     <p class="metric-value">{files_scanned}</p>
                 </div>
                 <div class="metric-card">
@@ -10858,8 +10895,8 @@ def generate_html_report(scan_results):
                     <p class="metric-value">{scan_results.get('soc2_score', 78)}%</p>
                 </div>
                 <div class="metric-card">
-                    <h3>{t('report.readiness_level', 'Readiness Level')}</h3>
-                    <p class="metric-value">{scan_results.get('readiness_level', 'Partial')}</p>
+                    <h3>{t('report.nis2_score', 'NIS2 Score')}</h3>
+                    <p class="metric-value">{scan_results.get('nis2_score', 72)}%</p>
                 </div>
             </div>
         </div>
@@ -11071,12 +11108,28 @@ def generate_findings_html(findings):
             else:
                 action = t('report.document_and_approve', 'Document and approve')
         
+        # Build compliance requirements display for SOC2/NIS2 findings
+        compliance_info = ""
+        tsc_criteria = finding.get('tsc_criteria', [])
+        nis2_articles = finding.get('nis2_articles', [])
+        
+        if tsc_criteria or nis2_articles:
+            compliance_parts = []
+            if tsc_criteria:
+                compliance_parts.append(f"<strong>SOC2:</strong> {', '.join(tsc_criteria)}")
+            if nis2_articles:
+                compliance_parts.append(f"<strong>NIS2:</strong> {', '.join(nis2_articles)}")
+            compliance_info = "<br>".join(compliance_parts)
+        else:
+            # Default GDPR for non-SOC2 findings
+            compliance_info = "Article 32 - Security of processing"
+        
         findings_html += f"""
         <tr class="finding {severity_class}">
             <td><strong>{finding_type}</strong></td>
             <td><span class="severity-badge {severity_class}">{severity}</span></td>
             <td><code>{file_info}</code></td>
-            <td>{line_info}</td>
+            <td>{line_info}<br><small style="color: #666;">{compliance_info}</small></td>
             <td>{description}</td>
             <td>{impact}</td>
             <td>{action}</td>
