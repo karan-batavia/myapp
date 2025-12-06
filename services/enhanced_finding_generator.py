@@ -802,6 +802,13 @@ def enhance_findings_for_report(scanner_type: str, findings: List[Dict[str, Any]
                 'data_classification': enhanced.data_classification,
                 'exposure_risk': enhanced.exposure_risk,
                 
+                # Preserve SOC2/NIS2 specific fields from original finding
+                'tsc_criteria': finding.get('tsc_criteria', finding.get('soc2_tsc_criteria', [])),
+                'soc2_tsc_criteria': finding.get('soc2_tsc_criteria', finding.get('tsc_criteria', [])),
+                'nis2_articles': finding.get('nis2_articles', []),
+                'soc2_tsc_details': finding.get('soc2_tsc_details', []),
+                'nis2_details': finding.get('nis2_details', []),
+                
                 # Preserve original finding data
                 'original_finding': finding
             }

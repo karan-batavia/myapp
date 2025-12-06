@@ -677,6 +677,10 @@ class UnifiedHTMLReportGenerator:
             estimated_effort = finding.get('estimated_effort', '')
             data_classification = finding.get('data_classification', '')
             
+            # SOC2/NIS2 specific fields (check both field names for compatibility)
+            tsc_criteria = finding.get('tsc_criteria', finding.get('soc2_tsc_criteria', []))
+            nis2_articles = finding.get('nis2_articles', [])
+            
             # Build enhanced finding HTML
             findings_html += f"""
             <div class="finding enhanced-finding {severity}">
@@ -704,7 +708,7 @@ class UnifiedHTMLReportGenerator:
                     
                     {f'<div class="estimated-effort"><strong>Estimated Effort:</strong> {estimated_effort}</div>' if estimated_effort else ''}
                     
-                    {self._generate_compliance_section(gdpr_articles, compliance_requirements)}
+                    {self._generate_compliance_section(gdpr_articles, compliance_requirements, tsc_criteria, nis2_articles)}
                     
                     {self._generate_recommendations_section(recommendations)}
                 </div>
@@ -1108,8 +1112,40 @@ class UnifiedHTMLReportGenerator:
         </div>
         """
     
-    def _generate_compliance_section(self, gdpr_articles: List[str], compliance_requirements: List[str]) -> str:
-        """Generate compliance requirements section."""
+    def _generate_compliance_section(self, gdpr_articles: List[str], compliance_requirements: List[str], 
+                                       tsc_criteria: List[str] = None, nis2_articles: List[str] = None) -> str:
+        """Generate compliance requirements section with support for SOC2/NIS2 frameworks."""
+        tsc_criteria = tsc_criteria or []
+        nis2_articles = nis2_articles or []
+        
+        # Check if this is a SOC2/NIS2 finding (has TSC criteria or NIS2 articles)
+        is_soc2_nis2 = bool(tsc_criteria or nis2_articles)
+        
+        if is_soc2_nis2:
+            # Generate SOC2 TSC and NIS2 compliance section
+            tsc_html = ""
+            if tsc_criteria:
+                tsc_html = "<div style='margin-bottom: 10px;'><strong>🔒 SOC2 TSC Criteria:</strong><ul class='compliance-list'>"
+                for criterion in tsc_criteria[:5]:  # Limit to first 5 for readability
+                    tsc_html += f"<li>{criterion}</li>"
+                tsc_html += "</ul></div>"
+            
+            nis2_html = ""
+            if nis2_articles:
+                nis2_html = "<div><strong>🇪🇺 NIS2 Articles:</strong><ul class='compliance-list'>"
+                for article in nis2_articles[:5]:  # Limit to first 5
+                    nis2_html += f"<li>{article}</li>"
+                nis2_html += "</ul></div>"
+            
+            return f"""
+            <div class="compliance-section">
+                <h4>⚖️ Compliance Requirements (SOC2 & NIS2)</h4>
+                {tsc_html}
+                {nis2_html}
+            </div>
+            """
+        
+        # Standard GDPR compliance section
         if not gdpr_articles and not compliance_requirements:
             return ""
         
