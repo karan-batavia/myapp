@@ -502,5 +502,105 @@ class TestArticleDeadlines:
                     f"Article {article} should have 2025 or 2027 deadline"
 
 
+class TestNewComplianceFunctions:
+    """Test new compliance functions added for top-tier coverage."""
+    
+    def test_compliance_timeline_structure(self):
+        """Test compliance timeline returns expected structure."""
+        from utils.eu_ai_act_compliance import get_compliance_timeline
+        timeline = get_compliance_timeline()
+        
+        assert 'phase_1' in timeline
+        assert 'phase_2' in timeline
+        assert 'phase_3' in timeline
+        assert 'phase_4' in timeline
+        assert 'key_dates' in timeline
+        assert timeline['phase_1']['date'] == '2025-02-02'
+        assert timeline['phase_1']['status'] == 'In Effect'
+    
+    def test_penalty_risk_calculator_structure(self):
+        """Test penalty risk calculator returns expected structure."""
+        from utils.eu_ai_act_compliance import calculate_penalty_risk
+        
+        findings = [
+            {'type': 'AI_ACT_PROHIBITED', 'severity': 'Critical'},
+            {'type': 'AI_ACT_HIGH_RISK', 'severity': 'High'}
+        ]
+        
+        result = calculate_penalty_risk(findings)
+        
+        assert 'max_potential_fine' in result
+        assert 'max_turnover_percentage' in result
+        assert 'penalty_tiers' in result
+        assert 'total_violations' in result
+    
+    def test_penalty_tier_1_critical(self):
+        """Test Tier 1 penalty for prohibited practices."""
+        from utils.eu_ai_act_compliance import calculate_penalty_risk
+        
+        findings = [{'type': 'AI_ACT_PROHIBITED', 'severity': 'Critical'}]
+        result = calculate_penalty_risk(findings)
+        
+        assert '35,000,000' in result['max_potential_fine']
+        assert result['max_turnover_percentage'] == '7%'
+        assert result['penalty_tiers']['tier_1_prohibited'] == 1
+    
+    def test_article_checklist_structure(self):
+        """Test article checklist returns expected structure."""
+        from utils.eu_ai_act_compliance import generate_article_checklist
+        
+        findings = []
+        checklist = generate_article_checklist(findings)
+        
+        assert 'Chapter I - General Provisions' in checklist
+        assert 'Chapter II - Prohibited Practices' in checklist
+        assert 'Chapter III - High-Risk AI' in checklist
+    
+    def test_articles_6_to_15_detection(self):
+        """Test Articles 6-15 high-risk requirements detection."""
+        from utils.eu_ai_act_compliance import _detect_high_risk_requirements_articles_6_15
+        
+        content = "High risk AI biometric identification system without risk management or human oversight."
+        findings = _detect_high_risk_requirements_articles_6_15(content)
+        
+        assert len(findings) > 0
+        article_refs = [f.get('article_reference', '') for f in findings]
+        assert any('Article' in ref for ref in article_refs)
+
+
+class TestHTMLReportEnhancements:
+    """Test HTML report enhancements."""
+    
+    def test_penalty_risk_in_html_report(self):
+        """Test penalty risk section appears in HTML report."""
+        from services.eu_ai_act_html_reporter import generate_eu_ai_act_html_report
+        
+        scan_result = {
+            'findings': [
+                {'type': 'AI_ACT_PROHIBITED', 'severity': 'Critical', 
+                 'category': 'Prohibited', 'description': 'Test'}
+            ],
+            'compliance_score': 50
+        }
+        
+        html = generate_eu_ai_act_html_report(scan_result, 'en')
+        
+        assert 'Penalty' in html or 'penalty' in html.lower()
+    
+    def test_timeline_in_html_report(self):
+        """Test compliance timeline appears in HTML report."""
+        from services.eu_ai_act_html_reporter import generate_eu_ai_act_html_report
+        
+        scan_result = {
+            'findings': [],
+            'compliance_score': 90
+        }
+        
+        html = generate_eu_ai_act_html_report(scan_result, 'en')
+        
+        assert 'Feb 2, 2025' in html or '2025' in html
+        assert 'Timeline' in html or 'Phase' in html
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '--tb=short'])

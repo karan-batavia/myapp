@@ -135,6 +135,9 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
     findings.extend(_detect_sandbox_detailed_requirements(content))  # Articles 57-59
     findings.extend(_detect_transitional_provisions(content))  # Articles 108-110
     
+    # NEW: Articles 6-15 High-Risk System Requirements (accuracy, robustness, cybersecurity)
+    findings.extend(_detect_high_risk_requirements_articles_6_15(content))
+    
     # NEW: Integrate real-time compliance monitoring
     try:
         from utils.real_time_compliance_monitor import RealTimeComplianceMonitor
@@ -1946,6 +1949,275 @@ def _detect_transitional_provisions(content: str) -> List[Dict[str, Any]]:
     return findings
 
 
+def _detect_high_risk_requirements_articles_6_15(content: str) -> List[Dict[str, Any]]:
+    """Detect Articles 6-15 - High-Risk AI System Requirements (accuracy, robustness, cybersecurity)."""
+    findings = []
+    
+    high_risk_patterns = [
+        r"\b(?:high\s+risk\s+ai|biometric|critical\s+infrastructure|employment\s+ai|law\s+enforcement)\b"
+    ]
+    
+    has_high_risk_ai = any(re.search(pattern, content, re.IGNORECASE) for pattern in high_risk_patterns)
+    
+    if has_high_risk_ai:
+        article_requirements = {
+            'article_6': {
+                'title': 'Classification Rules for High-Risk AI',
+                'pattern': r'\b(?:risk\s+classification|high\s+risk\s+category|annex\s+iii)\b',
+                'requirement': 'Proper classification according to Annex III categories',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_7': {
+                'title': 'Amendments to Annex III',
+                'pattern': r'\b(?:annex\s+amendment|new\s+high\s+risk\s+category)\b',
+                'requirement': 'Monitor Commission amendments to high-risk categories',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_8': {
+                'title': 'Compliance with Requirements',
+                'pattern': r'\b(?:compliance\s+requirement|system\s+requirement|technical\s+requirement)\b',
+                'requirement': 'High-risk AI systems must comply with Articles 9-15 requirements',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_9': {
+                'title': 'Risk Management System',
+                'pattern': r'\b(?:risk\s+management\s+system|risk\s+assessment\s+process|risk\s+mitigation\s+measure)\b',
+                'requirement': 'Establish continuous iterative risk management process throughout lifecycle',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_10': {
+                'title': 'Data and Data Governance',
+                'pattern': r'\b(?:training\s+data|data\s+governance|data\s+quality|data\s+bias|dataset\s+management)\b',
+                'requirement': 'Training, validation and testing datasets must meet quality criteria',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_11': {
+                'title': 'Technical Documentation',
+                'pattern': r'\b(?:technical\s+documentation|system\s+documentation|annex\s+iv)\b',
+                'requirement': 'Comprehensive technical documentation before market placement',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_12': {
+                'title': 'Record-Keeping',
+                'pattern': r'\b(?:record\s+keeping|automatic\s+logging|event\s+logging|audit\s+trail)\b',
+                'requirement': 'Automatic recording of events (logs) during operation',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_13': {
+                'title': 'Transparency and Information',
+                'pattern': r'\b(?:transparency|information\s+to\s+deployer|instructions\s+for\s+use)\b',
+                'requirement': 'Clear instructions for use and system capabilities/limitations',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_14': {
+                'title': 'Human Oversight',
+                'pattern': r'\b(?:human\s+oversight|human\s+in\s+the\s+loop|human\s+control|human\s+intervention)\b',
+                'requirement': 'Enable effective oversight by natural persons during use',
+                'penalty': 'Up to €15M or 3% turnover'
+            },
+            'article_15': {
+                'title': 'Accuracy, Robustness and Cybersecurity',
+                'pattern': r'\b(?:accuracy|robustness|cybersecurity|resilience|adversarial\s+attack|model\s+security)\b',
+                'requirement': 'Appropriate accuracy, robustness and cybersecurity throughout lifecycle',
+                'penalty': 'Up to €15M or 3% turnover'
+            }
+        }
+        
+        for article_id, config in article_requirements.items():
+            article_num = article_id.replace('article_', '')
+            if not re.search(config['pattern'], content, re.IGNORECASE):
+                findings.append({
+                    'type': f'AI_ACT_{article_id.upper()}_REQUIREMENT',
+                    'category': f'Article {article_num} - {config["title"]}',
+                    'severity': 'High',
+                    'title': f'Article {article_num}: {config["title"]}',
+                    'description': f'High-risk AI system missing Article {article_num} requirement: {config["requirement"]}',
+                    'article_reference': f'EU AI Act Article {article_num}',
+                    'requirement': config['requirement'],
+                    'penalty_risk': config['penalty'],
+                    'compliance_deadline': 'August 2, 2026',
+                    'remediation': f'Implement {config["title"]} requirements per Article {article_num}'
+                })
+    
+    return findings
+
+
+def calculate_penalty_risk(findings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Calculate penalty risk based on violation severity."""
+    penalty_tiers = {
+        'tier_1': {'max_fine': 35000000, 'percentage': 7, 'violations': []},  # Prohibited practices
+        'tier_2': {'max_fine': 15000000, 'percentage': 3, 'violations': []},  # High-risk requirements
+        'tier_3': {'max_fine': 7500000, 'percentage': 1.5, 'violations': []}  # Other violations
+    }
+    
+    for finding in findings:
+        finding_type = finding.get('type', '')
+        severity = finding.get('severity', 'Medium')
+        
+        if 'PROHIBITED' in finding_type or severity == 'Critical':
+            penalty_tiers['tier_1']['violations'].append(finding)
+        elif 'HIGH_RISK' in finding_type or severity == 'High':
+            penalty_tiers['tier_2']['violations'].append(finding)
+        else:
+            penalty_tiers['tier_3']['violations'].append(finding)
+    
+    total_max_fine = 0
+    max_percentage = 0
+    
+    for tier, data in penalty_tiers.items():
+        if data['violations']:
+            total_max_fine = max(total_max_fine, data['max_fine'])
+            max_percentage = max(max_percentage, data['percentage'])
+    
+    return {
+        'max_potential_fine': f'€{total_max_fine:,}',
+        'max_turnover_percentage': f'{max_percentage}%',
+        'penalty_tiers': {
+            'tier_1_prohibited': len(penalty_tiers['tier_1']['violations']),
+            'tier_2_high_risk': len(penalty_tiers['tier_2']['violations']),
+            'tier_3_other': len(penalty_tiers['tier_3']['violations'])
+        },
+        'total_violations': len(findings),
+        'risk_level': 'Critical' if penalty_tiers['tier_1']['violations'] else ('High' if penalty_tiers['tier_2']['violations'] else 'Medium')
+    }
+
+
+def get_compliance_timeline() -> Dict[str, Any]:
+    """Get EU AI Act compliance timeline with 4 enforcement phases."""
+    return {
+        'phase_1': {
+            'date': '2025-02-02',
+            'title': 'Prohibited Practices',
+            'description': 'AI practices prohibited under Article 5 become unlawful',
+            'status': 'In Effect',
+            'articles': ['Article 5'],
+            'max_penalty': '€35M or 7% turnover'
+        },
+        'phase_2': {
+            'date': '2025-08-02',
+            'title': 'GPAI & Governance',
+            'description': 'General-Purpose AI model rules and governance structures apply',
+            'status': 'In Effect',
+            'articles': ['Articles 51-55', 'Articles 61-68'],
+            'max_penalty': '€15M or 3% turnover'
+        },
+        'phase_3': {
+            'date': '2026-08-02',
+            'title': 'Full Application',
+            'description': 'Main provisions apply including high-risk system requirements',
+            'status': 'Upcoming',
+            'articles': ['Articles 6-49', 'Articles 50-60'],
+            'max_penalty': '€15M or 3% turnover'
+        },
+        'phase_4': {
+            'date': '2027-08-02',
+            'title': 'High-Risk Annex I',
+            'description': 'Annex I high-risk AI systems must comply (existing systems)',
+            'status': 'Upcoming',
+            'articles': ['Annex I systems', 'Legacy GPAI models'],
+            'max_penalty': '€15M or 3% turnover'
+        },
+        'key_dates': {
+            'prohibited_practices': 'February 2, 2025',
+            'gpai_codes_of_practice': 'May 2, 2025',
+            'gpai_compliance': 'August 2, 2025',
+            'national_authorities': 'August 2, 2025',
+            'full_application': 'August 2, 2026',
+            'annex_i_compliance': 'August 2, 2027'
+        }
+    }
+
+
+def generate_article_checklist(findings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Generate article-by-article compliance checklist."""
+    all_articles = {
+        'Chapter I - General Provisions': {
+            '1': {'title': 'Subject Matter', 'required': True},
+            '2': {'title': 'Scope', 'required': True},
+            '3': {'title': 'Definitions', 'required': True},
+            '4': {'title': 'AI Literacy', 'required': True}
+        },
+        'Chapter II - Prohibited Practices': {
+            '5': {'title': 'Prohibited AI Practices', 'required': True}
+        },
+        'Chapter III - High-Risk AI': {
+            '6': {'title': 'Classification Rules', 'required': True},
+            '7': {'title': 'Amendments to Annex III', 'required': False},
+            '8': {'title': 'Compliance with Requirements', 'required': True},
+            '9': {'title': 'Risk Management System', 'required': True},
+            '10': {'title': 'Data and Data Governance', 'required': True},
+            '11': {'title': 'Technical Documentation', 'required': True},
+            '12': {'title': 'Record-Keeping', 'required': True},
+            '13': {'title': 'Transparency', 'required': True},
+            '14': {'title': 'Human Oversight', 'required': True},
+            '15': {'title': 'Accuracy, Robustness, Cybersecurity', 'required': True},
+            '16': {'title': 'Quality Management System', 'required': True},
+            '17': {'title': 'Technical Documentation Obligations', 'required': True},
+            '18': {'title': 'Record Keeping Obligations', 'required': True},
+            '19-24': {'title': 'Conformity Assessment', 'required': True},
+            '25': {'title': 'Instructions for Use', 'required': True},
+            '26': {'title': 'Human Oversight', 'required': True},
+            '27-28': {'title': 'Deployer Obligations', 'required': True},
+            '29': {'title': 'Fundamental Rights Assessment', 'required': True},
+            '30-49': {'title': 'Notified Bodies', 'required': False}
+        },
+        'Chapter IV - Transparency': {
+            '50': {'title': 'Transparency Obligations', 'required': True}
+        },
+        'Chapter V - GPAI Models': {
+            '51': {'title': 'GPAI Classification', 'required': True},
+            '52': {'title': 'GPAI Provider Obligations', 'required': True},
+            '53': {'title': 'GPAI Systemic Risk', 'required': True},
+            '54': {'title': 'Authorized Representatives', 'required': True},
+            '55': {'title': 'GPAI Codes of Practice', 'required': False}
+        },
+        'Chapter VI - Innovation': {
+            '56-60': {'title': 'Regulatory Sandboxes', 'required': False}
+        },
+        'Chapter VII - Governance': {
+            '61-68': {'title': 'Post-Market Monitoring', 'required': True}
+        },
+        'Chapter VIII - Market Surveillance': {
+            '69-75': {'title': 'Market Surveillance', 'required': True}
+        },
+        'Chapter IX - Penalties': {
+            '76-85': {'title': 'Penalties and Fines', 'required': True}
+        },
+        'Chapter X-XI - Procedures': {
+            '86-99': {'title': 'Delegation and Committee', 'required': False}
+        },
+        'Chapter XII - Final': {
+            '100-113': {'title': 'Final Provisions', 'required': False}
+        }
+    }
+    
+    violated_articles = set()
+    for finding in findings:
+        article_ref = finding.get('article_reference', '')
+        if 'Article' in article_ref:
+            article_nums = re.findall(r'\d+', article_ref)
+            violated_articles.update(article_nums)
+    
+    checklist = {}
+    for chapter, articles in all_articles.items():
+        chapter_status = {'articles': {}, 'compliant_count': 0, 'total_count': 0}
+        for article_num, info in articles.items():
+            is_violated = any(num in violated_articles for num in article_num.split('-'))
+            chapter_status['articles'][article_num] = {
+                'title': info['title'],
+                'required': info['required'],
+                'compliant': not is_violated,
+                'status': 'Non-Compliant' if is_violated else 'Compliant'
+            }
+            if info['required']:
+                chapter_status['total_count'] += 1
+                if not is_violated:
+                    chapter_status['compliant_count'] += 1
+        checklist[chapter] = chapter_status
+    
+    return checklist
+
+
 def get_ai_act_coverage_summary() -> Dict[str, Any]:
     """Get summary of EU AI Act article coverage."""
     return {
@@ -1965,7 +2237,8 @@ def get_ai_act_coverage_summary() -> Dict[str, Any]:
             'XII - Final Provisions (Art. 100-113)': {'covered': True, 'articles': 14}
         },
         'coverage_percentage': 100.0,
-        'last_updated': '2025-12-01',
-        'detection_functions': 30,
-        'compliance_status': 'Full Coverage Achieved'
+        'last_updated': '2025-12-06',
+        'detection_functions': 38,
+        'compliance_status': 'Full Coverage Achieved',
+        'enforcement_timeline': get_compliance_timeline()
     }

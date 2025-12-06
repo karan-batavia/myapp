@@ -53,7 +53,14 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
             'upcoming': 'Upcoming',
             'remediation_actions': 'Remediation Actions',
             'no_findings': 'No compliance issues detected',
-            'chapter_coverage': 'Chapter Coverage'
+            'chapter_coverage': 'Chapter Coverage',
+            'penalty_risk': 'Penalty Risk Assessment',
+            'max_fine': 'Maximum Potential Fine',
+            'turnover_percentage': 'Turnover Percentage',
+            'tier_1_violations': 'Tier 1 (Prohibited)',
+            'tier_2_violations': 'Tier 2 (High-Risk)',
+            'tier_3_violations': 'Tier 3 (Other)',
+            'article_checklist': 'Article Compliance Checklist'
         },
         'nl': {
             'title': 'EU AI-wet Nalevingsrapport',
@@ -88,7 +95,14 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
             'upcoming': 'Aanstaande',
             'remediation_actions': 'Herstelacties',
             'no_findings': 'Geen nalevingsproblemen gedetecteerd',
-            'chapter_coverage': 'Hoofdstuk Dekking'
+            'chapter_coverage': 'Hoofdstuk Dekking',
+            'penalty_risk': 'Boeterisicobeoordeling',
+            'max_fine': 'Maximale Potentiële Boete',
+            'turnover_percentage': 'Omzetpercentage',
+            'tier_1_violations': 'Niveau 1 (Verboden)',
+            'tier_2_violations': 'Niveau 2 (Hoog-Risico)',
+            'tier_3_violations': 'Niveau 3 (Overig)',
+            'article_checklist': 'Artikel Naleving Checklist'
         }
     }
     
@@ -118,6 +132,8 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
     coverage_percentage = round((articles_covered / 113) * 100, 1)
     
     chapter_coverage = _get_chapter_coverage(ai_act_findings)
+    
+    penalty_risk = _calculate_penalty_risk(ai_act_findings)
     
     html = f'''
     <!DOCTYPE html>
@@ -236,6 +252,42 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
                         <span class="timeline-date">Aug 2, 2027</span>
                         <span class="timeline-status upcoming">{t['upcoming']}</span>
                         <span>{t['phase_4']}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card" style="margin-bottom: 2rem;">
+                <h3>{t['penalty_risk']}</h3>
+                <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                    <div>
+                        <h4 style="color: #64748b; font-size: 0.75rem; margin-bottom: 0.25rem;">{t['max_fine']}</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: {'#ef4444' if penalty_risk['total_violations'] > 0 else '#22c55e'}">
+                            {penalty_risk['max_potential_fine']}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: #64748b; font-size: 0.75rem; margin-bottom: 0.25rem;">{t['turnover_percentage']}</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: {'#ef4444' if penalty_risk['total_violations'] > 0 else '#22c55e'}">
+                            {penalty_risk['max_turnover_percentage']}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: #64748b; font-size: 0.75rem; margin-bottom: 0.25rem;">{t['tier_1_violations']}</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #7c2d12;">
+                            {penalty_risk['penalty_tiers']['tier_1_prohibited']}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: #64748b; font-size: 0.75rem; margin-bottom: 0.25rem;">{t['tier_2_violations']}</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #dc2626;">
+                            {penalty_risk['penalty_tiers']['tier_2_high_risk']}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color: #64748b; font-size: 0.75rem; margin-bottom: 0.25rem;">{t['tier_3_violations']}</h4>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #d97706;">
+                            {penalty_risk['penalty_tiers']['tier_3_other']}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -366,6 +418,46 @@ def _generate_chapter_coverage_html(chapter_coverage: Dict, language: str) -> st
             </div>
         ''')
     return '\n'.join(html_parts)
+
+
+def _calculate_penalty_risk(findings: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Calculate penalty risk based on violation severity."""
+    penalty_tiers = {
+        'tier_1': {'max_fine': 35000000, 'percentage': 7, 'violations': []},
+        'tier_2': {'max_fine': 15000000, 'percentage': 3, 'violations': []},
+        'tier_3': {'max_fine': 7500000, 'percentage': 1.5, 'violations': []}
+    }
+    
+    for finding in findings:
+        finding_type = finding.get('type', '')
+        severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+        
+        if 'PROHIBITED' in finding_type or severity == 'Critical':
+            penalty_tiers['tier_1']['violations'].append(finding)
+        elif 'HIGH_RISK' in finding_type or severity == 'High':
+            penalty_tiers['tier_2']['violations'].append(finding)
+        else:
+            penalty_tiers['tier_3']['violations'].append(finding)
+    
+    total_max_fine = 0
+    max_percentage = 0
+    
+    for tier, data in penalty_tiers.items():
+        if data['violations']:
+            total_max_fine = max(total_max_fine, data['max_fine'])
+            max_percentage = max(max_percentage, data['percentage'])
+    
+    return {
+        'max_potential_fine': f'€{total_max_fine:,}' if total_max_fine > 0 else '€0',
+        'max_turnover_percentage': f'{max_percentage}%',
+        'penalty_tiers': {
+            'tier_1_prohibited': len(penalty_tiers['tier_1']['violations']),
+            'tier_2_high_risk': len(penalty_tiers['tier_2']['violations']),
+            'tier_3_other': len(penalty_tiers['tier_3']['violations'])
+        },
+        'total_violations': len(findings),
+        'risk_level': 'Critical' if penalty_tiers['tier_1']['violations'] else ('High' if penalty_tiers['tier_2']['violations'] else 'Medium')
+    }
 
 
 def _generate_findings_table_html(findings: List[Dict[str, Any]], t: Dict[str, str]) -> str:
