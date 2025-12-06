@@ -7788,8 +7788,35 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             # The repo_analysis contains real findings from scanning the actual repository
             soc2_findings = repo_analysis.get('findings', [])
             
-            # Ensure each finding has a location field for proper report display
+            # Map category to proper type names for report display
+            category_to_type = {
+                'security': 'SECURITY_CONTROL',
+                'availability': 'AVAILABILITY_CONTROL',
+                'processing_integrity': 'PROCESSING_INTEGRITY',
+                'confidentiality': 'CONFIDENTIALITY_CONTROL',
+                'privacy': 'PRIVACY_CONTROL',
+                'access_control': 'ACCESS_CONTROL',
+                'encryption': 'ENCRYPTION_CONTROL',
+                'monitoring': 'MONITORING_CONTROL',
+                'backup': 'BACKUP_CONTROL',
+                'network': 'NETWORK_SECURITY',
+                'iam': 'IAM_CONTROL',
+                'logging': 'LOGGING_CONTROL',
+                'configuration': 'CONFIGURATION_CONTROL'
+            }
+            
+            # Ensure each finding has proper type and location fields for report display
             for finding in soc2_findings:
+                # Set type based on category if not already set
+                if not finding.get('type') or finding.get('type') == 'Unknown':
+                    category = finding.get('category', 'security').lower()
+                    finding['type'] = category_to_type.get(category, 'SECURITY_CONTROL')
+                
+                # Map severity from risk_level if needed
+                if not finding.get('severity'):
+                    finding['severity'] = finding.get('risk_level', 'Medium')
+                
+                # Ensure location field exists
                 if not finding.get('location'):
                     file_path = finding.get('file', 'unknown')
                     line_num = finding.get('line', 0)
