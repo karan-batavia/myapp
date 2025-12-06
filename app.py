@@ -8124,6 +8124,24 @@ def render_website_scanner_interface(region: str, username: str):
                     file_name=f"intelligent_website_scan_report_{scan_result['scan_id'][:8]}.html",
                     mime="text/html"
                 )
+                
+                # CRITICAL: Save scan results to database for Results/History pages
+                try:
+                    from services.results_aggregator import ResultsAggregator
+                    aggregator = ResultsAggregator()
+                    
+                    # Ensure proper scan_type for display
+                    scan_result['scan_type'] = 'Intelligent Website Scanner'
+                    scan_result['file_count'] = scan_result.get('pages_scanned', 1)
+                    scan_result['total_pii_found'] = len(scan_result.get('findings', []))
+                    scan_result['high_risk_count'] = sum(1 for f in scan_result.get('findings', []) if f.get('severity', '').lower() in ['high', 'critical'])
+                    
+                    stored_scan_id = aggregator.save_scan_result(username=username, result=scan_result)
+                    if stored_scan_id:
+                        logger.info(f"Intelligent website scan saved to database: {stored_scan_id}")
+                        st.session_state['last_scan_id'] = stored_scan_id
+                except Exception as save_error:
+                    logger.error(f"Failed to save intelligent website scan: {save_error}")
         else:
             # Use original scanning method
             scan_config = {
@@ -8627,6 +8645,24 @@ def execute_website_scan(region, username, url, scan_config):
                 'compliance_score': scan_results["compliance_score"]
             }
         )
+        
+        # CRITICAL: Save scan results to database for Results/History pages
+        try:
+            from services.results_aggregator import ResultsAggregator
+            aggregator = ResultsAggregator()
+            
+            # Ensure proper scan_type and metrics for display
+            scan_results['scan_type'] = 'Website Scanner'
+            scan_results['file_count'] = scan_results.get('pages_scanned', 1)
+            scan_results['total_pii_found'] = findings_count
+            scan_results['high_risk_count'] = high_risk_count
+            
+            stored_scan_id = aggregator.save_scan_result(username=username, result=scan_results)
+            if stored_scan_id:
+                logger.info(f"Website scan saved to database: {stored_scan_id}")
+                st.session_state['last_scan_id'] = stored_scan_id
+        except Exception as save_error:
+            logger.error(f"Failed to save website scan: {save_error}")
         
         st.success(f"✅ Multi-page GDPR website privacy compliance scan completed! ({scan_results['pages_scanned']} pages analyzed)")
         
