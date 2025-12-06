@@ -6993,14 +6993,14 @@ def render_model_analysis_interface(region: str, username: str):
     # Important notice about comprehensive coverage  
     st.success("""
     **🎯 Comprehensive EU AI Act 2025 Coverage (60-65%, Articles 4-94) for ALL Input Methods:**
-    - 📤 **Upload Model File**: Full 10-phase analysis (Annex III, transparency, provider obligations, conformity, GPAI, post-market, AI literacy, enforcement, governance)
     - 🔗 **Model Repository**: Automatically clones repository, detects model files (.pt, .h5, .pkl, etc.), and performs full comprehensive analysis
+    - 📤 **Upload Model File**: Full 10-phase analysis (Annex III, transparency, provider obligations, conformity, GPAI, post-market, AI literacy, enforcement, governance)
     - 📁 **Model Path**: Full comprehensive coverage when model file exists locally
     
     *Repository note: If no model files found in repository, falls back to metadata-based analysis.*
     """)
     
-    model_source = st.radio("Select Model Source", ["Upload Model File", "Model Repository", "Model Path"], horizontal=True)
+    model_source = st.radio("Select Model Source", ["Model Repository", "Upload Model File", "Model Path"], horizontal=True)
     
     # Always show file uploader to catch uploaded files regardless of radio selection
     uploaded_model = st.file_uploader(
