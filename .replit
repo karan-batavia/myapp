@@ -111,6 +111,10 @@ externalPort = 3002
 localPort = 43121
 externalPort = 3003
 
+[[ports]]
+localPort = 45453
+externalPort = 8080
+
 [agent]
 
 [userenv]

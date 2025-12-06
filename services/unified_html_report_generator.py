@@ -1067,27 +1067,61 @@ class UnifiedHTMLReportGenerator:
     
     def _generate_sustainability_content(self, scan_result: Dict[str, Any]) -> str:
         """Generate sustainability-specific metrics."""
-        co2_emissions = scan_result.get('co2_emissions', 'N/A')
-        energy_consumption = scan_result.get('energy_consumption', 'N/A')
-        cost_savings = scan_result.get('cost_savings_potential', 'N/A')
+        # Get emissions data from the nested 'emissions' dictionary
+        emissions_data = scan_result.get('emissions', {})
+        metrics_data = scan_result.get('metrics', {})
+        resources_data = scan_result.get('resources', {})
+        
+        # Extract values from the correct locations
+        co2_emissions = emissions_data.get('total_co2_kg_month', 0)
+        energy_consumption = emissions_data.get('total_energy_kwh_month', 0)
+        cost_savings = resources_data.get('total_waste_cost', 0) + metrics_data.get('total_cost_savings_potential', 0)
+        co2_reduction = metrics_data.get('total_co2_reduction_potential', 0)
+        sustainability_score = metrics_data.get('sustainability_score', 0)
+        
+        # Format values for display
+        co2_display = f"{co2_emissions:.1f} kg" if co2_emissions else 'N/A'
+        energy_display = f"{energy_consumption:.1f} kWh" if energy_consumption else 'N/A'
+        cost_display = f"€{cost_savings:.2f}" if cost_savings else 'N/A'
+        
+        # Build additional metrics section
+        additional_metrics = ""
+        if co2_reduction or sustainability_score:
+            additional_metrics = f"""
+            <div class="metrics-grid" style="margin-top: 20px;">
+                <div class="metric-card">
+                    <div class="metric-value">{co2_reduction:.1f} kg</div>
+                    <div class="metric-label">CO₂ Reduction Potential</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{sustainability_score}/100</div>
+                    <div class="metric-label">Sustainability Score</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{resources_data.get('unused_resources', 0)}</div>
+                    <div class="metric-label">Unused Resources</div>
+                </div>
+            </div>
+            """
         
         return f"""
         <div class="scanner-specific">
             <h2>🌱 {t_report('sustainability_report', 'Sustainability Metrics')}</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{co2_emissions}</div>
+                    <div class="metric-value">{co2_display}</div>
                     <div class="metric-label">CO₂ Emissions/Month</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{energy_consumption}</div>
+                    <div class="metric-value">{energy_display}</div>
                     <div class="metric-label">Energy Consumption</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{cost_savings}</div>
+                    <div class="metric-value">{cost_display}</div>
                     <div class="metric-label">Potential Cost Savings</div>
                 </div>
             </div>
+            {additional_metrics}
         </div>
         """
     
