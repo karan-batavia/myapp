@@ -1,0 +1,95 @@
+🛡️ DataGuardian Pro Report
+Scan Type: Intelligent Website Scanner
+
+Scan ID: web_scan...
+
+Generated: 2025-12-06 22:28:22
+
+Region: Netherlands
+
+📊 Executive Summary
+5
+Files Scanned
+3
+Total Findings
+0
+Critical Issues
+2
+High Risk Issues
+Compliance Score: 65.0%
+🎯 Compliance Score Analysis
+65.0%
+📊 Current Compliance Score
+🔴 Critical
+🚨 Risk Level
+Financial Services: 78.5%
+🏢 Industry Benchmark
+📊 Compliance Score Analysis
+📊 Current Status: Your compliance score of 65.0% indicates critical compliance posture.
+🏢 Industry Comparison: Below average compared to industry benchmarks.
+📈 Recommendations: Focus on addressing critical findings.
+💡 Pro Tip: Advanced AI-powered compliance forecasting is available with full system dependencies installed.
+
+🌐 Website Privacy Analysis
+2
+Cookies Found
+[{'name': 'Optimizely', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/reizen-met-ov-chipkaart/geldigheid-van-vervoerbewijzen.html', 'purpose': 'Analytics and tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior data', 'gdpr_basis': 'Consent or legitimate interest required'}, {'name': 'Google Analytics', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/reizen-met-ov-chipkaart/geldigheid-van-vervoerbewijzen.html', 'purpose': 'Website analytics and user behavior tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior, page views, demographics, device info', 'gdpr_basis': 'Legitimate interest or consent required'}, {'name': 'Google Tag Manager', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/reizen-met-ov-chipkaart/geldigheid-van-vervoerbewijzen.html', 'purpose': 'Tag management system for deploying tracking codes', 'privacy_risk': 'Medium', 'data_collected': 'Variable based on configured tags', 'gdpr_basis': 'Depends on tags deployed'}, {'name': 'Inline Script Pattern: optimizely', 'source': 'https://www.ns.nl/reisinformatie/reizen-met-ov-chipkaart/geldigheid-van-vervoerbewijzen.html', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Optimizely'}, {'name': 'Inline Script Pattern: gtm', 'source': 'https://www.ns.nl/reisinformatie/reizen-met-ov-chipkaart/geldigheid-van-vervoerbewijzen.html', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Google Analytics'}, {'name': 'Optimizely', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/mijn-ns.html', 'purpose': 'Analytics and tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior data', 'gdpr_basis': 'Consent or legitimate interest required'}, {'name': 'Google Analytics', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/mijn-ns.html', 'purpose': 'Website analytics and user behavior tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior, page views, demographics, device info', 'gdpr_basis': 'Legitimate interest or consent required'}, {'name': 'Google Tag Manager', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/mijn-ns.html', 'purpose': 'Tag management system for deploying tracking codes', 'privacy_risk': 'Medium', 'data_collected': 'Variable based on configured tags', 'gdpr_basis': 'Depends on tags deployed'}, {'name': 'Inline Script Pattern: optimizely', 'source': 'https://www.ns.nl/reisinformatie/mijn-ns.html', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Optimizely'}, {'name': 'Inline Script Pattern: gtm', 'source': 'https://www.ns.nl/reisinformatie/mijn-ns.html', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Google Analytics'}, {'name': 'Optimizely', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'purpose': 'Analytics and tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior data', 'gdpr_basis': 'Consent or legitimate interest required'}, {'name': 'Google Analytics', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'purpose': 'Website analytics and user behavior tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior, page views, demographics, device info', 'gdpr_basis': 'Legitimate interest or consent required'}, {'name': 'Google Tag Manager', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'purpose': 'Tag management system for deploying tracking codes', 'privacy_risk': 'Medium', 'data_collected': 'Variable based on configured tags', 'gdpr_basis': 'Depends on tags deployed'}, {'name': 'Inline Script Pattern: optimizely', 'source': 'https://www.ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Optimizely'}, {'name': 'Inline Script Pattern: gtm', 'source': 'https://www.ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Google Analytics'}, {'name': 'Optimizely', 'type': 'inline', 'found_on': 'https://ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'purpose': 'Analytics and tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior data', 'gdpr_basis': 'Consent or legitimate interest required'}, {'name': 'Google Analytics', 'type': 'inline', 'found_on': 'https://ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'purpose': 'Website analytics and user behavior tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior, page views, demographics, device info', 'gdpr_basis': 'Legitimate interest or consent required'}, {'name': 'Google Tag Manager', 'type': 'inline', 'found_on': 'https://ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'purpose': 'Tag management system for deploying tracking codes', 'privacy_risk': 'Medium', 'data_collected': 'Variable based on configured tags', 'gdpr_basis': 'Depends on tags deployed'}, {'name': 'Inline Script Pattern: optimizely', 'source': 'https://ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Optimizely'}, {'name': 'Inline Script Pattern: gtm', 'source': 'https://ns.nl/reisinformatie/inchecken-uitchecken/betaalpas', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Google Analytics'}, {'name': 'Optimizely', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/reizen-met-een-beperking/reishulp/in-de-trein.html', 'purpose': 'Analytics and tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior data', 'gdpr_basis': 'Consent or legitimate interest required'}, {'name': 'Google Analytics', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/reizen-met-een-beperking/reishulp/in-de-trein.html', 'purpose': 'Website analytics and user behavior tracking', 'privacy_risk': 'Medium', 'data_collected': 'User behavior, page views, demographics, device info', 'gdpr_basis': 'Legitimate interest or consent required'}, {'name': 'Google Tag Manager', 'type': 'inline', 'found_on': 'https://www.ns.nl/reisinformatie/reizen-met-een-beperking/reishulp/in-de-trein.html', 'purpose': 'Tag management system for deploying tracking codes', 'privacy_risk': 'Medium', 'data_collected': 'Variable based on configured tags', 'gdpr_basis': 'Depends on tags deployed'}, {'name': 'Inline Script Pattern: optimizely', 'source': 'https://www.ns.nl/reisinformatie/reizen-met-een-beperking/reishulp/in-de-trein.html', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Optimizely'}, {'name': 'Inline Script Pattern: gtm', 'source': 'https://www.ns.nl/reisinformatie/reizen-met-een-beperking/reishulp/in-de-trein.html', 'privacy_risk': 'Medium', 'from_finding': True, 'type': 'tracker', 'description': 'Inline tracker script for Google Analytics'}]
+Trackers Detected
+🔍 Detailed Findings
+Security Finding: Tracker
+High
+Description: Inline tracker script for Optimizely
+Context: Inline tracker script for Optimizely
+Location: Inline Script Pattern: optimizely (affects 1 pages)
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: High - Review within 3 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate High
+Description: Address: Inline tracker script for Optimizely
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Tracker
+High
+Description: Inline tracker script for Google Analytics
+Context: Inline tracker script for Google Analytics
+Location: Inline Script Pattern: gtm (affects 1 pages)
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: High - Review within 3 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate High
+Description: Address: Inline tracker script for Google Analytics
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Consent Management
+Info
+Description: Using TrustArc consent management platform
+Context: Using TrustArc consent management platform
+Location: CMP Pattern: truste (affects 1 pages)
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Info - Review within 7 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate Info
+Description: Address: Using TrustArc consent management platform
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Generated by DataGuardian Pro - Enterprise Privacy & Sustainability Compliance Platform
+
+Report ID: web_scan_80735730 | Generated: 2025-12-06 22:28:22

@@ -1093,22 +1093,53 @@ class UnifiedHTMLReportGenerator:
     
     def _generate_website_content(self, scan_result: Dict[str, Any]) -> str:
         """Generate website-specific compliance content."""
-        cookies_found = scan_result.get('cookies_found', 0)
-        trackers_detected = scan_result.get('trackers_detected', 0)
+        cookies_raw = scan_result.get('cookies_found', 0)
+        trackers_raw = scan_result.get('trackers_detected', 0)
+        
+        # Handle both list and integer values
+        cookies_count = len(cookies_raw) if isinstance(cookies_raw, list) else cookies_raw
+        trackers_count = len(trackers_raw) if isinstance(trackers_raw, list) else trackers_raw
+        
+        # Build detailed cookie and tracker lists if available
+        cookies_details = ""
+        if isinstance(cookies_raw, list) and cookies_raw:
+            cookies_details = "<div class='details-section'><h3>🍪 Cookie Details</h3><table class='findings-table'><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Privacy Risk</th></tr>"
+            for cookie in cookies_raw[:10]:  # Limit to first 10
+                name = cookie.get('name', 'Unknown')
+                cookie_type = cookie.get('type', 'Unknown')
+                purpose = cookie.get('purpose', 'Unknown')
+                risk = cookie.get('privacy_risk', 'Unknown')
+                risk_class = 'high' if risk.lower() == 'high' else 'medium' if risk.lower() == 'medium' else 'low'
+                cookies_details += f"<tr><td>{name}</td><td>{cookie_type}</td><td>{purpose}</td><td class='{risk_class}'>{risk}</td></tr>"
+            cookies_details += "</table></div>"
+        
+        trackers_details = ""
+        if isinstance(trackers_raw, list) and trackers_raw:
+            trackers_details = "<div class='details-section'><h3>📡 Tracker Details</h3><table class='findings-table'><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Privacy Risk</th></tr>"
+            for tracker in trackers_raw[:10]:  # Limit to first 10
+                name = tracker.get('name', 'Unknown')
+                tracker_type = tracker.get('type', 'Unknown')
+                purpose = tracker.get('purpose', 'Unknown')
+                risk = tracker.get('privacy_risk', 'Unknown')
+                risk_class = 'high' if risk.lower() == 'high' else 'medium' if risk.lower() == 'medium' else 'low'
+                trackers_details += f"<tr><td>{name}</td><td>{tracker_type}</td><td>{purpose}</td><td class='{risk_class}'>{risk}</td></tr>"
+            trackers_details += "</table></div>"
         
         return f"""
         <div class="scanner-specific">
             <h2>🌐 {t_report('website_privacy_report', 'Website Privacy Analysis')}</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-value">{cookies_found}</div>
+                    <div class="metric-value">{cookies_count}</div>
                     <div class="metric-label">Cookies Found</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value">{trackers_detected}</div>
+                    <div class="metric-value">{trackers_count}</div>
                     <div class="metric-label">Trackers Detected</div>
                 </div>
             </div>
+            {cookies_details}
+            {trackers_details}
         </div>
         """
     
