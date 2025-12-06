@@ -1087,8 +1087,8 @@ def render_authenticated_interface():
         
         # Navigation menu with translations
         nav_options = [
-            f"🏠 {_('sidebar.dashboard', 'Dashboard')}", 
             f"🔍 {_('scan.new_scan_title', 'New Scan')}", 
+            f"🏠 {_('sidebar.dashboard', 'Dashboard')}", 
             "🤖 Predictive Analytics",
             f"📊 {_('results.title', 'Results')}", 
             f"📋 {_('history.title', 'History')}", 
