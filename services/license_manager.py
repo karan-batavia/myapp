@@ -578,7 +578,12 @@ class LicenseManager:
         if not is_valid:
             return False
         
-        return scanner_type in self.current_license.allowed_scanners
+        # All scanners available for valid active licenses
+        all_scanners = [
+            "code", "document", "image", "database", "api", "enterprise", 
+            "ai_model", "website", "soc2", "dpia", "sustainability"
+        ]
+        return scanner_type in all_scanners
     
     def check_region_access(self, region: str) -> bool:
         """Check if region is allowed"""
