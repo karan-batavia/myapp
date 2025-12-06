@@ -7784,130 +7784,33 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             status.update(label="Mapping findings to Trust Service Criteria...")
             progress_bar.progress(50)
             
-            # Generate SOC2-specific findings
-            soc2_findings = []
+            # Use ACTUAL findings from the repository scan
+            # The repo_analysis contains real findings from scanning the actual repository
+            soc2_findings = repo_analysis.get('findings', [])
             
-            if security:
-                soc2_findings.extend([
-                    {
-                        'type': 'SECURITY_CONTROL',
-                        'severity': 'High',
-                        'file': 'infrastructure/security.tf',
-                        'line': 15,
-                        'location': 'infrastructure/security.tf:15',
-                        'description': 'Encryption not enabled for data at rest',
-                        'recommendation': 'Enable encryption for all storage resources',
-                        'tsc_criteria': ['CC6.1', 'CC6.7'],
-                        'nis2_articles': ['Article 21(2)(d)', 'Article 21(2)(e)'],
-                        'category': 'security'
-                    },
-                    {
-                        'type': 'ACCESS_CONTROL',
-                        'severity': 'Medium',
-                        'file': 'config/auth.yaml',
-                        'line': 8,
-                        'location': 'config/auth.yaml:8',
-                        'description': 'Multi-factor authentication not enforced',
-                        'recommendation': 'Implement MFA for all user accounts',
-                        'tsc_criteria': ['CC6.2', 'CC6.3'],
-                        'nis2_articles': ['Article 21(2)(j)', 'Article 21(2)(a)'],
-                        'category': 'security'
-                    }
-                ])
-            
-            if availability:
-                soc2_findings.extend([
-                    {
-                        'type': 'AVAILABILITY_CONTROL',
-                        'severity': 'Medium',
-                        'file': 'infrastructure/backup.tf',
-                        'line': 12,
-                        'location': 'infrastructure/backup.tf:12',
-                        'description': 'Automated backup procedures documented',
-                        'recommendation': 'Verify backup restoration procedures',
-                        'tsc_criteria': ['A1.1', 'A1.2'],
-                        'nis2_articles': ['Article 21(2)(c)', 'Article 21(2)(g)'],
-                        'category': 'availability'
-                    }
-                ])
-            
-            if processing_integrity:
-                soc2_findings.extend([
-                    {
-                        'type': 'PROCESSING_INTEGRITY',
-                        'severity': 'High',
-                        'file': 'src/validation.py',
-                        'line': 23,
-                        'location': 'src/validation.py:23',
-                        'description': 'Input validation controls incomplete',
-                        'recommendation': 'Implement comprehensive input validation',
-                        'tsc_criteria': ['PI1.1', 'PI1.2'],
-                        'nis2_articles': ['Article 21(2)(b)', 'Article 21(2)(d)'],
-                        'category': 'processing_integrity'
-                    }
-                ])
-            
-            if confidentiality:
-                soc2_findings.extend([
-                    {
-                        'type': 'CONFIDENTIALITY_CONTROL',
-                        'severity': 'High',
-                        'file': 'config/database.conf',
-                        'line': 5,
-                        'location': 'config/database.conf:5',
-                        'description': 'Sensitive data not properly classified',
-                        'recommendation': 'Implement data classification controls',
-                        'tsc_criteria': ['C1.1', 'C1.2'],
-                        'nis2_articles': ['Article 21(2)(d)', 'Article 21(2)(e)'],
-                        'category': 'confidentiality'
-                    }
-                ])
-            
-            if privacy:
-                soc2_findings.extend([
-                    {
-                        'type': 'PRIVACY_CONTROL',
-                        'severity': 'High',
-                        'file': 'policies/privacy.md',
-                        'line': 1,
-                        'location': 'policies/privacy.md:1',
-                        'description': 'Data retention policy needs review',
-                        'recommendation': 'Define clear data retention periods',
-                        'tsc_criteria': ['P1.1', 'P2.1'],
-                        'nis2_articles': ['Article 21(2)(f)', 'Article 20'],
-                        'category': 'privacy'
-                    }
-                ])
+            # Ensure each finding has a location field for proper report display
+            for finding in soc2_findings:
+                if not finding.get('location'):
+                    file_path = finding.get('file', 'unknown')
+                    line_num = finding.get('line', 0)
+                    finding['location'] = f"{file_path}:{line_num}" if line_num else file_path
             
             # Add findings to scan results
             scan_results["findings"] = soc2_findings
             
-            # Calculate realistic metrics based on SOC2 compliance analysis
-            files_scanned = len(set([f.get('file', f'config_{i}.yaml') for i, f in enumerate(soc2_findings)]))
+            # Use metrics from the actual scan
+            files_scanned = repo_analysis.get('total_files_scanned', 0)
             if files_scanned == 0:
-                files_scanned = max(4, len(soc2_findings))  # Minimum 4 files for SOC2 analysis
+                files_scanned = repo_analysis.get('iac_files_found', len(set([f.get('file', '') for f in soc2_findings])))
             
-            # Calculate lines analyzed based on SOC2 configuration files
-            lines_per_file = {
-                'infrastructure/security.tf': 150,
-                'config/auth.yaml': 85,
-                'infrastructure/backup.tf': 120,
-                'src/validation.py': 200,
-                'config/database.conf': 45,
-                'policies/privacy.md': 300
-            }
-            
-            lines_analyzed = 0
-            for finding in soc2_findings:
-                file_path = finding.get('file', 'config/default.yaml')
-                lines_analyzed += lines_per_file.get(file_path, 100)  # Default 100 lines per file
-            
+            lines_analyzed = repo_analysis.get('lines_analyzed', 0)
             if lines_analyzed == 0:
-                lines_analyzed = files_scanned * 125  # Average 125 lines per SOC2 config file
+                lines_analyzed = files_scanned * 125  # Average 125 lines per IaC file
             
             scan_results["files_scanned"] = files_scanned
             scan_results["lines_analyzed"] = lines_analyzed
             scan_results["total_controls_assessed"] = len(soc2_findings)
+            scan_results["technologies_detected"] = repo_analysis.get('technologies_detected', [])
             
             # Calculate compliance score
             high_risk = len([f for f in soc2_findings if f.get('severity') == 'High'])
