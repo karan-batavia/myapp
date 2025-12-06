@@ -1083,6 +1083,24 @@ def render_landing_page():
 def render_authenticated_interface():
     """Render the main authenticated user interface with performance optimization"""
     
+    # Hide the duplicate "app" label in sidebar navigation for authenticated users
+    st.markdown("""
+    <style>
+        /* Hide the 'app' text at top of sidebar navigation */
+        [data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+        /* Also hide the default page list that shows 'app' */
+        section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+        /* Hide any default navigation header text */
+        .stSidebar [data-testid="stSidebarNavItems"] {
+            display: none !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Track anonymous page view (GDPR-compliant with IP anonymization)
     try:
         from services.auth_tracker import track_page_view
