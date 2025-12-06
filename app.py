@@ -886,13 +886,13 @@ def render_landing_page():
         },
         {
             "icon": "🛡️", 
-            "title": _('landing.scanner.soc2_title', 'SOC2 Scanner'),
-            "description": _('landing.scanner.soc2_desc', 'SOC2 Type II compliance assessment with security controls evaluation'),
+            "title": _('landing.scanner.soc2_title', 'SOC2 & NIS2 Scanner'),
+            "description": _('landing.scanner.soc2_desc', 'SOC2 + NIS2 EU Directive compliance with dual framework coverage'),
             "features": [
-                _('landing.scanner.soc2_f1', 'TSC framework analysis'),
-                _('landing.scanner.soc2_f2', 'Security controls audit'),
-                _('landing.scanner.soc2_f3', 'Compliance gap analysis'),
-                _('landing.scanner.soc2_f4', 'Readiness assessment')
+                _('landing.scanner.soc2_f1', 'SOC2 TSC framework analysis'),
+                _('landing.scanner.soc2_f2', 'NIS2 Article 21 risk management'),
+                _('landing.scanner.soc2_f3', 'Incident handling (Article 23)'),
+                _('landing.scanner.soc2_f4', 'Business continuity compliance')
             ],
             "color": "#607D8B"
         },
@@ -2551,7 +2551,7 @@ def render_scanner_interface_safe():
         f"🌐 {_('scan.website', 'Website')}": _('scan.website_description', 'Privacy policy and web compliance analysis'),
         f"🔌 {_('scan.api', 'API')}": _('scan.api_description', 'REST API security and PII exposure analysis'),
         f"🤖 {_('scan.ai_model', 'AI Model')}": _('scan.ai_model_description', 'ML model privacy risks and bias detection'),
-        f"🛡️ {_('scan.soc2', 'SOC2')}": _('scan.soc2_description', 'SOC2 compliance assessment with TSC mapping'),
+        f"🛡️ {_('scan.soc2', 'SOC2 & NIS2')}": _('scan.soc2_description', 'SOC2 + NIS2 EU Directive compliance with TSC mapping'),
         f"📋 {_('scan.dpia', 'DPIA')}": _('scan.dpia_description', 'Data Protection Impact Assessment workflow'),
         f"🌱 {_('scan.sustainability', 'Sustainability')}": _('scan.sustainability_description', 'Environmental impact and green coding analysis')
     }
@@ -7606,19 +7606,19 @@ def render_soc2_scanner_interface(region: str, username: str):
     session_id = st.session_state.get('session_id', str(uuid.uuid4()))
     user_id = st.session_state.get('user_id', username)
     
-    st.subheader("🛡️ SOC2 Compliance Scanner")
+    st.subheader("🛡️ SOC2 & NIS2 Compliance Scanner")
     
-    # Enhanced description from July 1st
+    # Enhanced description with NIS2
     st.write(
-        "Scan Infrastructure as Code (IaC) repositories for SOC2 compliance issues. "
+        "Scan Infrastructure as Code (IaC) repositories for SOC2 and NIS2 compliance issues. "
         "This scanner identifies security, availability, processing integrity, "
-        "confidentiality, and privacy issues in your infrastructure code."
+        "confidentiality, and privacy issues aligned with both frameworks."
     )
     
-    st.info(
-        "SOC2 scanning analyzes your infrastructure code against Trust Services Criteria (TSC) "
-        "to identify potential compliance issues. The scanner maps findings to specific TSC controls "
-        "and provides recommendations for remediation."
+    st.success(
+        "**Dual Framework Coverage:**\n\n"
+        "**SOC2** - Trust Services Criteria (TSC) mapping for security, availability, processing integrity, confidentiality, and privacy.\n\n"
+        "**NIS2** - EU Directive 2022/2555 compliance with Articles 20-23 covering risk management, incident handling, business continuity, and supply chain security."
     )
     
     # Repository source selection
@@ -7673,12 +7673,12 @@ def render_soc2_scanner_interface(region: str, username: str):
     # Output information
     st.markdown("""
     <div style="padding: 10px; border-radius: 5px; background-color: #f0f8ff; margin: 10px 0;">
-        <span style="font-weight: bold;">Output:</span> SOC2 checklist + mapped violations aligned with Trust Services Criteria
+        <span style="font-weight: bold;">Output:</span> SOC2 TSC checklist + NIS2 Article mapping + dual framework compliance report with remediation recommendations
     </div>
     """, unsafe_allow_html=True)
     
     # Scan button
-    if st.button("🚀 Start SOC2 Compliance Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start SOC2 & NIS2 Compliance Scan", type="primary", use_container_width=True):
         if not repo_url:
             st.error("Please enter a repository URL for SOC2 analysis.")
             return

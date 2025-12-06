@@ -1,9 +1,13 @@
 """
-SOC2 Compliance Scanner for IaC Code
+SOC2 & NIS2 Compliance Scanner for IaC Code
 
 This module provides functionality to scan infrastructure-as-code (IaC) repositories
-for SOC2 compliance issues. It focuses on common security and compliance issues
-in Terraform, CloudFormation, Ansible, and other IaC tools.
+for SOC2 and NIS2 (EU Directive 2022/2555) compliance issues. It focuses on common 
+security and compliance issues in Terraform, CloudFormation, Ansible, and other IaC tools.
+
+NIS2 Directive: EU cybersecurity law requiring organizations in critical sectors to 
+implement comprehensive cybersecurity measures including risk management, incident 
+reporting, business continuity, and supply chain security.
 """
 
 import os
@@ -33,6 +37,91 @@ SOC2_CATEGORIES = {
     "processing_integrity": "Processing Integrity",
     "confidentiality": "Confidentiality",
     "privacy": "Privacy"
+}
+
+# NIS2 Directive Compliance Categories (EU 2022/2555)
+NIS2_CATEGORIES = {
+    "risk_management": "Risk Management",
+    "incident_handling": "Incident Handling",
+    "business_continuity": "Business Continuity",
+    "supply_chain": "Supply Chain Security",
+    "network_security": "Network Security",
+    "access_control": "Access Control & MFA",
+    "cryptography": "Cryptography & Encryption",
+    "asset_management": "Asset Management",
+    "cybersecurity_training": "Cybersecurity Training",
+    "vulnerability_management": "Vulnerability Management"
+}
+
+# NIS2 Article Mapping (EU Directive 2022/2555)
+NIS2_ARTICLE_MAPPING = {
+    # Risk Management Measures (Article 21)
+    "NIS2-21.1": "Policies on risk analysis and information system security",
+    "NIS2-21.2a": "Incident handling procedures",
+    "NIS2-21.2b": "Business continuity (backup management, disaster recovery, crisis management)",
+    "NIS2-21.2c": "Supply chain security including security aspects of supplier relationships",
+    "NIS2-21.2d": "Security in network and information systems acquisition, development, maintenance",
+    "NIS2-21.2e": "Policies for assessing effectiveness of cybersecurity measures",
+    "NIS2-21.2f": "Basic cyber hygiene practices and cybersecurity training",
+    "NIS2-21.2g": "Policies for use of cryptography and encryption",
+    "NIS2-21.2h": "Human resources security, access control policies, asset management",
+    "NIS2-21.2i": "Use of multi-factor authentication, secured communications, secured emergency systems",
+    "NIS2-21.2j": "Vulnerability handling and disclosure policies",
+    
+    # Incident Reporting (Article 23)
+    "NIS2-23.1": "24-hour early warning for significant incidents",
+    "NIS2-23.2": "72-hour incident notification with initial assessment",
+    "NIS2-23.3": "Intermediate and final report within one month",
+    "NIS2-23.4": "Notification to affected service recipients",
+    
+    # Corporate Accountability (Article 20)
+    "NIS2-20.1": "Management body approval of cybersecurity measures",
+    "NIS2-20.2": "Management body oversight of implementation",
+    "NIS2-20.3": "Management accountability for non-compliance",
+    "NIS2-20.4": "Cybersecurity training for management and staff",
+    
+    # Supply Chain Security (Article 22)
+    "NIS2-22.1": "Assessment of security of supply chain",
+    "NIS2-22.2": "Security requirements for suppliers and service providers",
+    "NIS2-22.3": "Coordinated security risk assessments of critical supply chains",
+    
+    # Penalties (Article 34)
+    "NIS2-34.1": "Essential entities: fines up to €10M or 2% global revenue",
+    "NIS2-34.2": "Important entities: fines up to €7M or 1.4% global revenue"
+}
+
+# Map findings to NIS2 articles
+FINDING_TO_NIS2_MAP = {
+    # Security mappings
+    "Hard-coded AWS access keys": ["NIS2-21.2g", "NIS2-21.2h"],
+    "Possible hard-coded secrets": ["NIS2-21.2g", "NIS2-21.2h"],
+    "Possible hard-coded password": ["NIS2-21.2g", "NIS2-21.2h"],
+    "Security group with unrestricted ingress": ["NIS2-21.2d", "NIS2-21.1"],
+    "IAM policy with unrestricted access": ["NIS2-21.2h", "NIS2-21.1"],
+    "Container running in privileged mode": ["NIS2-21.2d", "NIS2-21.1"],
+    "Pod using hostPath volume": ["NIS2-21.2d", "NIS2-21.2h"],
+    
+    # Business Continuity mappings
+    "Resource with backups disabled": ["NIS2-21.2b"],
+    "EC2 instance without termination protection": ["NIS2-21.2b"],
+    "S3 bucket without versioning": ["NIS2-21.2b"],
+    "Resource with monitoring disabled": ["NIS2-21.2e", "NIS2-21.2a"],
+    "Resource without deletion protection": ["NIS2-21.2b"],
+    
+    # Incident Handling mappings
+    "Resource without logging configured": ["NIS2-21.2a", "NIS2-23.1"],
+    "Using 'latest' tag for base image": ["NIS2-21.2j", "NIS2-21.2d"],
+    
+    # Cryptography mappings
+    "S3 bucket with public read access": ["NIS2-21.2g", "NIS2-21.2h"],
+    "Resource with encryption disabled": ["NIS2-21.2g"],
+    
+    # Access Control mappings
+    "Hard-coded credentials or secrets": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-21.2i"],
+    "Use of eval() function": ["NIS2-21.2d", "NIS2-21.2j"],
+    "CORS allowing all origins": ["NIS2-21.2d", "NIS2-21.1"],
+    "JWT token generation without expiration": ["NIS2-21.2h", "NIS2-21.2i"],
+    "Database connection without proper error handling": ["NIS2-21.2a", "NIS2-21.2b"]
 }
 
 # SOC2 Trust Services Criteria (TSC) mapping
@@ -594,6 +683,20 @@ def scan_iac_file(file_path: str, tech: Optional[str] = None) -> List[Dict[str, 
                         "description": criterion_description
                     })
                 
+                # Get NIS2 article mapping for this finding
+                nis2_articles = []
+                if description in FINDING_TO_NIS2_MAP:
+                    nis2_articles = FINDING_TO_NIS2_MAP[description]
+                
+                # Create nis2_details with article and description pairs
+                nis2_details = []
+                for article in nis2_articles:
+                    article_description = NIS2_ARTICLE_MAPPING.get(article, "")
+                    nis2_details.append({
+                        "article": article,
+                        "description": article_description
+                    })
+                
                 finding = {
                     "file": file_path,
                     "line": line_num,
@@ -605,7 +708,9 @@ def scan_iac_file(file_path: str, tech: Optional[str] = None) -> List[Dict[str, 
                     "code_snippet": code_snippet,
                     "technology": tech,
                     "soc2_tsc_criteria": tsc_criteria,
-                    "soc2_tsc_details": tsc_details
+                    "soc2_tsc_details": tsc_details,
+                    "nis2_articles": nis2_articles,
+                    "nis2_details": nis2_details
                 }
                 
                 findings.append(finding)
