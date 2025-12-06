@@ -2134,10 +2134,6 @@ class GithubRepoSustainabilityScanner:
         # Define a function to analyze a single file with pyflakes
         def analyze_file(file_path):
             try:
-    # Log scan start
-    if hasattr(logger, 'scan_started'):
-        logger.scan_started('cloud_resources_scanner', 'scan_target')
-
                 result = subprocess.run(['pyflakes', file_path], capture_output=True, text=True, timeout=5)
                 file_results = []
                 
