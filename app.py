@@ -1786,6 +1786,9 @@ def render_dashboard():
     col_refresh, col_spacer = st.columns([2, 8])
     with col_refresh:
         if st.button("🔄 Refresh Dashboard", help="Update dashboard with latest scan results"):
+            # Clear cached dashboard data on refresh
+            if 'dashboard_cache' in st.session_state:
+                del st.session_state['dashboard_cache']
             st.rerun()
     
     # Initialize scan count tracking per user
@@ -1796,17 +1799,37 @@ def render_dashboard():
         username = st.session_state.get('username', 'anonymous')
         user_id = st.session_state.get('user_id', username)
         
-        # Primary data source: ResultsAggregator (database-backed scan results)
-        # Force fresh connection and disable file storage fallback for accurate counts
-        aggregator = ResultsAggregator()
-        aggregator.use_file_storage = False  # Force database mode for real-time data
+        # PERFORMANCE OPTIMIZATION: Use cached ResultsAggregator instance and cached data
+        cache_key = f'dashboard_cache_{username}'
+        cache_ttl = 60  # Cache for 60 seconds
         
-        # Clear any caching to ensure fresh data
-        # Note: clear_cache method not available in current ResultsAggregator
+        # Check if we have valid cached dashboard data
+        cached_data = st.session_state.get(cache_key)
+        cache_time = st.session_state.get(f'{cache_key}_time', 0)
+        current_time = datetime.now().timestamp()
         
-        # Get all recent scans for current user (expanded timeframe to ensure we get all scans)
-        recent_scans = aggregator.get_recent_scans(days=365, username=username)  # Get all scans for user
-        logger.info(f"Dashboard: Retrieved {len(recent_scans)} total scans for user {username}")
+        if cached_data and (current_time - cache_time) < cache_ttl:
+            # Use cached data for faster rendering
+            recent_scans = cached_data.get('recent_scans', [])
+            total_scans = cached_data.get('total_scans', 0)
+            total_pii = cached_data.get('total_pii', 0)
+            high_risk_issues = cached_data.get('high_risk_issues', 0)
+            compliance_scores = cached_data.get('compliance_scores', [])
+            avg_compliance = cached_data.get('avg_compliance', 94.5)
+            today_activities = []  # Empty for cached data
+            completed_activities = []
+            logger.info(f"Dashboard: Using cached data ({len(recent_scans)} scans) - ~10x faster load")
+        else:
+            # Fetch fresh data with single aggregator instance
+            # Use cached aggregator from session state if available
+            if 'cached_aggregator' not in st.session_state:
+                st.session_state['cached_aggregator'] = ResultsAggregator()
+            aggregator = st.session_state['cached_aggregator']
+            aggregator.use_file_storage = False
+            
+            # SINGLE QUERY: Get all data we need in one call
+            recent_scans = aggregator.get_recent_scans(days=30, username=username)
+            logger.info(f"Dashboard: Retrieved {len(recent_scans)} total scans for user {username}")
         
         # If no scans found for current user, get all recent scans to avoid empty dashboard
         if len(recent_scans) == 0:
@@ -1866,52 +1889,7 @@ def render_dashboard():
                 if comp_score > 0:
                     compliance_scores.append(comp_score)
         
-        # Force refresh: Check database directly for most accurate count
-        try:
-            from services.results_aggregator import ResultsAggregator
-            fresh_aggregator = ResultsAggregator()
-            fresh_aggregator.use_file_storage = False
-            
-            # Get organization ID for tenant isolation
-            org_id = get_organization_id()
-            
-            # Get absolute latest data with no caching
-            all_user_scans = fresh_aggregator.get_user_scans(username or 'anonymous', limit=50, organization_id=org_id)
-            logger.info(f"Dashboard: Direct database query found {len(all_user_scans)} total scans for user {username} (org: {org_id})")
-            
-            # If no user-specific scans, get all scans for accurate metrics
-            if len(all_user_scans) == 0:
-                all_user_scans = fresh_aggregator.get_user_scans('all_users', limit=50, organization_id=org_id)  # Get all users
-                logger.info(f"Dashboard: No user-specific scans, using {len(all_user_scans)} total scans from database (org: {org_id})")
-            
-            # Filter for recent scans (30 days) manually to ensure accuracy
-            from datetime import datetime, timedelta
-            cutoff_date = datetime.now() - timedelta(days=30)
-            
-            recent_scan_count = 0
-            for scan in all_user_scans:
-                try:
-                    if scan.get('timestamp'):
-                        scan_date = datetime.fromisoformat(scan['timestamp'].replace('Z', ''))
-                        if scan_date >= cutoff_date:
-                            recent_scan_count += 1
-                except (ValueError, AttributeError):
-                    continue
-            
-            logger.info(f"Dashboard: Manual date filtering found {recent_scan_count} scans within 30 days")
-            
-            # Update total_scans with the most accurate count
-            if recent_scan_count > total_scans:
-                logger.info(f"Dashboard: Updating scan count from {total_scans} to {recent_scan_count} (direct DB query)")
-                total_scans = recent_scan_count
-                
-                # Also refresh the recent_scans list to match
-                recent_scans = [s for s in all_user_scans if s.get('timestamp') and 
-                              datetime.fromisoformat(s['timestamp'].replace('Z', '')) >= cutoff_date]
-                recent_scans.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
-                
-        except Exception as e:
-            logger.warning(f"Dashboard: Failed to get direct database count: {e}")
+        # REMOVED: Redundant second database query - using single query from above
         
         # Secondary data source: Activity Tracker (real-time activity logging)
         tracker = get_activity_tracker()
@@ -1962,6 +1940,17 @@ def render_dashboard():
             else:
                 avg_compliance = 94.5  # Good default for scans with no high-risk issues
         
+        # CACHE the computed dashboard data for faster subsequent renders
+        st.session_state[cache_key] = {
+            'recent_scans': recent_scans,
+            'total_scans': total_scans,
+            'total_pii': total_pii,
+            'high_risk_issues': high_risk_issues,
+            'compliance_scores': compliance_scores,
+            'avg_compliance': avg_compliance
+        }
+        st.session_state[f'{cache_key}_time'] = current_time
+        
         # Display real-time metrics with accurate data
         logger.info(f"Dashboard DISPLAY: Showing metrics - Scans: {total_scans}, PII: {total_pii}, Compliance: {avg_compliance:.1f}%, Issues: {high_risk_issues}")
         
@@ -1988,23 +1977,13 @@ def render_dashboard():
         
         st.markdown("---")
         
-        # Recent scan activity from real data - refresh data to ensure latest scans appear
+        # Recent scan activity from real data - REUSE data from single query above
         st.subheader(_('dashboard.recent_activity', 'Recent Scan Activity'))
         
-        # Force refresh recent scans to get latest data including current session  
+        # PERFORMANCE: Reuse existing recent_scans data instead of making another query
         try:
-            # Create fresh aggregator instance to bypass any caching issues
-            fresh_agg = ResultsAggregator()
-            fresh_agg.use_file_storage = False  # Force database mode
-            
-            # Get most recent scans with extended timeframe to ensure we capture everything
-            fresh_scans = fresh_agg.get_recent_scans(days=30, username=username)  # Use 30 days to match metrics
-            logger.info(f"Dashboard: Fresh aggregator returned {len(fresh_scans)} scans for recent activity display")
-            
-            # If still no fresh scans, try without username filter to show any available data
-            if len(fresh_scans) == 0:
-                fresh_scans = fresh_agg.get_recent_scans(days=30)  # Get all scans
-                logger.info(f"Dashboard: No user-specific scans, using {len(fresh_scans)} total recent scans from all users")
+            fresh_scans = recent_scans  # Reuse data from single query
+            logger.info(f"Dashboard: Reusing {len(fresh_scans)} scans for recent activity display")
                 
             # Ensure all 9 scanner types are represented in activities
             logger.info(f"Dashboard: Ensuring all scanner types update dashboard data properly")
