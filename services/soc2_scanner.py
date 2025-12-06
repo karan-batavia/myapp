@@ -375,7 +375,7 @@ FINDING_TO_TSC_MAP = {
 
 # IaC file patterns to identify
 IaC_FILE_PATTERNS = {
-    "terraform": [r"\.tf$", r"\.tfvars$", r"terraform\..*\.json$"],
+    "terraform": [r"\.tf$", r"\.tfvars$", r"terraform\..*\.json$", r"\.hcl$", r"terragrunt\.hcl$"],
     "cloudformation": [r"\.yaml$", r"\.yml$", r"\.json$"],
     "azure_arm": [r"azuredeploy\.json$", r"mainTemplate\.json$", r"\.arm\.json$", r"parameters\.json$"],
     "gcp_deployment": [r"\.jinja$", r"\.jinja2$", r"deployment\.yaml$", r"\.dm\.yaml$"],
@@ -394,7 +394,7 @@ TERRAFORM_RISK_PATTERNS = {
     r"provider\s+\"aws\"\s*{[^}]*(?!version\s*=)": (
         "AWS provider without version constraint",
         "medium",
-        "Specify provider version constraints for better stability and security",
+        "Add version constraint to AWS provider block. For Terraform: 'version = \"~> 5.0\"'. For Terragrunt: add 'required_providers { aws = { source = \"hashicorp/aws\", version = \"~> 5.0\" } }' in generate block or terraform { } block",
         "security"
     ),
     r"(?:access_key|aws_access_key_id)\s*=\s*[\"'][A-Z0-9]{20}[\"']": (
