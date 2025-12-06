@@ -12,10 +12,21 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
 
 ## System Architecture
 ### Frontend Architecture
-- **Framework**: Streamlit-based web application.
+- **Framework**: Streamlit-based web application with multi-page architecture.
+- **Main Entry Point**: `app.py` handles authentication, session management, and primary navigation (12,768 lines - gradual refactoring in progress).
+- **Multi-Page Structure**: 7 pages in `pages/` directory (New Scan, Dashboard, Results, History, Settings, Pricing, Admin) with authentication wrapper.
+- **Page Modules**: Reusable page logic in `page_modules/` (scanner.py, dashboard.py, results.py, history.py, settings.py, pricing.py, admin.py).
+- **Auth Wrapper**: `page_modules/auth_wrapper.py` provides shared authentication, session initialization, and role-based access control for multi-page navigation.
 - **Language Support**: Internationalization with English and Dutch translations, including automated browser language detection.
 - **Authentication**: Role-based access control with 7 predefined user roles, using bcrypt for password hashing and JWT for token authentication.
 - **UI Components**: Modular design with reusable components, animated language switcher, professional styling, and a 6-tab settings system, including a new billing tab with subscription management.
+
+### API Architecture (Development)
+- **REST API**: Flask-based API endpoints in `api/` directory (planned for external integrations).
+- **Endpoints**: Health check, scans list/create/get, compliance status, license info (api/routes.py).
+- **Webhooks**: Active webhook server in `services/webhook_server.py` for Stripe payments; additional webhook handlers in `api/webhooks.py` for Microsoft 365/Google/Exact Online.
+- **Middleware**: Rate limiting, JWT authentication, CORS headers, request logging (api/middleware.py).
+- **Status**: Webhook server active on port 5001; REST API blueprints planned for future integration.
 
 ### Backend Architecture
 - **Language**: Python 3.11.
