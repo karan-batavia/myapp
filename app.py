@@ -9592,6 +9592,24 @@ def execute_enhanced_dpia_scan(region, username, responses):
             }
         )
         
+        # CRITICAL: Save scan results to database for Results/History pages
+        try:
+            from services.results_aggregator import ResultsAggregator
+            aggregator = ResultsAggregator()
+            
+            scan_results['scan_type'] = 'DPIA Scanner'
+            scan_results['file_count'] = 1
+            scan_results['total_pii_found'] = findings_count
+            scan_results['high_risk_count'] = high_risk_count
+            scan_results['compliance_score'] = min(100, max(0, 100 - (scan_results["risk_score"] * 10)))
+            
+            stored_scan_id = aggregator.save_scan_result(username=username, result=scan_results)
+            if stored_scan_id:
+                logger.info(f"DPIA scan saved to database: {stored_scan_id}")
+                st.session_state['last_scan_id'] = stored_scan_id
+        except Exception as save_error:
+            logger.error(f"Failed to save DPIA scan: {save_error}")
+        
         # Reset wizard for new assessment
         st.session_state.dpia_step = 1
         st.session_state.dpia_responses = {}
@@ -10358,6 +10376,25 @@ def execute_sustainability_scan(region, username, scan_params):
                 'code_issues': len(code_bloat_findings)
             }
         )
+        
+        # CRITICAL: Save scan results to database for Results/History pages
+        try:
+            from services.results_aggregator import ResultsAggregator
+            aggregator = ResultsAggregator()
+            
+            scan_results['scan_type'] = 'Sustainability Scanner'
+            scan_results['file_count'] = len(code_bloat_findings) + len(unused_resources)
+            # Sustainability scans don't detect PII - use 0 for PII count, use findings for issues
+            scan_results['total_pii_found'] = 0  # Not a PII scanner
+            scan_results['high_risk_count'] = high_risk_count  # Environmental/efficiency issues
+            scan_results['sustainability_findings'] = findings_count  # Store actual finding count
+            
+            stored_scan_id = aggregator.save_scan_result(username=username, result=scan_results)
+            if stored_scan_id:
+                logger.info(f"Sustainability scan saved to database: {stored_scan_id}")
+                st.session_state['last_scan_id'] = stored_scan_id
+        except Exception as save_error:
+            logger.error(f"Failed to save sustainability scan: {save_error}")
         
         st.success("✅ Comprehensive sustainability analysis completed!")
         

@@ -42,10 +42,18 @@ def rate_limit(max_requests=RATE_LIMIT_MAX_REQUESTS, window=RATE_LIMIT_WINDOW):
 
 
 def validate_api_key(api_key):
-    """Validate API key against stored keys"""
+    """Validate API key against stored keys - requires explicit configuration"""
     try:
-        valid_keys = os.environ.get('API_KEYS', '').split(',')
-        return api_key in valid_keys if valid_keys else True
+        api_keys_env = os.environ.get('API_KEYS', '')
+        if not api_keys_env or api_keys_env.strip() == '':
+            # SECURITY: Reject all API keys if none are configured
+            logger.warning("API_KEYS not configured - rejecting API key authentication")
+            return False
+        valid_keys = [k.strip() for k in api_keys_env.split(',') if k.strip()]
+        if not valid_keys:
+            logger.warning("API_KEYS is empty - rejecting API key authentication")
+            return False
+        return api_key in valid_keys
     except Exception as e:
         logger.error(f"Error validating API key: {e}")
         return False
@@ -70,7 +78,11 @@ def require_auth(f):
             token = auth_header.split(' ')[1]
             try:
                 import jwt as pyjwt
-                secret = os.environ.get('JWT_SECRET', 'default-secret')
+                secret = os.environ.get('JWT_SECRET', '')
+                # SECURITY: Require explicit JWT_SECRET configuration
+                if not secret or secret.strip() == '' or secret == 'default-secret':
+                    logger.error("JWT_SECRET not configured or using insecure default")
+                    return {'error': 'Server configuration error'}, 500
                 payload = pyjwt.decode(token, secret, algorithms=['HS256'])
                 g.user_id = payload.get('user_id')
                 g.auth_method = 'jwt'
