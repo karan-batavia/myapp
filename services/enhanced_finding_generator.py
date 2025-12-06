@@ -456,35 +456,198 @@ class EnhancedFindingGenerator:
         ]
     
     def _create_generic_enhanced_finding(self, finding: Dict[str, Any]) -> EnhancedFinding:
-        """Create generic enhanced finding for unknown types"""
+        """Create enhanced finding with intelligent context based on finding type"""
+        finding_type = finding.get('type', 'unknown').lower().replace('_', ' ')
+        description = finding.get('description', 'Security or privacy issue detected')
+        location = finding.get('location', 'Unknown location')
+        severity = finding.get('severity', 'Medium')
+        
+        # Generate intelligent context based on finding type
+        context, gdpr_articles, compliance_reqs, business_impact, recommendations = self._get_type_specific_context(
+            finding_type, description, location, severity
+        )
+        
         return EnhancedFinding(
             type=finding.get('type', 'unknown'),
             subtype=finding.get('subtype', 'generic'),
             title=f"Security Finding: {finding.get('type', 'Unknown').replace('_', ' ').title()}",
-            description=finding.get('description', 'Security or privacy issue detected'),
-            location=finding.get('location', 'Unknown location'),
-            context="Generic security or privacy finding requiring review",
-            risk_level=finding.get('severity', 'Medium'),
-            severity=finding.get('severity', 'Medium'),
-            business_impact="Potential security or compliance impact requiring investigation",
-            gdpr_articles=['Article 32 - Security of processing'],
-            compliance_requirements=['General security best practices'],
-            recommendations=[
-                ActionableRecommendation(
-                    action="Review and assess finding",
-                    description="Conduct detailed analysis of this security finding",
-                    implementation="Investigate the specific issue and determine appropriate remediation",
-                    effort_estimate="1-2 hours",
-                    priority="Medium",
-                    verification="Confirm issue is properly addressed"
-                )
-            ],
-            remediation_priority="Medium - Review within 7 days",
-            estimated_effort="1-2 hours - Investigation and remediation",
-            affected_systems=["Unknown"],
-            data_classification="Unknown",
-            exposure_risk="Unknown"
+            description=description,
+            location=location,
+            context=context,
+            risk_level=severity,
+            severity=severity,
+            business_impact=business_impact,
+            gdpr_articles=gdpr_articles,
+            compliance_requirements=compliance_reqs,
+            recommendations=recommendations,
+            remediation_priority=f"{severity} - Review within {'24 hours' if severity == 'Critical' else '3 days' if severity == 'High' else '7 days'}",
+            estimated_effort="1-4 hours - Investigation and remediation",
+            affected_systems=self._infer_affected_systems(finding_type),
+            data_classification=self._infer_data_classification(finding_type),
+            exposure_risk=self._infer_exposure_risk(severity)
         )
+    
+    def _get_type_specific_context(self, finding_type: str, description: str, location: str, severity: str):
+        """Generate context based on finding type"""
+        
+        # AI Act related findings
+        if 'ai act' in finding_type or 'gpai' in finding_type:
+            if 'quality management' in finding_type:
+                return (
+                    "EU AI Act Article 16 requires quality management systems for high-risk AI. Missing elements indicate compliance gaps.",
+                    ['EU AI Act Article 16 - Quality Management Systems'],
+                    ['Implement documented QMS procedures', 'Establish risk management processes', 'Create audit trails'],
+                    "Non-compliance with EU AI Act QMS requirements can result in fines up to €15M or 3% of global turnover",
+                    [ActionableRecommendation(action="Implement Quality Management System", description="Establish AI-specific QMS per Article 16", implementation="Document procedures, risk assessments, testing protocols, and incident response", effort_estimate="8-16 hours", priority=severity, verification="Third-party QMS audit")]
+                )
+            elif 'human oversight' in finding_type:
+                return (
+                    "EU AI Act Article 26 requires human oversight mechanisms for high-risk AI systems to ensure human control.",
+                    ['EU AI Act Article 26 - Human Oversight'],
+                    ['Implement human-in-the-loop controls', 'Enable operator intervention', 'Provide override capabilities'],
+                    "Missing human oversight can lead to uncontrolled AI decisions and regulatory non-compliance",
+                    [ActionableRecommendation(action="Implement Human Oversight Controls", description="Add human-in-the-loop mechanisms per Article 26", implementation="Design intervention points, override controls, and monitoring dashboards", effort_estimate="4-8 hours", priority=severity, verification="Test human override capabilities")]
+                )
+            elif 'logging' in finding_type:
+                return (
+                    "EU AI Act Article 17 requires automatic logging for high-risk AI systems to ensure traceability.",
+                    ['EU AI Act Article 17 - Automatic Logging'],
+                    ['Implement comprehensive event logging', 'Maintain audit trails', 'Enable log retention'],
+                    "Insufficient logging prevents incident investigation and violates transparency requirements",
+                    [ActionableRecommendation(action="Implement Comprehensive Logging", description="Add automatic logging per Article 17", implementation="Log inputs, outputs, decisions, and system events with timestamps", effort_estimate="4-8 hours", priority=severity, verification="Verify log completeness and retention")]
+                )
+            elif 'fundamental rights' in finding_type:
+                return (
+                    "EU AI Act Article 29 requires consideration of fundamental rights impact for high-risk AI systems.",
+                    ['EU AI Act Article 29 - Fundamental Rights Impact Assessment'],
+                    ['Conduct fundamental rights assessment', 'Document impact on individuals', 'Implement safeguards'],
+                    "AI systems affecting fundamental rights require documented impact assessments and mitigation measures",
+                    [ActionableRecommendation(action="Conduct Fundamental Rights Assessment", description="Assess AI impact on fundamental rights per Article 29", implementation="Document potential impacts on privacy, non-discrimination, due process", effort_estimate="4-8 hours", priority=severity, verification="Legal review of assessment")]
+                )
+            elif 'data governance' in finding_type:
+                return (
+                    "EU AI Act Article 10 requires robust data governance for AI training data quality and representativeness.",
+                    ['EU AI Act Article 10 - Data Governance'],
+                    ['Implement data quality measures', 'Ensure representative datasets', 'Document data provenance'],
+                    "Poor data governance leads to biased AI outputs and regulatory non-compliance",
+                    [ActionableRecommendation(action="Implement Data Governance Framework", description="Establish data governance per Article 10", implementation="Document data sources, quality checks, bias mitigation, and provenance tracking", effort_estimate="8-16 hours", priority=severity, verification="Data quality audit")]
+                )
+            elif 'risk classification' in finding_type:
+                return (
+                    "EU AI Act Article 6 requires risk classification of AI systems to determine applicable requirements.",
+                    ['EU AI Act Article 6 - Risk Classification'],
+                    ['Classify AI system risk level', 'Apply appropriate controls', 'Document classification rationale'],
+                    "Incorrect risk classification can lead to inadequate compliance measures or unnecessary burdens",
+                    [ActionableRecommendation(action="Complete Risk Classification", description="Classify AI system per Article 6 Annex III", implementation="Evaluate use cases against high-risk categories, document classification", effort_estimate="2-4 hours", priority=severity, verification="Legal review of classification")]
+                )
+            elif 'scope' in finding_type or 'definition' in finding_type:
+                return (
+                    "EU AI Act Articles 1-4 define scope and key terms. Clear definitions ensure proper compliance scope.",
+                    ['EU AI Act Articles 1-4 - Scope and Definitions'],
+                    ['Define AI system boundaries', 'Identify provider/deployer roles', 'Document applicability'],
+                    "Unclear scope can lead to missed compliance requirements or wasted effort on non-applicable rules",
+                    [ActionableRecommendation(action="Define AI Act Applicability", description="Document AI system scope and role definitions", implementation="Identify if you are provider, deployer, or distributor; document AI system boundaries", effort_estimate="2-4 hours", priority=severity, verification="Legal review of applicability")]
+                )
+            else:
+                return (
+                    f"EU AI Act compliance finding: {description}",
+                    ['EU AI Act - General Requirements'],
+                    ['Review specific EU AI Act article requirements', 'Implement appropriate controls'],
+                    "EU AI Act non-compliance can result in significant fines and market access restrictions",
+                    [ActionableRecommendation(action="Address EU AI Act Requirement", description=description, implementation="Review applicable EU AI Act article and implement required controls", effort_estimate="2-8 hours", priority=severity, verification="Compliance audit")]
+                )
+        
+        # License detection
+        elif 'license' in finding_type:
+            return (
+                f"License detected: {description}. Open source licenses may have attribution or copyleft requirements.",
+                ['EU AI Act Article 53 - Copyright Compliance for GPAI'],
+                ['Verify license compliance', 'Document attribution requirements', 'Ensure commercial use permitted'],
+                "License violations can result in legal action and copyright infringement claims",
+                [ActionableRecommendation(action="Verify License Compliance", description="Review license terms and ensure compliance", implementation="Check attribution requirements, commercial use permissions, and derivative work rules", effort_estimate="1-2 hours", priority="Low", verification="Legal review of license terms")]
+            )
+        
+        # Documentation findings
+        elif 'documentation' in finding_type:
+            return (
+                f"Documentation review: {description}. Proper documentation supports transparency and accountability.",
+                ['EU AI Act Article 11 - Technical Documentation', 'GDPR Article 30 - Records of Processing'],
+                ['Maintain comprehensive documentation', 'Document AI system design decisions', 'Keep records up to date'],
+                "Inadequate documentation hinders transparency and complicates regulatory compliance",
+                [ActionableRecommendation(action="Enhance Documentation", description="Improve AI system documentation", implementation="Document architecture, training data, testing results, and operational procedures", effort_estimate="4-8 hours", priority="Medium", verification="Documentation completeness review")]
+            )
+        
+        # Opt-out mechanisms
+        elif 'opt' in finding_type:
+            return (
+                f"Opt-out mechanism detected: {description}. Ensure proper exclusion handling for data collection.",
+                ['GDPR Article 21 - Right to Object', 'EU AI Act Article 53 - Training Data Opt-Out'],
+                ['Respect opt-out preferences', 'Implement exclusion mechanisms', 'Document compliance'],
+                "Failure to honor opt-out requests violates data subject rights",
+                [ActionableRecommendation(action="Verify Opt-Out Compliance", description="Ensure opt-out mechanisms are properly implemented", implementation="Test exclusion functionality, verify data is excluded from training", effort_estimate="1-2 hours", priority="Medium", verification="Test opt-out flow")]
+            )
+        
+        # Model architecture
+        elif 'model' in finding_type or 'architecture' in finding_type:
+            return (
+                f"Model architecture finding: {description}. Architecture decisions affect compliance requirements.",
+                ['EU AI Act Article 9 - Risk Management', 'EU AI Act Article 15 - Accuracy and Robustness'],
+                ['Document architecture decisions', 'Assess accuracy and robustness', 'Implement appropriate testing'],
+                "Model architecture affects system capabilities and associated compliance requirements",
+                [ActionableRecommendation(action="Document Model Architecture", description="Complete model architecture documentation", implementation="Document model type, parameters, training approach, and performance characteristics", effort_estimate="2-4 hours", priority="Medium", verification="Technical review of documentation")]
+            )
+        
+        # Accountability
+        elif 'accountability' in finding_type or 'governance' in finding_type:
+            return (
+                f"Accountability finding: {description}. AI systems require clear governance and accountability frameworks.",
+                ['EU AI Act Articles 14-15 - Human Oversight and Accountability', 'GDPR Article 5(2) - Accountability'],
+                ['Establish governance framework', 'Assign clear responsibilities', 'Implement audit mechanisms'],
+                "Lack of accountability framework creates compliance and liability risks",
+                [ActionableRecommendation(action="Establish Accountability Framework", description="Implement AI governance structure", implementation="Define roles, responsibilities, decision-making processes, and escalation procedures", effort_estimate="8-16 hours", priority=severity, verification="Governance framework review")]
+            )
+        
+        # Default fallback with description-based context
+        else:
+            return (
+                description if len(description) > 30 else f"Compliance finding requiring review: {description}",
+                ['Article 32 - Security of processing'],
+                ['Review specific requirements', 'Implement appropriate controls'],
+                "Potential security or compliance impact requiring investigation",
+                [ActionableRecommendation(action="Review and Remediate", description=f"Address: {description}", implementation="Investigate the finding and implement appropriate remediation", effort_estimate="1-4 hours", priority=severity, verification="Confirm remediation complete")]
+            )
+    
+    def _infer_affected_systems(self, finding_type: str) -> List[str]:
+        """Infer affected systems from finding type"""
+        if 'ai' in finding_type or 'model' in finding_type:
+            return ['AI/ML Systems', 'Model Pipeline', 'Inference Services']
+        elif 'data' in finding_type:
+            return ['Data Storage', 'Data Processing', 'Data Governance']
+        elif 'document' in finding_type or 'license' in finding_type:
+            return ['Documentation Systems', 'Repository']
+        else:
+            return ['Application Systems']
+    
+    def _infer_data_classification(self, finding_type: str) -> str:
+        """Infer data classification from finding type"""
+        if 'pii' in finding_type or 'personal' in finding_type:
+            return 'Personal Data'
+        elif 'training' in finding_type or 'data' in finding_type:
+            return 'Training Data'
+        elif 'model' in finding_type:
+            return 'Model Assets'
+        else:
+            return 'System Configuration'
+    
+    def _infer_exposure_risk(self, severity: str) -> str:
+        """Infer exposure risk from severity"""
+        risk_map = {
+            'Critical': 'Immediate regulatory and business risk',
+            'High': 'Significant compliance exposure',
+            'Medium': 'Moderate compliance risk',
+            'Low': 'Minor compliance consideration'
+        }
+        return risk_map.get(severity, 'Unknown risk level')
     
     # Placeholder methods for other scanner types
     def _analyze_bias_context(self, finding): return {'detailed_description': 'AI bias detected', 'business_context': 'AI fairness issue', 'gdpr_articles': [], 'compliance_requirements': [], 'affected_systems': [], 'data_classification': 'Unknown'}
