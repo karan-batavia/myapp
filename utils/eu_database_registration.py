@@ -4,6 +4,7 @@ Automated registration workflow for high-risk AI systems in EU database
 """
 
 import json
+import re
 import uuid
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
