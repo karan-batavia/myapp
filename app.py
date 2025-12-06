@@ -3587,6 +3587,11 @@ def display_scan_results(scan_results):
         st.info("No issues found in the scan.")
     
     # Add report download section with license control
+    # Skip for SOC2 Scanner - it has its own specialized download button
+    scan_type = scan_results.get('scan_type', '') if scan_results else ''
+    if scan_type == 'SOC2 Scanner':
+        return  # SOC2 Scanner has its own download button with proper dual-framework format
+    
     st.markdown("---")
     st.subheader("📄 Download Reports")
     
@@ -7941,12 +7946,20 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             # Store scan results in session state for download access
             st.session_state['last_scan_results'] = scan_results
             
-            # Generate and offer HTML report
-            html_report = generate_html_report(scan_results)
+            # Generate and offer HTML report using unified report generator
+            # This ensures SOC2 TSC criteria and NIS2 articles are properly displayed
+            try:
+                from services.unified_html_report_generator import UnifiedHTMLReportGenerator
+                report_generator = UnifiedHTMLReportGenerator(region=region)
+                html_report = report_generator.generate_report(scan_results)
+            except Exception as e:
+                # Fallback to basic report generator
+                html_report = generate_html_report(scan_results)
+            
             st.download_button(
-                label="📄 Download SOC2 Compliance Report",
+                label="📄 Download SOC2 & NIS2 Compliance Report",
                 data=html_report,
-                file_name=f"soc2_compliance_report_{scan_results['scan_id'][:8]}.html",
+                file_name=f"soc2_nis2_compliance_report_{scan_results['scan_id'][:8]}.html",
                 mime="text/html"
             )
             
