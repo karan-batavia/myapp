@@ -1,40 +1,40 @@
 {
-  "license_id": "12ece572-560e-42fc-b9bc-d58ef3c54ade",
+  "license_id": "cdf12909-77ef-4a56-9c2f-f5b32f1ed92d",
   "license_type": "professional",
   "customer_id": "CUST-019",
   "customer_name": "CUST-019",
   "company_name": "Subscription Customer",
   "email": "CUST-019@customer.email",
-  "issued_date": "2025-12-06T13:17:39.838522",
-  "expiry_date": "2026-12-06T13:17:39.838523",
+  "issued_date": "2025-12-06T14:35:32.076800",
+  "expiry_date": "2026-12-06T14:35:32.076800",
   "usage_limits": [
     {
       "limit_type": "scans_per_month",
       "limit_value": 350,
       "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T13:17:39.838443"
+      "last_reset": "2025-12-06T14:35:32.076720"
     },
     {
       "limit_type": "concurrent_users",
       "limit_value": 10,
       "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T13:17:39.838450"
+      "last_reset": "2025-12-06T14:35:32.076726"
     },
     {
       "limit_type": "export_reports",
       "limit_value": 100,
       "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T13:17:39.838452"
+      "last_reset": "2025-12-06T14:35:32.076728"
     },
     {
       "limit_type": "scanner_types",
       "limit_value": 9,
       "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T13:17:39.838453"
+      "last_reset": "2025-12-06T14:35:32.076729"
     }
   ],
   "allowed_features": [
@@ -73,12 +73,12 @@
     "generated_by": "DataGuardian Pro License Manager",
     "version": "1.0",
     "hardware_id": "080af339e59e0586",
-    "creation_timestamp": "2025-12-06T13:17:39.838674",
+    "creation_timestamp": "2025-12-06T14:35:32.076921",
     "stripe_subscription_id": "sub_123",
     "stripe_customer_id": "CUST-019",
     "subscription_plan": "Professional Plan",
     "subscription_tier": "professional",
-    "activation_date": "2025-12-06T13:17:39.838684",
+    "activation_date": "2025-12-06T14:35:32.076937",
     "payment_method": "stripe_subscription"
   }
 }
