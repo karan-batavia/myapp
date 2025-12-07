@@ -134,6 +134,8 @@ class UnifiedHTMLReportGenerator:
         # Handle different metric naming conventions
         summary = scan_result.get('summary', {})
         
+        findings = scan_result.get('findings', [])
+        
         metrics = {
             'files_scanned': (
                 summary.get('scanned_files') or 
@@ -147,22 +149,22 @@ class UnifiedHTMLReportGenerator:
                 scan_result.get('content_analysis') or 
                 scan_result.get('text_extracted') or 0
             ),
-            'total_findings': len(scan_result.get('findings', [])),
-            'critical_count': len([f for f in scan_result.get('findings', []) if f.get('severity') == 'Critical']),
+            'total_findings': len(findings),
+            'critical_count': len([f for f in findings if f.get('severity') == 'Critical' or f.get('risk_level') == 'Critical']),
             'high_risk_count': (
                 summary.get('high_risk_count') or 
                 scan_result.get('high_risk_count') or
-                len([f for f in scan_result.get('findings', []) if f.get('severity') == 'High'])
+                len([f for f in findings if f.get('severity') == 'High' or f.get('risk_level') == 'High'])
             ),
             'medium_risk_count': (
                 summary.get('medium_risk_count') or 
                 scan_result.get('medium_risk_count') or
-                len([f for f in scan_result.get('findings', []) if f.get('severity') == 'Medium'])
+                len([f for f in findings if f.get('severity') == 'Medium' or f.get('risk_level') == 'Medium'])
             ),
             'low_risk_count': (
                 summary.get('low_risk_count') or 
                 scan_result.get('low_risk_count') or
-                len([f for f in scan_result.get('findings', []) if f.get('severity') == 'Low'])
+                len([f for f in findings if f.get('severity') == 'Low' or f.get('risk_level') == 'Low'])
             ),
             'compliance_score': (
                 summary.get('overall_compliance_score') or 

@@ -892,6 +892,13 @@ def enhance_findings_for_report(scanner_type: str, findings: List[Dict[str, Any]
                 'soc2_tsc_details': finding.get('soc2_tsc_details', []),
                 'nis2_details': finding.get('nis2_details', []),
                 
+                # Preserve deepfake/image scanner specific fields
+                'source': finding.get('source', ''),
+                'analysis_details': finding.get('analysis_details', {}),
+                'eu_ai_act_compliance': finding.get('eu_ai_act_compliance', {}),
+                'confidence': finding.get('confidence', 0),
+                'reason': finding.get('reason', ''),
+                
                 # Preserve original finding data
                 'original_finding': finding
             }
