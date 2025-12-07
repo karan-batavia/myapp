@@ -7051,17 +7051,21 @@ def render_model_analysis_interface(region: str, username: str):
     if model_source == "Model Repository":
         repo_url = st.text_input(
             "Model Repository URL",
+            value=st.session_state.get('ai_model_repo_url', ''),
             placeholder="https://huggingface.co/username/model-name",
             help="Enter model repository URL (e.g., Hugging Face, GitHub)",
-            disabled=uploaded_model is not None
+            disabled=uploaded_model is not None,
+            key="ai_model_repo_url"
         )
         
     elif model_source == "Model Path":
         model_path = st.text_input(
             "Local Model Path",
+            value=st.session_state.get('ai_model_path', ''),
             placeholder="/path/to/model.pkl",
             help="Enter local path to model file",
-            disabled=uploaded_model is not None
+            disabled=uploaded_model is not None,
+            key="ai_model_path"
         )
     
     # Model configuration
