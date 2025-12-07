@@ -9928,13 +9928,8 @@ def render_sustainability_scanner_interface(region: str, username: str):
             dependency_analysis = st.checkbox("Unused Dependencies", value=True)
             regional_emissions = st.checkbox("Regional Emissions Mapping", value=True)
     
-    # Region selection for emissions calculation
-    emissions_region = "eu-west-1 (Netherlands)"  # Default to Netherlands
-    if calculate_emissions or regional_emissions:
-        emissions_region = st.selectbox("Primary Cloud Region", [
-            "eu-west-1 (Netherlands)", "eu-central-1 (Germany)", "us-east-1 (N. Virginia)", 
-            "us-west-2 (Oregon)", "ap-southeast-1 (Singapore)", "ap-northeast-1 (Tokyo)"
-        ])
+    # Default to Netherlands region for emissions calculation (no user selection needed)
+    emissions_region = "eu-west-1 (Netherlands)"
     
     if st.button("🚀 Start Comprehensive Sustainability Scan", type="primary", use_container_width=True):
         # Pass all parameters to enhanced scan function

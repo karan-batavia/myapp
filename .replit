@@ -88,12 +88,12 @@ localPort = 33697
 externalPort = 8000
 
 [[ports]]
-localPort = 37883
-externalPort = 5000
+localPort = 37621
+externalPort = 8008
 
 [[ports]]
-localPort = 38831
-externalPort = 8008
+localPort = 37883
+externalPort = 5000
 
 [[ports]]
 localPort = 40203
