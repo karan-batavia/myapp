@@ -162,7 +162,7 @@ def generate_pdf_report(scan_results: Dict[str, Any], filename: str = "scan_repo
 
 def generate_html_report(scan_results: Dict[str, Any], filename: str = "scan_report.html") -> Optional[str]:
     """
-    Generate professional HTML report from scan results - Unified template for all scanners.
+    Generate professional HTML report from scan results - Uses unified template for all scanners.
     
     Args:
         scan_results: Complete scan results with findings
@@ -171,6 +171,19 @@ def generate_html_report(scan_results: Dict[str, Any], filename: str = "scan_rep
     Returns:
         HTML string or None if generation fails
     """
+    try:
+        # Use the unified HTML report generator for consistent professional reports
+        from services.unified_html_report_generator import generate_unified_html_report
+        return generate_unified_html_report(scan_results)
+    except ImportError:
+        # Fallback to legacy generator if unified not available
+        pass
+    except Exception as e:
+        # Log error but continue with fallback
+        import logging
+        logging.warning(f"Unified report generator failed, using fallback: {e}")
+    
+    # Legacy fallback generator
     try:
         findings = scan_results.get('findings', [])
         scan_type = scan_results.get('scan_type', 'Security Scan')
