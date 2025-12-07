@@ -1,0 +1,175 @@
+🛡️ DataGuardian Pro Report
+Scan Type: Comprehensive Sustainability Scanner
+
+Scan ID: c762da77...
+
+Generated: 2025-12-07 12:29:45
+
+Region: Netherlands
+
+📊 Executive Summary
+156
+Files Scanned
+6
+Total Findings
+2
+Critical Issues
+2
+High Risk Issues
+Compliance Score: 70%
+🎯 Compliance Score Analysis
+70.0%
+📊 Current Compliance Score
+🟠 Attention
+🚨 Risk Level
+Financial Services: 78.5%
+🏢 Industry Benchmark
+📊 Compliance Score Analysis
+📊 Current Status: Your compliance score of 70.0% indicates moderate compliance posture.
+🏢 Industry Comparison: Below average compared to industry benchmarks.
+📈 Recommendations: Implement systematic improvements.
+💡 Pro Tip: Advanced AI-powered compliance forecasting is available with full system dependencies installed.
+
+🌱 Sustainability Metrics
+46.4 kg
+CO₂ Emissions/Month
+156.8 kWh
+Energy Consumption
+€3877.64
+Potential Cost Savings
+111.7 kg
+CO₂ Reduction Potential
+45/100
+Sustainability Score
+3
+Unused Resources
+💰 Your Potential Savings
+€238.82
+Monthly Waste
+Currently being spent
+€2865.84
+Annual Savings
+If all issues are fixed
+46.4 kg
+CO₂ Reduction
+Monthly environmental impact
+📋 Itemized Savings Breakdown
+Issue	Monthly Cost	Annual Cost	CO₂/Month
+ Zombie Vm	€145.99	€1751.88	29.8 kg
+ Orphaned Storage	€25.50	€306.00	5.2 kg
+ Unused Container	€67.33	€807.96	11.4 kg
+Total Potential Savings	€238.82	€2865.84	46.4 kg
+💡 Quick Win: Addressing the critical and high-priority issues first can achieve up to 80% of these savings with minimal effort.
+
+🔍 Detailed Findings
+Security Finding: Zombie Vm
+Critical
+Description: Terminate or downsize - 98% idle for 3 weeks | Cost: €145.99/month | CO₂: 29.8 kg/month
+Context: Terminate or downsize - 98% idle for 3 weeks | Cost: €145.99/month | CO₂: 29.8 kg/month
+Location: eu-west-1 (Netherlands) / vm-idle-prod-01
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Critical - Review within 24 hours
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate Critical
+Description: Address: Terminate or downsize - 98% idle for 3 weeks | Cost: €145.99/month | CO₂: 29.8 kg/month
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Orphaned Storage
+High
+Description: Delete old snapshot - original volume deleted 14 months ago | Cost: €25.50/month | CO₂: 5.2 kg/month
+Context: Delete old snapshot - original volume deleted 14 months ago | Cost: €25.50/month | CO₂: 5.2 kg/month
+Location: eu-west-1 (Netherlands) / vol-snapshot-backup-2023
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: High - Review within 3 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate High
+Description: Address: Delete old snapshot - original volume deleted 14 months ago | Cost: €25.50/month | CO₂: 5.2 kg/month
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Unused Container
+High
+Description: Remove unused staging container - no deployments in 3 months | Cost: €67.33/month | CO₂: 11.4 kg/month
+Context: Remove unused staging container - no deployments in 3 months | Cost: €67.33/month | CO₂: 11.4 kg/month
+Location: eu-west-1 / container-staging-legacy
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: High - Review within 3 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate High
+Description: Address: Remove unused staging container - no deployments in 3 months | Cost: €67.33/month | CO₂: 11.4 kg/month
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Dead Code
+Medium
+Description: Remove 247 lines of dead code - functions never called | Energy waste: 0.8 kWh/month | CO₂ impact: 0.4 kg CO₂e/month
+Context: Remove 247 lines of dead code - functions never called | Energy waste: 0.8 kWh/month | CO₂ impact: 0.4 kg CO₂e/month
+Location: src/legacy/old_authentication.py
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate Medium
+Description: Address: Remove 247 lines of dead code - functions never called | Energy waste: 0.8 kWh/month | CO₂ impact: 0.4 kg CO₂e/month
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Unused Dependencies
+Medium
+Description: Remove 3 unused dependencies - reduce bundle size by 245KB | Bundle reduction: 245 KB | Energy saving: 1.2 kWh/month
+Context: Remove 3 unused dependencies - reduce bundle size by 245KB | Bundle reduction: 245 KB | Energy saving: 1.2 kWh/month
+Location: package.json
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Medium - Review within 7 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate Medium
+Description: Address: Remove 3 unused dependencies - reduce bundle size by 245KB | Bundle reduction: 245 KB | Energy saving: 1.2 kWh/month
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Finding: Inefficient Algorithm
+Critical
+Description: Optimize algorithm - reduce complexity from O(n²) to O(n log n) | Energy waste: 15.5 kWh/month | CO₂ impact: 7.8 kg CO₂e/month
+Context: Optimize algorithm - reduce complexity from O(n²) to O(n log n) | Energy waste: 15.5 kWh/month | CO₂ impact: 7.8 kg CO₂e/month
+Location: src/data/processing.py:process_large_dataset()
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: Critical - Review within 24 hours
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements
+Article 32 - Security of processing
+Review specific requirements
+Implement appropriate controls
+💡 Actionable Recommendations
+Review and Remediate Critical
+Description: Address: Optimize algorithm - reduce complexity from O(n²) to O(n log n) | Energy waste: 15.5 kWh/month | CO₂ impact: 7.8 kg CO₂e/month
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Generated by DataGuardian Pro - Enterprise Privacy & Sustainability Compliance Platform
+
+Report ID: c762da77-44fb-4543-ac41-f2f4efd3c6d9 | Generated: 2025-12-07 12:29:45
