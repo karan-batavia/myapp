@@ -10185,6 +10185,7 @@ def execute_sustainability_scan(region, username, scan_params):
                 'severity': resource['severity'],
                 'file': f"{resource['resource_type']}: {resource['resource_id']}",
                 'line': f"Region: {resource['region']}",
+                'location': f"{resource['region']} / {resource['resource_id']}",
                 'description': f"{resource['recommendation']} | Cost: €{resource['estimated_monthly_cost']:.2f}/month | CO₂: {resource['co2_emissions_kg_month']:.1f} kg/month",
                 'resource_details': resource,
                 'category': 'Resource Optimization',
@@ -10199,24 +10200,29 @@ def execute_sustainability_scan(region, username, scan_params):
                 file_info = f"{code_issue['file']} ({code_issue['lines']} lines, {code_issue['functions']} functions)"
                 line_info = f"Functions: {', '.join(code_issue['unused_functions'])}"
                 description = f"{code_issue['recommendation']} | Energy waste: {code_issue['estimated_energy_waste']} | CO₂ impact: {code_issue['co2_impact']}"
+                location_info = code_issue['file']
             elif code_issue['type'] == 'UNUSED_DEPENDENCIES':
                 file_info = f"{code_issue['file']} (Package manifest)"
                 line_info = f"Packages: {', '.join(code_issue['unused_packages'])}"
                 description = f"{code_issue['recommendation']} | Bundle reduction: {code_issue['bundle_size_reduction']} | Energy saving: {code_issue['estimated_energy_saving']}"
+                location_info = code_issue['file']
             elif code_issue['type'] == 'INEFFICIENT_ALGORITHM':
                 file_info = f"{code_issue['file']} (Function: {code_issue['function']})"
                 line_info = f"Complexity: {code_issue['complexity']} → {code_issue['suggested_complexity']}"
                 description = f"{code_issue['recommendation']} | Energy waste: {code_issue['estimated_energy_waste']} | CO₂ impact: {code_issue['co2_impact']}"
+                location_info = f"{code_issue['file']}:{code_issue['function']}()"
             else:
                 file_info = code_issue['file']
                 line_info = "Analysis location"
                 description = code_issue['recommendation']
+                location_info = code_issue['file']
             
             all_findings.append({
                 'type': code_issue['type'],
                 'severity': code_issue['severity'],
                 'file': file_info,
                 'line': line_info,
+                'location': location_info,
                 'description': description,
                 'code_details': code_issue,
                 'category': 'Code Efficiency',
