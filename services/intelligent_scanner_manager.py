@@ -221,9 +221,11 @@ class IntelligentScannerManager:
                                    **kwargs) -> Dict[str, Any]:
         """Intelligent repository scanning."""
         from services.code_scanner import CodeScanner
+        from services.repo_scanner import RepoScanner
         
         code_scanner = CodeScanner()
-        intelligent_scanner = IntelligentRepoScanner(code_scanner)
+        repo_scanner = RepoScanner(code_scanner)
+        intelligent_scanner = IntelligentRepoScanner(repo_scanner)
         
         return intelligent_scanner.scan_repository_intelligent(
             repo_url, kwargs.get('branch'), scan_mode, max_files, progress_callback

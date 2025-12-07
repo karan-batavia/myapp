@@ -39,17 +39,28 @@ class IntelligentRepoScanner:
         logger.info(f"Starting intelligent repository scan: {target} (mode: {scan_mode})")
         
         try:
-            # Use the code scanner directly for repository scanning
+            # Use the repo scanner for repository scanning (handles git clone + code scan)
             if hasattr(self.code_scanner, 'scan_repository'):
-                results = self.code_scanner.scan_repository(target, **kwargs)
-            elif hasattr(self.code_scanner, 'scan_code'):
-                results = self.code_scanner.scan_code(target, **kwargs)
+                branch = kwargs.get('branch')
+                auth_token = kwargs.get('auth_token')
+                progress_callback = kwargs.get('progress_callback')
+                results = self.code_scanner.scan_repository(
+                    target, 
+                    branch=branch, 
+                    auth_token=auth_token,
+                    progress_callback=progress_callback
+                )
+            elif hasattr(self.code_scanner, 'scan_directory'):
+                # Fallback to directory scan for local paths
+                results = self.code_scanner.scan_directory(target, **kwargs)
             else:
-                # Fallback to basic results structure
+                # Last resort fallback
+                logger.warning(f"Scanner does not have scan_repository or scan_directory method")
                 results = {
                     "findings": [],
                     "scan_mode": scan_mode,
-                    "target": target
+                    "target": target,
+                    "error": "No suitable scan method available"
                 }
             
             logger.info(f"Repository scan completed with {len(results.get('findings', []))} findings")
@@ -57,6 +68,8 @@ class IntelligentRepoScanner:
             
         except Exception as e:
             logger.error(f"Repository scan failed: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return {
                 "error": str(e),
                 "findings": [],
