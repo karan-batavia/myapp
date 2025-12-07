@@ -925,8 +925,144 @@ class UnifiedHTMLReportGenerator:
             return self._generate_dpia_content(scan_result)
         elif 'enterprise' in scan_type or 'connector' in scan_type:
             return self._generate_enterprise_connector_content(scan_result)
+        elif 'document' in scan_type:
+            return self._generate_document_scanner_content(scan_result)
+        elif 'image' in scan_type:
+            return self._generate_image_scanner_content(scan_result)
         else:
             return ""
+    
+    def _generate_document_scanner_content(self, scan_result: Dict[str, Any]) -> str:
+        """Generate document scanner specific content with fraud detection analysis."""
+        content_html = ""
+        
+        document_results = scan_result.get('document_results', [])
+        
+        fraud_detected_count = 0
+        high_risk_fraud_count = 0
+        fraud_docs = []
+        
+        for doc in document_results:
+            fraud_analysis = doc.get('fraud_analysis', {})
+            if fraud_analysis and fraud_analysis.get('ai_generated_risk', 0) > 0:
+                fraud_detected_count += 1
+                if fraud_analysis.get('risk_level') in ['High', 'Critical']:
+                    high_risk_fraud_count += 1
+                fraud_docs.append({
+                    'file_name': doc.get('file_name', 'Unknown'),
+                    'fraud_analysis': fraud_analysis
+                })
+        
+        if fraud_docs:
+            content_html += f"""
+            <div class="fraud-section" style="background: #fff3cd; border-left: 5px solid #dc3545; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                <h3 style="color: #c92a2a; margin-top: 0;">
+                    🚨 {t_report('ai_fraud_detection', 'AI Document Fraud Detection')}
+                    <span style="font-size: 0.8em; color: #e67700;">(EU AI Act Article 50)</span>
+                </h3>
+                <p style="margin: 10px 0; font-size: 0.95em; color: #555;">
+                    {t_report('fraud_intro', 'Automated detection of AI-generated or tampered documents requiring verification under EU AI Act 2025 transparency obligations.')}
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 15px 0;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #495057;">{len(document_results)}</div>
+                        <div style="color: #6c757d;">Documents Scanned</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #e67700;">{fraud_detected_count}</div>
+                        <div style="color: #6c757d;">AI Indicators Found</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #c92a2a;">{high_risk_fraud_count}</div>
+                        <div style="color: #6c757d;">High Risk Documents</div>
+                    </div>
+                </div>
+            """
+            
+            for doc in fraud_docs:
+                fraud = doc['fraud_analysis']
+                risk_level = fraud.get('risk_level', 'Medium')
+                ai_risk = fraud.get('ai_generated_risk', 0)
+                confidence = fraud.get('confidence', 0)
+                ai_model = fraud.get('ai_model', 'Unknown')
+                indicators = fraud.get('fraud_indicators', [])
+                recommendations = fraud.get('recommendations', [])
+                
+                risk_colors = {
+                    'Critical': '#c92a2a',
+                    'High': '#e67700',
+                    'Medium': '#f59f00',
+                    'Low': '#37b24d'
+                }
+                risk_color = risk_colors.get(risk_level, '#868e96')
+                
+                content_html += f"""
+                <div class="fraud-finding" style="background: white; border: 2px solid {risk_color}; padding: 20px; margin: 15px 0; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: #495057;">
+                            📄 {doc['file_name']}
+                        </h4>
+                        <span style="background: {risk_color}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                            {risk_level} Risk
+                        </span>
+                    </div>
+                    
+                    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div>
+                                <strong>AI Generated Risk:</strong>
+                                <div style="color: {risk_color}; font-size: 1.5em; font-weight: bold;">{ai_risk:.0%}</div>
+                            </div>
+                            <div>
+                                <strong>Detection Confidence:</strong>
+                                <div style="color: #495057; font-size: 1.5em; font-weight: bold;">{confidence:.1f}%</div>
+                            </div>
+                            <div>
+                                <strong>Suspected Model:</strong>
+                                <div style="color: #495057; font-size: 1.2em; font-weight: bold;">{ai_model}</div>
+                            </div>
+                        </div>
+                    </div>
+                """
+                
+                if indicators:
+                    content_html += """
+                    <div style="margin: 15px 0;">
+                        <strong>🔍 Detection Indicators:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                    """
+                    for ind in indicators:
+                        if ind.get('score', 0) > 0:
+                            ind_type = ind.get('type', '').replace('_', ' ').title()
+                            ind_score = ind.get('score', 0)
+                            ind_details = ind.get('details', '')
+                            content_html += f"""
+                            <li style="margin: 5px 0;">
+                                <strong>{ind_type}:</strong> {ind_score:.0%} - {ind_details}
+                            </li>
+                            """
+                    content_html += "</ul></div>"
+                
+                if recommendations:
+                    content_html += """
+                    <div style="margin: 15px 0; padding: 12px; background: #e7f5ff; border-left: 4px solid #1c7ed6; border-radius: 4px;">
+                        <strong style="color: #1864ab;">📋 Recommended Actions:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                    """
+                    for rec in recommendations[:3]:
+                        content_html += f"<li style='margin: 5px 0;'>{rec}</li>"
+                    content_html += "</ul></div>"
+                
+                content_html += "</div>"
+            
+            content_html += "</div>"
+        
+        return content_html
+    
+    def _generate_image_scanner_content(self, scan_result: Dict[str, Any]) -> str:
+        """Generate image scanner specific content."""
+        return ""
     
     def _generate_enterprise_connector_content(self, scan_result: Dict[str, Any]) -> str:
         """Generate enterprise connector-specific metrics and Netherlands compliance."""

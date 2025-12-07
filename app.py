@@ -3931,12 +3931,37 @@ def execute_document_scan(region, username, uploaded_files):
             # Scan document
             doc_results = scanner.scan_file(tmp_path)
             
+            # Add file_name to doc_results for report generation
+            doc_results['file_name'] = file.name
+            
             # Add source file information to each finding
             for finding in doc_results.get("findings", []):
                 if not finding.get('source'):
                     finding['source'] = file.name
                 if not finding.get('source_file'):
                     finding['source_file'] = file.name
+            
+            # Add fraud detection as a finding if detected
+            fraud_analysis = doc_results.get('fraud_analysis', {})
+            if fraud_analysis and fraud_analysis.get('ai_generated_risk', 0) >= 0.30:
+                fraud_finding = {
+                    'type': 'AI_GENERATED_DOCUMENT',
+                    'title': 'AI-Generated Document Detected',
+                    'description': f"Document shows {fraud_analysis.get('ai_generated_risk', 0):.0%} likelihood of being AI-generated (suspected model: {fraud_analysis.get('ai_model', 'Unknown')})",
+                    'risk_level': fraud_analysis.get('risk_level', 'Medium'),
+                    'severity': fraud_analysis.get('risk_level', 'Medium'),
+                    'source': file.name,
+                    'source_file': file.name,
+                    'confidence': fraud_analysis.get('confidence', 0),
+                    'fraud_indicators': fraud_analysis.get('fraud_indicators', []),
+                    'recommendations': fraud_analysis.get('recommendations', []),
+                    'eu_ai_act_compliance': {
+                        'article': 'Article 50',
+                        'title': 'Transparency Obligations',
+                        'requirements': ['Verify document authenticity', 'Label AI-generated content', 'Maintain audit trail']
+                    }
+                }
+                doc_results.get("findings", []).append(fraud_finding)
             
             scan_results["findings"].extend(doc_results.get("findings", []))
             scan_results["document_results"].append(doc_results)
