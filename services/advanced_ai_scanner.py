@@ -3320,52 +3320,76 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
     
     # Determine risk level from scan results
     risk_category = scan_results.get('eu_ai_act_2025', {}).get('risk_category', 'High-Risk AI System')
+    detected_risk_level = "high_risk"  # Default
     if 'high' in risk_category.lower():
-        risk_level = "high_risk"
+        detected_risk_level = "high_risk"
     elif 'limited' in risk_category.lower():
-        risk_level = "limited_risk"
+        detected_risk_level = "limited_risk"
     elif 'minimal' in risk_category.lower():
-        risk_level = "minimal_risk"
-    else:
-        risk_level = "high_risk"
+        detected_risk_level = "minimal_risk"
+    
+    # Always use high_risk for comprehensive 113-article coverage in reports
+    # This ensures all articles are assessed and reported on
+    traceability_risk_level = "high_risk"
     
     # Initialize components
-    traceability = AIActTraceabilityMatrix(risk_level=risk_level, region=region)
+    traceability = AIActTraceabilityMatrix(risk_level=traceability_risk_level, region=region)
     remediation = RemediationPriorityEngine()
-    conformity = ConformityAssessmentScorecard(risk_level=risk_level)
+    conformity = ConformityAssessmentScorecard(risk_level=detected_risk_level)
     
     # Populate traceability matrix from scan findings
     findings = scan_results.get('findings', [])
     compliance_score = scan_results.get('compliance_score', 0)
     
-    # Map findings to article assessments
+    # Map findings to article assessments (expanded to match actual finding types)
     article_mapping = {
-        'Risk Classification': [6],
-        'Risk Management': [9],
-        'Data Governance': [10],
-        'Technical Documentation': [11],
-        'Record-keeping': [12],
-        'Transparency': [13, 50],
-        'Human Oversight': [14, 26],
-        'Accuracy': [15],
-        'Quality Management': [16],
-        'Logging': [17, 20],
-        'Conformity Assessment': [19, 43],
-        'Fundamental Rights': [27, 29],
-        'GPAI': [51, 52, 53, 54, 55],
-        'Post-Market': [74, 75],
-        'Penalties': [87, 88]
+        # Core article mappings
+        'risk classification': [6],
+        'risk management': [9],
+        'data governance': [10],
+        'technical documentation': [11],
+        'record-keeping': [12],
+        'transparency': [13, 50],
+        'human oversight': [14, 26],
+        'accuracy': [15],
+        'quality management': [16],
+        'logging': [17, 20],
+        'conformity assessment': [19, 43],
+        'fundamental rights': [27, 29],
+        'gpai': [51, 52, 53, 54, 55],
+        'post-market': [74, 75],
+        'penalties': [87, 88],
+        # Extended mappings for actual finding types
+        'ai act fundamental': [27, 29],
+        'ai act accountability': [14, 15],
+        'ai act gpai': [51, 52, 53, 54, 55],
+        'ai act risk': [6, 9],
+        'ai act quality': [16],
+        'ai act automatic logging': [17, 20],
+        'ai act logging': [17, 20],
+        'license': [53],
+        'opt-out': [53],
+        'documentation': [11],
+        'model architecture': [9, 15],
+        'copyright': [53],
+        'bias': [10, 15],
+        'fairness': [10],
+        'security': [9, 15],
+        'privacy': [10],
+        'accountability': [14, 15],
     }
     
     # Process each finding
     finding_articles = set()
     for finding in findings:
-        finding_type = finding.get('finding_type', '')
+        finding_type = finding.get('finding_type', '').lower()
         severity = finding.get('severity', 'Medium')
         
         # Find matching articles
+        matched = False
         for category, articles in article_mapping.items():
-            if category.lower() in finding_type.lower():
+            if category in finding_type:
+                matched = True
                 for article_num in articles:
                     finding_articles.add(article_num)
                     
@@ -3388,6 +3412,18 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
                         effort_hours=8.0 if severity == 'Critical' else 4.0 if severity == 'High' else 2.0,
                         deadline="2025-08-02" if article_num in [51, 52, 53, 54, 55] else "2026-08-02"
                     )
+        
+        # If no category matched but it's a significant finding, add to general remediation
+        if not matched and severity in ['Critical', 'High']:
+            priority = PriorityLevel.CRITICAL if severity == 'Critical' else PriorityLevel.HIGH
+            remediation.add_remediation_item(
+                article_ref="General Compliance",
+                finding=finding.get('description', finding_type.title()),
+                priority=priority,
+                impact_score=90.0 if severity == 'Critical' else 75.0,
+                effort_hours=6.0,
+                deadline="2026-08-02"
+            )
     
     # Mark all applicable articles based on overall compliance score
     # Articles without findings are marked based on system's overall compliance posture
@@ -3425,10 +3461,18 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
                         ArticleStatus.PARTIALLY_COMPLIANT,
                         base_score
                     )
-                else:
+                elif base_score >= 30:
+                    # Below 50% but some compliance effort shown
                     traceability.update_article_status(
                         article_num,
-                        ArticleStatus.REQUIRES_ASSESSMENT,
+                        ArticleStatus.PARTIALLY_COMPLIANT,
+                        base_score
+                    )
+                else:
+                    # Very low compliance - mark as non-compliant
+                    traceability.update_article_status(
+                        article_num,
+                        ArticleStatus.NON_COMPLIANT,
                         base_score
                     )
     
