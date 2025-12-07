@@ -563,6 +563,7 @@ class RepoScanner:
                 'total_files': 0,
                 'processed_files': 0,
                 'skipped_files': 0,
+                'critical_count': 0,
                 'high_risk_count': 0,
                 'medium_risk_count': 0,
                 'low_risk_count': 0
@@ -650,13 +651,23 @@ class RepoScanner:
                         finding['file_path'] = rel_path
                         finding['source_file'] = rel_path
                         
+                        # Normalize risk level/severity - ensure both fields are set
+                        risk_level = finding.get('risk_level', finding.get('severity', 'Medium'))
+                        if isinstance(risk_level, str):
+                            risk_level = risk_level.capitalize()
+                        
+                        # Ensure both severity and risk_level are set for report compatibility
+                        finding['severity'] = risk_level
+                        finding['risk_level'] = risk_level
+                        
                         # Count risk levels
-                        risk_level = finding.get('risk_level', finding.get('severity', 'medium')).lower()
-                        if risk_level in ['high', 'critical']:
+                        if risk_level.lower() == 'critical':
+                            scan_results['critical_count'] += 1
+                        elif risk_level.lower() == 'high':
                             scan_results['high_risk_count'] += 1
-                        elif risk_level == 'medium':
+                        elif risk_level.lower() == 'medium':
                             scan_results['medium_risk_count'] += 1
-                        elif risk_level == 'low':
+                        elif risk_level.lower() == 'low':
                             scan_results['low_risk_count'] += 1
                         
                         # Add individual finding to results
@@ -675,6 +686,24 @@ class RepoScanner:
             scan_results['repository_metadata'] = clone_result.get('metadata', {})
             scan_results['scan_time'] = datetime.now().isoformat()
             scan_results['process_time_seconds'] = time.time() - start_time
+            
+            # Add files_scanned for report compatibility
+            scan_results['files_scanned'] = scan_results['processed_files']
+            
+            # Calculate compliance score based on findings
+            total_findings = len(scan_results['findings'])
+            if total_findings == 0:
+                scan_results['compliance_score'] = 100
+            else:
+                critical = scan_results.get('critical_count', 0)
+                high = scan_results.get('high_risk_count', 0)
+                medium = scan_results.get('medium_risk_count', 0)
+                low = scan_results.get('low_risk_count', 0)
+                
+                # Weight: Critical=25, High=10, Medium=3, Low=1
+                penalty = (critical * 25) + (high * 10) + (medium * 3) + (low * 1)
+                score = max(0, 100 - min(penalty, 100))
+                scan_results['compliance_score'] = score
             
             return scan_results
             
