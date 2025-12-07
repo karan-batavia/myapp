@@ -7544,26 +7544,16 @@ def execute_ai_model_scan(region, username, model_source, uploaded_model, repo_u
                     st.progress(score/100)
                     st.markdown("---")
             
-            # Store scan results in session state and results aggregator
-            st.session_state['last_scan_results'] = scan_results
-            
-            # Calculate scan metrics first
+            # Calculate scan metrics FIRST before any enrichment
             scan_duration = int((datetime.now() - scan_start_time).total_seconds() * 1000)
-            findings_count = len(all_findings)  # Use all_findings instead of scan_results["findings"]
+            findings_count = len(all_findings)
             high_risk_count = sum(1 for f in all_findings if f.get('severity') in ['Critical', 'High'])
             
-            # Save to results aggregator for dashboard integration
-            try:
-                from services.results_aggregator import ResultsAggregator
-                aggregator = ResultsAggregator()
-                aggregator.save_scan_result(
-                    username=username,
-                    result=scan_results
-                )
-            except Exception as save_error:
-                logger.warning(f"Failed to save AI model scan results to aggregator: {save_error}")
-            
-            # Ensure AI compliance metrics are in scan_results for HTML report
+            # STEP 1: Enrich scan_results with ALL metrics BEFORE saving or generating reports
+            scan_results["total_pii_found"] = findings_count
+            scan_results["high_risk_count"] = high_risk_count
+            scan_results["findings"] = all_findings
+            scan_results["scan_duration_ms"] = scan_duration
             scan_results.update({
                 "model_framework": scan_results.get("model_framework", "Multi-Framework"),
                 "ai_act_compliance": scan_results.get("ai_act_compliance", "Assessment Complete"),
@@ -7571,7 +7561,10 @@ def execute_ai_model_scan(region, username, model_source, uploaded_model, repo_u
                 "ai_model_compliance": scan_results.get("ai_model_compliance", scan_results.get("compliance_score", 85))
             })
             
-            # Generate comprehensive HTML report and persist it
+            # STEP 2: Store enriched scan results in session state
+            st.session_state['last_scan_results'] = scan_results
+            
+            # STEP 3: Generate comprehensive HTML report with FULLY enriched data
             html_report = generate_html_report(scan_results)
             report_filename = f"ai_model_analysis_{scan_results['scan_id'][:8]}.html"
             
@@ -7594,12 +7587,18 @@ def execute_ai_model_scan(region, username, model_source, uploaded_model, repo_u
                 key=f"download_ai_report_{scan_results['scan_id'][:8]}"
             )
             
-            # Update scan results with final metrics for proper dashboard tracking
-            scan_results["total_pii_found"] = findings_count
-            scan_results["high_risk_count"] = high_risk_count
-            scan_results["findings"] = all_findings
+            # STEP 4: Save FULLY enriched results to aggregator for dashboard integration
+            try:
+                from services.results_aggregator import ResultsAggregator
+                aggregator = ResultsAggregator()
+                aggregator.save_scan_result(
+                    username=username,
+                    result=scan_results
+                )
+            except Exception as save_error:
+                logger.warning(f"Failed to save AI model scan results to aggregator: {save_error}")
             
-            # Track successful completion with enhanced details
+            # STEP 5: Track successful completion with enhanced details
             track_scan_completed_wrapper_safe(
                 scanner_type=ScannerType.AI_MODEL,
                 user_id=user_id,
