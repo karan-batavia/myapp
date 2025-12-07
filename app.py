@@ -9909,7 +9909,7 @@ def render_sustainability_scanner_interface(region: str, username: str):
     ])
     
     # Input source - DataGuardian scans code repositories, not cloud environments
-    source_type = st.radio("Source", ["Upload Files", "Repository URL"])
+    source_type = st.radio("Source", ["Repository URL", "Upload Files"], index=0)
     
     if source_type == "Upload Files":
         uploaded_files = st.file_uploader("Upload Code Files", accept_multiple_files=True, type=['py', 'js', 'java', 'cpp', 'c', 'go', 'rs', 'php', 'rb', 'cs', 'swift', 'kt'])
