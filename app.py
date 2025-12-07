@@ -2836,8 +2836,8 @@ def render_code_scanner_interface(region: str, username: str):
             from utils.strategy_descriptions import get_strategy_description
             st.info(f"**{scan_mode.title()} Strategy**: {get_strategy_description(scan_mode)}")
     
-    # Source selection
-    source_type = st.radio("Source Type", ["Upload Files", "Repository URL", "Directory Path"])
+    # Source selection - Repository URL selected by default
+    source_type = st.radio("Source Type", ["Upload Files", "Repository URL", "Directory Path"], index=1)
     
     uploaded_files = None
     repo_url = None
@@ -11468,8 +11468,8 @@ def render_code_scanner_config():
     """Code scanner configuration"""
     st.subheader("📝 Code Scanner Configuration")
     
-    # Source selection
-    source = st.radio("Source Type", ["Upload Files", "Repository URL"])
+    # Source selection - Repository URL selected by default
+    source = st.radio("Source Type", ["Upload Files", "Repository URL"], index=1)
     
     if source == "Upload Files":
         uploaded_files = st.file_uploader(
