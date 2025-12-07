@@ -34,6 +34,8 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
 - **Containerization**: Docker with multi-stage builds and Docker Compose.
 - **Deployment**: Support for Azure DevOps, GitHub workflows, and local deployments; also supports a hybrid deployment model with SaaS (Hetzner Cloud) and standalone enterprise packages (Docker, VM, native installation).
 - **Core Scanning Services**: Includes Code, Blob, Image (OCR-based), Website, Database, DPIA, AI Model, SOC2, and Sustainability scanners.
+- **Sustainability Scanner**: Scans code repositories (not live cloud environments) for cloud infrastructure files including Terraform (.tf), AWS CloudFormation, Azure ARM/Bicep, GCP Deployment Manager, Kubernetes YAML, and Docker files. Detects oversized instances, missing auto-scaling, and sustainability issues.
+- **GDPR Data Protection Layer**: Database-persisted consent management, automatic data retention enforcement (365 days scans, 90 days analytics), PII anonymization with SHA256 hashing, user data export (GDPR Art. 20), and user data deletion (GDPR Art. 17). Privacy & GDPR tab in Settings page.
 - **Risk Analysis Engine**: AI-powered Smart Risk Analyzer for severity assessment and region-specific GDPR rules (Netherlands, Germany, France, Belgium).
 - **Report Generation**: Multi-format (PDF, HTML) report generation with professional styling, certificate generation, and centralized results aggregation.
 - **Performance Optimization**: Redis caching layer, optimized database operations, async processing, and session isolation.
