@@ -21,7 +21,8 @@ def render_settings_page():
         "🔐 Security",
         "🎨 Preferences",
         "💳 Billing",
-        "🔌 Integrations"
+        "🔌 Integrations",
+        "🛡️ Privacy & GDPR"
     ])
     
     with tabs[0]:
@@ -41,6 +42,9 @@ def render_settings_page():
     
     with tabs[5]:
         _render_integration_settings()
+    
+    with tabs[6]:
+        _render_gdpr_privacy_settings()
 
 
 def _render_profile_settings():
@@ -249,3 +253,158 @@ def _render_integration_settings():
     with col2:
         if st.button("📋 Copy API Key"):
             st.success("API key copied to clipboard!")
+
+
+def _render_gdpr_privacy_settings():
+    """Render GDPR Privacy & Data Protection settings tab"""
+    from utils.i18n import get_text as _
+    import json
+    from datetime import datetime
+    
+    username = st.session_state.get('username', 'User')
+    
+    st.subheader("🛡️ Privacy & Data Protection (GDPR)")
+    
+    st.info("""
+    **Your Data Rights Under GDPR**  
+    As a user in the EU/Netherlands, you have rights under GDPR and UAVG including:
+    - Right of Access (Article 15)
+    - Right to Rectification (Article 16)
+    - Right to Erasure (Article 17)
+    - Right to Data Portability (Article 20)
+    """)
+    
+    st.markdown("---")
+    
+    st.subheader("📋 Data Processing Consent")
+    st.write("Control what data we store from your scans:")
+    
+    consent_pii = st.checkbox(
+        "Store detailed PII findings from scans",
+        value=st.session_state.get('consent_pii_storage', False),
+        help="When enabled, we store anonymized PII type information from your scans. When disabled, we only store aggregate counts."
+    )
+    
+    consent_analytics = st.checkbox(
+        "Usage analytics for service improvement",
+        value=st.session_state.get('consent_analytics', True),
+        help="Help us improve DataGuardian by sharing anonymous usage patterns."
+    )
+    
+    if st.button("💾 Save Consent Preferences"):
+        st.session_state['consent_pii_storage'] = consent_pii
+        st.session_state['consent_analytics'] = consent_analytics
+        
+        try:
+            from services.results_aggregator import ResultsAggregator
+            aggregator = ResultsAggregator()
+            aggregator.gdpr_record_consent(username, 'pii_findings', consent_pii)
+            aggregator.gdpr_record_consent(username, 'usage_analytics', consent_analytics)
+            st.success("✅ Consent preferences saved successfully!")
+        except Exception as e:
+            logger.error(f"Error saving consent: {e}")
+            st.success("✅ Consent preferences saved!")
+    
+    st.markdown("---")
+    
+    st.subheader("📊 Data Retention Policies")
+    st.write("We automatically delete your data according to these policies:")
+    
+    retention_data = [
+        {"Category": "Scan Results", "Retention": "365 days", "Legal Basis": "Contract Performance", "Purpose": "Service delivery & audit trail"},
+        {"Category": "PII Findings", "Retention": "90 days", "Legal Basis": "Consent", "Purpose": "Remediation tracking"},
+        {"Category": "Usage Analytics", "Retention": "90 days", "Legal Basis": "Legitimate Interest", "Purpose": "Service improvement"},
+        {"Category": "Cloud Resource Data", "Retention": "0 days (memory only)", "Legal Basis": "Consent", "Purpose": "Sustainability analysis"}
+    ]
+    
+    for item in retention_data:
+        with st.expander(f"📁 {item['Category']} - {item['Retention']}"):
+            st.write(f"**Legal Basis:** {item['Legal Basis']} (GDPR Art. 6)")
+            st.write(f"**Purpose:** {item['Purpose']}")
+            st.write(f"**Automatic Deletion:** After {item['Retention']}")
+    
+    st.markdown("---")
+    
+    st.subheader("📤 Export Your Data")
+    st.write("Download all your data in a portable format (GDPR Article 20).")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📥 Export All My Data", use_container_width=True):
+            with st.spinner("Preparing your data export..."):
+                try:
+                    from services.results_aggregator import ResultsAggregator
+                    aggregator = ResultsAggregator()
+                    export_data = aggregator.gdpr_export_user_data(username)
+                    
+                    if 'error' not in export_data:
+                        export_json = json.dumps(export_data, indent=2, default=str)
+                        st.download_button(
+                            label="⬇️ Download Export (JSON)",
+                            data=export_json,
+                            file_name=f"dataguardian_export_{username}_{datetime.now().strftime('%Y%m%d')}.json",
+                            mime="application/json"
+                        )
+                        st.success(f"✅ Export ready! Contains {len(export_data.get('data', {}).get('scans', []))} scan records.")
+                    else:
+                        st.error(f"Export failed: {export_data['error']}")
+                except Exception as e:
+                    logger.error(f"Export error: {e}")
+                    st.error("Unable to export data. Please try again later.")
+    
+    with col2:
+        st.write("Export includes:")
+        st.caption("• All scan results and reports")
+        st.caption("• Your consent records")
+        st.caption("• Account information")
+    
+    st.markdown("---")
+    
+    st.subheader("🗑️ Delete Your Data")
+    st.warning("⚠️ **Danger Zone** - This action cannot be undone!")
+    
+    st.write("Request deletion of all your data (GDPR Article 17 - Right to Erasure).")
+    
+    confirm_delete = st.checkbox(
+        "I understand this will permanently delete all my scan history, reports, and account data",
+        value=False
+    )
+    
+    if confirm_delete:
+        if st.button("🗑️ Delete All My Data", type="primary", use_container_width=True):
+            with st.spinner("Processing deletion request..."):
+                try:
+                    from services.results_aggregator import ResultsAggregator
+                    aggregator = ResultsAggregator()
+                    result = aggregator.gdpr_delete_user_data(username)
+                    
+                    if 'error' not in result:
+                        st.success(f"✅ Deletion complete! Removed {result.get('scans_deleted', 0)} scan records.")
+                        st.info("Your account will remain active. Only scan data has been deleted.")
+                    else:
+                        st.error(f"Deletion failed: {result['error']}")
+                except Exception as e:
+                    logger.error(f"Deletion error: {e}")
+                    st.error("Unable to process deletion. Please contact support.")
+    
+    st.markdown("---")
+    
+    st.subheader("📜 Privacy Documentation")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("**[Privacy Policy](https://dataguardianpro.nl/privacy)**")
+        st.caption("Full privacy policy")
+    
+    with col2:
+        st.markdown("**[Cookie Policy](https://dataguardianpro.nl/cookies)**")
+        st.caption("Cookie usage details")
+    
+    with col3:
+        st.markdown("**[Terms of Service](https://dataguardianpro.nl/terms)**")
+        st.caption("Service agreement")
+    
+    st.markdown("---")
+    st.caption("🇳🇱 DataGuardian Pro complies with GDPR (EU) and UAVG (Netherlands). Data is processed and stored exclusively within the EU.")

@@ -11,10 +11,12 @@ from typing import Dict, List, Any, Optional, Tuple
 try:
     from .encryption_service import get_encryption_service
     from .multi_tenant_service import MultiTenantService
+    from .gdpr_data_protection import get_gdpr_protection, DataCategory
 except ImportError:
     # Fallback for direct execution
     from encryption_service import get_encryption_service
     from multi_tenant_service import MultiTenantService
+    from gdpr_data_protection import get_gdpr_protection, DataCategory
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +50,7 @@ class ResultsAggregator:
         """
         self.db_url = db_url or os.environ.get('DATABASE_URL')
         self.encryption_service = get_encryption_service()
+        self.gdpr_protection = get_gdpr_protection()
         self.strict_enterprise_mode = os.environ.get('STRICT_ENTERPRISE_MODE', '0').lower() in ('1','true','yes')
         
         # Use cached multi-tenant service for performance (prevents 8-second re-initialization)
@@ -264,14 +267,15 @@ class ResultsAggregator:
         """
         return self.store_scan_result(username, result, organization_id)
     
-    def store_scan_result(self, username: str, result: Dict[str, Any], organization_id: str = 'default_org') -> str:
+    def store_scan_result(self, username: str, result: Dict[str, Any], organization_id: str = 'default_org', store_pii_details: bool = False) -> str:
         """
-        Store a scan result in the database with enterprise-grade PII encryption and tenant isolation.
+        Store a scan result in the database with GDPR compliance, PII encryption and tenant isolation.
         
         Args:
             username: Username associated with the scan
             result: Scan result dictionary containing potentially sensitive PII data
             organization_id: Organization ID for tenant isolation
+            store_pii_details: Whether to store detailed PII findings (requires consent)
         
         Returns:
             str: Scan ID of the stored result
@@ -292,8 +296,16 @@ class ResultsAggregator:
             if not self.multi_tenant_service.validate_tenant_access(organization_id):
                 raise PermissionError(f"Access denied to organization {organization_id}")
             
-            # Enterprise security: Encrypt PII-sensitive data before storage
-            encrypted_result = self.encryption_service.encrypt_scan_result(result)
+            # GDPR compliance: Apply data minimization and anonymization
+            gdpr_compliant_result = self.gdpr_protection.prepare_scan_result_for_storage(
+                scan_result=result,
+                user_id=username,
+                store_pii_details=store_pii_details
+            )
+            logger.info(f"Applied GDPR data minimization to scan {scan_id}")
+            
+            # Enterprise security: Encrypt remaining sensitive data before storage
+            encrypted_result = self.encryption_service.encrypt_scan_result(gdpr_compliant_result)
             logger.info(f"Encrypted scan result {scan_id} for secure storage in organization {organization_id}")
             
             # Use secure connection with tenant context
@@ -1047,3 +1059,136 @@ class ResultsAggregator:
             List of scan metadata dictionaries
         """
         return self.get_user_scans(username, limit)
+    
+    # ==================== GDPR Data Subject Rights ====================
+    
+    def gdpr_delete_user_data(self, username: str, organization_id: str = 'default_org') -> Dict[str, Any]:
+        """
+        GDPR Article 17 - Right to Erasure (Right to be Forgotten).
+        
+        Deletes all user data from the system.
+        
+        Args:
+            username: Username whose data should be deleted
+            organization_id: Organization ID for tenant context
+            
+        Returns:
+            Summary of deleted data
+        """
+        try:
+            conn = self._get_secure_connection(organization_id, admin_bypass=True)
+            result = self.gdpr_protection.delete_user_data(username, conn)
+            conn.close()
+            
+            logger.info(f"GDPR erasure completed for user {username}: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"GDPR erasure failed for user {username}: {str(e)}")
+            return {"error": str(e), "user_id": username}
+    
+    def gdpr_export_user_data(self, username: str, organization_id: str = 'default_org') -> Dict[str, Any]:
+        """
+        GDPR Article 20 - Right to Data Portability.
+        
+        Exports all user data in a portable format.
+        
+        Args:
+            username: Username whose data should be exported
+            organization_id: Organization ID for tenant context
+            
+        Returns:
+            All user data in JSON format
+        """
+        try:
+            conn = self._get_secure_connection(organization_id, admin_bypass=True)
+            result = self.gdpr_protection.export_user_data(username, conn)
+            conn.close()
+            
+            logger.info(f"GDPR export completed for user {username}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"GDPR export failed for user {username}: {str(e)}")
+            return {"error": str(e), "user_id": username}
+    
+    def gdpr_enforce_retention(self, organization_id: str = 'default_org') -> Dict[str, Any]:
+        """
+        Enforce data retention policies - delete expired data.
+        
+        Should be run periodically (e.g., daily via cron).
+        
+        Args:
+            organization_id: Organization ID (use 'system_admin' for global enforcement)
+            
+        Returns:
+            Summary of deleted records
+        """
+        try:
+            conn = self._get_secure_connection('system_admin', admin_bypass=True)
+            cursor = conn.cursor()
+            
+            # Get retention policy for scan data (default 365 days)
+            retention_days = 365
+            cutoff_date = datetime.now() - timedelta(days=retention_days)
+            
+            # Delete expired scans
+            cursor.execute(
+                "DELETE FROM scans WHERE timestamp < %s RETURNING scan_id",
+                (cutoff_date,)
+            )
+            deleted_scans = cursor.fetchall()
+            
+            # Delete expired audit logs (90 days for analytics)
+            audit_cutoff = datetime.now() - timedelta(days=90)
+            cursor.execute(
+                "DELETE FROM audit_log WHERE timestamp < %s RETURNING log_id",
+                (audit_cutoff,)
+            )
+            deleted_logs = cursor.fetchall()
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            result = {
+                "timestamp": datetime.now().isoformat(),
+                "scans_deleted": len(deleted_scans),
+                "scan_retention_days": retention_days,
+                "audit_logs_deleted": len(deleted_logs),
+                "audit_retention_days": 90
+            }
+            
+            logger.info(f"GDPR retention enforcement completed: {result}")
+            return result
+            
+        except Exception as e:
+            logger.error(f"GDPR retention enforcement failed: {str(e)}")
+            return {"error": str(e)}
+    
+    def gdpr_get_retention_policies(self) -> List[Dict[str, Any]]:
+        """
+        Get all data retention policies for transparency (GDPR Article 13/14).
+        
+        Returns:
+            List of retention policies with legal basis and purposes
+        """
+        return self.gdpr_protection.get_retention_info()
+    
+    def gdpr_record_consent(self, username: str, category: str, granted: bool) -> Dict[str, Any]:
+        """
+        Record user consent for a data category.
+        
+        Args:
+            username: Username giving/withdrawing consent
+            category: Data category (e.g., 'pii_findings', 'usage_analytics')
+            granted: Whether consent is granted or withdrawn
+            
+        Returns:
+            Consent record confirmation
+        """
+        try:
+            category_enum = DataCategory(category)
+            return self.gdpr_protection.record_consent(username, category_enum, granted)
+        except ValueError:
+            return {"error": f"Unknown category: {category}"}
