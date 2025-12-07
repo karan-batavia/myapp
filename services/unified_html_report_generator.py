@@ -669,6 +669,11 @@ class UnifiedHTMLReportGenerator:
             description = finding.get('description', finding.get('message', 'No description available'))
             location = finding.get('location', 'Unknown')
             
+            # Get source file information
+            import os
+            source_path = finding.get('source', finding.get('source_file', ''))
+            source_file = os.path.basename(source_path) if source_path else ''
+            
             # Enhanced finding fields
             context = finding.get('context', '')
             business_impact = finding.get('business_impact', '')
@@ -692,6 +697,8 @@ class UnifiedHTMLReportGenerator:
                 </div>
                 
                 <div class="finding-content">
+                    {f'<div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">{source_file}</code></div>' if source_file else ''}
+                    
                     <div class="finding-description">
                         <strong>Description:</strong> {description}
                     </div>

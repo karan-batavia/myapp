@@ -3930,6 +3930,14 @@ def execute_document_scan(region, username, uploaded_files):
             
             # Scan document
             doc_results = scanner.scan_file(tmp_path)
+            
+            # Add source file information to each finding
+            for finding in doc_results.get("findings", []):
+                if not finding.get('source'):
+                    finding['source'] = file.name
+                if not finding.get('source_file'):
+                    finding['source_file'] = file.name
+            
             scan_results["findings"].extend(doc_results.get("findings", []))
             scan_results["document_results"].append(doc_results)
             scan_results["files_scanned"] += 1
