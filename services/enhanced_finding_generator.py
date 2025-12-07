@@ -458,9 +458,19 @@ class EnhancedFindingGenerator:
     def _create_generic_enhanced_finding(self, finding: Dict[str, Any]) -> EnhancedFinding:
         """Create enhanced finding with intelligent context based on finding type"""
         finding_type = finding.get('type', 'unknown').lower().replace('_', ' ')
-        description = finding.get('description', 'Security or privacy issue detected')
+        
+        # Extract description from multiple possible fields (different scanners use different fields)
+        description = (finding.get('description') or 
+                       finding.get('reason') or 
+                       finding.get('context') or 
+                       'Security or privacy issue detected')
+        
+        # For EXIF findings, use reason as it contains the detailed explanation
+        if 'exif' in finding_type and finding.get('reason'):
+            description = finding.get('reason')
+        
         location = finding.get('location', 'Unknown location')
-        severity = finding.get('severity', 'Medium')
+        severity = finding.get('severity', finding.get('risk_level', 'Medium'))
         
         # Generate intelligent context based on finding type
         context, gdpr_articles, compliance_reqs, business_impact, recommendations = self._get_type_specific_context(
@@ -605,6 +615,79 @@ class EnhancedFindingGenerator:
                 ['Establish governance framework', 'Assign clear responsibilities', 'Implement audit mechanisms'],
                 "Lack of accountability framework creates compliance and liability risks",
                 [ActionableRecommendation(action="Establish Accountability Framework", description="Implement AI governance structure", implementation="Define roles, responsibilities, decision-making processes, and escalation procedures", effort_estimate="8-16 hours", priority=severity, verification="Governance framework review")]
+            )
+        
+        # EXIF metadata findings
+        elif 'exif' in finding_type:
+            if 'gps' in finding_type or 'location' in finding_type:
+                return (
+                    f"GPS location data embedded in image metadata. {description}",
+                    ['GDPR Article 4(1) - Personal Data Definition', 'GDPR Article 9 - Special Categories'],
+                    ['Strip GPS metadata before sharing', 'Implement metadata removal pipeline', 'Document data handling'],
+                    "GPS coordinates can reveal exact physical locations, identifying individuals when combined with other data",
+                    [ActionableRecommendation(action="Remove GPS Metadata", description="Strip location data from images", implementation="Use EXIF removal tools, implement automated stripping in upload pipeline", effort_estimate="1-2 hours", priority="High", verification="Verify GPS data removed from processed images")]
+                )
+            elif 'timestamp' in finding_type or 'date' in finding_type:
+                return (
+                    f"Timestamp metadata found in image. {description}",
+                    ['GDPR Article 4(1) - Personal Data Definition'],
+                    ['Consider timestamp implications', 'Strip if privacy-sensitive', 'Document retention policy'],
+                    "Timestamps can reveal patterns of behavior and location when combined with other data",
+                    [ActionableRecommendation(action="Review Timestamp Data", description="Assess timestamp privacy implications", implementation="Determine if timestamps need stripping for privacy, implement if needed", effort_estimate="30 mins", priority="Medium", verification="Verify timestamp handling policy")]
+                )
+            elif 'author' in finding_type or 'artist' in finding_type:
+                return (
+                    f"Author/creator information in image metadata. {description}",
+                    ['GDPR Article 4(1) - Personal Data Definition'],
+                    ['Remove author info if anonymity required', 'Strip PII from metadata', 'Document handling'],
+                    "Author names and creator info directly identify individuals - this is PII under GDPR",
+                    [ActionableRecommendation(action="Remove Author Metadata", description="Strip author/creator PII from images", implementation="Remove Artist, Copyright, XPAuthor fields from EXIF", effort_estimate="30 mins", priority="Medium", verification="Verify author data removed")]
+                )
+            elif 'device' in finding_type or 'camera' in finding_type:
+                return (
+                    f"Device identification data in image metadata. {description}",
+                    ['GDPR Article 4(1) - Personal Data Definition'],
+                    ['Strip device identifiers', 'Remove serial numbers', 'Implement metadata cleaning'],
+                    "Device serial numbers and camera identifiers create persistent identifiers that can track individuals across images",
+                    [ActionableRecommendation(action="Remove Device Identifiers", description="Strip device/camera serial numbers", implementation="Remove Make, Model, BodySerialNumber, LensSerialNumber from EXIF", effort_estimate="30 mins", priority="High", verification="Verify device identifiers removed")]
+                )
+            else:
+                return (
+                    f"Image metadata privacy finding: {description}",
+                    ['GDPR Article 4(1) - Personal Data Definition', 'GDPR Article 5 - Data Minimization'],
+                    ['Review all metadata fields', 'Strip privacy-sensitive data', 'Implement metadata policy'],
+                    "Image metadata can contain various forms of PII requiring GDPR-compliant handling",
+                    [ActionableRecommendation(action="Audit Image Metadata", description="Review and sanitize image metadata", implementation="Scan all metadata fields, strip PII, implement automated cleaning", effort_estimate="1-2 hours", priority="Medium", verification="Verify metadata sanitization")]
+                )
+        
+        # Watermark findings
+        elif 'watermark' in finding_type:
+            return (
+                f"Watermark detected in image. {description}",
+                ['Copyright Law', 'GDPR Article 4(1) if watermark contains PII'],
+                ['Verify watermark ownership', 'Respect copyright', 'Document source'],
+                "Watermarks may indicate copyrighted content or contain identifying information",
+                [ActionableRecommendation(action="Review Watermark", description="Assess watermark implications", implementation="Verify content ownership, check for PII in watermark, document source", effort_estimate="30 mins", priority="Medium", verification="Document watermark review")]
+            )
+        
+        # Signature findings
+        elif 'signature' in finding_type:
+            return (
+                f"Signature pattern detected. {description}",
+                ['GDPR Article 4(1) - Personal Data Definition', 'eIDAS Regulation'],
+                ['Verify signature authenticity', 'Protect as biometric data', 'Document handling'],
+                "Signatures are biometric identifiers and personal data under GDPR",
+                [ActionableRecommendation(action="Handle Signature Data", description="Process signature as sensitive PII", implementation="Apply appropriate access controls, encryption, and retention policies", effort_estimate="1 hour", priority="High", verification="Verify signature protection measures")]
+            )
+        
+        # Deepfake/synthetic media findings
+        elif 'deepfake' in finding_type or 'synthetic' in finding_type:
+            return (
+                f"Synthetic/AI-generated media analysis: {description}",
+                ['EU AI Act Article 50(2) - Transparency for AI-generated content'],
+                ['Verify content authenticity', 'Add disclosure labels if synthetic', 'Document verification'],
+                "AI-generated content requires transparency labeling under EU AI Act to prevent misinformation",
+                [ActionableRecommendation(action="Verify Content Authenticity", description="Confirm if content is AI-generated", implementation="Cross-reference sources, check provenance, add disclosure if synthetic", effort_estimate="1-2 hours", priority=severity, verification="Document authenticity verification")]
             )
         
         # Default fallback with description-based context
