@@ -625,29 +625,42 @@ class RepoScanner:
                     progress_callback(i + 1, len(all_files), rel_path)
                 
                 try:
-                    # Process each file individually using the code scanner's file scanning method
-                    file_findings = self.code_scanner.scan_single_file(file_path)
+                    # Process each file individually using the code scanner's scan_file method
+                    file_result = self.code_scanner.scan_file(file_path)
                     
-                    # Skip if no findings
-                    if not file_findings or not file_findings.get('findings'):
+                    # Get relative path for the file
+                    rel_path = os.path.relpath(file_path, repo_path)
+                    
+                    # Check for skipped or error files
+                    if file_result.get('status') in ['skipped', 'error']:
                         scan_results['processed_files'] += 1
                         continue
                     
-                    # Add relevant file paths to findings
-                    rel_path = os.path.relpath(file_path, repo_path)
-                    file_findings['file_path'] = rel_path
+                    # Get findings - scan_file uses 'pii_found' key
+                    pii_findings = file_result.get('pii_found', [])
                     
-                    # Count risk levels
-                    for finding in file_findings.get('findings', []):
-                        if finding.get('risk_level') == 'high':
+                    # Skip if no findings
+                    if not pii_findings:
+                        scan_results['processed_files'] += 1
+                        continue
+                    
+                    # Convert pii_found to findings format and add to results
+                    for finding in pii_findings:
+                        # Add file path to finding
+                        finding['file_path'] = rel_path
+                        finding['source_file'] = rel_path
+                        
+                        # Count risk levels
+                        risk_level = finding.get('risk_level', finding.get('severity', 'medium')).lower()
+                        if risk_level in ['high', 'critical']:
                             scan_results['high_risk_count'] += 1
-                        elif finding.get('risk_level') == 'medium':
+                        elif risk_level == 'medium':
                             scan_results['medium_risk_count'] += 1
-                        elif finding.get('risk_level') == 'low':
+                        elif risk_level == 'low':
                             scan_results['low_risk_count'] += 1
-                    
-                    # Add file findings to overall results
-                    scan_results['findings'].append(file_findings)
+                        
+                        # Add individual finding to results
+                        scan_results['findings'].append(finding)
                     
                     # Increment processed files count
                     scan_results['processed_files'] += 1
