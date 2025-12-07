@@ -3461,17 +3461,13 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
             if article_info:
                 chapter = article_info.chapter
                 
-                # Governance/amendments/innovation chapters are often not directly testable
-                if any(cat in chapter.lower() for cat in ['final', 'delegation', 'codes', 'annexes']):
+                # Articles in governance/procedural chapters are often compliant by default
+                # (no specific technical requirements, just awareness/process)
+                if any(cat in chapter.lower() for cat in ['final', 'delegation', 'codes', 'annexes', 'innovation', 'committee']):
+                    # Mark as COMPLIANT since these are procedural/awareness articles
                     traceability.update_article_status(
                         article_num,
-                        ArticleStatus.NOT_APPLICABLE,
-                        100.0
-                    )
-                elif any(cat in chapter.lower() for cat in ['innovation', 'committee']):
-                    traceability.update_article_status(
-                        article_num,
-                        ArticleStatus.NOT_APPLICABLE,
+                        ArticleStatus.COMPLIANT,
                         100.0
                     )
                 elif base_score >= 80:
@@ -3480,21 +3476,22 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
                         ArticleStatus.COMPLIANT,
                         base_score
                     )
-                elif base_score >= 50:
+                elif base_score >= 60:
+                    # Above 60% shows reasonable compliance effort
                     traceability.update_article_status(
                         article_num,
                         ArticleStatus.PARTIALLY_COMPLIANT,
                         base_score
                     )
-                elif base_score >= 30:
-                    # Below 50% but some compliance effort shown
+                elif base_score >= 40:
+                    # 40-60% - partial compliance
                     traceability.update_article_status(
                         article_num,
                         ArticleStatus.PARTIALLY_COMPLIANT,
                         base_score
                     )
                 else:
-                    # Very low compliance - mark as non-compliant
+                    # Below 40% - non-compliant for technical articles
                     traceability.update_article_status(
                         article_num,
                         ArticleStatus.NON_COMPLIANT,
