@@ -313,7 +313,7 @@ def _render_code_scanner(region: str, username: str):
     
     st.markdown("Scan source code repositories for PII, secrets, and security vulnerabilities.")
     
-    source_type = st.radio("Source Type", ["Upload Files", "Repository URL", "Directory Path"])
+    source_type = st.radio("Source Type", ["Upload Files", "Repository URL", "Directory Path"], index=1)
     
     uploaded_files = None
     repo_url = None
