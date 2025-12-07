@@ -9908,17 +9908,13 @@ def render_sustainability_scanner_interface(region: str, username: str):
         "Zombie Resource Detection"
     ])
     
-    # Input source
-    source_type = st.radio("Source", ["Upload Files", "Repository URL", "Cloud Provider Analysis"])
+    # Input source - DataGuardian scans code repositories, not cloud environments
+    source_type = st.radio("Source", ["Upload Files", "Repository URL"])
     
     if source_type == "Upload Files":
         uploaded_files = st.file_uploader("Upload Code Files", accept_multiple_files=True, type=['py', 'js', 'java', 'cpp', 'c', 'go', 'rs', 'php', 'rb', 'cs', 'swift', 'kt'])
-    elif source_type == "Repository URL":
-        repo_url = st.text_input("Repository URL", placeholder="https://github.com/user/repo")
     else:
-        # Cloud provider analysis
-        cloud_provider = st.selectbox("Cloud Provider", ["AWS", "Azure", "Google Cloud", "Multi-Cloud"])
-        st.info("💡 Cloud provider analysis requires API credentials for authentic resource scanning")
+        repo_url = st.text_input("Repository URL", placeholder="https://github.com/user/repo")
     
     # Enhanced analysis options
     with st.expander("🔧 Advanced Analysis Options"):
@@ -9956,10 +9952,8 @@ def render_sustainability_scanner_interface(region: str, username: str):
         
         if source_type == "Upload Files":
             scan_params['uploaded_files'] = locals().get('uploaded_files', None)
-        elif source_type == "Repository URL":
+        else:
             scan_params['repo_url'] = locals().get('repo_url', None)
-        elif source_type == "Cloud Provider Analysis":
-            scan_params['cloud_provider'] = locals().get('cloud_provider', None)
             
         execute_sustainability_scan(region, username, scan_params)
 
