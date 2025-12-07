@@ -1104,6 +1104,113 @@ class UnifiedHTMLReportGenerator:
             </div>
             """
         
+        # Calculate itemized savings from findings
+        findings = scan_result.get('findings', [])
+        savings_items = []
+        total_monthly_cost = 0
+        total_monthly_co2 = 0
+        
+        for finding in findings:
+            desc = finding.get('description', '') or finding.get('context', '')
+            # Extract cost from description (e.g., "Cost: €145.99/month")
+            import re
+            cost_match = re.search(r'Cost:\s*€?([\d,.]+)/month', desc)
+            co2_match = re.search(r'CO₂:\s*([\d.]+)\s*kg', desc)
+            
+            if cost_match:
+                try:
+                    cost = float(cost_match.group(1).replace(',', '.'))
+                    co2 = float(co2_match.group(1)) if co2_match else 0
+                    total_monthly_cost += cost
+                    total_monthly_co2 += co2
+                    savings_items.append({
+                        'type': finding.get('type', 'Issue'),
+                        'cost': cost,
+                        'co2': co2,
+                        'severity': finding.get('severity', 'medium')
+                    })
+                except (ValueError, AttributeError):
+                    pass
+        
+        # Build savings summary section
+        annual_savings = total_monthly_cost * 12
+        savings_summary = ""
+        if savings_items or cost_savings > 0:
+            final_monthly = total_monthly_cost if total_monthly_cost > 0 else cost_savings
+            final_annual = final_monthly * 12
+            
+            savings_summary = f"""
+            <div class="savings-summary" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-radius: 12px; padding: 25px; margin: 20px 0; border-left: 5px solid #2e7d32;">
+                <h3 style="color: #1b5e20; margin-top: 0;">💰 Your Potential Savings</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 15px;">
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 2em; font-weight: bold; color: #d32f2f;">€{final_monthly:.2f}</div>
+                        <div style="color: #666; font-size: 0.9em;">Monthly Waste</div>
+                        <div style="color: #888; font-size: 0.8em; margin-top: 5px;">Currently being spent</div>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 2em; font-weight: bold; color: #2e7d32;">€{final_annual:.2f}</div>
+                        <div style="color: #666; font-size: 0.9em;">Annual Savings</div>
+                        <div style="color: #888; font-size: 0.8em; margin-top: 5px;">If all issues are fixed</div>
+                    </div>
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="font-size: 2em; font-weight: bold; color: #1565c0;">{total_monthly_co2 if total_monthly_co2 > 0 else co2_reduction:.1f} kg</div>
+                        <div style="color: #666; font-size: 0.9em;">CO₂ Reduction</div>
+                        <div style="color: #888; font-size: 0.8em; margin-top: 5px;">Monthly environmental impact</div>
+                    </div>
+                </div>
+            """
+            
+            # Add itemized breakdown if we have specific items
+            if savings_items:
+                savings_summary += """
+                <div style="margin-top: 20px;">
+                    <h4 style="color: #1b5e20; margin-bottom: 10px;">📋 Itemized Savings Breakdown</h4>
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #f5f5f5;">
+                                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd;">Issue</th>
+                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Monthly Cost</th>
+                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">Annual Cost</th>
+                                <th style="padding: 12px; text-align: right; border-bottom: 2px solid #ddd;">CO₂/Month</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                """
+                for item in savings_items:
+                    severity_color = '#d32f2f' if item['severity'].lower() == 'critical' else '#f57c00' if item['severity'].lower() == 'high' else '#1976d2'
+                    savings_summary += f"""
+                            <tr>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: {severity_color}; margin-right: 8px;"></span>
+                                    {item['type'].replace('_', ' ').title()}
+                                </td>
+                                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee; color: #d32f2f; font-weight: bold;">€{item['cost']:.2f}</td>
+                                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee; color: #d32f2f;">€{item['cost'] * 12:.2f}</td>
+                                <td style="padding: 10px; text-align: right; border-bottom: 1px solid #eee;">{item['co2']:.1f} kg</td>
+                            </tr>
+                    """
+                savings_summary += f"""
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: #e8f5e9; font-weight: bold;">
+                                <td style="padding: 12px;">Total Potential Savings</td>
+                                <td style="padding: 12px; text-align: right; color: #2e7d32;">€{total_monthly_cost:.2f}</td>
+                                <td style="padding: 12px; text-align: right; color: #2e7d32;">€{total_monthly_cost * 12:.2f}</td>
+                                <td style="padding: 12px; text-align: right; color: #1565c0;">{total_monthly_co2:.1f} kg</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                """
+            
+            savings_summary += """
+                <p style="margin-top: 15px; padding: 10px; background: #fff3e0; border-radius: 6px; color: #e65100; font-size: 0.9em;">
+                    💡 <strong>Quick Win:</strong> Addressing the critical and high-priority issues first can achieve up to 80% of these savings with minimal effort.
+                </p>
+            </div>
+            """
+        
         return f"""
         <div class="scanner-specific">
             <h2>🌱 {t_report('sustainability_report', 'Sustainability Metrics')}</h2>
@@ -1122,6 +1229,7 @@ class UnifiedHTMLReportGenerator:
                 </div>
             </div>
             {additional_metrics}
+            {savings_summary}
         </div>
         """
     
