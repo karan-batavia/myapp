@@ -184,6 +184,447 @@ class CloudResourcesScanner:
         }
 
 
+class CloudInfrastructureFileScanner:
+    """
+    Scans code repositories for cloud provider configuration files and analyzes them
+    for sustainability, cost optimization, and efficiency issues.
+    
+    Supports:
+    - AWS: CloudFormation (YAML/JSON), CDK, SAM templates
+    - Azure: ARM templates, Bicep files
+    - GCP: Deployment Manager, Cloud Build configs
+    - Multi-cloud: Terraform (.tf), Kubernetes YAML, Docker files
+    """
+    
+    CLOUD_FILE_PATTERNS = {
+        'terraform': {
+            'extensions': ['.tf', '.tfvars'],
+            'provider': 'multi-cloud',
+            'description': 'Terraform Infrastructure as Code'
+        },
+        'cloudformation': {
+            'extensions': ['.yaml', '.yml', '.json'],
+            'patterns': ['AWSTemplateFormatVersion', 'AWS::'],
+            'provider': 'aws',
+            'description': 'AWS CloudFormation Templates'
+        },
+        'arm_template': {
+            'extensions': ['.json'],
+            'patterns': ['$schema', 'microsoft.com/schemas', 'contentVersion'],
+            'provider': 'azure',
+            'description': 'Azure ARM Templates'
+        },
+        'bicep': {
+            'extensions': ['.bicep'],
+            'provider': 'azure',
+            'description': 'Azure Bicep Files'
+        },
+        'kubernetes': {
+            'extensions': ['.yaml', '.yml'],
+            'patterns': ['apiVersion:', 'kind:', 'metadata:'],
+            'provider': 'multi-cloud',
+            'description': 'Kubernetes Manifests'
+        },
+        'docker': {
+            'filenames': ['Dockerfile', 'docker-compose.yml', 'docker-compose.yaml'],
+            'provider': 'multi-cloud',
+            'description': 'Docker Configuration'
+        },
+        'gcp_deployment': {
+            'extensions': ['.yaml', '.yml', '.jinja'],
+            'patterns': ['type: compute.v1', 'type: storage.v1', 'type: container.v1'],
+            'provider': 'gcp',
+            'description': 'GCP Deployment Manager'
+        },
+        'cdk': {
+            'extensions': ['.ts', '.py', '.java'],
+            'patterns': ['aws-cdk', '@aws-cdk', 'from aws_cdk'],
+            'provider': 'aws',
+            'description': 'AWS CDK Code'
+        }
+    }
+    
+    INSTANCE_TYPES = {
+        'aws': {
+            'oversized': ['m5.4xlarge', 'm5.8xlarge', 'm5.12xlarge', 'r5.4xlarge', 'c5.9xlarge'],
+            'efficient': ['t3.micro', 't3.small', 't3.medium', 'm5.large', 'c5.large'],
+            'graviton': ['m6g.', 'c6g.', 'r6g.', 't4g.']  # ARM-based, more efficient
+        },
+        'azure': {
+            'oversized': ['Standard_D16s_v3', 'Standard_D32s_v3', 'Standard_E16s_v3'],
+            'efficient': ['Standard_B1s', 'Standard_B2s', 'Standard_D2s_v3'],
+            'arm': ['Standard_D2ps_v5', 'Standard_D4ps_v5']  # ARM-based
+        },
+        'gcp': {
+            'oversized': ['n1-standard-16', 'n1-standard-32', 'n1-highmem-16'],
+            'efficient': ['e2-micro', 'e2-small', 'e2-medium', 'n1-standard-1'],
+            'tau': ['t2a-standard-', 't2d-standard-']  # Tau VMs, more efficient
+        }
+    }
+    
+    def __init__(self, region="Europe"):
+        self.region = region
+        self.findings = []
+        self.cloud_files_found = {
+            'aws': [], 'azure': [], 'gcp': [], 'multi-cloud': []
+        }
+        
+    def scan_file(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Scan a single file for cloud infrastructure patterns."""
+        findings = []
+        file_type = self._identify_file_type(file_path, content)
+        
+        if not file_type:
+            return findings
+        
+        provider = self.CLOUD_FILE_PATTERNS[file_type]['provider']
+        self.cloud_files_found[provider].append(file_path)
+        
+        # Analyze based on file type
+        if file_type == 'terraform':
+            findings.extend(self._analyze_terraform(file_path, content))
+        elif file_type == 'cloudformation':
+            findings.extend(self._analyze_cloudformation(file_path, content))
+        elif file_type == 'arm_template':
+            findings.extend(self._analyze_arm_template(file_path, content))
+        elif file_type == 'bicep':
+            findings.extend(self._analyze_bicep(file_path, content))
+        elif file_type == 'kubernetes':
+            findings.extend(self._analyze_kubernetes(file_path, content))
+        elif file_type == 'docker':
+            findings.extend(self._analyze_docker(file_path, content))
+        elif file_type == 'gcp_deployment':
+            findings.extend(self._analyze_gcp_deployment(file_path, content))
+        elif file_type == 'cdk':
+            findings.extend(self._analyze_cdk(file_path, content))
+        
+        return findings
+    
+    def _identify_file_type(self, file_path: str, content: str) -> Optional[str]:
+        """Identify the type of cloud configuration file."""
+        filename = os.path.basename(file_path).lower()
+        
+        # Check Docker files first (exact filename match)
+        if filename in ['dockerfile', 'docker-compose.yml', 'docker-compose.yaml']:
+            return 'docker'
+        
+        # Check by extension
+        ext = os.path.splitext(file_path)[1].lower()
+        
+        # Terraform files
+        if ext in ['.tf', '.tfvars']:
+            return 'terraform'
+        
+        # Bicep files
+        if ext == '.bicep':
+            return 'bicep'
+        
+        # For YAML/JSON files, check content patterns
+        if ext in ['.yaml', '.yml', '.json']:
+            # Check CloudFormation
+            if 'AWSTemplateFormatVersion' in content or 'AWS::' in content:
+                return 'cloudformation'
+            
+            # Check ARM template
+            if 'microsoft.com/schemas' in content and 'contentVersion' in content:
+                return 'arm_template'
+            
+            # Check Kubernetes
+            if 'apiVersion:' in content and 'kind:' in content:
+                return 'kubernetes'
+            
+            # Check GCP Deployment Manager
+            if 'type: compute.v1' in content or 'type: storage.v1' in content:
+                return 'gcp_deployment'
+        
+        # Check CDK patterns in code files
+        if ext in ['.ts', '.py', '.java']:
+            if 'aws-cdk' in content or '@aws-cdk' in content or 'from aws_cdk' in content:
+                return 'cdk'
+        
+        return None
+    
+    def _analyze_terraform(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze Terraform files for sustainability issues."""
+        findings = []
+        lines = content.split('\n')
+        
+        for i, line in enumerate(lines, 1):
+            # Check for oversized instances
+            for provider, types in self.INSTANCE_TYPES.items():
+                for instance_type in types.get('oversized', []):
+                    if instance_type in line:
+                        findings.append({
+                            'file': file_path,
+                            'line': i,
+                            'type': 'oversized_instance',
+                            'provider': provider,
+                            'severity': 'medium',
+                            'message': f'Potentially oversized instance type: {instance_type}',
+                            'recommendation': f'Consider using smaller instance types or ARM-based instances for better efficiency',
+                            'co2_impact_kg': 15.5
+                        })
+            
+            # Check for missing auto-scaling
+            if 'aws_instance' in line or 'azurerm_virtual_machine' in line or 'google_compute_instance' in line:
+                # Look for count or for_each (indicates scaling consideration)
+                if 'count' not in content[:content.find(line)] and 'for_each' not in content[:content.find(line)]:
+                    findings.append({
+                        'file': file_path,
+                        'line': i,
+                        'type': 'no_scaling',
+                        'severity': 'low',
+                        'message': 'Single instance without scaling configuration',
+                        'recommendation': 'Consider using auto-scaling groups for variable workloads',
+                        'co2_impact_kg': 8.2
+                    })
+            
+            # Check for unencrypted storage
+            if 'encrypted' in line.lower() and 'false' in line.lower():
+                findings.append({
+                    'file': file_path,
+                    'line': i,
+                    'type': 'security_sustainability',
+                    'severity': 'high',
+                    'message': 'Unencrypted storage detected',
+                    'recommendation': 'Enable encryption for data security and compliance',
+                    'co2_impact_kg': 0
+                })
+            
+            # Check for spot/preemptible instances (good practice)
+            if 'spot_price' in line or 'preemptible' in line or 'spot_instance_type' in line:
+                findings.append({
+                    'file': file_path,
+                    'line': i,
+                    'type': 'good_practice',
+                    'severity': 'info',
+                    'message': 'Using spot/preemptible instances - good for cost and sustainability',
+                    'recommendation': 'Continue using spot instances for fault-tolerant workloads',
+                    'co2_impact_kg': -5.0  # Positive impact (reduction)
+                })
+        
+        return findings
+    
+    def _analyze_cloudformation(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze AWS CloudFormation templates."""
+        findings = []
+        
+        # Check for oversized EC2 instances
+        for instance_type in self.INSTANCE_TYPES['aws']['oversized']:
+            if instance_type in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'oversized_instance',
+                    'provider': 'aws',
+                    'severity': 'medium',
+                    'message': f'Oversized EC2 instance type: {instance_type}',
+                    'recommendation': 'Consider Graviton-based instances (m6g, c6g) for 40% better price-performance',
+                    'co2_impact_kg': 18.3
+                })
+        
+        # Check for Graviton instances (good practice)
+        for graviton in self.INSTANCE_TYPES['aws']['graviton']:
+            if graviton in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'good_practice',
+                    'severity': 'info',
+                    'message': 'Using AWS Graviton (ARM) instances - excellent for sustainability',
+                    'recommendation': 'Graviton instances provide up to 60% better energy efficiency',
+                    'co2_impact_kg': -12.0
+                })
+        
+        # Check for S3 lifecycle policies
+        if 'AWS::S3::Bucket' in content:
+            if 'LifecycleConfiguration' not in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'missing_lifecycle',
+                    'provider': 'aws',
+                    'severity': 'low',
+                    'message': 'S3 bucket without lifecycle policy',
+                    'recommendation': 'Add lifecycle rules to move infrequently accessed data to cheaper storage tiers',
+                    'co2_impact_kg': 3.5
+                })
+        
+        return findings
+    
+    def _analyze_arm_template(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze Azure ARM templates."""
+        findings = []
+        
+        # Check for oversized VMs
+        for vm_size in self.INSTANCE_TYPES['azure']['oversized']:
+            if vm_size in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'oversized_instance',
+                    'provider': 'azure',
+                    'severity': 'medium',
+                    'message': f'Oversized Azure VM: {vm_size}',
+                    'recommendation': 'Consider using B-series for variable workloads or ARM-based VMs',
+                    'co2_impact_kg': 16.7
+                })
+        
+        # Check for spot VMs (good practice)
+        if 'Spot' in content or 'priority' in content.lower():
+            findings.append({
+                'file': file_path,
+                'type': 'good_practice',
+                'severity': 'info',
+                'message': 'Using Azure Spot VMs - good for cost optimization',
+                'co2_impact_kg': -4.5
+            })
+        
+        return findings
+    
+    def _analyze_bicep(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze Azure Bicep files."""
+        # Similar to ARM template analysis
+        return self._analyze_arm_template(file_path, content)
+    
+    def _analyze_kubernetes(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze Kubernetes manifests for sustainability issues."""
+        findings = []
+        
+        # Check for missing resource limits
+        if 'kind: Deployment' in content or 'kind: Pod' in content:
+            if 'resources:' not in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'missing_resource_limits',
+                    'severity': 'medium',
+                    'message': 'Kubernetes workload without resource limits',
+                    'recommendation': 'Define CPU/memory requests and limits to prevent resource waste',
+                    'co2_impact_kg': 7.8
+                })
+            elif 'limits:' not in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'missing_limits',
+                    'severity': 'low',
+                    'message': 'Resource requests defined but no limits',
+                    'recommendation': 'Add resource limits to prevent unbounded resource consumption',
+                    'co2_impact_kg': 4.2
+                })
+        
+        # Check for HPA (Horizontal Pod Autoscaler)
+        if 'kind: HorizontalPodAutoscaler' in content:
+            findings.append({
+                'file': file_path,
+                'type': 'good_practice',
+                'severity': 'info',
+                'message': 'Using HorizontalPodAutoscaler - good for efficiency',
+                'co2_impact_kg': -6.0
+            })
+        
+        # Check for high replica counts
+        if 'replicas:' in content:
+            import re
+            replicas = re.findall(r'replicas:\s*(\d+)', content)
+            for count in replicas:
+                if int(count) > 10:
+                    findings.append({
+                        'file': file_path,
+                        'type': 'high_replica_count',
+                        'severity': 'low',
+                        'message': f'High replica count ({count}) - ensure this matches actual demand',
+                        'recommendation': 'Use HPA instead of fixed high replica counts',
+                        'co2_impact_kg': 5.5
+                    })
+        
+        return findings
+    
+    def _analyze_docker(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze Docker files for sustainability issues."""
+        findings = []
+        
+        # Check for large base images
+        large_images = ['ubuntu:', 'debian:', 'centos:', 'python:', 'node:']
+        slim_alternatives = {
+            'ubuntu:': 'ubuntu:22.04-slim or alpine',
+            'debian:': 'debian:slim or alpine',
+            'python:': 'python:3.x-slim or python:3.x-alpine',
+            'node:': 'node:xx-alpine or node:xx-slim'
+        }
+        
+        for image in large_images:
+            if image in content and '-slim' not in content and '-alpine' not in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'large_base_image',
+                    'severity': 'low',
+                    'message': f'Using full base image ({image})',
+                    'recommendation': f'Consider using {slim_alternatives.get(image, "slim/alpine variant")} to reduce image size and pull time',
+                    'co2_impact_kg': 2.3
+                })
+        
+        # Check for multi-stage builds (good practice)
+        if content.count('FROM ') > 1:
+            findings.append({
+                'file': file_path,
+                'type': 'good_practice',
+                'severity': 'info',
+                'message': 'Using multi-stage Docker build - good for smaller images',
+                'co2_impact_kg': -1.5
+            })
+        
+        return findings
+    
+    def _analyze_gcp_deployment(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze GCP Deployment Manager files."""
+        findings = []
+        
+        # Check for oversized instances
+        for instance_type in self.INSTANCE_TYPES['gcp']['oversized']:
+            if instance_type in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'oversized_instance',
+                    'provider': 'gcp',
+                    'severity': 'medium',
+                    'message': f'Oversized GCP instance: {instance_type}',
+                    'recommendation': 'Consider E2 or Tau VMs for better efficiency',
+                    'co2_impact_kg': 14.9
+                })
+        
+        return findings
+    
+    def _analyze_cdk(self, file_path: str, content: str) -> List[Dict[str, Any]]:
+        """Analyze AWS CDK code."""
+        findings = []
+        
+        # Check for oversized instances in CDK
+        for instance_type in self.INSTANCE_TYPES['aws']['oversized']:
+            if instance_type in content:
+                findings.append({
+                    'file': file_path,
+                    'type': 'oversized_instance',
+                    'provider': 'aws',
+                    'severity': 'medium',
+                    'message': f'Oversized instance in CDK: {instance_type}',
+                    'recommendation': 'Use Graviton instances for better sustainability',
+                    'co2_impact_kg': 17.2
+                })
+        
+        return findings
+    
+    def get_summary(self) -> Dict[str, Any]:
+        """Get a summary of all cloud files found and analyzed."""
+        total_files = sum(len(files) for files in self.cloud_files_found.values())
+        
+        return {
+            'total_cloud_files': total_files,
+            'by_provider': {
+                'aws': len(self.cloud_files_found['aws']),
+                'azure': len(self.cloud_files_found['azure']),
+                'gcp': len(self.cloud_files_found['gcp']),
+                'multi_cloud': len(self.cloud_files_found['multi-cloud'])
+            },
+            'files': self.cloud_files_found
+        }
+
+
 class GithubRepoSustainabilityScanner:
     def __init__(self, repo_url="", branch="main", region="Europe"):
         """
