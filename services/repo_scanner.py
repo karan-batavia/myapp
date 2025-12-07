@@ -11,6 +11,7 @@ import shutil
 import tempfile
 import subprocess
 import logging
+import fnmatch
 
 # Import centralized logging
 try:
