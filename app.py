@@ -7012,6 +7012,21 @@ def render_ai_model_scanner_interface(region: str, username: str):
 def render_model_analysis_interface(region: str, username: str):
     """Render the traditional model analysis interface"""
     
+    # Show persistent download button if report exists from previous scan
+    if 'ai_model_html_report' in st.session_state and st.session_state.get('ai_model_html_report'):
+        with st.expander("📥 Previous Report Available", expanded=False):
+            st.download_button(
+                label="📄 Download Previous AI Model Report",
+                data=st.session_state['ai_model_html_report'],
+                file_name=st.session_state.get('ai_model_report_filename', 'ai_model_report.html'),
+                mime="text/html",
+                key="download_previous_ai_report"
+            )
+            if st.button("🗑️ Clear Previous Report", key="clear_ai_report"):
+                del st.session_state['ai_model_html_report']
+                del st.session_state['ai_model_report_filename']
+                st.rerun()
+    
     # Model source selection
     st.subheader("Model Source")
     
@@ -7556,13 +7571,27 @@ def execute_ai_model_scan(region, username, model_source, uploaded_model, repo_u
                 "ai_model_compliance": scan_results.get("ai_model_compliance", scan_results.get("compliance_score", 85))
             })
             
-            # Generate comprehensive HTML report
+            # Generate comprehensive HTML report and persist it
             html_report = generate_html_report(scan_results)
+            report_filename = f"ai_model_analysis_{scan_results['scan_id'][:8]}.html"
+            
+            # Store in session state for persistence across reruns
+            st.session_state['ai_model_html_report'] = html_report
+            st.session_state['ai_model_report_filename'] = report_filename
+            
+            # Also save to static directory for reliable download
+            static_dir = "static/reports"
+            os.makedirs(static_dir, exist_ok=True)
+            report_path = os.path.join(static_dir, report_filename)
+            with open(report_path, 'w', encoding='utf-8') as f:
+                f.write(html_report)
+            
             st.download_button(
                 label="📄 Download AI Model Analysis Report",
                 data=html_report,
-                file_name=f"ai_model_analysis_{scan_results['scan_id'][:8]}.html",
-                mime="text/html"
+                file_name=report_filename,
+                mime="text/html",
+                key=f"download_ai_report_{scan_results['scan_id'][:8]}"
             )
             
             # Update scan results with final metrics for proper dashboard tracking
