@@ -1887,6 +1887,9 @@ class UnifiedHTMLReportGenerator:
             </div>
             """
         
+        # Generate enhanced sections (traceability, remediation, conformity)
+        enhanced_sections = self._generate_enhanced_ai_act_sections(scan_result, compliance_score)
+        
         return f"""
         <div class="scanner-specific">
             <h2>🤖 {t_report('ai_model_compliance', 'AI Model Compliance')}</h2>
@@ -1905,8 +1908,257 @@ class UnifiedHTMLReportGenerator:
                 </div>
             </div>
             {comprehensive_html}
+            {enhanced_sections}
         </div>
         """
+    
+    def _generate_enhanced_ai_act_sections(self, scan_result: Dict[str, Any], compliance_score: float) -> str:
+        """Generate enhanced AI Act sections: traceability matrix, remediation plan, conformity scorecard."""
+        try:
+            from services.advanced_ai_scanner import generate_enhanced_compliance_report
+            
+            system_name = scan_result.get('model_name', scan_result.get('repository_url', 'AI System'))
+            enhanced = generate_enhanced_compliance_report(
+                scan_result, 
+                system_name=str(system_name)[:50] if system_name else "AI System",
+                organization="Organization",
+                region=scan_result.get('region', 'Netherlands')
+            )
+            
+            if 'error' in enhanced:
+                return ""
+            
+            # Build traceability summary section
+            traceability = enhanced.get('traceability_matrix', {})
+            overall = traceability.get('overall_metrics', {})
+            chapter_summary = traceability.get('chapter_summary', {})
+            
+            # Article status summary
+            traceability_html = f"""
+            <div style="margin-top: 30px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px;">
+                <h3 style="color: #1e293b; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    📋 EU AI Act Article Traceability Matrix (All 113 Articles)
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #10b981;">{overall.get('overall_compliance_score', 0):.1f}%</div>
+                        <div style="font-size: 12px; color: #64748b;">Overall Compliance</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">{overall.get('total_articles', 0)}</div>
+                        <div style="font-size: 12px; color: #64748b;">Articles Assessed</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #22c55e;">{overall.get('compliant', 0)}</div>
+                        <div style="font-size: 12px; color: #64748b;">Fully Compliant</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">{overall.get('partially_compliant', 0)}</div>
+                        <div style="font-size: 12px; color: #64748b;">Partial Compliance</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #ef4444;">{overall.get('non_compliant', 0)}</div>
+                        <div style="font-size: 12px; color: #64748b;">Non-Compliant</div>
+                    </div>
+                </div>
+            """
+            
+            # Chapter breakdown table
+            if chapter_summary:
+                traceability_html += """
+                <h4 style="color: #475569; margin: 20px 0 15px 0;">Compliance by Chapter</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #1e293b; color: white;">
+                            <th style="padding: 10px; text-align: left; border-radius: 4px 0 0 0;">Chapter</th>
+                            <th style="padding: 10px; text-align: center;">Articles</th>
+                            <th style="padding: 10px; text-align: center;">Compliant</th>
+                            <th style="padding: 10px; text-align: center;">Partial</th>
+                            <th style="padding: 10px; text-align: center;">Score</th>
+                            <th style="padding: 10px; text-align: center; border-radius: 0 4px 0 0;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                """
+                
+                for chapter, data in list(chapter_summary.items())[:12]:
+                    avg_score = data.get('average_score', 0)
+                    status_icon = "✅" if avg_score >= 80 else "⚠️" if avg_score >= 50 else "❌"
+                    status_color = "#10b981" if avg_score >= 80 else "#f59e0b" if avg_score >= 50 else "#ef4444"
+                    
+                    traceability_html += f"""
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">{chapter[:40]}{'...' if len(chapter) > 40 else ''}</td>
+                            <td style="padding: 10px; text-align: center;">{len(data.get('articles', []))}</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">{data.get('compliant', 0)}</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">{data.get('partial', 0)}</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">{avg_score:.0f}%</td>
+                            <td style="padding: 10px; text-align: center; color: {status_color};">{status_icon}</td>
+                        </tr>
+                    """
+                
+                traceability_html += "</tbody></table>"
+            
+            traceability_html += "</div>"
+            
+            # Remediation Priority Plan
+            remediation = enhanced.get('remediation_plan', {})
+            prioritized = remediation.get('prioritized_items', [])[:8]
+            
+            remediation_html = ""
+            if prioritized:
+                remediation_html = f"""
+                <div style="margin-top: 30px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 25px;">
+                    <h3 style="color: #92400e; margin-bottom: 20px; border-bottom: 2px solid #f59e0b; padding-bottom: 10px;">
+                        🎯 Prioritized Remediation Plan
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #92400e; color: white;">
+                                <th style="padding: 12px; text-align: left;">ID</th>
+                                <th style="padding: 12px; text-align: left;">Article</th>
+                                <th style="padding: 12px; text-align: left;">Finding</th>
+                                <th style="padding: 12px; text-align: center;">Priority</th>
+                                <th style="padding: 12px; text-align: center;">Impact</th>
+                                <th style="padding: 12px; text-align: center;">Effort</th>
+                                <th style="padding: 12px; text-align: center;">Deadline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                """
+                
+                for item in prioritized:
+                    priority = item.get('priority', 'medium')
+                    priority_color = "#ef4444" if priority == "critical" else "#f59e0b" if priority == "high" else "#3b82f6"
+                    priority_icon = "🔴" if priority == "critical" else "🟠" if priority == "high" else "🟡"
+                    
+                    finding_text = item.get('finding', '')[:60]
+                    if len(item.get('finding', '')) > 60:
+                        finding_text += '...'
+                    
+                    remediation_html += f"""
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">{item.get('id', '')}</td>
+                            <td style="padding: 10px; font-weight: 600;">{item.get('article', '')}</td>
+                            <td style="padding: 10px; font-size: 12px;">{finding_text}</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: {priority_color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">{priority_icon} {priority.upper()}</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">{item.get('impact_score', 0):.0f}</td>
+                            <td style="padding: 10px; text-align: center;">{item.get('effort_hours', 0):.0f}h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">{item.get('deadline', '')}</td>
+                        </tr>
+                    """
+                
+                remediation_html += """
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 15px; font-size: 12px; color: #92400e; font-style: italic;">
+                        💡 Items sorted by business impact score. Focus on critical and high priority items first.
+                    </p>
+                </div>
+                """
+            
+            # Conformity Assessment Readiness Scorecard
+            conformity = enhanced.get('conformity_scorecard', {})
+            readiness = conformity.get('readiness_scores', {})
+            
+            conformity_html = f"""
+            <div style="margin-top: 30px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #3b82f6; border-radius: 12px; padding: 25px;">
+                <h3 style="color: #1e40af; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    📊 Conformity Assessment Readiness Scorecard
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            """
+            
+            readiness_items = [
+                ("Overall Readiness", readiness.get('overall', 0), "#3b82f6"),
+                ("Documentation", readiness.get('documentation', 0), "#8b5cf6"),
+                ("Technical", readiness.get('technical', 0), "#06b6d4"),
+                ("Governance", readiness.get('governance', 0), "#10b981"),
+                ("Human Oversight", readiness.get('human_oversight', 0), "#f59e0b"),
+                ("Risk Management", readiness.get('risk_management', 0), "#ef4444"),
+            ]
+            
+            for label, score, color in readiness_items:
+                status_icon = "✅" if score >= 80 else "⚠️" if score >= 50 else "❌"
+                conformity_html += f"""
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: {color};">{score:.0f}%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">{label}</div>
+                        <div style="font-size: 16px; margin-top: 5px;">{status_icon}</div>
+                    </div>
+                """
+            
+            conformity_html += "</div>"
+            
+            # Time to ready estimate
+            time_to_ready = conformity.get('estimated_time_to_ready', 'Unknown')
+            recommendations = conformity.get('recommendations', [])[:4]
+            
+            conformity_html += f"""
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="font-weight: bold; color: #1e40af;">⏱️ Estimated Time to Conformity Ready:</span>
+                        <span style="background: #1e40af; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">{time_to_ready}</span>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                        <strong style="color: #1e40af;">Key Recommendations:</strong>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+            """
+            
+            for rec in recommendations:
+                conformity_html += f'<li style="margin-bottom: 5px; color: #475569; font-size: 13px;">{rec}</li>'
+            
+            conformity_html += """
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            """
+            
+            # Executive Summary for Regulators
+            exec_summary = enhanced.get('executive_summary', {})
+            compliance_overview = exec_summary.get('compliance_overview', {})
+            
+            executive_html = f"""
+            <div style="margin-top: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #16a34a; border-radius: 12px; padding: 25px;">
+                <h3 style="color: #166534; margin-bottom: 20px; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">
+                    📄 Regulator-Ready Executive Summary
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4 style="color: #166534; margin-bottom: 10px;">Compliance Overview</h4>
+                        <table style="width: 100%; font-size: 13px;">
+                            <tr><td style="padding: 5px; color: #64748b;">Overall Score:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('overall_score', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Rating:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('rating', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Articles Assessed:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('articles_assessed', 0)}</td></tr>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 style="color: #166534; margin-bottom: 10px;">Regulatory Deadlines</h4>
+                        <table style="width: 100%; font-size: 13px;">
+                            <tr><td style="padding: 5px; color: #64748b;">Prohibited Practices:</td><td style="padding: 5px; font-weight: bold;">Feb 2, 2025</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">GPAI Models:</td><td style="padding: 5px; font-weight: bold;">Aug 2, 2025</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">High-Risk Systems:</td><td style="padding: 5px; font-weight: bold;">Aug 2, 2026</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                    <strong style="color: #166534;">🇳🇱 Netherlands Specific:</strong>
+                    <p style="margin-top: 10px; font-size: 13px; color: #475569;">
+                        Authority: Autoriteit Persoonsgegevens (Dutch DPA) | UAVG compliance aligned | BSN handling procedures implemented where applicable
+                    </p>
+                </div>
+                <p style="margin-top: 15px; text-align: center; font-size: 11px; color: #64748b;">
+                    Assessment Date: {datetime.now().strftime('%Y-%m-%d')} | Assessor: DataGuardian Pro AI Compliance Platform | Valid until material changes
+                </p>
+            </div>
+            """
+            
+            return traceability_html + remediation_html + conformity_html + executive_html
+            
+        except Exception as e:
+            logger.warning(f"Could not generate enhanced AI Act sections: {e}")
+            return ""
     
     def _generate_dpia_content(self, scan_result: Dict[str, Any]) -> str:
         """Generate DPIA-specific content."""

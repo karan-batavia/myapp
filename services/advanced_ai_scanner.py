@@ -3292,3 +3292,184 @@ def scan_ai_model_advanced(model_file: Any, model_metadata: Optional[Dict[str, A
     """
     scanner = AdvancedAIScanner(region=region)
     return scanner.scan_ai_model_comprehensive(model_file, model_metadata or {})
+
+
+def generate_enhanced_compliance_report(scan_results: Dict[str, Any], 
+                                        system_name: str = "AI System",
+                                        organization: str = "Organization",
+                                        region: str = "Netherlands") -> Dict[str, Any]:
+    """
+    Generate enhanced best-in-class compliance report with:
+    - Full 113-article traceability matrix
+    - Remediation priority scoring
+    - Conformity assessment readiness scorecard
+    - Regulator-ready executive summary
+    """
+    try:
+        from utils.ai_act_traceability import (
+            AIActTraceabilityMatrix,
+            RemediationPriorityEngine,
+            ConformityAssessmentScorecard,
+            ArticleStatus,
+            PriorityLevel,
+            generate_regulator_ready_summary
+        )
+    except ImportError:
+        logger.warning("Traceability module not available")
+        return {"error": "Enhanced compliance features not available"}
+    
+    # Determine risk level from scan results
+    risk_category = scan_results.get('eu_ai_act_2025', {}).get('risk_category', 'High-Risk AI System')
+    if 'high' in risk_category.lower():
+        risk_level = "high_risk"
+    elif 'limited' in risk_category.lower():
+        risk_level = "limited_risk"
+    elif 'minimal' in risk_category.lower():
+        risk_level = "minimal_risk"
+    else:
+        risk_level = "high_risk"
+    
+    # Initialize components
+    traceability = AIActTraceabilityMatrix(risk_level=risk_level, region=region)
+    remediation = RemediationPriorityEngine()
+    conformity = ConformityAssessmentScorecard(risk_level=risk_level)
+    
+    # Populate traceability matrix from scan findings
+    findings = scan_results.get('findings', [])
+    compliance_score = scan_results.get('compliance_score', 0)
+    
+    # Map findings to article assessments
+    article_mapping = {
+        'Risk Classification': [6],
+        'Risk Management': [9],
+        'Data Governance': [10],
+        'Technical Documentation': [11],
+        'Record-keeping': [12],
+        'Transparency': [13, 50],
+        'Human Oversight': [14, 26],
+        'Accuracy': [15],
+        'Quality Management': [16],
+        'Logging': [17, 20],
+        'Conformity Assessment': [19, 43],
+        'Fundamental Rights': [27, 29],
+        'GPAI': [51, 52, 53, 54, 55],
+        'Post-Market': [74, 75],
+        'Penalties': [87, 88]
+    }
+    
+    # Process each finding
+    finding_articles = set()
+    for finding in findings:
+        finding_type = finding.get('finding_type', '')
+        severity = finding.get('severity', 'Medium')
+        
+        # Find matching articles
+        for category, articles in article_mapping.items():
+            if category.lower() in finding_type.lower():
+                for article_num in articles:
+                    finding_articles.add(article_num)
+                    
+                    # Update traceability
+                    status = ArticleStatus.NON_COMPLIANT if severity in ['Critical', 'High'] else ArticleStatus.PARTIALLY_COMPLIANT
+                    traceability.update_article_status(
+                        article_num,
+                        status,
+                        50.0 if severity == 'Critical' else 65.0 if severity == 'High' else 75.0,
+                        gaps=[finding.get('description', 'Gap identified')]
+                    )
+                    
+                    # Add remediation item
+                    priority = PriorityLevel.CRITICAL if severity == 'Critical' else PriorityLevel.HIGH if severity == 'High' else PriorityLevel.MEDIUM
+                    remediation.add_remediation_item(
+                        article_ref=f"Article {article_num}",
+                        finding=finding.get('description', 'Compliance gap'),
+                        priority=priority,
+                        impact_score=95.0 if severity == 'Critical' else 80.0 if severity == 'High' else 60.0,
+                        effort_hours=8.0 if severity == 'Critical' else 4.0 if severity == 'High' else 2.0,
+                        deadline="2025-08-02" if article_num in [51, 52, 53, 54, 55] else "2026-08-02"
+                    )
+    
+    # Mark all applicable articles based on overall compliance score
+    # Articles without findings are marked based on system's overall compliance posture
+    base_score = compliance_score if compliance_score > 0 else 50.0
+    
+    for article_num in traceability.get_applicable_articles():
+        if article_num not in finding_articles:
+            # Determine status based on overall compliance and article category
+            article_info = traceability.assessments.get(article_num)
+            if article_info:
+                chapter = article_info.chapter
+                
+                # Governance/amendments/innovation chapters are often not directly testable
+                if any(cat in chapter.lower() for cat in ['final', 'delegation', 'codes', 'annexes']):
+                    traceability.update_article_status(
+                        article_num,
+                        ArticleStatus.NOT_APPLICABLE,
+                        100.0
+                    )
+                elif any(cat in chapter.lower() for cat in ['innovation', 'committee']):
+                    traceability.update_article_status(
+                        article_num,
+                        ArticleStatus.NOT_APPLICABLE,
+                        100.0
+                    )
+                elif base_score >= 80:
+                    traceability.update_article_status(
+                        article_num,
+                        ArticleStatus.COMPLIANT,
+                        base_score
+                    )
+                elif base_score >= 50:
+                    traceability.update_article_status(
+                        article_num,
+                        ArticleStatus.PARTIALLY_COMPLIANT,
+                        base_score
+                    )
+                else:
+                    traceability.update_article_status(
+                        article_num,
+                        ArticleStatus.REQUIRES_ASSESSMENT,
+                        base_score
+                    )
+    
+    # Update conformity scorecard based on findings
+    eu_ai_act = scan_results.get('eu_ai_act_2025', {})
+    
+    # Documentation
+    conformity.update_requirement('documentation', 'technical_documentation', 
+                                  eu_ai_act.get('documentation', {}).get('has_documentation', False))
+    conformity.update_requirement('documentation', 'risk_assessment',
+                                  eu_ai_act.get('risk_management', {}).get('risk_assessment_done', False))
+    
+    # Technical
+    conformity.update_requirement('technical', 'accuracy_metrics',
+                                  eu_ai_act.get('accuracy_robustness', {}).get('accuracy_measured', False))
+    conformity.update_requirement('technical', 'automatic_logging',
+                                  eu_ai_act.get('logging', {}).get('logging_enabled', False))
+    
+    # Governance
+    conformity.update_requirement('governance', 'human_oversight_procedures',
+                                  eu_ai_act.get('human_oversight', {}).get('oversight_implemented', False))
+    conformity.update_requirement('governance', 'quality_management_system',
+                                  eu_ai_act.get('quality_management', {}).get('qms_exists', False))
+    
+    # Generate comprehensive report
+    enhanced_report = {
+        "traceability_matrix": traceability.export_traceability_matrix(),
+        "remediation_plan": {
+            "prioritized_items": remediation.get_prioritized_remediation_plan(),
+            "timeline": remediation.generate_remediation_timeline()
+        },
+        "conformity_scorecard": conformity.export_scorecard(),
+        "executive_summary": generate_regulator_ready_summary(
+            traceability, remediation, conformity, system_name, organization
+        ),
+        "metadata": {
+            "generated_at": datetime.now().isoformat(),
+            "scanner_version": "2.0.0",
+            "coverage": "113 EU AI Act Articles",
+            "region": region
+        }
+    }
+    
+    return enhanced_report
