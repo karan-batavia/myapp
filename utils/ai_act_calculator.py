@@ -660,12 +660,14 @@ class AIActCalculator:
             if indicator in system_text:
                 return True
         
-        # Check decision impact
-        if system_profile.decision_impact in ["High", "Critical"]:
+        # Check decision impact (handle both short and full-text values from UI)
+        high_impact_keywords = ["high", "critical", "significant impact", "life-changing"]
+        if any(kw in system_profile.decision_impact.lower() for kw in high_impact_keywords):
             return True
         
-        # Check automation level
-        if system_profile.automation_level in ["Fully automated", "Mostly automated"] and not system_profile.human_oversight:
+        # Check automation level (handle both short and full-text values from UI)
+        high_automation_keywords = ["fully automated", "mostly automated", "no human intervention", "minimal human"]
+        if any(kw in system_profile.automation_level.lower() for kw in high_automation_keywords) and not system_profile.human_oversight:
             return True
         
         return False
@@ -737,13 +739,19 @@ class AIActCalculator:
         
         if risk_level == AISystemRiskLevel.HIGH_RISK:
             return [
+                AIActArticle.ARTICLE_8,   # Compliance with requirements
                 AIActArticle.ARTICLE_9,   # Risk management
                 AIActArticle.ARTICLE_10,  # Data governance
                 AIActArticle.ARTICLE_11,  # Technical documentation
                 AIActArticle.ARTICLE_12,  # Record keeping
                 AIActArticle.ARTICLE_13,  # Transparency
                 AIActArticle.ARTICLE_14,  # Human oversight
-                AIActArticle.ARTICLE_15   # Accuracy, robustness, cybersecurity
+                AIActArticle.ARTICLE_15,  # Accuracy, robustness, cybersecurity
+                AIActArticle.ARTICLE_16,  # Quality management system
+                AIActArticle.ARTICLE_17,  # Automatic logging
+                AIActArticle.ARTICLE_26,  # Human oversight measures
+                AIActArticle.ARTICLE_27,  # Deployer obligations general
+                AIActArticle.ARTICLE_29   # Fundamental rights impact
             ]
         
         return []
