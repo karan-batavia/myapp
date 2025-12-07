@@ -3359,7 +3359,7 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
         'gpai': [51, 52, 53, 54, 55],
         'post-market': [74, 75],
         'penalties': [87, 88],
-        # Extended mappings for actual finding types
+        # Extended mappings for actual finding types from scanner
         'ai act fundamental': [27, 29],
         'ai act accountability': [14, 15],
         'ai act gpai': [51, 52, 53, 54, 55],
@@ -3377,12 +3377,37 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
         'security': [9, 15],
         'privacy': [10],
         'accountability': [14, 15],
+        # Additional scanner type mappings (from 'type' field)
+        'ai_act_prohibited': [5],
+        'ai_act_high_risk': [6, 9],
+        'ai_bias': [10, 15],
+        'ai_explainability': [13, 14],
+        'ai_governance': [16, 17],
+        'annex_iii_high_risk': [6],
+        'transparency_article_50': [50],
+        'provider_obligations': [16, 17],
+        'deployer_obligations': [26, 27],
+        'conformity_assessment': [19, 43],
+        'gpai_compliance': [51, 52, 53, 54, 55],
+        'post_market_monitoring': [72, 73],
+        'ai_literacy': [4],
+        'enforcement_readiness': [74, 75],
+        'governance_structures': [16],
+        'risk_management_gap': [9],
+        'data_governance_gap': [10],
+        'documentation_gap': [11],
+        'human_oversight_gap': [14, 26],
+        'accuracy_robustness_gap': [15],
+        'fundamental_rights_gap': [27, 29],
+        'incident_reporting_gap': [73],
+        'national_authority_gap': [74],
     }
     
     # Process each finding
     finding_articles = set()
     for finding in findings:
-        finding_type = finding.get('finding_type', '').lower()
+        # Check both 'finding_type' and 'type' keys as different scanners use different naming
+        finding_type = finding.get('finding_type', finding.get('type', '')).lower()
         severity = finding.get('severity', 'Medium')
         
         # Find matching articles
