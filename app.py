@@ -6842,7 +6842,7 @@ def render_sap_connector(region: str, username: str):
                 
                 try:
                     report_generator = UnifiedHTMLReportGenerator()
-                    html_report = report_generator.generate_report(scan_results)
+                    html_report = report_generator.generate_html_report(scan_results)
                     
                     st.download_button(
                         label="📥 Download Full Compliance Report (HTML)",
