@@ -103,6 +103,18 @@ class ResultsAggregator:
         """DEPRECATED AND UNSAFE: This method bypasses tenant isolation and should not be used."""
         raise RuntimeError("_get_connection() is deprecated and unsafe - use _get_secure_connection() with proper organization_id for tenant isolation")
     
+    def _release_connection(self, conn):
+        """Release a connection back to the pool."""
+        if conn is not None:
+            try:
+                self.multi_tenant_service.release_connection(conn)
+            except Exception as e:
+                logger.warning(f"Error releasing connection to pool: {e}")
+                try:
+                    conn.close()  # Fallback to direct close if pool release fails
+                except:
+                    pass
+    
     def _ensure_reports_directory(self):
         """Ensure reports directory exists for non-PII report generation."""
         # Only create reports directory for non-sensitive report files
@@ -245,11 +257,10 @@ class ResultsAggregator:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
         except Exception as e:
             logger.error(f"Error creating database tables: {str(e)}")
-            if conn:
-                conn.close()
+            self._release_connection(conn)
             # Enterprise security: Fail secure - no file fallback for PII data
             raise RuntimeError(f"Database initialization required for enterprise security compliance: {str(e)}")
     
@@ -340,7 +351,7 @@ class ResultsAggregator:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             # Update tenant usage statistics
             self.multi_tenant_service.update_tenant_usage(organization_id, increment_scans=1)
@@ -422,7 +433,7 @@ class ResultsAggregator:
             result = cursor.fetchone()
             
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             if result and result[0]:
                 # Enterprise security: Decrypt PII data before returning
@@ -484,7 +495,7 @@ class ResultsAggregator:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             logger.info(f"Successfully migrated {migrated_count} legacy records to encrypted format")
             return migrated_count
@@ -521,7 +532,7 @@ class ResultsAggregator:
             
             results = cursor.fetchall()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             # Format as dictionaries
             scans = []
@@ -637,7 +648,7 @@ class ResultsAggregator:
             print(f"Database returned {len(results)} scan records")
             
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             # Convert to list of dictionaries with enhanced logging
             scans = []
@@ -733,7 +744,7 @@ class ResultsAggregator:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             logger.info(f"Audit event logged for organization {organization_id}: {action} by {username}")
         except Exception as e:
@@ -824,7 +835,7 @@ class ResultsAggregator:
             
             row = cursor.fetchone()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             if row:
                 return {
@@ -907,7 +918,7 @@ class ResultsAggregator:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
         except Exception as e:
             print(f"Error storing compliance score: {str(e)}")
             self.use_file_storage = True
@@ -991,7 +1002,7 @@ class ResultsAggregator:
             cursor.execute(query, params)
             results = cursor.fetchall()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             # Format as dictionaries
             history = []
@@ -1078,7 +1089,7 @@ class ResultsAggregator:
         try:
             conn = self._get_secure_connection(organization_id, admin_bypass=True)
             result = self.gdpr_protection.delete_user_data(username, conn)
-            conn.close()
+            self._release_connection(conn)
             
             logger.info(f"GDPR erasure completed for user {username}: {result}")
             return result
@@ -1103,7 +1114,7 @@ class ResultsAggregator:
         try:
             conn = self._get_secure_connection(organization_id, admin_bypass=True)
             result = self.gdpr_protection.export_user_data(username, conn)
-            conn.close()
+            self._release_connection(conn)
             
             logger.info(f"GDPR export completed for user {username}")
             return result
@@ -1149,7 +1160,7 @@ class ResultsAggregator:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._release_connection(conn)
             
             result = {
                 "timestamp": datetime.now().isoformat(),

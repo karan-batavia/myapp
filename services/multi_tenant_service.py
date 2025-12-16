@@ -6,13 +6,60 @@ Provides organization-level data isolation and tenant separation for enterprise 
 import os
 import logging
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import Json
 from datetime import datetime
 from typing import Dict, Any, Optional, List, Set
 from dataclasses import dataclass
 from enum import Enum
+import threading
 
 logger = logging.getLogger(__name__)
+
+# Global connection pool (singleton for all MultiTenantService instances)
+_connection_pool = None
+_pool_lock = threading.Lock()
+
+def get_connection_pool(db_url: str, min_connections: int = 2, max_connections: int = 20):
+    """
+    Get or create a thread-safe connection pool (singleton pattern).
+    
+    Args:
+        db_url: PostgreSQL database URL
+        min_connections: Minimum connections to keep open
+        max_connections: Maximum connections allowed
+        
+    Returns:
+        ThreadedConnectionPool instance
+    """
+    global _connection_pool
+    
+    if _connection_pool is None:
+        with _pool_lock:
+            if _connection_pool is None:
+                try:
+                    _connection_pool = pool.ThreadedConnectionPool(
+                        minconn=min_connections,
+                        maxconn=max_connections,
+                        dsn=db_url,
+                        sslmode='require'
+                    )
+                    logger.info(f"Connection pool initialized: min={min_connections}, max={max_connections}")
+                except Exception as e:
+                    logger.error(f"Failed to create connection pool: {e}")
+                    raise
+    
+    return _connection_pool
+
+def close_connection_pool():
+    """Close the global connection pool (call on shutdown)."""
+    global _connection_pool
+    if _connection_pool is not None:
+        with _pool_lock:
+            if _connection_pool is not None:
+                _connection_pool.closeall()
+                _connection_pool = None
+                logger.info("Connection pool closed")
 
 class TenantTier(Enum):
     """Tenant subscription tiers."""
@@ -60,7 +107,7 @@ class MultiTenantService:
     """
     
     def __init__(self):
-        """Initialize multi-tenant service."""
+        """Initialize multi-tenant service with connection pooling."""
         self.db_url = os.environ.get('DATABASE_URL')
         if not self.db_url:
             raise RuntimeError("DATABASE_URL environment variable required for multi-tenant service")
@@ -68,15 +115,28 @@ class MultiTenantService:
         self.tenants: Dict[str, TenantConfig] = {}
         self.usage_cache: Dict[str, TenantUsage] = {}
         
+        # Initialize connection pool (singleton - shared across all instances)
+        self.pool = get_connection_pool(self.db_url, min_connections=2, max_connections=20)
+        
         self._init_tenant_schema()
         self._load_tenant_configs()
         
-        logger.info("Multi-tenant service initialized with organization isolation")
+        logger.info("Multi-tenant service initialized with connection pooling and organization isolation")
+    
+    def _get_pooled_connection(self):
+        """Get a connection from the pool."""
+        return self.pool.getconn()
+    
+    def _return_connection(self, conn):
+        """Return a connection to the pool."""
+        if conn is not None:
+            self.pool.putconn(conn)
     
     def _init_tenant_schema(self) -> None:
         """Initialize database schema for multi-tenancy."""
+        conn = None
         try:
-            conn = psycopg2.connect(self.db_url, sslmode='require')
+            conn = self._get_pooled_connection()
             cursor = conn.cursor()
             
             # Create tenants table for organization management
@@ -144,11 +204,14 @@ class MultiTenantService:
             
             conn.commit()
             cursor.close()
-            conn.close()
+            self._return_connection(conn)
+            conn = None
             
             logger.info("Multi-tenant database schema initialized successfully with RLS")
             
         except Exception as e:
+            if conn is not None:
+                self._return_connection(conn)
             logger.error(f"Failed to initialize tenant schema: {str(e)}")
             raise RuntimeError(f"Multi-tenant schema initialization failed: {str(e)}")
     
@@ -237,21 +300,26 @@ class MultiTenantService:
     
     def get_secure_connection(self, organization_id: str, admin_bypass: bool = False):
         """
-        Get a secure database connection with tenant context set.
+        Get a secure database connection from the pool with tenant context set.
+        
+        IMPORTANT: Caller must return connection using return_connection() when done,
+        or use release_connection() method. Do NOT call conn.close() directly.
         
         Args:
             organization_id: Organization ID for tenant isolation
             admin_bypass: Whether to bypass RLS for admin operations
             
         Returns:
-            psycopg2 connection with proper tenant context
+            psycopg2 connection from pool with proper tenant context
         """
+        conn = None
         try:
             # Validate organization access first
             if not admin_bypass and not self.validate_tenant_access(organization_id):
                 raise PermissionError(f"Access denied to organization {organization_id}")
             
-            conn = psycopg2.connect(self.db_url, sslmode='require')
+            # Get connection from pool instead of creating new one
+            conn = self._get_pooled_connection()
             conn.autocommit = True  # Use autocommit for SET commands to avoid transaction issues
             cursor = conn.cursor()
             
@@ -268,12 +336,22 @@ class MultiTenantService:
             conn.autocommit = False
             cursor.close()
             
-            logger.debug(f"Secure connection established for organization {organization_id}")
+            logger.debug(f"Secure pooled connection established for organization {organization_id}")
             return conn
             
         except Exception as e:
+            # Return connection to pool if we got one but failed
+            if conn is not None:
+                self._return_connection(conn)
             logger.error(f"Failed to get secure connection for organization {organization_id}: {str(e)}")
             raise RuntimeError(f"Secure connection failed: {str(e)}")
+    
+    def release_connection(self, conn):
+        """
+        Release a connection back to the pool.
+        Use this instead of conn.close() for pooled connections.
+        """
+        self._return_connection(conn)
     
     def execute_with_tenant_context(self, organization_id: str, query: str, params: Optional[tuple] = None, admin_bypass: bool = False):
         """
@@ -306,20 +384,21 @@ class MultiTenantService:
                 conn.commit()
             
             cursor.close()
-            conn.close()
+            self.release_connection(conn)
             
             return results
             
         except Exception as e:
             conn.rollback()
-            conn.close()
+            self.release_connection(conn)
             logger.error(f"Query execution failed for organization {organization_id}: {str(e)}")
             raise RuntimeError(f"Tenant query execution failed: {str(e)}")
     
     def _load_tenant_configs(self) -> None:
         """Load tenant configurations from database."""
+        conn = None
         try:
-            conn = psycopg2.connect(self.db_url, sslmode='require')
+            conn = self._get_pooled_connection()
             cursor = conn.cursor()
             
             cursor.execute("""
@@ -348,7 +427,8 @@ class MultiTenantService:
                 self.tenants[org_id] = tenant_config
             
             cursor.close()
-            conn.close()
+            self._return_connection(conn)
+            conn = None
             
             logger.info(f"Loaded {len(self.tenants)} tenant configurations")
             
@@ -357,6 +437,8 @@ class MultiTenantService:
                 self._create_default_tenant()
                 
         except Exception as e:
+            if conn is not None:
+                self._return_connection(conn)
             logger.error(f"Failed to load tenant configs: {str(e)}")
             # Create default tenant for fallback
             self._create_default_tenant()
