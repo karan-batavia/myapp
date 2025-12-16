@@ -930,32 +930,97 @@ def render_landing_page():
             # Silent fail for IP geolocation - not critical for app functionality
             pass
     
-    # Main landing page content with translations
-    st.markdown(f"""
-    <div style="text-align: center; padding: 2rem 0;">
-        <h1 style="color: #1f77b4; font-size: 3rem; margin-bottom: 0.5rem;">
-            🛡️ {_('app.title', 'DataGuardian Pro')}
-        </h1>
-        <h2 style="color: #666; font-weight: 300; margin-bottom: 2rem;">
-            {_('app.subtitle', 'Enterprise Privacy Compliance Platform')}
-        </h2>
-        <p style="font-size: 1.2rem; color: #444; max-width: 800px; margin: 0 auto;">
-            {_('app.tagline', 'Detect, Manage, and Report Privacy Compliance with AI-powered Precision')}
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    # Hero section with image and value proposition
+    hero_col1, hero_col2 = st.columns([1, 1], gap="large")
     
-    # Modern Scanner Showcase
+    with hero_col1:
+        st.markdown(f"""
+        <div style="padding: 2rem 0;">
+            <h1 style="color: #1B2559; font-size: 2.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem;">
+                {_('app.title', 'DataGuardian Pro')}
+            </h1>
+            <p style="font-size: 1.3rem; color: #1f77b4; font-weight: 600; margin-bottom: 1.5rem;">
+                {_('app.subtitle', 'Enterprise Privacy Compliance Platform')}
+            </p>
+            <p style="font-size: 1.1rem; color: #555; line-height: 1.7; margin-bottom: 1.5rem;">
+                {_('app.tagline', 'Protect your organization from GDPR fines with AI-powered privacy scanning. Automatically discover, analyze, and report personal data across your entire digital ecosystem.')}
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                    <span style="color: #333; font-weight: 500;">GDPR & UAVG Compliant</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                    <span style="color: #333; font-weight: 500;">EU AI Act 2025 Ready</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
+                    <span style="color: #333; font-weight: 500;">Netherlands Focused</span>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with hero_col2:
+        try:
+            st.image("attached_assets/stock_images/data_privacy_protect_bf172a8b.jpg", use_container_width=True)
+        except:
+            st.markdown("""
+            <div style="
+                background: linear-gradient(135deg, #1f77b420, #1f77b410);
+                border-radius: 16px;
+                height: 300px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <span style="font-size: 5rem;">🛡️</span>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    # Key benefits section
     st.markdown("---")
     
-    # Section title
+    benefits = [
+        {"icon": "⚡", "title": _('landing.benefit1_title', 'Save Time'), "desc": _('landing.benefit1_desc', 'Reduce manual compliance work by 90% with automated scanning')},
+        {"icon": "💰", "title": _('landing.benefit2_title', 'Avoid Fines'), "desc": _('landing.benefit2_desc', 'Prevent costly GDPR violations before they happen')},
+        {"icon": "📊", "title": _('landing.benefit3_title', 'Full Visibility'), "desc": _('landing.benefit3_desc', 'Know exactly where all personal data lives in your organization')},
+        {"icon": "🔒", "title": _('landing.benefit4_title', 'Enterprise Ready'), "desc": _('landing.benefit4_desc', 'SOC2, NIS2, and Netherlands AP compliant architecture')}
+    ]
+    
+    benefit_cols = st.columns(4, gap="medium")
+    for i, benefit in enumerate(benefits):
+        with benefit_cols[i]:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 1.5rem 0.5rem;">
+                <div style="
+                    width: 60px;
+                    height: 60px;
+                    background: linear-gradient(145deg, #1f77b415, #1f77b408);
+                    border-radius: 12px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 1rem;
+                ">
+                    <span style="font-size: 1.8rem;">{benefit['icon']}</span>
+                </div>
+                <h4 style="color: #1B2559; font-size: 1.1rem; font-weight: 700; margin: 0 0 0.5rem 0;">{benefit['title']}</h4>
+                <p style="color: #666; font-size: 0.9rem; line-height: 1.5; margin: 0;">{benefit['desc']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # Scanner showcase section title
     st.markdown(f"""
-    <div style="text-align: center; margin: 3rem 0 2rem 0;">
-        <h2 style="color: #1f77b4; font-size: 2.5rem; margin-bottom: 1rem;">
-            🔍 {_('landing.scanner_showcase_title', 'Advanced Privacy Scanners')}
+    <div style="text-align: center; margin: 2rem 0;">
+        <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
+            {_('landing.scanner_showcase_title', '11 Powerful Privacy Scanners')}
         </h2>
         <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
-            {_('landing.scanner_showcase_subtitle', 'Comprehensive AI-powered tools for complete GDPR compliance and privacy protection')}
+            {_('landing.scanner_showcase_subtitle', 'Everything you need for complete GDPR, EU AI Act, and data protection compliance')}
         </p>
     </div>
     """, unsafe_allow_html=True)
