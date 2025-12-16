@@ -965,209 +965,185 @@ def render_landing_page():
         {
             "icon": "🏢", 
             "title": _('landing.scanner.enterprise_title', 'Enterprise Connector'),
-            "description": _('landing.scanner.enterprise_desc', 'Microsoft 365, Exact Online, Google Workspace integration for automated PII scanning'),
+            "description": _('landing.scanner.enterprise_desc', 'Seamlessly connect to your business platforms and automatically discover personal data across your entire digital ecosystem'),
             "features": [
-                _('landing.scanner.enterprise_f1', 'Microsoft 365 integration'),
-                _('landing.scanner.enterprise_f2', 'Exact Online (Netherlands)'),
-                _('landing.scanner.enterprise_f3', 'Google Workspace scanning'),
-                _('landing.scanner.enterprise_f4', 'Automated enterprise PII detection')
+                _('landing.scanner.enterprise_f1', 'Microsoft 365 & SharePoint'),
+                _('landing.scanner.enterprise_f2', 'Exact Online accounting data'),
+                _('landing.scanner.enterprise_f3', 'Google Workspace & Drive'),
+                _('landing.scanner.enterprise_f4', 'Salesforce & SAP integration')
             ],
             "color": "#E91E63"
         },
         {
             "icon": "🔍", 
             "title": _('landing.scanner.code_title', 'Code Scanner'),
-            "description": _('landing.scanner.code_desc', 'Repository scanning with PII detection, GDPR compliance, and BSN identification'),
+            "description": _('landing.scanner.code_desc', 'Deep analysis of source code repositories to detect hardcoded secrets, PII exposure, and security vulnerabilities'),
             "features": [
-                _('landing.scanner.code_f1', 'Git repository analysis'),
-                _('landing.scanner.code_f2', 'Dutch BSN detection'),
-                _('landing.scanner.code_f3', 'GDPR Article compliance'),
-                _('landing.scanner.code_f4', 'Real-time security scanning')
+                _('landing.scanner.code_f1', 'GitHub & GitLab integration'),
+                _('landing.scanner.code_f2', 'Dutch BSN & EU ID detection'),
+                _('landing.scanner.code_f3', 'Secret & API key scanning'),
+                _('landing.scanner.code_f4', 'GDPR compliance mapping')
             ],
             "color": "#4CAF50"
         },
         {
             "icon": "📄", 
             "title": _('landing.scanner.document_title', 'Document Scanner'),
-            "description": _('landing.scanner.document_desc', 'PDF, DOCX, TXT analysis with OCR and sensitive data identification'),
+            "description": _('landing.scanner.document_desc', 'Intelligent analysis of business documents to identify personal data, contracts, and sensitive information'),
             "features": [
-                _('landing.scanner.document_f1', 'Multi-format support'),
-                _('landing.scanner.document_f2', 'OCR text extraction'),
-                _('landing.scanner.document_f3', 'Privacy data detection'),
-                _('landing.scanner.document_f4', 'Compliance reporting')
+                _('landing.scanner.document_f1', 'PDF, Word, Excel & text files'),
+                _('landing.scanner.document_f2', 'Smart OCR text extraction'),
+                _('landing.scanner.document_f3', 'Contract & HR data detection'),
+                _('landing.scanner.document_f4', 'Automated risk classification')
             ],
             "color": "#FF9800"
         },
         {
             "icon": "🖼️", 
             "title": _('landing.scanner.image_title', 'Image Scanner'),
-            "description": _('landing.scanner.image_desc', 'Visual content scanning with text extraction and face detection privacy assessment'),
+            "description": _('landing.scanner.image_desc', 'Advanced visual analysis with AI-powered text extraction and biometric privacy assessment'),
             "features": [
-                _('landing.scanner.image_f1', 'Advanced OCR scanning'),
-                _('landing.scanner.image_f2', 'Face detection & privacy'),
-                _('landing.scanner.image_f3', 'Image metadata analysis'),
-                _('landing.scanner.image_f4', 'GDPR compliance check')
+                _('landing.scanner.image_f1', 'High-accuracy OCR engine'),
+                _('landing.scanner.image_f2', 'Face & biometric detection'),
+                _('landing.scanner.image_f3', 'ID document recognition'),
+                _('landing.scanner.image_f4', 'EXIF metadata analysis')
             ],
             "color": "#9C27B0"
         },
         {
             "icon": "🗄️", 
             "title": _('landing.scanner.database_title', 'Database Scanner'),
-            "description": _('landing.scanner.database_desc', 'Multi-database support with schema analysis and PII column detection'),
+            "description": _('landing.scanner.database_desc', 'Comprehensive database inspection to discover PII columns, sensitive tables, and data protection gaps'),
             "features": [
-                _('landing.scanner.database_f1', 'PostgreSQL, MySQL, SQLite'),
-                _('landing.scanner.database_f2', 'Schema vulnerability scan'),
-                _('landing.scanner.database_f3', 'PII column identification'),
-                _('landing.scanner.database_f4', 'Data protection compliance')
+                _('landing.scanner.database_f1', 'PostgreSQL, MySQL & SQL Server'),
+                _('landing.scanner.database_f2', 'Smart schema analysis'),
+                _('landing.scanner.database_f3', 'PII pattern recognition'),
+                _('landing.scanner.database_f4', 'Data retention validation')
             ],
             "color": "#3F51B5"
         },
         {
             "icon": "🌐", 
             "title": _('landing.scanner.website_title', 'Website Scanner'),
-            "description": _('landing.scanner.website_desc', 'Privacy policy analysis, cookie compliance, and Netherlands AP compliance'),
+            "description": _('landing.scanner.website_desc', 'Complete web privacy audit including cookie consent, tracking scripts, and dark pattern detection'),
             "features": [
-                _('landing.scanner.website_f1', 'Cookie consent analysis'),
-                _('landing.scanner.website_f2', 'Dark pattern detection'),
-                _('landing.scanner.website_f3', 'Netherlands AP rules'),
-                _('landing.scanner.website_f4', 'GDPR Article compliance')
+                _('landing.scanner.website_f1', 'Cookie & consent analysis'),
+                _('landing.scanner.website_f2', 'Third-party tracker detection'),
+                _('landing.scanner.website_f3', 'Dark pattern identification'),
+                _('landing.scanner.website_f4', 'Netherlands AP compliance')
             ],
             "color": "#2196F3"
         },
         {
             "icon": "🤖", 
             "title": _('landing.scanner.ai_title', 'AI Model Scanner'),
-            "description": _('landing.scanner.ai_desc', 'ML model privacy risks, bias detection, and EU AI Act 2025 compliance'),
+            "description": _('landing.scanner.ai_desc', 'Full EU AI Act 2025 compliance assessment with risk classification, bias detection, and transparency auditing'),
             "features": [
-                _('landing.scanner.ai_f1', 'EU AI Act 2025 compliance'),
-                _('landing.scanner.ai_f2', 'Bias and fairness detection'),
-                _('landing.scanner.ai_f3', 'Data leakage assessment'),
-                _('landing.scanner.ai_f4', 'Model explainability')
+                _('landing.scanner.ai_f1', 'All 113 EU AI Act articles'),
+                _('landing.scanner.ai_f2', 'AI risk classification'),
+                _('landing.scanner.ai_f3', 'Bias & fairness testing'),
+                _('landing.scanner.ai_f4', 'Model explainability audit')
             ],
             "color": "#FF5722"
         },
         {
             "icon": "📋", 
             "title": _('landing.scanner.dpia_title', 'DPIA Scanner'),
-            "description": _('landing.scanner.dpia_desc', 'Data Protection Impact Assessment with GDPR Article 35 compliance wizard'),
+            "description": _('landing.scanner.dpia_desc', 'Guided Data Protection Impact Assessment wizard with automated risk scoring and regulatory documentation'),
             "features": [
-                _('landing.scanner.dpia_f1', 'GDPR Article 35 wizard'),
-                _('landing.scanner.dpia_f2', 'Risk assessment scoring'),
-                _('landing.scanner.dpia_f3', 'Netherlands UAVG compliance'),
-                _('landing.scanner.dpia_f4', 'Professional reporting')
+                _('landing.scanner.dpia_f1', 'GDPR Article 35 compliant'),
+                _('landing.scanner.dpia_f2', '5-step guided assessment'),
+                _('landing.scanner.dpia_f3', 'Netherlands UAVG specific'),
+                _('landing.scanner.dpia_f4', 'Ready-to-submit reports')
             ],
             "color": "#795548"
         },
         {
             "icon": "🛡️", 
             "title": _('landing.scanner.soc2_title', 'SOC2 & NIS2 Scanner'),
-            "description": _('landing.scanner.soc2_desc', 'Multi-cloud (AWS/Azure/GCP) SOC2 + NIS2 EU Directive compliance'),
+            "description": _('landing.scanner.soc2_desc', 'Enterprise security compliance for cloud infrastructure with SOC2 Type II and EU NIS2 Directive coverage'),
             "features": [
-                _('landing.scanner.soc2_f1', 'Multi-cloud IaC scanning'),
-                _('landing.scanner.soc2_f2', 'SOC2 TSC framework analysis'),
-                _('landing.scanner.soc2_f3', 'NIS2 Article 20-26 compliance'),
-                _('landing.scanner.soc2_f4', 'AWS, Azure, GCP support')
+                _('landing.scanner.soc2_f1', 'AWS, Azure & GCP analysis'),
+                _('landing.scanner.soc2_f2', 'SOC2 Trust Service Criteria'),
+                _('landing.scanner.soc2_f3', 'NIS2 Articles 20-26'),
+                _('landing.scanner.soc2_f4', 'Infrastructure-as-Code scan')
             ],
             "color": "#607D8B"
         },
         {
             "icon": "🔗", 
             "title": _('landing.scanner.api_title', 'API Scanner'),
-            "description": _('landing.scanner.api_desc', 'REST API endpoint scanning for data leakage, security vulnerabilities, and privacy compliance'),
+            "description": _('landing.scanner.api_desc', 'Comprehensive API security testing to identify data exposure, authentication weaknesses, and privacy violations'),
             "features": [
-                _('landing.scanner.api_f1', 'Endpoint security analysis'),
-                _('landing.scanner.api_f2', 'Data exposure detection'),
-                _('landing.scanner.api_f3', 'Authentication testing'),
-                _('landing.scanner.api_f4', 'GDPR compliance validation')
+                _('landing.scanner.api_f1', 'REST & GraphQL endpoints'),
+                _('landing.scanner.api_f2', 'Data leakage detection'),
+                _('landing.scanner.api_f3', 'Auth & token validation'),
+                _('landing.scanner.api_f4', 'Response PII scanning')
             ],
             "color": "#00BCD4"
         },
         {
             "icon": "🌱", 
             "title": _('landing.scanner.sustainability_title', 'Sustainability Scanner'),
-            "description": _('landing.scanner.sustainability_desc', 'Environmental impact analysis with carbon footprint and waste detection'),
+            "description": _('landing.scanner.sustainability_desc', 'Cloud infrastructure efficiency analysis to identify over-provisioned resources and carbon footprint optimization'),
             "features": [
-                _('landing.scanner.sustainability_f1', 'Carbon footprint analysis'),
-                _('landing.scanner.sustainability_f2', 'Energy consumption tracking'),
-                _('landing.scanner.sustainability_f3', 'Waste resource detection'),
-                _('landing.scanner.sustainability_f4', 'Sustainability scoring')
+                _('landing.scanner.sustainability_f1', 'Resource optimization'),
+                _('landing.scanner.sustainability_f2', 'Auto-scaling detection'),
+                _('landing.scanner.sustainability_f3', 'Terraform & K8s analysis'),
+                _('landing.scanner.sustainability_f4', 'Green IT recommendations')
             ],
             "color": "#4CAF50"
         }
     ]
     
-    # Display scanners in modern card grid - 2 columns with proper spacing
+    # Display scanners in modern card grid - 2 columns with enhanced styling
+    def render_scanner_card(scanner):
+        return f"""
+        <div style="
+            background: #ffffff;
+            border-left: 4px solid {scanner['color']};
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 0.6rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+        ">
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                <div style="
+                    width: 48px;
+                    height: 48px;
+                    background: linear-gradient(135deg, {scanner['color']}20, {scanner['color']}10);
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 0.8rem;
+                    flex-shrink: 0;
+                ">
+                    <span style="font-size: 1.5rem;">{scanner['icon']}</span>
+                </div>
+                <h3 style="color: {scanner['color']}; margin: 0; font-size: 1.15rem; font-weight: 600;">{scanner['title']}</h3>
+            </div>
+            <p style="color: #444; font-size: 0.88rem; line-height: 1.5; margin: 0 0 1rem 0; flex-grow: 0;">
+                {scanner['description']}
+            </p>
+            <div style="font-size: 0.82rem; color: #666; line-height: 1.6; flex-grow: 1;">
+                {"".join([f'<div style="margin-bottom: 0.3rem;"><span style="color: {scanner["color"]}; margin-right: 0.4rem;">&#10003;</span>{feature}</div>' for feature in scanner['features'][:4]])}
+            </div>
+        </div>
+        """
+    
     for i in range(0, len(scanners), 2):
         col1, col2 = st.columns([1, 1], gap="medium")
         
-        # First scanner in row
         with col1:
-            scanner = scanners[i]
-            st.markdown(f"""
-            <div style="
-                background: linear-gradient(135deg, {scanner['color']}15, {scanner['color']}05);
-                border: 2px solid {scanner['color']}30;
-                border-radius: 12px;
-                padding: 1.2rem;
-                margin: 0.8rem 0;
-                box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-                transition: transform 0.3s ease, box-shadow 0.3s ease;
-                height: auto;
-                min-height: 320px;
-                max-height: 350px;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-            ">
-                <div style="text-align: center; margin-bottom: 0.8rem; flex-shrink: 0;">
-                    <span style="font-size: 2.5rem; display: block; margin-bottom: 0.3rem;">{scanner['icon']}</span>
-                    <h3 style="color: {scanner['color']}; margin: 0; font-size: 1.25rem; font-weight: 600; line-height: 1.2;">{scanner['title']}</h3>
-                </div>
-                <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
-                    <p style="color: #555; font-size: 0.9rem; line-height: 1.3; margin: 0 0 0.8rem 0; flex-shrink: 0;">
-                        {scanner['description']}
-                    </p>
-                    <div style="font-size: 0.8rem; color: #666; line-height: 1.4; overflow: hidden;">
-                        {"".join([f"• {feature}<br>" for feature in scanner['features'][:4]])}
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(render_scanner_card(scanners[i]), unsafe_allow_html=True)
         
-        # Second scanner in row (if exists)
         with col2:
             if i + 1 < len(scanners):
-                scanner = scanners[i + 1]
-                st.markdown(f"""
-                <div style="
-                    background: linear-gradient(135deg, {scanner['color']}15, {scanner['color']}05);
-                    border: 2px solid {scanner['color']}30;
-                    border-radius: 12px;
-                    padding: 1.2rem;
-                    margin: 0.8rem 0;
-                    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-                    transition: transform 0.3s ease, box-shadow 0.3s ease;
-                    height: auto;
-                    min-height: 320px;
-                    max-height: 350px;
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                ">
-                    <div style="text-align: center; margin-bottom: 0.8rem; flex-shrink: 0;">
-                        <span style="font-size: 2.5rem; display: block; margin-bottom: 0.3rem;">{scanner['icon']}</span>
-                        <h3 style="color: {scanner['color']}; margin: 0; font-size: 1.25rem; font-weight: 600; line-height: 1.2;">{scanner['title']}</h3>
-                    </div>
-                    <div style="flex-grow: 1; overflow: hidden; display: flex; flex-direction: column;">
-                        <p style="color: #555; font-size: 0.9rem; line-height: 1.3; margin: 0 0 0.8rem 0; flex-shrink: 0;">
-                            {scanner['description']}
-                        </p>
-                        <div style="font-size: 0.8rem; color: #666; line-height: 1.4; overflow: hidden;">
-                            {"".join([f"• {feature}<br>" for feature in scanner['features'][:4]])}
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                st.markdown(render_scanner_card(scanners[i + 1]), unsafe_allow_html=True)
     
     # Call to action section
     st.markdown("---")
