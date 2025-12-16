@@ -471,21 +471,55 @@ class SAPRepoScanner:
                        file_path: str, line_number: int, matched_text: str,
                        context: str) -> Dict[str, Any]:
         """Create a standardized finding entry."""
+        severity = pattern_info['severity']
+        gdpr_articles = pattern_info.get('gdpr_articles', [])
+        
+        severity_priority = {'Critical': 'Critical - Immediate action required', 
+                            'High': 'High - Address within 24-48 hours',
+                            'Medium': 'Medium - Review within 7 days', 
+                            'Low': 'Low - Address in next sprint'}
+        severity_effort = {'Critical': '4-8 hours - Urgent remediation',
+                          'High': '2-4 hours - Priority fix',
+                          'Medium': '1-4 hours - Investigation and remediation',
+                          'Low': '1-2 hours - Minor adjustment'}
+        category_classification = {'pii_exposure': 'Personal Data (PII)',
+                                   'security_vulnerability': 'System Configuration',
+                                   'sap_specific': 'System Configuration'}
+        category_impact = {'pii_exposure': 'Potential GDPR violation and data breach risk',
+                          'security_vulnerability': 'Security vulnerability requiring immediate attention',
+                          'sap_specific': 'Potential security or compliance impact requiring investigation'}
+        
         return {
             'id': f"SAP-{self.scan_id}-{uuid.uuid4().hex[:6]}",
             'category': category,
             'type': pattern_name,
+            'title': f"{category.replace('_', ' ').title()}: {pattern_name.replace('_', ' ').title()}",
             'description': pattern_info['description'],
-            'severity': pattern_info['severity'],
+            'severity': severity,
             'file_path': file_path,
             'line_number': line_number,
+            'location': f"{file_path}:{line_number}" if file_path and line_number else file_path or 'Unknown',
+            'source': file_path,
+            'source_file': file_path,
             'matched_text': matched_text,
             'context': context,
-            'gdpr_articles': pattern_info.get('gdpr_articles', []),
+            'gdpr_articles': gdpr_articles,
             'uavg_articles': pattern_info.get('uavg_articles', []),
             'nis2_articles': pattern_info.get('nis2_articles', []),
             'soc2_controls': pattern_info.get('soc2_controls', []),
             'remediation': self._get_remediation(pattern_name, category),
+            'data_classification': category_classification.get(category, 'Unknown'),
+            'business_impact': category_impact.get(category, 'Requires review'),
+            'remediation_priority': severity_priority.get(severity, 'Review required'),
+            'estimated_effort': severity_effort.get(severity, '1-2 hours'),
+            'compliance_requirements': gdpr_articles,
+            'recommendations': [{
+                'title': f'Review and Remediate {severity}',
+                'description': f'Address: {pattern_info["description"]}',
+                'implementation': 'Investigate the finding and implement appropriate remediation',
+                'effort': severity_effort.get(severity, '1-2 hours').split(' - ')[0],
+                'verification': 'Confirm remediation complete'
+            }],
             'timestamp': datetime.utcnow().isoformat()
         }
     
