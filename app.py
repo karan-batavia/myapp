@@ -6803,7 +6803,7 @@ def render_sap_connector(region: str, username: str):
                         pii_findings = [f for f in findings if f.get('category') == 'pii_exposure']
                         if pii_findings:
                             for finding in pii_findings[:10]:
-                                severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(finding['severity'], "⚪")
+                                severity_color = {"Critical": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}.get(finding['severity'], "⚪")
                                 with st.expander(f"{severity_color} {finding['description']} - {finding['file_path']}"):
                                     st.markdown(f"**Line:** {finding['line_number']}")
                                     st.markdown(f"**GDPR Articles:** {', '.join(finding.get('gdpr_articles', []))}")
@@ -6817,7 +6817,7 @@ def render_sap_connector(region: str, username: str):
                         security_findings = [f for f in findings if f.get('category') == 'security_vulnerability']
                         if security_findings:
                             for finding in security_findings[:10]:
-                                severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(finding['severity'], "⚪")
+                                severity_color = {"Critical": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}.get(finding['severity'], "⚪")
                                 with st.expander(f"{severity_color} {finding['description']} - {finding['file_path']}"):
                                     st.markdown(f"**Line:** {finding['line_number']}")
                                     st.markdown(f"**NIS2 Articles:** {', '.join(finding.get('nis2_articles', []))}")
@@ -6831,7 +6831,7 @@ def render_sap_connector(region: str, username: str):
                         sap_findings = [f for f in findings if f.get('category') == 'sap_specific']
                         if sap_findings:
                             for finding in sap_findings[:10]:
-                                severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(finding['severity'], "⚪")
+                                severity_color = {"Critical": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}.get(finding['severity'], "⚪")
                                 with st.expander(f"{severity_color} {finding['description']} - {finding['file_path']}"):
                                     st.markdown(f"**Line:** {finding['line_number']}")
                                     st.markdown(f"**GDPR Articles:** {', '.join(finding.get('gdpr_articles', []))}")

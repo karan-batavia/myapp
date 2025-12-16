@@ -49,7 +49,7 @@ class SAPRepoScanner:
             'bsn_number': {
                 'pattern': r'\b[0-9]{9}\b',
                 'description': 'Netherlands BSN (Social Security Number)',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 9', 'Art. 87'],
                 'uavg_articles': ['Art. 46'],
                 'nis2_articles': ['Art. 21'],
@@ -58,7 +58,7 @@ class SAPRepoScanner:
             'kvk_number': {
                 'pattern': r'\b[0-9]{8}\b',
                 'description': 'Netherlands KvK (Chamber of Commerce) Number',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 6'],
                 'uavg_articles': ['Art. 3'],
                 'nis2_articles': [],
@@ -67,7 +67,7 @@ class SAPRepoScanner:
             'iban_number': {
                 'pattern': r'\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}\b',
                 'description': 'IBAN Bank Account Number',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 32'],
                 'uavg_articles': ['Art. 3'],
                 'nis2_articles': ['Art. 21'],
@@ -76,7 +76,7 @@ class SAPRepoScanner:
             'email_address': {
                 'pattern': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
                 'description': 'Email Address',
-                'severity': 'medium',
+                'severity': 'Medium',
                 'gdpr_articles': ['Art. 6'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -85,7 +85,7 @@ class SAPRepoScanner:
             'phone_nl': {
                 'pattern': r'\b(?:\+31|0031|0)[1-9][0-9]{8}\b',
                 'description': 'Netherlands Phone Number',
-                'severity': 'medium',
+                'severity': 'Medium',
                 'gdpr_articles': ['Art. 6'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -94,7 +94,7 @@ class SAPRepoScanner:
             'passport_nl': {
                 'pattern': r'\b[A-Z]{2}[A-Z0-9]{6}[0-9]\b',
                 'description': 'Netherlands Passport Number',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 9', 'Art. 87'],
                 'uavg_articles': ['Art. 46'],
                 'nis2_articles': ['Art. 21'],
@@ -103,7 +103,7 @@ class SAPRepoScanner:
             'credit_card': {
                 'pattern': r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b',
                 'description': 'Credit Card Number',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -112,7 +112,7 @@ class SAPRepoScanner:
             'date_of_birth': {
                 'pattern': r'\b(?:geboortedatum|birth_?date|dob|birthday)\s*[=:]\s*["\']?\d{1,4}[-/]\d{1,2}[-/]\d{1,4}',
                 'description': 'Date of Birth Field',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 9'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -124,7 +124,7 @@ class SAPRepoScanner:
             'hardcoded_password': {
                 'pattern': r'(?i)(password|passwd|pwd|wachtwoord)\s*[=:]\s*["\'][^"\']{4,}["\']',
                 'description': 'Hardcoded Password',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -133,7 +133,7 @@ class SAPRepoScanner:
             'sap_client_secret': {
                 'pattern': r'(?i)(client_?secret|clientsecret)\s*[=:]\s*["\'][A-Za-z0-9+/=]{20,}["\']',
                 'description': 'SAP Client Secret Exposed',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -142,7 +142,7 @@ class SAPRepoScanner:
             'api_key_exposed': {
                 'pattern': r'(?i)(api[_-]?key|apikey)\s*[=:]\s*["\'][A-Za-z0-9_-]{20,}["\']',
                 'description': 'API Key Exposed in Code',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -151,7 +151,7 @@ class SAPRepoScanner:
             'sql_injection_risk': {
                 'pattern': r'(?i)(SELECT|INSERT|UPDATE|DELETE|DROP).*\+\s*["\']?\w+["\']?\s*\+',
                 'description': 'Potential SQL Injection Vulnerability',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -160,7 +160,7 @@ class SAPRepoScanner:
             'abap_authority_bypass': {
                 'pattern': r'(?i)AUTHORITY-CHECK\s+OBJECT\s+["\'][^"\']+["\']\s+ID\s+["\']ACTVT["\']\s+FIELD\s+["\'](\*|X)',
                 'description': 'ABAP Authority Check Bypass Pattern',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -169,7 +169,7 @@ class SAPRepoScanner:
             'missing_auth_check': {
                 'pattern': r'(?i)(?:FUNCTION|METHOD)\s+\w+\.\s*(?:(?!AUTHORITY-CHECK).)*?(?:SELECT|UPDATE|DELETE)',
                 'description': 'Missing Authorization Check in ABAP',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -178,7 +178,7 @@ class SAPRepoScanner:
             'btp_binding_exposed': {
                 'pattern': r'(?i)(VCAP_SERVICES|xsuaa|hana|destination)\s*[=:]\s*["\'][^"\']{50,}',
                 'description': 'SAP BTP Service Binding Exposed',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -187,7 +187,7 @@ class SAPRepoScanner:
             'fiori_xss_risk': {
                 'pattern': r'(?i)(innerHTML|outerHTML|document\.write)\s*=',
                 'description': 'Potential XSS Vulnerability in Fiori/UI5',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -196,7 +196,7 @@ class SAPRepoScanner:
             'unencrypted_storage': {
                 'pattern': r'(?i)(localStorage|sessionStorage)\s*\.\s*(setItem|getItem)\s*\([^)]*(?:password|token|secret|key)',
                 'description': 'Sensitive Data in Browser Storage',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -205,7 +205,7 @@ class SAPRepoScanner:
             'hana_db_credentials': {
                 'pattern': r'(?i)(hana|hdb)\s*(host|user|password)\s*[=:]\s*["\'][^"\']+["\']',
                 'description': 'SAP HANA Database Credentials',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -217,7 +217,7 @@ class SAPRepoScanner:
             'pa0002_access': {
                 'pattern': r'(?i)(?:SELECT|UPDATE|DELETE|INSERT)\s+(?:\*|SINGLE)?\s*FROM\s+PA0002',
                 'description': 'Direct access to SAP HR Personal Data Table PA0002',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 6', 'Art. 9', 'Art. 32'],
                 'uavg_articles': ['Art. 46'],
                 'nis2_articles': ['Art. 21'],
@@ -226,7 +226,7 @@ class SAPRepoScanner:
             'kna1_access': {
                 'pattern': r'(?i)(?:SELECT|UPDATE|DELETE|INSERT)\s+(?:\*|SINGLE)?\s*FROM\s+KNA1',
                 'description': 'Direct access to SAP Customer Master Table KNA1',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -235,7 +235,7 @@ class SAPRepoScanner:
             'lfa1_access': {
                 'pattern': r'(?i)(?:SELECT|UPDATE|DELETE|INSERT)\s+(?:\*|SINGLE)?\s*FROM\s+LFA1',
                 'description': 'Direct access to SAP Vendor Master Table LFA1',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -244,7 +244,7 @@ class SAPRepoScanner:
             'but000_access': {
                 'pattern': r'(?i)(?:SELECT|UPDATE|DELETE|INSERT)\s+(?:\*|SINGLE)?\s*FROM\s+BUT000',
                 'description': 'Direct access to SAP Business Partner Table BUT000',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -253,7 +253,7 @@ class SAPRepoScanner:
             'bseg_access': {
                 'pattern': r'(?i)(?:SELECT|UPDATE|DELETE|INSERT)\s+(?:\*|SINGLE)?\s*FROM\s+BSEG',
                 'description': 'Direct access to SAP Financial Document Segment Table',
-                'severity': 'medium',
+                'severity': 'Medium',
                 'gdpr_articles': ['Art. 6'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -262,7 +262,7 @@ class SAPRepoScanner:
             'usr02_access': {
                 'pattern': r'(?i)(?:SELECT|UPDATE|DELETE|INSERT)\s+(?:\*|SINGLE)?\s*FROM\s+USR02',
                 'description': 'Direct access to SAP User Logon Data Table',
-                'severity': 'critical',
+                'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -271,7 +271,7 @@ class SAPRepoScanner:
             'debug_statement': {
                 'pattern': r'(?i)\bBREAK-POINT\b|\bDEBUGGING\b',
                 'description': 'ABAP Debug Statement in Production Code',
-                'severity': 'medium',
+                'severity': 'Medium',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': [],
@@ -280,7 +280,7 @@ class SAPRepoScanner:
             'native_sql': {
                 'pattern': r'(?i)EXEC\s+SQL|NATIVE\s+SQL',
                 'description': 'Native SQL Usage (Bypass of Authority Checks)',
-                'severity': 'high',
+                'severity': 'High',
                 'gdpr_articles': ['Art. 32'],
                 'uavg_articles': [],
                 'nis2_articles': ['Art. 21'],
@@ -519,9 +519,9 @@ class SAPRepoScanner:
         nis2_findings = [f for f in findings if f.get('nis2_articles')]
         soc2_findings = [f for f in findings if f.get('soc2_controls')]
         
-        critical_count = len([f for f in findings if f['severity'] == 'critical'])
-        high_count = len([f for f in findings if f['severity'] == 'high'])
-        medium_count = len([f for f in findings if f['severity'] == 'medium'])
+        critical_count = len([f for f in findings if f['severity'] == 'Critical'])
+        high_count = len([f for f in findings if f['severity'] == 'High'])
+        medium_count = len([f for f in findings if f['severity'] == 'Medium'])
         
         base_score = 100
         base_score -= critical_count * 15
@@ -555,7 +555,7 @@ class SAPRepoScanner:
                 'critical': critical_count,
                 'high': high_count,
                 'medium': medium_count,
-                'low': len([f for f in findings if f['severity'] == 'low'])
+                'low': len([f for f in findings if f['severity'] == 'Low'])
             }
         }
     
@@ -587,8 +587,8 @@ class SAPRepoScanner:
                 'pii_exposures': len([f for f in findings if f['category'] == 'pii_exposure']),
                 'security_issues': len([f for f in findings if f['category'] == 'security_vulnerability']),
                 'sap_specific_issues': len([f for f in findings if f['category'] == 'sap_specific']),
-                'critical_findings': len([f for f in findings if f['severity'] == 'critical']),
-                'high_findings': len([f for f in findings if f['severity'] == 'high']),
+                'critical_findings': len([f for f in findings if f['severity'] == 'Critical']),
+                'high_findings': len([f for f in findings if f['severity'] == 'High']),
                 'frameworks_affected': self._get_affected_frameworks(compliance_assessment)
             },
             'region': self.region,
@@ -597,11 +597,11 @@ class SAPRepoScanner:
     
     def _get_overall_severity(self, findings: List[Dict]) -> str:
         """Determine overall severity based on findings."""
-        if any(f['severity'] == 'critical' for f in findings):
+        if any(f['severity'] == 'Critical' for f in findings):
             return 'critical'
-        elif any(f['severity'] == 'high' for f in findings):
+        elif any(f['severity'] == 'High' for f in findings):
             return 'high'
-        elif any(f['severity'] == 'medium' for f in findings):
+        elif any(f['severity'] == 'Medium' for f in findings):
             return 'medium'
         elif findings:
             return 'low'
