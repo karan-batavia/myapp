@@ -960,150 +960,150 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # All 11 scanners with images and feature showcase
+    # All 11 scanners with images and value-focused feature showcase
     scanners = [
         {
             "icon": "🏢", 
             "title": _('landing.scanner.enterprise_title', 'Enterprise Connector'),
-            "description": _('landing.scanner.enterprise_desc', 'Seamlessly connect to your business platforms and automatically discover personal data across your entire digital ecosystem'),
+            "description": _('landing.scanner.enterprise_desc', 'Connect once, scan everything. Automatically discover and protect personal data across Microsoft 365, Exact Online, Google Workspace, and more - without manual file uploads.'),
             "features": [
-                _('landing.scanner.enterprise_f1', 'Microsoft 365 & SharePoint'),
-                _('landing.scanner.enterprise_f2', 'Exact Online accounting data'),
-                _('landing.scanner.enterprise_f3', 'Google Workspace & Drive'),
-                _('landing.scanner.enterprise_f4', 'Salesforce & SAP integration')
+                _('landing.scanner.enterprise_f1', 'One-click platform connection'),
+                _('landing.scanner.enterprise_f2', 'Automatic data discovery'),
+                _('landing.scanner.enterprise_f3', 'Continuous monitoring'),
+                _('landing.scanner.enterprise_f4', 'Multi-platform coverage')
             ],
             "color": "#E91E63",
-            "image": "attached_assets/stock_images/enterprise_business__764c2338.jpg"
+            "image": "attached_assets/stock_images/business_team_collab_a15119a2.jpg"
         },
         {
             "icon": "🔍", 
             "title": _('landing.scanner.code_title', 'Code Scanner'),
-            "description": _('landing.scanner.code_desc', 'Deep analysis of source code repositories to detect hardcoded secrets, PII exposure, and security vulnerabilities'),
+            "description": _('landing.scanner.code_desc', 'Protect your codebase from costly data breaches. Find hardcoded secrets, exposed credentials, and privacy violations before they reach production.'),
             "features": [
-                _('landing.scanner.code_f1', 'GitHub & GitLab integration'),
-                _('landing.scanner.code_f2', 'Dutch BSN & EU ID detection'),
-                _('landing.scanner.code_f3', 'Secret & API key scanning'),
-                _('landing.scanner.code_f4', 'GDPR compliance mapping')
+                _('landing.scanner.code_f1', 'Prevent credential leaks'),
+                _('landing.scanner.code_f2', 'Dutch BSN auto-detection'),
+                _('landing.scanner.code_f3', 'GDPR violation alerts'),
+                _('landing.scanner.code_f4', 'CI/CD integration ready')
             ],
             "color": "#4CAF50",
-            "image": "attached_assets/stock_images/source_code_programm_04dfc2fd.jpg"
+            "image": "attached_assets/stock_images/developer_laptop_cod_d6588fe5.jpg"
         },
         {
             "icon": "📄", 
             "title": _('landing.scanner.document_title', 'Document Scanner'),
-            "description": _('landing.scanner.document_desc', 'Intelligent analysis of business documents to identify personal data, contracts, and sensitive information'),
+            "description": _('landing.scanner.document_desc', 'Turn hours of manual document review into minutes. Automatically identify personal data in contracts, HR files, and business documents with AI-powered analysis.'),
             "features": [
-                _('landing.scanner.document_f1', 'PDF, Word, Excel & text files'),
-                _('landing.scanner.document_f2', 'Smart OCR text extraction'),
-                _('landing.scanner.document_f3', 'Contract & HR data detection'),
-                _('landing.scanner.document_f4', 'Automated risk classification')
+                _('landing.scanner.document_f1', 'Process 100+ formats'),
+                _('landing.scanner.document_f2', 'Smart text extraction'),
+                _('landing.scanner.document_f3', 'Auto-classify risk levels'),
+                _('landing.scanner.document_f4', 'Bulk processing support')
             ],
             "color": "#FF9800",
-            "image": "attached_assets/stock_images/business_document_an_20ba5975.jpg"
+            "image": "attached_assets/stock_images/business_contract_pa_279b28d9.jpg"
         },
         {
             "icon": "🖼️", 
             "title": _('landing.scanner.image_title', 'Image Scanner'),
-            "description": _('landing.scanner.image_desc', 'Advanced visual analysis with AI-powered text extraction and biometric privacy assessment'),
+            "description": _('landing.scanner.image_desc', 'Uncover hidden personal data in images and scanned documents. Detect faces, ID cards, and embedded text that other scanners miss.'),
             "features": [
-                _('landing.scanner.image_f1', 'High-accuracy OCR engine'),
-                _('landing.scanner.image_f2', 'Face & biometric detection'),
-                _('landing.scanner.image_f3', 'ID document recognition'),
-                _('landing.scanner.image_f4', 'EXIF metadata analysis')
+                _('landing.scanner.image_f1', 'Face & ID detection'),
+                _('landing.scanner.image_f2', 'Scanned document OCR'),
+                _('landing.scanner.image_f3', 'Hidden metadata analysis'),
+                _('landing.scanner.image_f4', 'Photo library scanning')
             ],
             "color": "#9C27B0",
-            "image": "attached_assets/stock_images/image_scanning_ocr_p_e6f44510.jpg"
+            "image": "attached_assets/stock_images/digital_photo_scanni_dc2f2d4c.jpg"
         },
         {
             "icon": "🗄️", 
             "title": _('landing.scanner.database_title', 'Database Scanner'),
-            "description": _('landing.scanner.database_desc', 'Comprehensive database inspection to discover PII columns, sensitive tables, and data protection gaps'),
+            "description": _('landing.scanner.database_desc', 'Know exactly where your sensitive data lives. Scan database tables to identify PII columns, unprotected fields, and data retention violations.'),
             "features": [
-                _('landing.scanner.database_f1', 'PostgreSQL, MySQL & SQL Server'),
-                _('landing.scanner.database_f2', 'Smart schema analysis'),
-                _('landing.scanner.database_f3', 'PII pattern recognition'),
-                _('landing.scanner.database_f4', 'Data retention validation')
+                _('landing.scanner.database_f1', 'All major databases'),
+                _('landing.scanner.database_f2', 'Column-level detection'),
+                _('landing.scanner.database_f3', 'Retention policy check'),
+                _('landing.scanner.database_f4', 'Encryption validation')
             ],
             "color": "#3F51B5",
-            "image": "attached_assets/stock_images/database_server_data_7e35d17a.jpg"
+            "image": "attached_assets/stock_images/data_analytics_dashb_e12b4d3e.jpg"
         },
         {
             "icon": "🌐", 
             "title": _('landing.scanner.website_title', 'Website Scanner'),
-            "description": _('landing.scanner.website_desc', 'Complete web privacy audit including cookie consent, tracking scripts, and dark pattern detection'),
+            "description": _('landing.scanner.website_desc', 'Avoid costly GDPR fines. Audit your website for cookie consent issues, hidden trackers, dark patterns, and privacy policy gaps in minutes.'),
             "features": [
-                _('landing.scanner.website_f1', 'Cookie & consent analysis'),
-                _('landing.scanner.website_f2', 'Third-party tracker detection'),
-                _('landing.scanner.website_f3', 'Dark pattern identification'),
-                _('landing.scanner.website_f4', 'Netherlands AP compliance')
+                _('landing.scanner.website_f1', 'Cookie consent audit'),
+                _('landing.scanner.website_f2', 'Tracker identification'),
+                _('landing.scanner.website_f3', 'Dark pattern detection'),
+                _('landing.scanner.website_f4', 'AP Netherlands ready')
             ],
             "color": "#2196F3",
-            "image": "attached_assets/stock_images/website_browser_priv_44d7f435.jpg"
+            "image": "attached_assets/stock_images/website_analytics_la_d044208f.jpg"
         },
         {
             "icon": "🤖", 
             "title": _('landing.scanner.ai_title', 'AI Model Scanner'),
-            "description": _('landing.scanner.ai_desc', 'Full EU AI Act 2025 compliance assessment with risk classification, bias detection, and transparency auditing'),
+            "description": _('landing.scanner.ai_desc', 'Stay ahead of EU AI Act 2025 requirements. Assess your AI systems for compliance risks, bias issues, and transparency gaps before regulators do.'),
             "features": [
-                _('landing.scanner.ai_f1', 'All 113 EU AI Act articles'),
-                _('landing.scanner.ai_f2', 'AI risk classification'),
-                _('landing.scanner.ai_f3', 'Bias & fairness testing'),
-                _('landing.scanner.ai_f4', 'Model explainability audit')
+                _('landing.scanner.ai_f1', 'Full 113-article coverage'),
+                _('landing.scanner.ai_f2', 'Risk level classification'),
+                _('landing.scanner.ai_f3', 'Bias & fairness audit'),
+                _('landing.scanner.ai_f4', 'Compliance roadmap')
             ],
             "color": "#FF5722",
-            "image": "attached_assets/stock_images/artificial_intellige_1286b6ca.jpg"
+            "image": "attached_assets/stock_images/ai_compliance_regula_cf997669.jpg"
         },
         {
             "icon": "📋", 
             "title": _('landing.scanner.dpia_title', 'DPIA Scanner'),
-            "description": _('landing.scanner.dpia_desc', 'Guided Data Protection Impact Assessment wizard with automated risk scoring and regulatory documentation'),
+            "description": _('landing.scanner.dpia_desc', 'Complete your Data Protection Impact Assessment in hours, not weeks. Guided wizard with automated risk scoring and regulator-ready documentation.'),
             "features": [
-                _('landing.scanner.dpia_f1', 'GDPR Article 35 compliant'),
-                _('landing.scanner.dpia_f2', '5-step guided assessment'),
-                _('landing.scanner.dpia_f3', 'Netherlands UAVG specific'),
-                _('landing.scanner.dpia_f4', 'Ready-to-submit reports')
+                _('landing.scanner.dpia_f1', 'Step-by-step wizard'),
+                _('landing.scanner.dpia_f2', 'Automated risk scoring'),
+                _('landing.scanner.dpia_f3', 'Netherlands UAVG ready'),
+                _('landing.scanner.dpia_f4', 'Export to PDF/Word')
             ],
             "color": "#795548",
-            "image": "attached_assets/stock_images/compliance_audit_che_60cd1b01.jpg"
+            "image": "attached_assets/stock_images/risk_assessment_chec_72e940c1.jpg"
         },
         {
             "icon": "🛡️", 
             "title": _('landing.scanner.soc2_title', 'SOC2 & NIS2 Scanner'),
-            "description": _('landing.scanner.soc2_desc', 'Enterprise security compliance for cloud infrastructure with SOC2 Type II and EU NIS2 Directive coverage'),
+            "description": _('landing.scanner.soc2_desc', 'Prove your security posture to customers and auditors. Scan cloud infrastructure against SOC2 Type II and EU NIS2 requirements automatically.'),
             "features": [
-                _('landing.scanner.soc2_f1', 'AWS, Azure & GCP analysis'),
-                _('landing.scanner.soc2_f2', 'SOC2 Trust Service Criteria'),
-                _('landing.scanner.soc2_f3', 'NIS2 Articles 20-26'),
-                _('landing.scanner.soc2_f4', 'Infrastructure-as-Code scan')
+                _('landing.scanner.soc2_f1', 'AWS, Azure, GCP ready'),
+                _('landing.scanner.soc2_f2', 'SOC2 TSC mapping'),
+                _('landing.scanner.soc2_f3', 'NIS2 compliance check'),
+                _('landing.scanner.soc2_f4', 'Audit evidence export')
             ],
             "color": "#607D8B",
-            "image": "attached_assets/stock_images/cloud_security_shiel_1c7131cb.jpg"
+            "image": "attached_assets/stock_images/cloud_computing_secu_9f083e1f.jpg"
         },
         {
             "icon": "🔗", 
             "title": _('landing.scanner.api_title', 'API Scanner'),
-            "description": _('landing.scanner.api_desc', 'Comprehensive API security testing to identify data exposure, authentication weaknesses, and privacy violations'),
+            "description": _('landing.scanner.api_desc', 'Prevent data leaks through your APIs. Test endpoints for exposed personal data, weak authentication, and privacy compliance issues.'),
             "features": [
-                _('landing.scanner.api_f1', 'REST & GraphQL endpoints'),
-                _('landing.scanner.api_f2', 'Data leakage detection'),
-                _('landing.scanner.api_f3', 'Auth & token validation'),
-                _('landing.scanner.api_f4', 'Response PII scanning')
+                _('landing.scanner.api_f1', 'REST & GraphQL support'),
+                _('landing.scanner.api_f2', 'PII exposure detection'),
+                _('landing.scanner.api_f3', 'Auth weakness testing'),
+                _('landing.scanner.api_f4', 'Automated reporting')
             ],
             "color": "#00BCD4",
-            "image": "attached_assets/stock_images/api_integration_tech_dca5d7a0.jpg"
+            "image": "attached_assets/stock_images/api_software_develop_35f2fc42.jpg"
         },
         {
             "icon": "🌱", 
             "title": _('landing.scanner.sustainability_title', 'Sustainability Scanner'),
-            "description": _('landing.scanner.sustainability_desc', 'Cloud infrastructure efficiency analysis to identify over-provisioned resources and carbon footprint optimization'),
+            "description": _('landing.scanner.sustainability_desc', 'Reduce cloud costs and carbon footprint. Identify over-provisioned resources, missing auto-scaling, and inefficient infrastructure configurations.'),
             "features": [
-                _('landing.scanner.sustainability_f1', 'Resource optimization'),
-                _('landing.scanner.sustainability_f2', 'Auto-scaling detection'),
-                _('landing.scanner.sustainability_f3', 'Terraform & K8s analysis'),
-                _('landing.scanner.sustainability_f4', 'Green IT recommendations')
+                _('landing.scanner.sustainability_f1', 'Cost optimization tips'),
+                _('landing.scanner.sustainability_f2', 'Carbon footprint report'),
+                _('landing.scanner.sustainability_f3', 'Resource right-sizing'),
+                _('landing.scanner.sustainability_f4', 'Green IT certification')
             ],
             "color": "#4CAF50",
-            "image": "attached_assets/stock_images/green_technology_sus_29b497d2.jpg"
+            "image": "attached_assets/stock_images/sustainable_business_35700aa4.jpg"
         }
     ]
     
