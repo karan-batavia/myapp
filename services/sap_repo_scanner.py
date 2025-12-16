@@ -311,9 +311,9 @@ class SAPRepoScanner:
             }
         }
     
-    def scan_repository(self, repo_url: str = None, directory_path: str = None,
-                        branch: str = None, auth_token: str = None,
-                        scan_config: Dict = None) -> Dict[str, Any]:
+    def scan_repository(self, repo_url: Optional[str] = None, directory_path: Optional[str] = None,
+                        branch: Optional[str] = None, auth_token: Optional[str] = None,
+                        scan_config: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Scan SAP code repository for compliance issues.
         
@@ -560,10 +560,10 @@ class SAPRepoScanner:
         }
     
     def _build_result(self, findings: List[Dict], files_scanned: int,
-                      repo_url: str, directory_path: str,
+                      repo_url: Optional[str], directory_path: Optional[str],
                       compliance_assessment: Dict, scan_config: Dict) -> Dict[str, Any]:
         """Build comprehensive scan result."""
-        scan_duration = time.time() - self.start_time
+        scan_duration = time.time() - (self.start_time or time.time())
         
         return {
             'success': True,
