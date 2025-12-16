@@ -8389,7 +8389,7 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             try:
                 from services.unified_html_report_generator import UnifiedHTMLReportGenerator
                 report_generator = UnifiedHTMLReportGenerator(region=region)
-                html_report = report_generator.generate_report(scan_results)
+                html_report = report_generator.generate_html_report(scan_results)
             except Exception as e:
                 # Fallback to basic report generator
                 html_report = generate_html_report(scan_results)
