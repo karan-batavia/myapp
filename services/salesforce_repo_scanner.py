@@ -52,8 +52,15 @@ class SalesforceRepoScanner:
             'CHANGELOG', 'changelog', 'HISTORY', 'history', 'NEWS', 'RELEASES',
             'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'Gemfile.lock',
             'composer.lock', 'poetry.lock', 'Cargo.lock', 'go.sum',
-            'sfdx-project.json', 'package.xml'
+            'sfdx-project.json', 'package.xml', 'dependencies.json',
+            '.forceignore', '.gitignore', 'jest.config.js', 'jsconfig.json',
+            'tsconfig.json', 'README.md', 'LICENSE', '.eslintrc.json',
+            '.prettierrc', '.prettierignore', 'CONTRIBUTING.md'
         ]
+        
+        self.code_only_extensions = ['.cls', '.trigger', '.apex', '.page', '.component', '.js', '.ts']
+        
+        self.config_extensions = ['.json', '.xml', '.yaml', '.yml', '.md', '.txt']
         
         self.salesforce_pii_patterns = {
             'bsn_number': {
@@ -252,31 +259,34 @@ class SalesforceRepoScanner:
                 'soc2_controls': ['CC6.1', 'CC6.7']
             },
             'bulk_data_export': {
-                'pattern': r'(?i)(?:QueryLocator|Database\.getQueryLocator|Batchable|FOR\s+UPDATE)',
-                'description': 'Bulk Data Export/Processing Pattern',
-                'severity': 'Medium',
-                'gdpr_articles': ['Art. 6', 'Art. 44'],
-                'uavg_articles': [],
-                'nis2_articles': [],
-                'soc2_controls': ['CC6.1']
-            },
-            'external_callout': {
-                'pattern': r'(?i)(?:Http\.send|HttpRequest|ExternalService|NamedCredential)',
-                'description': 'External HTTP Callout (Data Transfer Risk)',
-                'severity': 'Medium',
-                'gdpr_articles': ['Art. 44', 'Art. 46'],
-                'uavg_articles': [],
-                'nis2_articles': ['Art. 21'],
-                'soc2_controls': ['CC6.6', 'CC6.7']
-            },
-            'platform_event': {
-                'pattern': r'(?i)(?:EventBus\.publish|Platform\s*Event|__e\b)',
-                'description': 'Platform Event Publishing (Data Flow)',
+                'pattern': r'(?i)Database\.getQueryLocator\s*\([^)]*(?:Contact|Account|Lead|User|PersonAccount)',
+                'description': 'Bulk PII Data Export Pattern',
                 'severity': 'Low',
                 'gdpr_articles': ['Art. 6'],
                 'uavg_articles': [],
                 'nis2_articles': [],
-                'soc2_controls': ['CC6.1']
+                'soc2_controls': [],
+                'code_only': True
+            },
+            'external_callout_pii': {
+                'pattern': r'(?i)Http\.send\s*\([^)]*\).*(?:email|phone|address|bsn|ssn|passport)',
+                'description': 'External Callout with PII Data',
+                'severity': 'High',
+                'gdpr_articles': ['Art. 44', 'Art. 46'],
+                'uavg_articles': [],
+                'nis2_articles': ['Art. 21'],
+                'soc2_controls': ['CC6.6', 'CC6.7'],
+                'code_only': True
+            },
+            'platform_event_pii': {
+                'pattern': r'(?i)EventBus\.publish\s*\([^)]*(?:email|phone|bsn|ssn|passport|address)',
+                'description': 'Platform Event with PII Data',
+                'severity': 'Medium',
+                'gdpr_articles': ['Art. 6'],
+                'uavg_articles': [],
+                'nis2_articles': [],
+                'soc2_controls': ['CC6.1'],
+                'code_only': True
             }
         }
         
@@ -502,7 +512,13 @@ class SalesforceRepoScanner:
                     logger.warning(f"Regex error for pattern {pattern_name}: {e}")
         
         if scan_config.get('scan_salesforce_specific', True):
+            file_ext = os.path.splitext(file_path)[1].lower()
+            is_code_file = file_ext in self.code_only_extensions
+            
             for pattern_name, pattern_info in self.salesforce_specific_patterns.items():
+                if pattern_info.get('code_only', False) and not is_code_file:
+                    continue
+                    
                 try:
                     regex = re.compile(pattern_info['pattern'], re.IGNORECASE | re.MULTILINE)
                     for match in regex.finditer(content):
@@ -635,10 +651,10 @@ class SalesforceRepoScanner:
         medium_count = len([f for f in findings if f['severity'] == 'Medium'])
         
         base_score = 100
-        base_score -= critical_count * 15
-        base_score -= high_count * 8
-        base_score -= medium_count * 3
-        compliance_score = max(0, min(100, base_score))
+        base_score -= min(critical_count * 10, 40)
+        base_score -= min(high_count * 3, 30)
+        base_score -= min(medium_count * 1, 15)
+        compliance_score = max(15, min(100, base_score))
         
         return {
             'overall_score': compliance_score,
