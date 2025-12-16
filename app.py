@@ -6640,114 +6640,117 @@ def render_salesforce_connector(region: str, username: str):
             st.error(f"Salesforce connector failed: {str(e)}")
 
 def render_sap_connector(region: str, username: str):
-    """SAP ERP connector interface"""
-    from services.enterprise_connector_scanner import EnterpriseConnectorScanner
-    from utils.activity_tracker import ScannerType
+    """SAP Code Repository Scanner interface - Scans SAP ABAP, Fiori, BTP code for compliance"""
+    from services.sap_repo_scanner import SAPRepoScanner
+    from services.unified_html_report_generator import UnifiedHTMLReportGenerator
     
-    st.subheader("🏭 SAP ERP Integration")
-    st.write("Scan SAP HR, Finance, and Master Data modules for PII with Netherlands BSN detection in PA0002, KNA1, LFA1.")
+    st.subheader("🏭 SAP Code Repository Scanner")
+    st.write("Scan SAP ABAP, Fiori, and BTP code repositories for GDPR, UAVG, NIS2, and SOC2 compliance.")
     
-    # Premium positioning highlight
-    st.success("💰 **Premium Enterprise Connector**: SAP integration commands €10K-15K licenses. 77% of European enterprises run on SAP - critical for high-value deals.")
+    st.success("💰 **Premium Enterprise Scanner**: Detect PII exposure, security vulnerabilities, and compliance gaps in SAP codebases. Supports PA0002, KNA1, LFA1 table access detection.")
     
-    # Authentication setup
-    st.markdown("### SAP System Authentication")
+    st.markdown("### Repository Source")
     
-    auth_method = st.radio(
-        "SAP Authentication Method",
-        ["Basic Authentication", "OAuth2 Token", "Demo Mode"],
-        help="Choose authentication method for SAP OData APIs"
+    source_type = st.radio(
+        "Select source type",
+        ["Repository URL", "Demo Mode"],
+        index=0,
+        help="Scan SAP code from GitHub, GitLab, or Bitbucket"
     )
     
-    credentials = {}
+    repo_url = None
+    branch = None
+    auth_token = None
     
-    if auth_method == "Basic Authentication":
+    if source_type == "Repository URL":
+        repo_url = st.text_input(
+            "Repository URL",
+            placeholder="https://github.com/SAP-samples/abap-platform-refscen-flight",
+            help="Enter GitHub, GitLab, or Bitbucket repository URL containing SAP code"
+        )
+        
         col1, col2 = st.columns(2)
         with col1:
-            credentials['host'] = st.text_input("SAP Host", value="sap-server.company.com", help="SAP system hostname")
-            credentials['port'] = st.text_input("Port", value="8000", help="SAP HTTP port (usually 8000)")
-            credentials['client'] = st.text_input("Client", value="100", help="SAP client (usually 100)")
+            branch = st.text_input("Branch (optional)", placeholder="main", help="Leave empty for default branch")
         with col2:
-            credentials['username'] = st.text_input("SAP Username", help="SAP system username")
-            credentials['password'] = st.text_input("SAP Password", type="password", help="SAP system password")
+            auth_token = st.text_input("Access Token (for private repos)", type="password", help="GitHub/GitLab/Bitbucket personal access token")
     
-    elif auth_method == "OAuth2 Token":
-        credentials['access_token'] = st.text_input("SAP OAuth2 Token", type="password")
-        credentials['host'] = st.text_input("SAP Host", value="sap-server.company.com")
-        credentials['port'] = st.text_input("Port", value="8000")
+    else:
+        st.info("📋 Demo mode will scan a sample SAP ABAP project to demonstrate compliance detection capabilities.")
     
-    else:  # Demo Mode
-        st.success("✅ Demo mode enabled - using sample Netherlands SAP data")
-        credentials = {'username': 'demo', 'password': 'demo', 'host': 'demo-sap', 'port': '8000', 'client': '100'}
-    
-    # SAP Module Configuration
-    st.markdown("### SAP Module Configuration")
-    
+    st.markdown("### Compliance Frameworks")
     col1, col2 = st.columns(2)
     with col1:
-        scan_hr_data = st.checkbox("👥 HR Module (PA0002)", value=True, help="Personal data with BSN detection")
-        scan_customer_data = st.checkbox("🏢 Customer Master (KNA1)", value=True, help="Customer records with KvK numbers")
+        scan_gdpr = st.checkbox("🇪🇺 GDPR Compliance", value=True, help="EU General Data Protection Regulation")
+        scan_uavg = st.checkbox("🇳🇱 UAVG Compliance", value=True, help="Netherlands Privacy Law (BSN protection)")
     with col2:
-        scan_vendor_data = st.checkbox("🤝 Vendor Master (LFA1)", value=True, help="Vendor records with business data")
-        scan_finance_data = st.checkbox("💰 Finance Module", value=False, help="Financial transactions (advanced)")
+        scan_nis2 = st.checkbox("🔒 NIS2 Directive", value=True, help="EU Network and Information Security")
+        scan_soc2 = st.checkbox("📋 SOC2 Type II", value=True, help="Service Organization Controls")
     
-    # Netherlands-specific SAP fields
-    st.markdown("### Netherlands Specialization")
+    st.markdown("### SAP-Specific Detection")
     col1, col2 = st.columns(2)
     with col1:
-        detect_bsn_fields = st.checkbox("🔍 BSN Detection (PA0002)", value=True, help="Netherlands Social Security Numbers in HR")
-        detect_kvk_fields = st.checkbox("🏢 KvK Detection (KNA1)", value=True, help="Dutch Chamber of Commerce numbers")
+        detect_pii = st.checkbox("🔍 PII Exposure (BSN, KvK, IBAN)", value=True, help="Detect Netherlands-specific personal data")
+        detect_abap_tables = st.checkbox("📊 ABAP Table Access (PA0002, KNA1)", value=True, help="Detect direct access to sensitive SAP tables")
     with col2:
-        detect_tax_numbers = st.checkbox("💼 Tax Number Detection", value=True, help="Netherlands tax identifiers")
-        uavg_compliance = st.checkbox("⚖️ UAVG Compliance", value=True, help="Netherlands privacy law compliance")
+        detect_secrets = st.checkbox("🔑 Hardcoded Credentials", value=True, help="Detect passwords, API keys, secrets")
+        detect_security = st.checkbox("⚠️ Security Vulnerabilities", value=True, help="SQL injection, XSS, authorization bypass")
     
-    # Advanced SAP settings
-    with st.expander("🔧 Advanced SAP Settings"):
-        max_records = st.slider("Maximum Records per Module", 50, 1000, 200, help="Limit records scanned per SAP module")
-        odata_version = st.selectbox("OData Version", ["v2", "v4"], index=0, help="SAP OData service version")
-        custom_services = st.text_area("Custom OData Services", placeholder="ZHR_PRIVACY_SRV\nZFIN_PRIVACY_SRV", help="Additional custom SAP services to scan")
+    with st.expander("🔧 Advanced Settings"):
+        include_fiori = st.checkbox("Include Fiori/UI5 code analysis", value=True)
+        include_btp = st.checkbox("Include BTP/CAP code analysis", value=True)
+        include_hana = st.checkbox("Include HANA artifacts analysis", value=True)
     
-    if st.button("🚀 Start SAP Scan", type="primary"):
+    if st.button("🚀 Start SAP Code Scan", type="primary"):
+        if source_type == "Repository URL" and not repo_url:
+            st.error("Please enter a repository URL")
+            return
+        
         try:
-            scanner = EnterpriseConnectorScanner(
-                connector_type='sap',
-                credentials=credentials,
-                region=region,
-                max_items=max_records
-            )
+            scanner = SAPRepoScanner(region=region)
             
             scan_config = {
-                'scan_hr_data': scan_hr_data,
-                'scan_customer_data': scan_customer_data,
-                'scan_vendor_data': scan_vendor_data,
-                'scan_finance_data': scan_finance_data,
-                'detect_bsn_fields': detect_bsn_fields,
-                'detect_kvk_fields': detect_kvk_fields,
-                'detect_tax_numbers': detect_tax_numbers,
-                'uavg_compliance': uavg_compliance,
-                'odata_version': odata_version,
-                'custom_services': custom_services.split('\n') if custom_services else []
+                'scan_gdpr': scan_gdpr,
+                'scan_uavg': scan_uavg,
+                'scan_nis2': scan_nis2,
+                'scan_soc2': scan_soc2,
+                'detect_pii': detect_pii,
+                'detect_abap_tables': detect_abap_tables,
+                'detect_secrets': detect_secrets,
+                'detect_security': detect_security,
+                'include_fiori': include_fiori,
+                'include_btp': include_btp,
+                'include_hana': include_hana
             }
             
-            with st.spinner("Scanning SAP ERP system..."):
-                scan_results = scanner.scan_enterprise_source(scan_config)
+            with st.spinner("Scanning SAP code repository for compliance issues..."):
+                if source_type == "Demo Mode":
+                    scan_results = scanner.scan_repository(
+                        repo_url="https://github.com/SAP-samples/abap-platform-refscen-flight",
+                        scan_config=scan_config
+                    )
+                else:
+                    scan_results = scanner.scan_repository(
+                        repo_url=repo_url,
+                        branch=branch if branch else None,
+                        auth_token=auth_token if auth_token else None,
+                        scan_config=scan_config
+                    )
             
             if scan_results.get('success'):
-                # Store results in aggregator database
                 try:
                     from services.results_aggregator import ResultsAggregator
                     aggregator = ResultsAggregator()
                     
                     complete_result = {
                         **scan_results,
-                        'scan_type': 'enterprise connector',
-                        'total_pii_found': scan_results.get('pii_instances_found', 0),
-                        'high_risk_count': scan_results.get('high_risk_findings', 0),
+                        'scan_type': 'sap_repo',
+                        'total_pii_found': scan_results.get('summary', {}).get('pii_exposures', 0),
+                        'high_risk_count': scan_results.get('summary', {}).get('critical_findings', 0) + scan_results.get('summary', {}).get('high_findings', 0),
                         'region': region,
-                        'files_scanned': scan_results.get('total_items_scanned', 0),
                         'username': username,
                         'user_id': st.session_state.get('user_id', username),
-                        'connector_type': 'SAP'
+                        'connector_type': 'SAP Repository'
                     }
                     
                     stored_scan_id = aggregator.save_scan_result(username=username, result=complete_result)
@@ -6755,22 +6758,106 @@ def render_sap_connector(region: str, username: str):
                 except Exception as store_error:
                     st.error(f"Failed to store scan results: {store_error}")
                 
-                display_enterprise_scan_results(scan_results, 'SAP')
+                st.success(f"✅ SAP Code Scan Complete!")
                 
-                # SAP-specific findings summary
-                if scan_results.get('bsn_instances_found', 0) > 0:
-                    st.warning(f"⚠️ {scan_results['bsn_instances_found']} BSN instances found in SAP HR module - Immediate UAVG compliance review required")
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Files Scanned", scan_results.get('files_scanned', 0))
+                with col2:
+                    st.metric("Total Findings", scan_results.get('total_findings', 0))
+                with col3:
+                    compliance_score = scan_results.get('compliance_score', 0)
+                    st.metric("Compliance Score", f"{compliance_score}%")
+                with col4:
+                    severity = scan_results.get('severity', 'none').upper()
+                    st.metric("Severity", severity)
                 
-                if scan_results.get('hr_records_scanned', 0) > 0:
-                    st.info(f"👥 Scanned {scan_results['hr_records_scanned']} HR records from SAP PA0002")
+                compliance = scan_results.get('compliance', {})
+                st.markdown("### Compliance Framework Status")
                 
-                if scan_results.get('customer_records_scanned', 0) > 0:
-                    st.info(f"🏢 Scanned {scan_results['customer_records_scanned']} customer records from SAP KNA1")
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    gdpr_status = compliance.get('gdpr', {})
+                    status_icon = "✅" if gdpr_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**GDPR**: {status_icon} ({gdpr_status.get('finding_count', 0)} issues)")
+                with col2:
+                    uavg_status = compliance.get('uavg', {})
+                    status_icon = "✅" if uavg_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**UAVG**: {status_icon} ({uavg_status.get('finding_count', 0)} issues)")
+                with col3:
+                    nis2_status = compliance.get('nis2', {})
+                    status_icon = "✅" if nis2_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**NIS2**: {status_icon} ({nis2_status.get('finding_count', 0)} issues)")
+                with col4:
+                    soc2_status = compliance.get('soc2', {})
+                    status_icon = "✅" if soc2_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**SOC2**: {status_icon} ({soc2_status.get('finding_count', 0)} issues)")
+                
+                findings = scan_results.get('findings', [])
+                if findings:
+                    st.markdown("### Findings by Category")
+                    
+                    tab1, tab2, tab3 = st.tabs(["🔍 PII Exposure", "🔒 Security Issues", "📊 SAP-Specific"])
+                    
+                    with tab1:
+                        pii_findings = [f for f in findings if f.get('category') == 'pii_exposure']
+                        if pii_findings:
+                            for finding in pii_findings[:10]:
+                                severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(finding['severity'], "⚪")
+                                with st.expander(f"{severity_color} {finding['description']} - {finding['file_path']}"):
+                                    st.markdown(f"**Line:** {finding['line_number']}")
+                                    st.markdown(f"**GDPR Articles:** {', '.join(finding.get('gdpr_articles', []))}")
+                                    st.markdown(f"**UAVG Articles:** {', '.join(finding.get('uavg_articles', []))}")
+                                    st.markdown(f"**Remediation:** {finding.get('remediation', 'N/A')}")
+                                    st.code(finding.get('context', ''), language='abap')
+                        else:
+                            st.success("No PII exposure issues found")
+                    
+                    with tab2:
+                        security_findings = [f for f in findings if f.get('category') == 'security_vulnerability']
+                        if security_findings:
+                            for finding in security_findings[:10]:
+                                severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(finding['severity'], "⚪")
+                                with st.expander(f"{severity_color} {finding['description']} - {finding['file_path']}"):
+                                    st.markdown(f"**Line:** {finding['line_number']}")
+                                    st.markdown(f"**NIS2 Articles:** {', '.join(finding.get('nis2_articles', []))}")
+                                    st.markdown(f"**SOC2 Controls:** {', '.join(finding.get('soc2_controls', []))}")
+                                    st.markdown(f"**Remediation:** {finding.get('remediation', 'N/A')}")
+                                    st.code(finding.get('context', ''), language='javascript')
+                        else:
+                            st.success("No security vulnerabilities found")
+                    
+                    with tab3:
+                        sap_findings = [f for f in findings if f.get('category') == 'sap_specific']
+                        if sap_findings:
+                            for finding in sap_findings[:10]:
+                                severity_color = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🟢"}.get(finding['severity'], "⚪")
+                                with st.expander(f"{severity_color} {finding['description']} - {finding['file_path']}"):
+                                    st.markdown(f"**Line:** {finding['line_number']}")
+                                    st.markdown(f"**GDPR Articles:** {', '.join(finding.get('gdpr_articles', []))}")
+                                    st.markdown(f"**Remediation:** {finding.get('remediation', 'N/A')}")
+                                    st.code(finding.get('context', ''), language='abap')
+                        else:
+                            st.success("No SAP-specific issues found")
+                
+                try:
+                    report_generator = UnifiedHTMLReportGenerator()
+                    html_report = report_generator.generate_report(scan_results)
+                    
+                    st.download_button(
+                        label="📥 Download Full Compliance Report (HTML)",
+                        data=html_report,
+                        file_name=f"sap_compliance_report_{scan_results.get('scan_id', 'report')}.html",
+                        mime="text/html"
+                    )
+                except Exception as report_error:
+                    st.warning(f"Report generation unavailable: {report_error}")
+                
             else:
                 st.error(f"SAP scan failed: {scan_results.get('error', 'Unknown error')}")
         
         except Exception as e:
-            st.error(f"SAP connector failed: {str(e)}")
+            st.error(f"SAP repository scan failed: {str(e)}")
 
 def _build_connector_metrics(connector_name: str, scan_results: dict) -> dict:
     """Build connector-specific metrics based on connector type."""
