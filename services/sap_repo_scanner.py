@@ -45,9 +45,15 @@ class SAPRepoScanner:
             '.properties', '.env', '.config', '.txt', '.md'
         ]
         
+        self.excluded_files = [
+            'CHANGELOG', 'changelog', 'HISTORY', 'history', 'NEWS', 'RELEASES',
+            'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'Gemfile.lock',
+            'composer.lock', 'poetry.lock', 'Cargo.lock', 'go.sum'
+        ]
+        
         self.sap_pii_patterns = {
             'bsn_number': {
-                'pattern': r'\b[0-9]{9}\b',
+                'pattern': r'(?i)(?:bsn|burgerservicenummer|sofi|citizen.?service)\s*[=:]\s*["\']?([0-9]{9})["\']?',
                 'description': 'Netherlands BSN (Social Security Number)',
                 'severity': 'Critical',
                 'gdpr_articles': ['Art. 9', 'Art. 87'],
@@ -56,7 +62,7 @@ class SAPRepoScanner:
                 'soc2_controls': ['CC6.1', 'CC6.7']
             },
             'kvk_number': {
-                'pattern': r'\b[0-9]{8}\b',
+                'pattern': r'(?i)(?:kvk|kamer.?van.?koophandel|chamber.?of.?commerce|coc)\s*[=:]\s*["\']?([0-9]{8})["\']?',
                 'description': 'Netherlands KvK (Chamber of Commerce) Number',
                 'severity': 'High',
                 'gdpr_articles': ['Art. 6'],
@@ -65,7 +71,7 @@ class SAPRepoScanner:
                 'soc2_controls': ['CC6.1']
             },
             'iban_number': {
-                'pattern': r'\b[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}\b',
+                'pattern': r'\b(NL[0-9]{2}[A-Z]{4}[0-9]{10}|DE[0-9]{2}[A-Z0-9]{4}[0-9]{14}|BE[0-9]{14}|FR[0-9]{2}[A-Z0-9]{11}[0-9]{11})\b',
                 'description': 'IBAN Bank Account Number',
                 'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 32'],
@@ -73,9 +79,9 @@ class SAPRepoScanner:
                 'nis2_articles': ['Art. 21'],
                 'soc2_controls': ['CC6.1', 'CC6.7']
             },
-            'email_address': {
-                'pattern': r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-                'description': 'Email Address',
+            'email_personal': {
+                'pattern': r'(?i)(?:email|e-mail|mail)\s*[=:]\s*["\']([A-Za-z0-9._%+-]+@(?!example\.com|test\.com|localhost)[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})["\']',
+                'description': 'Personal Email Address in Code',
                 'severity': 'Medium',
                 'gdpr_articles': ['Art. 6'],
                 'uavg_articles': [],
@@ -83,7 +89,7 @@ class SAPRepoScanner:
                 'soc2_controls': ['CC6.1']
             },
             'phone_nl': {
-                'pattern': r'\b(?:\+31|0031|0)[1-9][0-9]{8}\b',
+                'pattern': r'(?i)(?:phone|telefoon|tel|mobile|mobiel)\s*[=:]\s*["\']?(\+31|0031)[0-9]{9}["\']?',
                 'description': 'Netherlands Phone Number',
                 'severity': 'Medium',
                 'gdpr_articles': ['Art. 6'],
@@ -92,7 +98,7 @@ class SAPRepoScanner:
                 'soc2_controls': ['CC6.1']
             },
             'passport_nl': {
-                'pattern': r'\b[A-Z]{2}[A-Z0-9]{6}[0-9]\b',
+                'pattern': r'(?i)(?:passport|paspoort|reisdocument)\s*[=:]\s*["\']?([A-Z]{2}[A-Z0-9]{6}[0-9])["\']?',
                 'description': 'Netherlands Passport Number',
                 'severity': 'Critical',
                 'gdpr_articles': ['Art. 9', 'Art. 87'],
@@ -101,7 +107,7 @@ class SAPRepoScanner:
                 'soc2_controls': ['CC6.1', 'CC6.7']
             },
             'credit_card': {
-                'pattern': r'\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b',
+                'pattern': r'(?i)(?:card|credit|cc|creditcard)\s*[=:]\s*["\']?(4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})["\']?',
                 'description': 'Credit Card Number',
                 'severity': 'Critical',
                 'gdpr_articles': ['Art. 32'],
@@ -110,7 +116,7 @@ class SAPRepoScanner:
                 'soc2_controls': ['CC6.1', 'CC6.7', 'CC7.2']
             },
             'date_of_birth': {
-                'pattern': r'\b(?:geboortedatum|birth_?date|dob|birthday)\s*[=:]\s*["\']?\d{1,4}[-/]\d{1,2}[-/]\d{1,4}',
+                'pattern': r'(?i)(?:geboortedatum|birth_?date|dob|birthday|date.?of.?birth)\s*[=:]\s*["\']?\d{1,4}[-/]\d{1,2}[-/]\d{1,4}["\']?',
                 'description': 'Date of Birth Field',
                 'severity': 'High',
                 'gdpr_articles': ['Art. 6', 'Art. 9'],
@@ -405,6 +411,11 @@ class SAPRepoScanner:
         """Scan a single file for SAP-specific compliance issues."""
         findings = []
         relative_path = os.path.relpath(file_path, base_path)
+        filename = os.path.basename(file_path)
+        
+        if any(excluded in filename for excluded in self.excluded_files):
+            logger.debug(f"Skipping excluded file: {filename}")
+            return findings
         
         try:
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
