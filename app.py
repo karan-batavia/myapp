@@ -1096,41 +1096,49 @@ def render_landing_page():
         }
     ]
     
-    # Display scanners in modern card grid - 2 columns with enhanced styling
+    # Display scanners in premium card grid - 2 columns with enterprise styling
     def render_scanner_card(scanner):
         return f"""
         <div style="
-            background: #ffffff;
-            border-left: 4px solid {scanner['color']};
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 0.6rem 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            min-height: 280px;
+            background: linear-gradient(180deg, #FAFBFF 0%, #FFFFFF 100%);
+            border: 1px solid #E2E8F0;
+            border-top: 3px solid {scanner['color']};
+            border-radius: 12px;
+            padding: 1.5rem 1.5rem 1.25rem 1.5rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+            min-height: 300px;
             display: flex;
             flex-direction: column;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         ">
-            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+            <div style="text-align: center; margin-bottom: 1.2rem;">
                 <div style="
-                    width: 48px;
-                    height: 48px;
-                    background: linear-gradient(135deg, {scanner['color']}20, {scanner['color']}10);
-                    border-radius: 10px;
-                    display: flex;
+                    width: 56px;
+                    height: 56px;
+                    background: linear-gradient(145deg, {scanner['color']}18, {scanner['color']}08);
+                    border: 2px solid {scanner['color']}25;
+                    border-radius: 14px;
+                    display: inline-flex;
                     align-items: center;
                     justify-content: center;
-                    margin-right: 0.8rem;
-                    flex-shrink: 0;
+                    margin-bottom: 0.75rem;
                 ">
-                    <span style="font-size: 1.5rem;">{scanner['icon']}</span>
+                    <span style="font-size: 1.6rem;">{scanner['icon']}</span>
                 </div>
-                <h3 style="color: {scanner['color']}; margin: 0; font-size: 1.15rem; font-weight: 600;">{scanner['title']}</h3>
+                <h3 style="color: #1B1F3B; margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em;">{scanner['title']}</h3>
             </div>
-            <p style="color: #444; font-size: 0.88rem; line-height: 1.5; margin: 0 0 1rem 0; flex-grow: 0;">
+            <p style="color: #4A5568; font-size: 0.9rem; line-height: 1.55; margin: 0 0 1.1rem 0; text-align: center; flex-shrink: 0;">
                 {scanner['description']}
             </p>
-            <div style="font-size: 0.82rem; color: #666; line-height: 1.6; flex-grow: 1;">
-                {"".join([f'<div style="margin-bottom: 0.3rem;"><span style="color: {scanner["color"]}; margin-right: 0.4rem;">&#10003;</span>{feature}</div>' for feature in scanner['features'][:4]])}
+            <div style="
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.4rem;
+                justify-content: center;
+                margin-top: auto;
+            ">
+                {"".join([f'<span style="display: inline-block; background: {scanner["color"]}12; color: {scanner["color"]}; font-size: 0.75rem; font-weight: 500; padding: 0.35rem 0.65rem; border-radius: 6px; white-space: nowrap;">{feature}</span>' for feature in scanner['features'][:4]])}
             </div>
         </div>
         """
