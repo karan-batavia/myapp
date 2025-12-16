@@ -6479,11 +6479,19 @@ def render_salesforce_connector(region: str, username: str):
     from services.enterprise_connector_scanner import EnterpriseConnectorScanner
     from utils.activity_tracker import ScannerType
     
-    st.subheader("💼 Salesforce CRM Integration")
-    st.write("Scan Salesforce Accounts, Contacts, and Leads for PII with Netherlands BSN/KvK specialization.")
+    st.subheader("💼 Salesforce Integration")
+    st.write("Scan Salesforce CRM data or code repositories for PII with Netherlands BSN/KvK specialization.")
     
-    # Competitive advantage highlight
     st.success("🎯 **Enterprise Revenue Driver**: Salesforce integration enables €5K-10K enterprise deals vs €250 SME pricing. Critical for €25K MRR achievement.")
+    
+    salesforce_tab1, salesforce_tab2 = st.tabs(["🏢 CRM Data Scan", "📁 Code Repository Scan"])
+    
+    with salesforce_tab2:
+        render_salesforce_repo_scanner(region, username)
+    
+    with salesforce_tab1:
+        st.markdown("### CRM Data Integration")
+        st.write("Scan Salesforce Accounts, Contacts, and Leads for PII.")
     
     # Authentication setup
     st.markdown("### Authentication Setup")
@@ -6638,6 +6646,213 @@ def render_salesforce_connector(region: str, username: str):
         
         except Exception as e:
             st.error(f"Salesforce connector failed: {str(e)}")
+
+def render_salesforce_repo_scanner(region: str, username: str):
+    """Salesforce Code Repository Scanner interface"""
+    from services.salesforce_repo_scanner import SalesforceRepoScanner
+    from services.unified_html_report_generator import UnifiedHTMLReportGenerator
+    
+    st.markdown("### Code Repository Scan")
+    st.write("Scan Salesforce Apex, Lightning, and Visualforce code for GDPR, UAVG, NIS2, SOC2 compliance and fraud patterns.")
+    
+    st.info("💡 **Tip**: Scan your Salesforce DX projects, Apex classes, and Lightning components for security and compliance issues before deployment.")
+    
+    st.markdown("#### Repository Source")
+    
+    sf_source_type = st.radio(
+        "Select source type",
+        ["Repository URL", "Demo Mode"],
+        index=0,
+        key="sf_repo_source",
+        help="Scan Salesforce code from GitHub, GitLab, or Bitbucket"
+    )
+    
+    sf_repo_url = None
+    sf_branch = None
+    sf_auth_token = None
+    
+    if sf_source_type == "Repository URL":
+        sf_repo_url = st.text_input(
+            "Repository URL",
+            placeholder="https://github.com/trailheadapps/lwc-recipes",
+            key="sf_repo_url",
+            help="Enter repository URL containing Salesforce code (Apex, LWC, Aura, Visualforce)"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            sf_branch = st.text_input("Branch (optional)", placeholder="main", key="sf_branch", help="Leave empty for default branch")
+        with col2:
+            sf_auth_token = st.text_input("Access Token (for private repos)", type="password", key="sf_auth_token", help="GitHub/GitLab/Bitbucket personal access token")
+    
+    else:
+        st.info("📋 Demo mode will scan a sample Salesforce project to demonstrate compliance detection capabilities.")
+    
+    st.markdown("#### Compliance Frameworks")
+    col1, col2 = st.columns(2)
+    with col1:
+        sf_scan_gdpr = st.checkbox("🇪🇺 GDPR Compliance", value=True, key="sf_gdpr", help="EU General Data Protection Regulation")
+        sf_scan_uavg = st.checkbox("🇳🇱 UAVG Compliance", value=True, key="sf_uavg", help="Netherlands Privacy Law (BSN protection)")
+    with col2:
+        sf_scan_nis2 = st.checkbox("🔒 NIS2 Directive", value=True, key="sf_nis2", help="EU Network and Information Security")
+        sf_scan_soc2 = st.checkbox("📋 SOC2 Type II", value=True, key="sf_soc2", help="Service Organization Controls")
+    
+    st.markdown("#### Salesforce-Specific Detection")
+    col1, col2 = st.columns(2)
+    with col1:
+        sf_detect_pii = st.checkbox("🔍 PII Exposure (BSN, KvK, IBAN)", value=True, key="sf_pii", help="Detect Netherlands-specific personal data")
+        sf_detect_soql = st.checkbox("💾 SOQL/DML Security", value=True, key="sf_soql", help="Detect injection risks and CRUD/FLS bypass")
+    with col2:
+        sf_detect_secrets = st.checkbox("🔑 Hardcoded Credentials", value=True, key="sf_secrets", help="Detect passwords, API keys, session IDs")
+        sf_detect_fraud = st.checkbox("🚨 Fraud Detection", value=True, key="sf_fraud", help="Detect price manipulation, approval bypass, audit tampering")
+    
+    with st.expander("🔧 Advanced Settings"):
+        sf_include_lwc = st.checkbox("Include Lightning Web Components", value=True, key="sf_lwc")
+        sf_include_aura = st.checkbox("Include Aura Components", value=True, key="sf_aura")
+        sf_include_vf = st.checkbox("Include Visualforce Pages", value=True, key="sf_vf")
+    
+    if st.button("🚀 Start Salesforce Code Scan", type="primary", key="sf_scan_btn"):
+        if sf_source_type == "Repository URL" and not sf_repo_url:
+            st.error("Please enter a repository URL")
+            return
+        
+        try:
+            scanner = SalesforceRepoScanner(region=region)
+            
+            scan_config = {
+                'scan_pii': sf_detect_pii,
+                'scan_security': sf_detect_secrets or sf_detect_soql,
+                'scan_salesforce_specific': True,
+                'scan_fraud': sf_detect_fraud,
+                'frameworks': []
+            }
+            if sf_scan_gdpr: scan_config['frameworks'].append('gdpr')
+            if sf_scan_uavg: scan_config['frameworks'].append('uavg')
+            if sf_scan_nis2: scan_config['frameworks'].append('nis2')
+            if sf_scan_soc2: scan_config['frameworks'].append('soc2')
+            
+            with st.spinner("Scanning Salesforce code repository for compliance issues..."):
+                if sf_source_type == "Demo Mode":
+                    scan_results = scanner.scan(
+                        repo_url="https://github.com/trailheadapps/lwc-recipes",
+                        scan_config=scan_config
+                    )
+                else:
+                    scan_results = scanner.scan(
+                        repo_url=sf_repo_url,
+                        branch=sf_branch if sf_branch else "main",
+                        access_token=sf_auth_token if sf_auth_token else None,
+                        scan_config=scan_config
+                    )
+            
+            if scan_results.get('success'):
+                try:
+                    from services.results_aggregator import ResultsAggregator
+                    aggregator = ResultsAggregator()
+                    
+                    complete_result = {
+                        **scan_results,
+                        'scan_type': 'salesforce_repo',
+                        'total_pii_found': scan_results.get('summary', {}).get('pii_exposures', 0),
+                        'high_risk_count': scan_results.get('summary', {}).get('critical_findings', 0) + scan_results.get('summary', {}).get('high_findings', 0),
+                        'region': region,
+                        'username': username,
+                        'user_id': st.session_state.get('user_id', username),
+                        'connector_type': 'Salesforce Repository'
+                    }
+                    
+                    aggregator.save_scan_result(username=username, result=complete_result)
+                    
+                except Exception as store_error:
+                    logger.warning(f"Failed to store scan results: {store_error}")
+                
+                st.success(f"✅ Salesforce Code Scan Complete!")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Files Scanned", scan_results.get('files_scanned', 0))
+                with col2:
+                    st.metric("Total Findings", scan_results.get('total_findings', 0))
+                with col3:
+                    compliance_score = scan_results.get('compliance_score', 0)
+                    st.metric("Compliance Score", f"{compliance_score}%")
+                with col4:
+                    severity = scan_results.get('severity', 'none').upper()
+                    st.metric("Severity", severity)
+                
+                compliance = scan_results.get('compliance', {})
+                st.markdown("#### Compliance Framework Status")
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    gdpr_status = compliance.get('gdpr', {})
+                    status_icon = "✅" if gdpr_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**GDPR**: {status_icon} ({gdpr_status.get('finding_count', 0)} issues)")
+                with col2:
+                    uavg_status = compliance.get('uavg', {})
+                    status_icon = "✅" if uavg_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**UAVG**: {status_icon} ({uavg_status.get('finding_count', 0)} issues)")
+                with col3:
+                    nis2_status = compliance.get('nis2', {})
+                    status_icon = "✅" if nis2_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**NIS2**: {status_icon} ({nis2_status.get('finding_count', 0)} issues)")
+                with col4:
+                    soc2_status = compliance.get('soc2', {})
+                    status_icon = "✅" if soc2_status.get('status') == 'compliant' else "❌"
+                    st.markdown(f"**SOC2**: {status_icon} ({soc2_status.get('finding_count', 0)} issues)")
+                
+                fraud_status = compliance.get('fraud', {})
+                if fraud_status.get('finding_count', 0) > 0:
+                    st.error(f"🚨 **Fraud Risk Detected**: {fraud_status.get('finding_count', 0)} potential fraud patterns found!")
+                
+                summary = scan_results.get('summary', {})
+                if summary:
+                    st.markdown("#### Findings Summary")
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("PII Exposures", summary.get('pii_exposures', 0))
+                    with col2:
+                        st.metric("Security Issues", summary.get('security_issues', 0))
+                    with col3:
+                        st.metric("Salesforce Issues", summary.get('salesforce_issues', 0))
+                    with col4:
+                        st.metric("Fraud Patterns", summary.get('fraud_patterns', 0))
+                
+                findings = scan_results.get('findings', [])
+                if findings:
+                    with st.expander(f"📋 View All Findings ({len(findings)} total)", expanded=False):
+                        for category in ['pii_exposure', 'security_vulnerability', 'salesforce_specific', 'fraud_detection']:
+                            cat_findings = [f for f in findings if f.get('category') == category]
+                            if cat_findings:
+                                cat_name = category.replace('_', ' ').title()
+                                st.markdown(f"**{cat_name}** ({len(cat_findings)})")
+                                for finding in cat_findings[:10]:
+                                    severity = finding.get('severity', 'Medium')
+                                    severity_colors = {'Critical': '🔴', 'High': '🟠', 'Medium': '🟡', 'Low': '🟢'}
+                                    st.markdown(f"{severity_colors.get(severity, '⚪')} **{finding.get('type', 'Unknown')}** - {finding.get('location', 'Unknown')}")
+                                    if finding.get('context'):
+                                        st.code(finding.get('context', ''), language='java')
+                                if len(cat_findings) > 10:
+                                    st.info(f"... and {len(cat_findings) - 10} more {cat_name} findings")
+                
+                try:
+                    report_generator = UnifiedHTMLReportGenerator()
+                    html_report = report_generator.generate_html_report(scan_results)
+                    
+                    st.download_button(
+                        label="📥 Download Full Compliance Report (HTML)",
+                        data=html_report,
+                        file_name=f"salesforce_compliance_report_{scan_results.get('scan_id', 'report')}.html",
+                        mime="text/html"
+                    )
+                except Exception as report_error:
+                    st.warning(f"Report generation unavailable: {report_error}")
+                
+            else:
+                st.error(f"Salesforce scan failed: {scan_results.get('error', 'Unknown error')}")
+        
+        except Exception as e:
+            st.error(f"Salesforce code scanner failed: {str(e)}")
 
 def render_sap_connector(region: str, username: str):
     """SAP Code Repository Scanner interface - Scans SAP ABAP, Fiori, BTP code for compliance"""
