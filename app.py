@@ -960,7 +960,7 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # All 11 scanners in modern card grid layout - Enterprise Connector featured prominently
+    # All 11 scanners with images and feature showcase
     scanners = [
         {
             "icon": "🏢", 
@@ -972,7 +972,8 @@ def render_landing_page():
                 _('landing.scanner.enterprise_f3', 'Google Workspace & Drive'),
                 _('landing.scanner.enterprise_f4', 'Salesforce & SAP integration')
             ],
-            "color": "#E91E63"
+            "color": "#E91E63",
+            "image": "attached_assets/stock_images/enterprise_business__764c2338.jpg"
         },
         {
             "icon": "🔍", 
@@ -984,7 +985,8 @@ def render_landing_page():
                 _('landing.scanner.code_f3', 'Secret & API key scanning'),
                 _('landing.scanner.code_f4', 'GDPR compliance mapping')
             ],
-            "color": "#4CAF50"
+            "color": "#4CAF50",
+            "image": "attached_assets/stock_images/source_code_programm_04dfc2fd.jpg"
         },
         {
             "icon": "📄", 
@@ -996,7 +998,8 @@ def render_landing_page():
                 _('landing.scanner.document_f3', 'Contract & HR data detection'),
                 _('landing.scanner.document_f4', 'Automated risk classification')
             ],
-            "color": "#FF9800"
+            "color": "#FF9800",
+            "image": "attached_assets/stock_images/business_document_an_20ba5975.jpg"
         },
         {
             "icon": "🖼️", 
@@ -1008,7 +1011,8 @@ def render_landing_page():
                 _('landing.scanner.image_f3', 'ID document recognition'),
                 _('landing.scanner.image_f4', 'EXIF metadata analysis')
             ],
-            "color": "#9C27B0"
+            "color": "#9C27B0",
+            "image": "attached_assets/stock_images/image_scanning_ocr_p_e6f44510.jpg"
         },
         {
             "icon": "🗄️", 
@@ -1020,7 +1024,8 @@ def render_landing_page():
                 _('landing.scanner.database_f3', 'PII pattern recognition'),
                 _('landing.scanner.database_f4', 'Data retention validation')
             ],
-            "color": "#3F51B5"
+            "color": "#3F51B5",
+            "image": "attached_assets/stock_images/database_server_data_7e35d17a.jpg"
         },
         {
             "icon": "🌐", 
@@ -1032,7 +1037,8 @@ def render_landing_page():
                 _('landing.scanner.website_f3', 'Dark pattern identification'),
                 _('landing.scanner.website_f4', 'Netherlands AP compliance')
             ],
-            "color": "#2196F3"
+            "color": "#2196F3",
+            "image": "attached_assets/stock_images/website_browser_priv_44d7f435.jpg"
         },
         {
             "icon": "🤖", 
@@ -1044,7 +1050,8 @@ def render_landing_page():
                 _('landing.scanner.ai_f3', 'Bias & fairness testing'),
                 _('landing.scanner.ai_f4', 'Model explainability audit')
             ],
-            "color": "#FF5722"
+            "color": "#FF5722",
+            "image": "attached_assets/stock_images/artificial_intellige_1286b6ca.jpg"
         },
         {
             "icon": "📋", 
@@ -1056,7 +1063,8 @@ def render_landing_page():
                 _('landing.scanner.dpia_f3', 'Netherlands UAVG specific'),
                 _('landing.scanner.dpia_f4', 'Ready-to-submit reports')
             ],
-            "color": "#795548"
+            "color": "#795548",
+            "image": "attached_assets/stock_images/compliance_audit_che_60cd1b01.jpg"
         },
         {
             "icon": "🛡️", 
@@ -1068,7 +1076,8 @@ def render_landing_page():
                 _('landing.scanner.soc2_f3', 'NIS2 Articles 20-26'),
                 _('landing.scanner.soc2_f4', 'Infrastructure-as-Code scan')
             ],
-            "color": "#607D8B"
+            "color": "#607D8B",
+            "image": "attached_assets/stock_images/cloud_security_shiel_1c7131cb.jpg"
         },
         {
             "icon": "🔗", 
@@ -1080,7 +1089,8 @@ def render_landing_page():
                 _('landing.scanner.api_f3', 'Auth & token validation'),
                 _('landing.scanner.api_f4', 'Response PII scanning')
             ],
-            "color": "#00BCD4"
+            "color": "#00BCD4",
+            "image": "attached_assets/stock_images/api_integration_tech_dca5d7a0.jpg"
         },
         {
             "icon": "🌱", 
@@ -1092,66 +1102,67 @@ def render_landing_page():
                 _('landing.scanner.sustainability_f3', 'Terraform & K8s analysis'),
                 _('landing.scanner.sustainability_f4', 'Green IT recommendations')
             ],
-            "color": "#4CAF50"
+            "color": "#4CAF50",
+            "image": "attached_assets/stock_images/green_technology_sus_29b497d2.jpg"
         }
     ]
     
-    # Display scanners in premium card grid - 2 columns with enterprise styling
-    def render_scanner_card(scanner):
-        return f"""
-        <div style="
-            background: linear-gradient(180deg, #FAFBFF 0%, #FFFFFF 100%);
-            border: 1px solid #E2E8F0;
-            border-top: 3px solid {scanner['color']};
-            border-radius: 12px;
-            padding: 1.5rem 1.5rem 1.25rem 1.5rem;
-            margin: 0.5rem 0;
-            box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
-            min-height: 300px;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        ">
-            <div style="text-align: center; margin-bottom: 1.2rem;">
+    # Display scanners with images - one per row for visual impact
+    for idx, scanner in enumerate(scanners):
+        # Alternate image position (left/right)
+        is_image_left = idx % 2 == 0
+        
+        if is_image_left:
+            img_col, content_col = st.columns([1, 1], gap="large")
+        else:
+            content_col, img_col = st.columns([1, 1], gap="large")
+        
+        with img_col:
+            try:
+                st.image(scanner.get('image', ''), use_container_width=True)
+            except:
+                st.markdown(f"""
                 <div style="
-                    width: 56px;
-                    height: 56px;
-                    background: linear-gradient(145deg, {scanner['color']}18, {scanner['color']}08);
-                    border: 2px solid {scanner['color']}25;
-                    border-radius: 14px;
-                    display: inline-flex;
+                    background: linear-gradient(135deg, {scanner['color']}20, {scanner['color']}05);
+                    border-radius: 12px;
+                    height: 200px;
+                    display: flex;
                     align-items: center;
                     justify-content: center;
-                    margin-bottom: 0.75rem;
                 ">
-                    <span style="font-size: 1.6rem;">{scanner['icon']}</span>
+                    <span style="font-size: 4rem;">{scanner['icon']}</span>
                 </div>
-                <h3 style="color: #1B1F3B; margin: 0; font-size: 1.2rem; font-weight: 700; letter-spacing: -0.01em;">{scanner['title']}</h3>
-            </div>
-            <p style="color: #4A5568; font-size: 0.9rem; line-height: 1.55; margin: 0 0 1.1rem 0; text-align: center; flex-shrink: 0;">
-                {scanner['description']}
-            </p>
-            <div style="
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.4rem;
-                justify-content: center;
-                margin-top: auto;
-            ">
-                {"".join([f'<span style="display: inline-block; background: {scanner["color"]}12; color: {scanner["color"]}; font-size: 0.75rem; font-weight: 500; padding: 0.35rem 0.65rem; border-radius: 6px; white-space: nowrap;">{feature}</span>' for feature in scanner['features'][:4]])}
-            </div>
-        </div>
-        """
-    
-    for i in range(0, len(scanners), 2):
-        col1, col2 = st.columns([1, 1], gap="medium")
+                """, unsafe_allow_html=True)
         
-        with col1:
-            st.markdown(render_scanner_card(scanners[i]), unsafe_allow_html=True)
+        with content_col:
+            st.markdown(f"""
+            <div style="padding: 1rem 0;">
+                <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
+                    <span style="
+                        font-size: 1.8rem;
+                        background: linear-gradient(145deg, {scanner['color']}20, {scanner['color']}08);
+                        border-radius: 10px;
+                        width: 50px;
+                        height: 50px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin-right: 0.75rem;
+                    ">{scanner['icon']}</span>
+                    <h3 style="color: {scanner['color']}; margin: 0; font-size: 1.4rem; font-weight: 700;">{scanner['title']}</h3>
+                </div>
+                <p style="color: #444; font-size: 1rem; line-height: 1.6; margin: 0 0 1rem 0;">
+                    {scanner['description']}
+                </p>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {"".join([f'<span style="display: inline-flex; align-items: center; background: {scanner["color"]}12; color: {scanner["color"]}; font-size: 0.85rem; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 20px;"><span style="margin-right: 0.4rem;">&#10003;</span>{feature}</span>' for feature in scanner['features']])}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
-        with col2:
-            if i + 1 < len(scanners):
-                st.markdown(render_scanner_card(scanners[i + 1]), unsafe_allow_html=True)
+        # Add divider between scanners (except last)
+        if idx < len(scanners) - 1:
+            st.markdown("<hr style='margin: 2rem 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
     
     # Call to action section
     st.markdown("---")
