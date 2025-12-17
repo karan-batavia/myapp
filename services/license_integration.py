@@ -233,10 +233,14 @@ class LicenseIntegration:
     
     def show_license_status(self):
         """Show license status in sidebar"""
+        import logging
         
         # First check user's individual license tier from session
         user_license_tier = st.session_state.get('license_tier', None)
         username = st.session_state.get('username', 'User')
+        authenticated = st.session_state.get('authenticated', False)
+        
+        logging.info(f"show_license_status: authenticated={authenticated}, license_tier={user_license_tier}, username={username}")
         
         if user_license_tier:
             # Show user's individual license tier
