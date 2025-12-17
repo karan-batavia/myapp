@@ -94,16 +94,57 @@ class SecureAuthManager:
             return None
     
     def _load_users(self) -> Dict[str, Dict]:
-        """Load users from secure storage"""
-        if not os.path.exists(self.users_file):
-            return self._create_default_users()
+        """Load users from secure storage and database"""
+        # Load file-based users first
+        file_users = {}
+        if os.path.exists(self.users_file):
+            try:
+                with open(self.users_file, 'r') as f:
+                    file_users = json.load(f)
+            except Exception as e:
+                logger.error(f"Error loading users from file: {e}")
         
+        if not file_users:
+            file_users = self._create_default_users()
+        
+        # Also load users from database (platform_users table)
         try:
-            with open(self.users_file, 'r') as f:
-                return json.load(f)
+            from database.db_manager import get_db_connection
+            conn = get_db_connection()
+            if conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT id, username, email, password_hash, role, is_active, license_tier
+                    FROM platform_users WHERE is_active = TRUE
+                """)
+                rows = cursor.fetchall()
+                cursor.close()
+                conn.close()
+                
+                for row in rows:
+                    user_id, username, email, password_hash, role, is_active, license_tier = row
+                    # Add database users (keyed by both username and email for flexibility)
+                    user_data = {
+                        'user_id': str(user_id),
+                        'username': username,
+                        'email': email,
+                        'password_hash': password_hash,
+                        'role': role or 'user',
+                        'active': is_active,
+                        'license_tier': license_tier,
+                        'created_at': None,
+                        'last_login': None,
+                        'failed_attempts': 0,
+                        'locked_until': None
+                    }
+                    file_users[username] = user_data
+                    # Also allow login by email
+                    if email and email != username:
+                        file_users[email] = user_data
         except Exception as e:
-            logger.error(f"Error loading users: {e}")
-            return self._create_default_users()
+            logger.debug(f"Could not load database users: {e}")
+        
+        return file_users
     
     def _save_users(self, users: Dict[str, Dict]) -> None:
         """Save users to secure storage"""
