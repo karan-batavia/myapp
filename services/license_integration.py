@@ -234,6 +234,40 @@ class LicenseIntegration:
     def show_license_status(self):
         """Show license status in sidebar"""
         
+        # First check user's individual license tier from session
+        user_license_tier = st.session_state.get('license_tier', None)
+        username = st.session_state.get('username', 'User')
+        
+        if user_license_tier:
+            # Show user's individual license tier
+            st.sidebar.success("✅ License Active")
+            
+            tier_names = {
+                'trial': 'Free Trial (10 scans)',
+                'startup': 'Startup',
+                'professional': 'Professional',
+                'growth': 'Growth',
+                'scale': 'Scale',
+                'enterprise': 'Enterprise',
+                'free': 'Free'
+            }
+            plan_name = tier_names.get(user_license_tier, user_license_tier.title())
+            
+            with st.sidebar.expander("📋 License Details", expanded=True):
+                st.write(f"**Plan:** {plan_name}")
+                st.write(f"**Account:** {username}")
+                
+                # Show free scans remaining for trial users
+                if user_license_tier == 'trial':
+                    free_scans = st.session_state.get('free_scans_remaining', 10)
+                    st.write(f"**Free Scans:** {free_scans} remaining")
+                    if free_scans <= 3:
+                        st.warning("⚠️ Running low on scans!")
+                        if st.button("Upgrade Now", key="upgrade_sidebar"):
+                            st.session_state['show_pricing'] = True
+            return
+        
+        # Fall back to global license info
         license_info = get_license_info()
         
         if license_info.get("status") == "Valid":
