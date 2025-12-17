@@ -1019,6 +1019,8 @@ def render_landing_page():
                         # Set license tier from database
                         try:
                             import psycopg2
+                            import json
+                            import logging
                             db_url = os.environ.get('DATABASE_URL')
                             if db_url:
                                 conn = psycopg2.connect(db_url)
@@ -1032,16 +1034,28 @@ def render_landing_page():
                                 conn.close()
                                 
                                 if row:
-                                    st.session_state.license_tier = row[0] or 'free'
+                                    tier = row[0] or 'trial'
+                                    st.session_state.license_tier = tier
+                                    logging.info(f"Set license_tier to: {tier} for user {auth_result.username}")
                                     # Load free scans from metadata
                                     if row[1]:
-                                        import json
-                                        metadata = row[1] if isinstance(row[1], dict) else json.loads(row[1]) if row[1] else {}
-                                        st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', 0)
+                                        try:
+                                            metadata = row[1] if isinstance(row[1], dict) else json.loads(str(row[1])) if row[1] else {}
+                                            st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', 10)
+                                        except:
+                                            st.session_state.free_scans_remaining = 10
+                                    else:
+                                        st.session_state.free_scans_remaining = 10
                                 else:
-                                    st.session_state.license_tier = 'free'
-                        except Exception:
-                            st.session_state.license_tier = 'free'
+                                    st.session_state.license_tier = 'trial'
+                                    st.session_state.free_scans_remaining = 10
+                            else:
+                                st.session_state.license_tier = 'trial'
+                                st.session_state.free_scans_remaining = 10
+                        except Exception as e:
+                            logging.error(f"Error loading license tier: {e}")
+                            st.session_state.license_tier = 'trial'
+                            st.session_state.free_scans_remaining = 10
                         
                         # Track successful login
                         try:
