@@ -935,33 +935,45 @@ def render_landing_page():
     
     with hero_col1:
         st.markdown(f"""
-        <div style="padding: 2rem 0;">
-            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(90deg, #003DA5, #E85D04); padding: 0.4rem 1rem; border-radius: 20px; margin-bottom: 1rem;">
-                <span style="font-size: 1rem;">🇳🇱</span>
-                <span style="color: white; font-size: 0.85rem; font-weight: 600;">Netherlands & Europe Focused</span>
-                <span style="font-size: 1rem;">🇪🇺</span>
+        <div style="padding: 1.5rem 0;">
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(90deg, #003DA5, #E85D04); padding: 0.35rem 0.9rem; border-radius: 20px; margin-bottom: 1.25rem;">
+                <span style="font-size: 0.9rem;">🇳🇱</span>
+                <span style="color: white; font-size: 0.8rem; font-weight: 600;">Netherlands & Europe</span>
+                <span style="font-size: 0.9rem;">🇪🇺</span>
             </div>
-            <h1 style="color: #1B2559; font-size: 2.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem;">
-                {_('app.title', 'DataGuardian Pro')}
-            </h1>
-            <p style="font-size: 1.3rem; color: #1f77b4; font-weight: 600; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="width: 52px; height: 52px; background: linear-gradient(145deg, #1B2559, #2D4A8C); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(27, 37, 89, 0.3);">
+                    <span style="font-size: 1.6rem;">🛡️</span>
+                </div>
+                <h1 style="color: #1B2559; font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Data<span style="color: #1f77b4;">Guardian</span> Pro</h1>
+            </div>
+            <p style="font-size: 1.15rem; color: #1f77b4; font-weight: 600; margin: 0 0 1rem 0;">
                 {_('app.subtitle', 'Enterprise Privacy Compliance Platform')}
             </p>
-            <p style="font-size: 1.1rem; color: #555; line-height: 1.7; margin-bottom: 1.5rem;">
+            <p style="font-size: 1rem; color: #555; line-height: 1.65; margin: 0 0 1.25rem 0;">
                 {_('app.tagline', 'Protect your organization from GDPR fines with AI-powered privacy scanning. Automatically discover, analyze, and report personal data across your entire digital ecosystem.')}
             </p>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem;">
-                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #E8F5E9; padding: 0.5rem 0.9rem; border-radius: 8px;">
-                    <span style="color: #2E7D32; font-size: 1rem;">✓</span>
-                    <span style="color: #2E7D32; font-weight: 600; font-size: 0.9rem;">GDPR & UAVG</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #E8F5E9; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #C8E6C9;">
+                    <span style="color: #2E7D32; font-size: 0.9rem;">✓</span>
+                    <span style="color: #2E7D32; font-weight: 600; font-size: 0.8rem;">GDPR & UAVG</span>
                 </div>
-                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #E3F2FD; padding: 0.5rem 0.9rem; border-radius: 8px;">
-                    <span style="color: #1565C0; font-size: 1rem;">✓</span>
-                    <span style="color: #1565C0; font-weight: 600; font-size: 0.9rem;">EU AI Act 2025</span>
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #E3F2FD; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #BBDEFB;">
+                    <span style="color: #1565C0; font-size: 0.9rem;">✓</span>
+                    <span style="color: #1565C0; font-weight: 600; font-size: 0.8rem;">EU AI Act 2025</span>
                 </div>
-                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #FFF3E0; padding: 0.5rem 0.9rem; border-radius: 8px;">
-                    <span style="color: #E65100; font-size: 1rem;">✓</span>
-                    <span style="color: #E65100; font-weight: 600; font-size: 0.9rem;">SOC2 & NIS2</span>
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #FFF3E0; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #FFE0B2;">
+                    <span style="color: #E65100; font-size: 0.9rem;">✓</span>
+                    <span style="color: #E65100; font-weight: 600; font-size: 0.8rem;">SOC2 & NIS2</span>
+                </div>
+            </div>
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #E0E0E0;">
+                <p style="font-size: 0.75rem; color: #888; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Trusted by enterprises across</p>
+                <div style="display: flex; gap: 1.5rem; align-items: center; opacity: 0.7;">
+                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">Microsoft</span>
+                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">Google</span>
+                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">Salesforce</span>
+                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">SAP</span>
                 </div>
             </div>
         </div>
