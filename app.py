@@ -965,12 +965,15 @@ def render_landing_page():
                     <span style="color: #E65100; font-weight: 600; font-size: 0.8rem;">SOC2 & NIS2</span>
                 </div>
             </div>
-            
-            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                <span style="background: #f0f4f8; padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.75rem; color: #1B2559;">⚡ Scan in &lt;60s</span>
-                <span style="background: #f0f4f8; padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.75rem; color: #4CAF50;">🎯 99.7% Accuracy</span>
-                <span style="background: #f0f4f8; padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.75rem; color: #1565C0;">🔒 EU Hosted</span>
-            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Quick stats pills
+        st.markdown("""
+        <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1B2559;white-space:nowrap;">⚡ Scan in &lt;60s</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#4CAF50;white-space:nowrap;">🎯 99.7% Accuracy</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1565C0;white-space:nowrap;">🔒 EU Hosted</span>
         </div>
         """, unsafe_allow_html=True)
     
