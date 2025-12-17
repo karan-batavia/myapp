@@ -5,6 +5,14 @@
     "tagline": "Detecteer, Beheer en Rapporteer Privacynaleving met AI-gestuurde Precisie"
   },
   "landing": {
+    "benefit1_title": "Bespaar Tijd",
+    "benefit1_desc": "Verminder handmatig compliance werk met 90% door geautomatiseerde scanning",
+    "benefit2_title": "Voorkom Boetes",
+    "benefit2_desc": "Voorkom kostbare GDPR-overtredingen voordat ze plaatsvinden",
+    "benefit3_title": "Volledig Inzicht",
+    "benefit3_desc": "Weet precies waar alle persoonsgegevens zich in uw organisatie bevinden",
+    "benefit4_title": "Enterprise Klaar",
+    "benefit4_desc": "SOC2, NIS2, en Nederlandse AP-conforme architectuur",
     "scanner_showcase_title": "Geavanceerde Privacy Scanners",
     "scanner_showcase_subtitle": "Uitgebreide AI-gestuurde tools voor volledige GDPR-naleving en privacybescherming",
     "scanner": {
