@@ -972,24 +972,46 @@ def render_landing_page():
         # Professional image with stats overlay
         st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
         
-        # Unique capability metrics
+        # Platform coverage metrics
         st.markdown("""
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #4CAF5015, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5025;">
-                <div style="font-size: 1.4rem; font-weight: 800; color: #4CAF50;">🔍</div>
-                <div style="font-size: 0.7rem; color: #4CAF50; font-weight: 600;">Fraud Detection</div>
+            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #4CAF5012, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5020;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">11</div>
+                <div style="font-size: 0.65rem; color: #666;">Scanners</div>
             </div>
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #9C27B015, #9C27B005); border-radius: 8px; border: 1px solid #9C27B025;">
-                <div style="font-size: 1.4rem; font-weight: 800; color: #9C27B0;">🖼️</div>
-                <div style="font-size: 0.7rem; color: #9C27B0; font-weight: 600;">Fake Image Analysis</div>
+            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #FF980012, #FF980005); border-radius: 8px; border: 1px solid #FF980020;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #FF9800;">113</div>
+                <div style="font-size: 0.65rem; color: #666;">AI Act Articles</div>
             </div>
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #FF980015, #FF980005); border-radius: 8px; border: 1px solid #FF980025;">
-                <div style="font-size: 1.4rem; font-weight: 800; color: #FF9800;">🧾</div>
-                <div style="font-size: 0.7rem; color: #FF9800; font-weight: 600;">Receipt Verification</div>
+            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #E91E6312, #E91E6305); border-radius: 8px; border: 1px solid #E91E6320;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #E91E63;">100%</div>
+                <div style="font-size: 0.65rem; color: #666;">GDPR</div>
             </div>
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #E91E6315, #E91E6305); border-radius: 8px; border: 1px solid #E91E6325;">
-                <div style="font-size: 1.4rem; font-weight: 800; color: #E91E63;">📄</div>
-                <div style="font-size: 0.7rem; color: #E91E63; font-weight: 600;">Document Forensics</div>
+            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #1f77b412, #1f77b405); border-radius: 8px; border: 1px solid #1f77b420;">
+                <div style="font-size: 1.3rem; font-weight: 800; color: #1f77b4;">NL</div>
+                <div style="font-size: 0.65rem; color: #666;">UAVG</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Unique AI-powered capabilities
+        st.markdown("""
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #6A1B9A12, #6A1B9A05); border-radius: 8px; border: 1px solid #6A1B9A20;">
+                <div style="font-size: 1.1rem;">🔍</div>
+                <div style="font-size: 0.6rem; color: #6A1B9A; font-weight: 600;">Fraud Detection</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #00838F12, #00838F05); border-radius: 8px; border: 1px solid #00838F20;">
+                <div style="font-size: 1.1rem;">🖼️</div>
+                <div style="font-size: 0.6rem; color: #00838F; font-weight: 600;">Fake Image Analysis</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #F4511E12, #F4511E05); border-radius: 8px; border: 1px solid #F4511E20;">
+                <div style="font-size: 1.1rem;">🧾</div>
+                <div style="font-size: 0.6rem; color: #F4511E; font-weight: 600;">Receipt Verification</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #5E35B112, #5E35B105); border-radius: 8px; border: 1px solid #5E35B120;">
+                <div style="font-size: 1.1rem;">📄</div>
+                <div style="font-size: 0.6rem; color: #5E35B1; font-weight: 600;">Document Forensics</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
