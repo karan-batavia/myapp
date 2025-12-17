@@ -936,10 +936,8 @@ def render_landing_page():
     with hero_col1:
         st.markdown(f"""
         <div style="padding: 1.5rem 0;">
-            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(90deg, #003DA5, #E85D04); padding: 0.35rem 0.9rem; border-radius: 20px; margin-bottom: 1.25rem;">
-                <span style="font-size: 0.9rem;">🇳🇱</span>
-                <span style="color: white; font-size: 0.8rem; font-weight: 600;">Netherlands & Europe</span>
-                <span style="font-size: 0.9rem;">🇪🇺</span>
+            <div style="display: inline-flex; align-items: center; background: linear-gradient(135deg, #1565C0 0%, #1976D2 50%, #2196F3 100%); padding: 0.4rem 1rem; border-radius: 25px; margin-bottom: 1.25rem; box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);">
+                <span style="color: white; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.3px;">🇳🇱 Netherlands & Europe 🇪🇺</span>
             </div>
             <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
                 <div style="width: 52px; height: 52px; background: linear-gradient(145deg, #1B2559, #2D4A8C); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(27, 37, 89, 0.3);">
@@ -965,15 +963,6 @@ def render_landing_page():
                 <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #FFF3E0; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #FFE0B2;">
                     <span style="color: #E65100; font-size: 0.9rem;">✓</span>
                     <span style="color: #E65100; font-weight: 600; font-size: 0.8rem;">SOC2 & NIS2</span>
-                </div>
-            </div>
-            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #E0E0E0;">
-                <p style="font-size: 0.75rem; color: #888; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px;">Trusted by enterprises across</p>
-                <div style="display: flex; gap: 1.5rem; align-items: center; opacity: 0.7;">
-                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">Microsoft</span>
-                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">Google</span>
-                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">Salesforce</span>
-                    <span style="font-weight: 700; color: #555; font-size: 0.9rem;">SAP</span>
                 </div>
             </div>
         </div>
