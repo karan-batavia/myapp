@@ -972,22 +972,27 @@ def render_landing_page():
         # Professional image with stats overlay
         st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
         
-        # Key metrics row below image
-        metric_cols = st.columns(4)
-        metrics = [
-            {"value": "11", "label": "Scanners", "color": "#4CAF50"},
-            {"value": "113", "label": "AI Act Articles", "color": "#FF9800"},
-            {"value": "100%", "label": "GDPR", "color": "#E91E63"},
-            {"value": "🇳🇱", "label": "UAVG", "color": "#1f77b4"}
-        ]
-        for i, m in enumerate(metrics):
-            with metric_cols[i]:
-                st.markdown(f'''
-                <div style="text-align: center; padding: 0.5rem; background: linear-gradient(135deg, {m["color"]}15, {m["color"]}05); border-radius: 8px; border: 1px solid {m["color"]}20;">
-                    <div style="font-size: 1.3rem; font-weight: 800; color: {m["color"]};">{m["value"]}</div>
-                    <div style="font-size: 0.7rem; color: #666;">{m["label"]}</div>
-                </div>
-                ''', unsafe_allow_html=True)
+        # Unique capability metrics
+        st.markdown("""
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #4CAF5015, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5025;">
+                <div style="font-size: 1.4rem; font-weight: 800; color: #4CAF50;">🔍</div>
+                <div style="font-size: 0.7rem; color: #4CAF50; font-weight: 600;">Fraud Detection</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #9C27B015, #9C27B005); border-radius: 8px; border: 1px solid #9C27B025;">
+                <div style="font-size: 1.4rem; font-weight: 800; color: #9C27B0;">🖼️</div>
+                <div style="font-size: 0.7rem; color: #9C27B0; font-weight: 600;">Fake Image Analysis</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #FF980015, #FF980005); border-radius: 8px; border: 1px solid #FF980025;">
+                <div style="font-size: 1.4rem; font-weight: 800; color: #FF9800;">🧾</div>
+                <div style="font-size: 0.7rem; color: #FF9800; font-weight: 600;">Receipt Verification</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.6rem 0.4rem; background: linear-gradient(135deg, #E91E6315, #E91E6305); border-radius: 8px; border: 1px solid #E91E6325;">
+                <div style="font-size: 1.4rem; font-weight: 800; color: #E91E63;">📄</div>
+                <div style="font-size: 0.7rem; color: #E91E63; font-weight: 600;">Document Forensics</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Key benefits section
     st.markdown("---")
