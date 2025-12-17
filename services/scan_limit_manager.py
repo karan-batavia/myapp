@@ -26,6 +26,13 @@ class ScanLimitManager:
     
     def __init__(self):
         self.daily_limits = {
+            'trial': {
+                'daily_scans': 10,  # Total 10 scans for trial period
+                'scan_types': ['code', 'document', 'website'],
+                'features': ['basic_reports'],
+                'price': 0,
+                'is_lifetime_limit': True  # Trial has lifetime limit, not daily
+            },
             'free': {
                 'daily_scans': 3,
                 'scan_types': ['code', 'document'],
@@ -67,10 +74,37 @@ class ScanLimitManager:
                 json.dump({}, f)
     
     def get_user_tier(self, username: str) -> str:
-        """Get user's subscription tier"""
-        # For now, get from session state or default to free
-        user_tier = st.session_state.get(f'{username}_tier', 'free')
-        return user_tier
+        """Get user's subscription tier from session or database"""
+        # First check session state
+        if 'license_tier' in st.session_state:
+            return st.session_state.get('license_tier', 'free')
+        
+        # Legacy session key check
+        user_tier = st.session_state.get(f'{username}_tier')
+        if user_tier:
+            return user_tier
+        
+        # Check database for user's tier
+        try:
+            from database.db_manager import get_db_connection
+            conn = get_db_connection()
+            if conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    SELECT license_tier, metadata FROM platform_users 
+                    WHERE username = %s OR email = %s
+                """, (username, username))
+                row = cursor.fetchone()
+                cursor.close()
+                conn.close()
+                
+                if row:
+                    license_tier = row[0] or 'free'
+                    return license_tier
+        except Exception as e:
+            logger.debug(f"Could not get user tier from database: {e}")
+        
+        return 'free'
     
     def set_user_tier(self, username: str, tier: str):
         """Set user's subscription tier"""

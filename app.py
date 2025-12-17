@@ -1016,6 +1016,32 @@ def render_landing_page():
                         st.session_state.user_id = auth_result.user_id
                         st.session_state.auth_token = auth_result.token
                         
+                        # Set license tier from database
+                        try:
+                            from database.db_manager import get_db_connection
+                            conn = get_db_connection()
+                            if conn:
+                                cursor = conn.cursor()
+                                cursor.execute("""
+                                    SELECT license_tier, metadata FROM platform_users 
+                                    WHERE username = %s OR email = %s
+                                """, (auth_result.username, auth_result.username))
+                                row = cursor.fetchone()
+                                cursor.close()
+                                conn.close()
+                                
+                                if row:
+                                    st.session_state.license_tier = row[0] or 'free'
+                                    # Load free scans from metadata
+                                    if row[1]:
+                                        import json
+                                        metadata = row[1] if isinstance(row[1], dict) else json.loads(row[1]) if row[1] else {}
+                                        st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', 0)
+                                else:
+                                    st.session_state.license_tier = 'free'
+                        except Exception:
+                            st.session_state.license_tier = 'free'
+                        
                         # Track successful login
                         try:
                             from services.auth_tracker import track_login_success
