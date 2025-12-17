@@ -105,5 +105,8 @@ test_*/
 *_test.py
 pytest_cache/
 
-# Generated assets (optional)
-attached_assets/
+# Generated assets (exclude temp files but keep stock images)
+attached_assets/*.png
+attached_assets/*.pdf
+attached_assets/image_*.png
+!attached_assets/stock_images/
