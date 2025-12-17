@@ -966,31 +966,10 @@ def render_landing_page():
                 </div>
             </div>
             
-            <!-- Quick Stats Bar -->
-            <div style="margin-top: 1.5rem; padding: 1rem; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; border: 1px solid #dee2e6;">
-                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1.5rem;">⚡</span>
-                        <div>
-                            <div style="font-size: 0.75rem; color: #666;">Scan Speed</div>
-                            <div style="font-size: 1rem; font-weight: 700; color: #1B2559;">< 60 sec</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1.5rem;">🎯</span>
-                        <div>
-                            <div style="font-size: 0.75rem; color: #666;">Accuracy</div>
-                            <div style="font-size: 1rem; font-weight: 700; color: #4CAF50;">99.7%</div>
-                        </div>
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <span style="font-size: 1.5rem;">🔒</span>
-                        <div>
-                            <div style="font-size: 0.75rem; color: #666;">Data Security</div>
-                            <div style="font-size: 1rem; font-weight: 700; color: #1565C0;">EU Hosted</div>
-                        </div>
-                    </div>
-                </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                <span style="background: #f0f4f8; padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.75rem; color: #1B2559;">⚡ Scan in &lt;60s</span>
+                <span style="background: #f0f4f8; padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.75rem; color: #4CAF50;">🎯 99.7% Accuracy</span>
+                <span style="background: #f0f4f8; padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.75rem; color: #1565C0;">🔒 EU Hosted</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
