@@ -968,55 +968,25 @@ def render_landing_page():
         """, unsafe_allow_html=True)
     
     with hero_col2:
-        # Dynamic animated visual showing platform value
-        st.markdown("""
-        <div style="
-            background: linear-gradient(145deg, #1B2559 0%, #2D3A8C 50%, #1f77b4 100%);
-            border-radius: 16px;
-            padding: 2rem;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            min-height: 320px;
-        ">
-            <div style="position: relative; z-index: 2;">
-                <div style="text-align: center; margin-bottom: 1.5rem;">
-                    <span style="font-size: 3rem;">🛡️</span>
-                    <h3 style="color: white; font-size: 1.4rem; margin: 0.5rem 0; font-weight: 700;">Privacy Protection Dashboard</h3>
+        # Professional image with stats overlay
+        st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
+        
+        # Key metrics row below image
+        metric_cols = st.columns(4)
+        metrics = [
+            {"value": "11", "label": "Scanners", "color": "#4CAF50"},
+            {"value": "113", "label": "AI Act Articles", "color": "#FF9800"},
+            {"value": "100%", "label": "GDPR", "color": "#E91E63"},
+            {"value": "🇳🇱", "label": "UAVG", "color": "#1f77b4"}
+        ]
+        for i, m in enumerate(metrics):
+            with metric_cols[i]:
+                st.markdown(f'''
+                <div style="text-align: center; padding: 0.5rem; background: linear-gradient(135deg, {m["color"]}15, {m["color"]}05); border-radius: 8px; border: 1px solid {m["color"]}20;">
+                    <div style="font-size: 1.3rem; font-weight: 800; color: {m["color"]};">{m["value"]}</div>
+                    <div style="font-size: 0.7rem; color: #666;">{m["label"]}</div>
                 </div>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #4CAF50;">11</div>
-                        <div style="font-size: 0.8rem; opacity: 0.9;">Scanners</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #FF9800;">113</div>
-                        <div style="font-size: 0.8rem; opacity: 0.9;">AI Act Articles</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #E91E63;">100%</div>
-                        <div style="font-size: 0.8rem; opacity: 0.9;">GDPR Coverage</div>
-                    </div>
-                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
-                        <div style="font-size: 1.8rem; font-weight: 800; color: #00BCD4;">🇳🇱</div>
-                        <div style="font-size: 0.8rem; opacity: 0.9;">Dutch UAVG</div>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 1.5rem; text-align: center;">
-                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(76,175,80,0.3); padding: 0.5rem 1rem; border-radius: 20px;">
-                        <span style="color: #81C784;">●</span>
-                        <span style="font-size: 0.85rem;">Enterprise-ready compliance platform</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Decorative elements -->
-            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
-            <div style="position: absolute; bottom: -30px; left: -30px; width: 120px; height: 120px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
-        </div>
-        """, unsafe_allow_html=True)
+                ''', unsafe_allow_html=True)
     
     # Key benefits section
     st.markdown("---")
