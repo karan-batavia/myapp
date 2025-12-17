@@ -936,6 +936,11 @@ def render_landing_page():
     with hero_col1:
         st.markdown(f"""
         <div style="padding: 2rem 0;">
+            <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: linear-gradient(90deg, #003DA5, #E85D04); padding: 0.4rem 1rem; border-radius: 20px; margin-bottom: 1rem;">
+                <span style="font-size: 1rem;">🇳🇱</span>
+                <span style="color: white; font-size: 0.85rem; font-weight: 600;">Netherlands & Europe Focused</span>
+                <span style="font-size: 1rem;">🇪🇺</span>
+            </div>
             <h1 style="color: #1B2559; font-size: 2.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 1rem;">
                 {_('app.title', 'DataGuardian Pro')}
             </h1>
@@ -945,39 +950,73 @@ def render_landing_page():
             <p style="font-size: 1.1rem; color: #555; line-height: 1.7; margin-bottom: 1.5rem;">
                 {_('app.tagline', 'Protect your organization from GDPR fines with AI-powered privacy scanning. Automatically discover, analyze, and report personal data across your entire digital ecosystem.')}
             </p>
-            <div style="display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
-                    <span style="color: #333; font-weight: 500;">GDPR & UAVG Compliant</span>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.5rem;">
+                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #E8F5E9; padding: 0.5rem 0.9rem; border-radius: 8px;">
+                    <span style="color: #2E7D32; font-size: 1rem;">✓</span>
+                    <span style="color: #2E7D32; font-weight: 600; font-size: 0.9rem;">GDPR & UAVG</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
-                    <span style="color: #333; font-weight: 500;">EU AI Act 2025 Ready</span>
+                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #E3F2FD; padding: 0.5rem 0.9rem; border-radius: 8px;">
+                    <span style="color: #1565C0; font-size: 1rem;">✓</span>
+                    <span style="color: #1565C0; font-weight: 600; font-size: 0.9rem;">EU AI Act 2025</span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #4CAF50; font-size: 1.2rem;">✓</span>
-                    <span style="color: #333; font-weight: 500;">Netherlands Focused</span>
+                <div style="display: inline-flex; align-items: center; gap: 0.4rem; background: #FFF3E0; padding: 0.5rem 0.9rem; border-radius: 8px;">
+                    <span style="color: #E65100; font-size: 1rem;">✓</span>
+                    <span style="color: #E65100; font-weight: 600; font-size: 0.9rem;">SOC2 & NIS2</span>
                 </div>
             </div>
         </div>
         """, unsafe_allow_html=True)
     
     with hero_col2:
-        try:
-            st.image("attached_assets/stock_images/data_privacy_protect_bf172a8b.jpg", use_container_width=True)
-        except:
-            st.markdown("""
-            <div style="
-                background: linear-gradient(135deg, #1f77b420, #1f77b410);
-                border-radius: 16px;
-                height: 300px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            ">
-                <span style="font-size: 5rem;">🛡️</span>
+        # Dynamic animated visual showing platform value
+        st.markdown("""
+        <div style="
+            background: linear-gradient(145deg, #1B2559 0%, #2D3A8C 50%, #1f77b4 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            min-height: 320px;
+        ">
+            <div style="position: relative; z-index: 2;">
+                <div style="text-align: center; margin-bottom: 1.5rem;">
+                    <span style="font-size: 3rem;">🛡️</span>
+                    <h3 style="color: white; font-size: 1.4rem; margin: 0.5rem 0; font-weight: 700;">Privacy Protection Dashboard</h3>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #4CAF50;">11</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Scanners</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #FF9800;">113</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">AI Act Articles</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #E91E63;">100%</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">GDPR Coverage</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #00BCD4;">🇳🇱</div>
+                        <div style="font-size: 0.8rem; opacity: 0.9;">Dutch UAVG</div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(76,175,80,0.3); padding: 0.5rem 1rem; border-radius: 20px;">
+                        <span style="color: #81C784;">●</span>
+                        <span style="font-size: 0.85rem;">Enterprise-ready compliance platform</span>
+                    </div>
+                </div>
             </div>
-            """, unsafe_allow_html=True)
+            
+            <!-- Decorative elements -->
+            <div style="position: absolute; top: -20px; right: -20px; width: 100px; height: 100px; background: rgba(255,255,255,0.05); border-radius: 50%;"></div>
+            <div style="position: absolute; bottom: -30px; left: -30px; width: 120px; height: 120px; background: rgba(255,255,255,0.03); border-radius: 50%;"></div>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Key benefits section
     st.markdown("---")
