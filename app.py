@@ -833,8 +833,7 @@ def render_freemium_registration():
 Use the navigation menu to start scanning your documents, code, or websites.
                             """)
                             
-                            if st.button("🚀 Start Scanning Now", type="primary"):
-                                st.rerun()
+                            st.rerun()
                         else:
                             st.error(f"Registration failed: {message}")
                             
