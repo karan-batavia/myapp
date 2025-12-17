@@ -831,7 +831,26 @@ def show_plan_details(tier: PricingTier, pricing: Dict[str, Any]):
 
 # Helper function for main app integration
 def show_pricing_in_sidebar():
-    """Show pricing info in sidebar"""
+    """Show pricing info in sidebar - respects user's session tier"""
+    # First check user's individual license tier from session
+    user_license_tier = st.session_state.get('license_tier', None)
+    
+    if user_license_tier:
+        # User has session-based tier - show that instead of global
+        tier_names = {
+            'trial': 'Free Trial',
+            'startup': 'Startup',
+            'professional': 'Professional',
+            'growth': 'Growth',
+            'scale': 'Scale',
+            'enterprise': 'Enterprise',
+            'free': 'Free'
+        }
+        plan_name = tier_names.get(user_license_tier, user_license_tier.title())
+        st.sidebar.markdown(f"**Current Plan**: {plan_name}")
+        return
+    
+    # Fall back to global license tier
     license_integration = LicenseIntegration()
     current_tier = license_integration.get_current_pricing_tier()
     
