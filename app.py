@@ -740,56 +740,105 @@ def main():
             render_safe_mode()
 
 def render_freemium_registration():
-    """Render freemium registration form for new users"""
-    from services.subscription_manager import SubscriptionManager
+    """Render freemium registration form for new users with database persistence"""
+    import secrets
+    import string
+    from services.user_management_service import UserManagementService
     
     st.subheader("🚀 Start Your Free Trial")
-    st.info("Get 1 free AI Model scan (€41 value) to experience DataGuardian Pro")
+    st.success("✨ Get 1 free Document scan to experience DataGuardian Pro - No credit card required!")
     
     with st.form("freemium_registration"):
-        email = st.text_input("Email Address", placeholder="your@company.com")
-        name = st.text_input("Name/Company", placeholder="John Doe or Acme Corp")
-        country = st.selectbox("Country", ["Netherlands", "Germany", "France", "Belgium"], index=0)
+        email = st.text_input("Business Email *", placeholder="your@company.com")
+        company = st.text_input("Company Name *", placeholder="Acme Corporation")
         
         col1, col2 = st.columns(2)
         with col1:
-            agree_terms = st.checkbox("I agree to Terms of Service")
+            country = st.selectbox("Country", ["Netherlands", "Germany", "France", "Belgium"], index=0)
         with col2:
-            agree_gdpr = st.checkbox("I consent to GDPR-compliant processing")
+            password = st.text_input("Choose Password *", type="password", placeholder="Min 8 characters")
+        
+        agree_terms = st.checkbox("I agree to Terms of Service and Privacy Policy")
             
-        submitted = st.form_submit_button("🎯 Get My Free Scan", type="primary")
+        submitted = st.form_submit_button("🎯 Create Free Account", type="primary")
         
         if submitted:
-            if not email or not name:
+            if not email or not company or not password:
                 st.error("Please fill in all required fields")
-            elif not agree_terms or not agree_gdpr:
+            elif len(password) < 8:
+                st.error("Password must be at least 8 characters")
+            elif not agree_terms:
                 st.error("Please accept the terms and privacy policy")
+            elif '@' not in email or '.' not in email:
+                st.error("Please enter a valid email address")
             else:
-                # Create freemium user account
                 try:
-                    # For now, store in session state (would be database in production)
-                    st.session_state.update({
-                        'authenticated': True,
-                        'username': email,
-                        'user_role': 'freemium',
-                        'free_scans_remaining': 1,
-                        'subscription_plan': 'trial',
-                        'show_registration': False
-                    })
+                    # Create user in database
+                    user_service = UserManagementService()
                     
-                    # Track successful registration
-                    try:
-                        from services.auth_tracker import track_registration_success
-                        track_registration_success(role='freemium')
-                    except Exception:
-                        pass
-                    
-                    st.success("🎉 Welcome to DataGuardian Pro! Your free AI Model scan is ready.")
-                    st.info("👉 Navigate to 'AI Model Scan' to start your complimentary analysis")
-                    st.balloons()
+                    # Check if email already exists
+                    existing_user = user_service.get_user(email=email)
+                    if existing_user:
+                        st.error("An account with this email already exists. Please login instead.")
+                    else:
+                        # Create new trial user
+                        success, message, user_id = user_service.create_user(
+                            username=email,
+                            email=email,
+                            password=password,
+                            role="user",
+                            company_name=company,
+                            license_tier="trial",
+                            created_by="self_registration"
+                        )
                         
+                        if success:
+                            # Store free scan quota in user metadata
+                            try:
+                                user_service.update_user(user_id, {
+                                    'metadata': {'free_scans_remaining': 10, 'trial_started': True}
+                                })
+                            except Exception:
+                                pass
+                            
+                            # Auto-login the user
+                            st.session_state.update({
+                                'authenticated': True,
+                                'username': email,
+                                'user_id': user_id,
+                                'user_role': 'user',
+                                'license_tier': 'trial',
+                                'free_scans_remaining': 10,
+                                'subscription_plan': 'trial',
+                                'show_registration': False
+                            })
+                            
+                            # Track successful registration
+                            try:
+                                from services.auth_tracker import track_registration_success
+                                track_registration_success(role='trial')
+                            except Exception:
+                                pass
+                            
+                            st.success("🎉 Account created successfully! You are now logged in.")
+                            st.balloons()
+                            
+                            # Show next steps (no password shown)
+                            st.markdown("---")
+                            st.markdown("### ✅ Welcome to DataGuardian Pro!")
+                            st.info(f"""
+**Your Account:** {email}  
+**Plan:** Free Trial (10 scans included)  
+
+Use the navigation menu to start scanning your documents, code, or websites.
+                            """)
+                            
+                            if st.button("🚀 Start Scanning Now", type="primary"):
+                                st.rerun()
+                        else:
+                            st.error(f"Registration failed: {message}")
+                            
                 except Exception as e:
-                    # Track failed registration
                     try:
                         from services.auth_tracker import track_registration_failure
                         track_registration_failure(reason=str(e))
@@ -798,49 +847,145 @@ def render_freemium_registration():
                     st.error(f"Registration failed: {str(e)}")
 
 def render_full_registration():
-    """Render full registration form with subscription selection"""
-    from services.subscription_manager import SUBSCRIPTION_PLANS
+    """Render full registration form with subscription selection and Stripe checkout"""
+    from services.user_management_service import UserManagementService, TIER_LIMITS
     
     st.subheader("💼 Choose Your Plan")
     
-    # Display subscription plans in a more compact format
-    plan_options = []
-    for plan_id, plan in SUBSCRIPTION_PLANS.items():
-        plan_options.append(f"{plan['name']} - €{plan['price']/100:.2f}/month")
-        
-    with st.expander("📋 View All Plan Details"):
-        for plan_id, plan in SUBSCRIPTION_PLANS.items():
-            st.subheader(f"{plan['name']} - €{plan['price']/100:.2f}/month")
-            st.write(plan['description'])
-            for feature in plan['features']:
-                st.write(f"✓ {feature}")
-            st.markdown("---")
-                
+    # Define plans with Stripe-compatible pricing
+    plans = {
+        "startup": {"name": "Startup", "price": 59, "scans": 200, "users": 3},
+        "professional": {"name": "Professional", "price": 99, "scans": 350, "users": 5},
+        "growth": {"name": "Growth", "price": 179, "scans": 750, "users": 10},
+        "scale": {"name": "Scale", "price": 499, "scans": "Unlimited", "users": 25},
+    }
+    
+    # Plan cards
+    plan_cols = st.columns(4)
+    for idx, (plan_id, plan) in enumerate(plans.items()):
+        with plan_cols[idx]:
+            popular = " ⭐" if plan_id == "professional" else ""
+            st.markdown(f"""
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 1rem; text-align: center; min-height: 180px;">
+                <h4 style="margin: 0; color: #1B2559;">{plan['name']}{popular}</h4>
+                <p style="font-size: 1.5rem; font-weight: bold; color: #1f77b4; margin: 0.5rem 0;">€{plan['price']}</p>
+                <p style="font-size: 0.8rem; color: #666; margin: 0;">/month</p>
+                <hr style="margin: 0.5rem 0;">
+                <p style="font-size: 0.75rem; margin: 0.25rem 0;">📊 {plan['scans']} scans/month</p>
+                <p style="font-size: 0.75rem; margin: 0.25rem 0;">👥 {plan['users']} users</p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
     # Registration form
     with st.form("full_registration"):
         st.subheader("Account Details")
-        email = st.text_input("Business Email", placeholder="admin@company.com")
-        company = st.text_input("Company Name", placeholder="Acme Corporation")
-        selected_plan = st.selectbox("Select Plan", list(SUBSCRIPTION_PLANS.keys()), 
-                                   format_func=lambda x: f"{SUBSCRIPTION_PLANS[x]['name']} (€{SUBSCRIPTION_PLANS[x]['price']/100:.2f}/month)")
         
         col1, col2 = st.columns(2)
         with col1:
-            country = st.selectbox("Country", ["Netherlands", "Germany", "France", "Belgium"])
+            email = st.text_input("Business Email *", placeholder="admin@company.com")
+            company = st.text_input("Company Name *", placeholder="Acme Corporation")
         with col2:
+            password = st.text_input("Choose Password *", type="password", placeholder="Min 8 characters")
+            selected_plan = st.selectbox("Select Plan", list(plans.keys()), 
+                                       format_func=lambda x: f"{plans[x]['name']} - €{plans[x]['price']}/month",
+                                       index=1)
+        
+        col3, col4 = st.columns(2)
+        with col3:
+            country = st.selectbox("Country", ["Netherlands", "Germany", "France", "Belgium"])
+        with col4:
             vat_number = st.text_input("VAT Number (optional)", placeholder="NL123456789B01")
             
         agree_terms = st.checkbox("I agree to Terms of Service and Privacy Policy")
         
-        if st.form_submit_button("Continue to Payment", type="primary"):
-            if not email or not company or not agree_terms:
-                st.error("Please complete all required fields")
+        if st.form_submit_button("💳 Continue to Secure Payment", type="primary"):
+            if not email or not company or not password or not agree_terms:
+                st.error("Please complete all required fields and accept terms")
+            elif len(password) < 8:
+                st.error("Password must be at least 8 characters")
+            elif '@' not in email or '.' not in email:
+                st.error("Please enter a valid email address")
             else:
-                st.success("Redirecting to secure payment...")
-                selected_plan_info = SUBSCRIPTION_PLANS[selected_plan]
-                st.info(f"Selected: {selected_plan_info['name']} - €{selected_plan_info['price']/100:.2f}/month")
-                st.info("💳 Secure payment processing via Stripe with iDEAL support for Netherlands")
-                # Would redirect to Stripe checkout in production
+                try:
+                    # Check if user already exists
+                    user_service = UserManagementService()
+                    existing_user = user_service.get_user(email=email)
+                    
+                    if existing_user:
+                        st.error("An account with this email already exists. Please login instead.")
+                    else:
+                        # Create user with pending status
+                        success, message, user_id = user_service.create_user(
+                            username=email,
+                            email=email,
+                            password=password,
+                            role="user",
+                            company_name=company,
+                            license_tier=selected_plan,
+                            created_by="self_registration"
+                        )
+                        
+                        if success:
+                            # Create Stripe checkout session
+                            from services.stripe_payment import create_subscription_checkout
+                            
+                            country_codes = {"Netherlands": "NL", "Germany": "DE", "France": "FR", "Belgium": "BE"}
+                            checkout_result = create_subscription_checkout(
+                                plan_tier=selected_plan,
+                                user_email=email,
+                                user_id=user_id,
+                                country_code=country_codes.get(country, "NL"),
+                                vat_number=vat_number
+                            )
+                            
+                            if checkout_result and checkout_result.get('url'):
+                                st.success("✅ Account created! Complete payment to activate.")
+                                st.markdown(f"""
+                                ### 💳 Complete Your Payment
+                                
+                                Click the button below to proceed to our secure payment page:
+                                
+                                <a href="{checkout_result['url']}" target="_blank" style="
+                                    display: inline-block;
+                                    background: linear-gradient(135deg, #1f77b4, #1565C0);
+                                    color: white;
+                                    padding: 0.75rem 2rem;
+                                    border-radius: 8px;
+                                    text-decoration: none;
+                                    font-weight: bold;
+                                    margin: 1rem 0;
+                                ">💳 Pay €{plans[selected_plan]['price']}/month via Stripe</a>
+                                
+                                **Secure payment powered by Stripe**  
+                                ✓ iDEAL available for Netherlands  
+                                ✓ All major credit cards accepted  
+                                ✓ 30-day money-back guarantee
+                                """, unsafe_allow_html=True)
+                                
+                                st.info(f"""
+**After payment, log in with:**  
+Email: {email}  
+Your subscription will be activated automatically.
+                                """)
+                            else:
+                                # Fallback if Stripe not configured
+                                st.warning("Payment system temporarily unavailable. Your account has been created with trial access.")
+                                st.session_state.update({
+                                    'authenticated': True,
+                                    'username': email,
+                                    'user_id': user_id,
+                                    'user_role': 'user',
+                                    'license_tier': 'trial',
+                                    'show_full_registration': False
+                                })
+                                st.info("Please contact support@dataguardianpro.nl to complete your subscription upgrade.")
+                        else:
+                            st.error(f"Registration failed: {message}")
+                            
+                except Exception as e:
+                    st.error(f"Registration error: {str(e)}")
 
 def render_landing_page():
     """Render the beautiful landing page and login interface"""

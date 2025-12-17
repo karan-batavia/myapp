@@ -356,6 +356,108 @@ def create_checkout_session(scan_type: str, user_email: str, metadata: Optional[
         st.error("An unexpected error occurred. Please contact support.")
         return None
 
+def create_subscription_checkout(plan_tier: str, user_email: str, user_id: int, 
+                                  country_code: str = "NL", vat_number: str = None) -> Optional[Dict[str, Any]]:
+    """
+    Create a Stripe checkout session for subscription plans
+    
+    Args:
+        plan_tier: The subscription tier (startup, professional, growth, scale)
+        user_email: Email of the user
+        user_id: Database user ID for reference
+        country_code: Country code for payment methods
+        vat_number: Optional VAT number for B2B
+        
+    Returns:
+        Dictionary containing checkout session details if successful
+    """
+    # Plan pricing in cents
+    PLAN_PRICES = {
+        "startup": 5900,      # €59/month
+        "professional": 9900, # €99/month
+        "growth": 17900,      # €179/month
+        "scale": 49900,       # €499/month
+        "enterprise": 119900  # €1,199/month
+    }
+    
+    PLAN_NAMES = {
+        "startup": "DataGuardian Pro Startup",
+        "professional": "DataGuardian Pro Professional",
+        "growth": "DataGuardian Pro Growth",
+        "scale": "DataGuardian Pro Scale",
+        "enterprise": "DataGuardian Pro Enterprise"
+    }
+    
+    if plan_tier not in PLAN_PRICES:
+        return None
+    
+    if not stripe.api_key:
+        return None
+    
+    try:
+        # Payment methods including iDEAL for Netherlands
+        payment_methods = ["card"]
+        if country_code.upper() == "NL":
+            payment_methods.extend(["ideal", "sepa_debit"])
+        
+        # Build URLs
+        success_url = f"{get_base_url()}?payment_success=true&plan={plan_tier}"
+        cancel_url = f"{get_base_url()}?payment_cancelled=true"
+        
+        # Create checkout session for subscription
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=payment_methods,
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "eur",
+                        "product_data": {
+                            "name": PLAN_NAMES[plan_tier],
+                            "description": f"Monthly subscription - {plan_tier.title()} tier",
+                        },
+                        "unit_amount": PLAN_PRICES[plan_tier],
+                        "recurring": {
+                            "interval": "month"
+                        }
+                    },
+                    "quantity": 1,
+                },
+            ],
+            mode="subscription",
+            success_url=success_url,
+            cancel_url=cancel_url,
+            customer_email=user_email,
+            metadata={
+                "user_id": str(user_id),
+                "plan_tier": plan_tier,
+                "country_code": country_code,
+                "vat_number": vat_number or ""
+            },
+            subscription_data={
+                "metadata": {
+                    "user_id": str(user_id),
+                    "plan_tier": plan_tier
+                }
+            }
+        )
+        
+        return {
+            "id": checkout_session.id,
+            "url": checkout_session.url,
+            "amount": PLAN_PRICES[plan_tier] / 100,
+            "currency": "EUR",
+            "plan": plan_tier
+        }
+        
+    except stripe.StripeError as e:
+        import logging
+        logging.error(f"Stripe subscription checkout error: {e}")
+        return None
+    except Exception as e:
+        import logging
+        logging.error(f"Subscription checkout error: {e}")
+        return None
+
 def verify_payment(session_id: str) -> Dict[str, Any]:
     """
     Verify a payment based on a checkout session ID with security checks
