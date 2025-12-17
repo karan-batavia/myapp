@@ -109,9 +109,10 @@ class SecureAuthManager:
         
         # Also load users from database (platform_users table)
         try:
-            from database.db_manager import get_db_connection
-            conn = get_db_connection()
-            if conn:
+            import psycopg2
+            db_url = os.environ.get('DATABASE_URL')
+            if db_url:
+                conn = psycopg2.connect(db_url)
                 cursor = conn.cursor()
                 cursor.execute("""
                     SELECT id, username, email, password_hash, role, is_active, license_tier

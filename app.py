@@ -1018,9 +1018,10 @@ def render_landing_page():
                         
                         # Set license tier from database
                         try:
-                            from database.db_manager import get_db_connection
-                            conn = get_db_connection()
-                            if conn:
+                            import psycopg2
+                            db_url = os.environ.get('DATABASE_URL')
+                            if db_url:
+                                conn = psycopg2.connect(db_url)
                                 cursor = conn.cursor()
                                 cursor.execute("""
                                     SELECT license_tier, metadata FROM platform_users 
