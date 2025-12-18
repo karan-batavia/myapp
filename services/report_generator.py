@@ -1555,188 +1555,191 @@ def _generate_report_internal(scan_data: Dict[str, Any],
         elements.append(Paragraph("Enterprise Privacy & Sustainability Compliance Platform", footer_style))
     
     elif report_format == "document":
-        # Professional Document Scanner Report Format
-        # Clear elements for a fresh professional layout
+        # Professional Document Scanner Report Format - Matching HTML Report Design
         elements = []
         
-        # Professional Header with gradient effect
-        header_bg = Drawing(540, 100)
-        header_bg.add(Rect(0, 0, 540, 100, fillColor=HexColor('#1e3a5f'), strokeColor=None))
-        header_bg.add(Rect(0, 0, 540, 5, fillColor=HexColor('#3b82f6'), strokeColor=None))
+        # === HEADER SECTION ===
+        header_bg = Drawing(540, 80)
+        header_bg.add(Rect(0, 0, 540, 80, fillColor=HexColor('#1e3a5f'), strokeColor=None))
+        header_bg.add(Rect(0, 75, 540, 5, fillColor=HexColor('#3b82f6'), strokeColor=None))
         elements.append(header_bg)
         
-        # Company Title
-        doc_title_style = ParagraphStyle(
-            'DocTitle',
-            parent=styles['Title'],
-            fontSize=28,
-            textColor=HexColor('#1e3a5f'),
-            spaceAfter=5,
-            alignment=1
-        )
-        elements.append(Paragraph("DataGuardian Pro", doc_title_style))
+        # Title
+        title_style_doc = ParagraphStyle('DocTitle', parent=styles['Title'], fontSize=24, textColor=HexColor('#1e3a5f'), spaceAfter=3, alignment=1)
+        elements.append(Paragraph("DataGuardian Pro Report", title_style_doc))
         
-        # Report Subtitle
-        doc_subtitle_style = ParagraphStyle(
-            'DocSubtitle',
-            parent=styles['Normal'],
-            fontSize=16,
-            textColor=HexColor('#3b82f6'),
-            spaceAfter=20,
-            alignment=1
-        )
-        report_title = "Document Privacy Scan Report" if current_lang == 'en' else "Document Privacy Scan Rapport"
-        elements.append(Paragraph(report_title, doc_subtitle_style))
+        # Scan Type
+        scan_type_display = scan_data.get('scan_type', 'Document Scanner')
+        subtitle_style = ParagraphStyle('DocSubtitle', parent=styles['Normal'], fontSize=14, textColor=HexColor('#3b82f6'), spaceAfter=15, alignment=1)
+        elements.append(Paragraph(f"Scan Type: {scan_type_display}", subtitle_style))
         
-        # Report metadata box
-        scan_date = datetime.now().strftime('%B %d, %Y at %H:%M') if current_lang == 'en' else datetime.now().strftime('%d %B %Y om %H:%M')
-        scan_id_short = scan_data.get('scan_id', 'N/A')[:12]
-        items_scanned = scan_data.get('files_scanned', len(scan_data.get('detailed_results', [])))
+        # Metadata row
+        meta_style = ParagraphStyle('DocMeta', parent=styles['Normal'], fontSize=9, textColor=HexColor('#6b7280'), alignment=1)
+        scan_id_val = scan_data.get('scan_id', 'N/A')[:15] + '...'
+        scan_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        region = scan_data.get('region', 'Netherlands')
+        elements.append(Paragraph(f"Scan ID: {scan_id_val} | Generated: {scan_date} | Region: {region}", meta_style))
+        elements.append(Spacer(1, 20))
+        
+        # === EXECUTIVE SUMMARY SECTION ===
+        exec_header_style = ParagraphStyle('ExecHeader', parent=heading_style, fontSize=14, textColor=HexColor('#1e3a5f'), spaceBefore=10, spaceAfter=10)
+        elements.append(Paragraph("Executive Summary", exec_header_style))
+        
+        # Calculate metrics
+        items_scanned = scan_data.get('files_scanned', len(scan_data.get('detailed_results', []))) or 1
         total_findings = len(scan_data.get('findings', []))
-        
-        # Count severity levels
         critical_count = sum(1 for f in scan_data.get('findings', []) if f.get('severity', f.get('risk_level', '')).lower() == 'critical')
         high_count = sum(1 for f in scan_data.get('findings', []) if f.get('severity', f.get('risk_level', '')).lower() == 'high')
-        medium_count = sum(1 for f in scan_data.get('findings', []) if f.get('severity', f.get('risk_level', '')).lower() == 'medium')
-        low_count = total_findings - critical_count - high_count - medium_count
+        compliance_score = scan_data.get('compliance_score', 75.0)
         
-        # Executive Summary Card
-        exec_card_style = ParagraphStyle(
-            'ExecCard',
-            parent=normal_style,
-            fontSize=11,
-            textColor=HexColor('#1f2937'),
-            alignment=0
-        )
-        
-        elements.append(Spacer(1, 15))
-        exec_title = "Executive Summary" if current_lang == 'en' else "Samenvatting"
-        elements.append(Paragraph(f"<b>{exec_title}</b>", heading_style))
-        elements.append(Spacer(1, 10))
-        
-        # Summary metrics table with professional styling
-        summary_header = ['Metric', 'Value'] if current_lang == 'en' else ['Metriek', 'Waarde']
-        summary_data = [
-            summary_header,
-            ['Report Generated' if current_lang == 'en' else 'Rapport Gegenereerd', scan_date],
-            ['Scan ID', scan_id_short],
-            ['Documents Scanned' if current_lang == 'en' else 'Documenten Gescand', str(items_scanned)],
-            ['Total Findings' if current_lang == 'en' else 'Totaal Bevindingen', str(total_findings)],
-            ['Critical Issues' if current_lang == 'en' else 'Kritieke Problemen', str(critical_count)],
-            ['High Risk' if current_lang == 'en' else 'Hoog Risico', str(high_count)],
-            ['Medium Risk' if current_lang == 'en' else 'Gemiddeld Risico', str(medium_count)],
-            ['Low Risk' if current_lang == 'en' else 'Laag Risico', str(low_count)]
+        # Metric cards as table - 4 columns like HTML
+        metric_data = [
+            [str(items_scanned), str(total_findings), str(critical_count), str(high_count)],
+            ['Files Scanned' if current_lang == 'en' else 'Bestanden', 
+             'Total Findings' if current_lang == 'en' else 'Bevindingen', 
+             'Critical Issues' if current_lang == 'en' else 'Kritiek', 
+             'High Risk' if current_lang == 'en' else 'Hoog Risico']
         ]
         
-        summary_table = Table(summary_data, colWidths=[3*inch, 3*inch])
-        summary_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1e3a5f')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        metric_table = Table(metric_data, colWidths=[1.35*inch, 1.35*inch, 1.35*inch, 1.35*inch])
+        metric_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 11),
-            ('FONTSIZE', (0, 1), (-1, -1), 10),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('TOPPADDING', (0, 0), (-1, 0), 12),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 8),
-            ('BACKGROUND', (0, 1), (-1, -1), HexColor('#f8fafc')),
-            ('GRID', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [HexColor('#f8fafc'), HexColor('#ffffff')]),
-            # Highlight critical/high rows
-            ('BACKGROUND', (0, 5), (-1, 5), HexColor('#fef2f2') if critical_count > 0 else HexColor('#f8fafc')),
-            ('BACKGROUND', (0, 6), (-1, 6), HexColor('#fff7ed') if high_count > 0 else HexColor('#ffffff')),
+            ('FONTSIZE', (0, 0), (-1, 0), 20),
+            ('FONTSIZE', (0, 1), (-1, 1), 9),
+            ('TEXTCOLOR', (0, 0), (0, 0), HexColor('#3b82f6')),
+            ('TEXTCOLOR', (1, 0), (1, 0), HexColor('#f59e0b')),
+            ('TEXTCOLOR', (2, 0), (2, 0), HexColor('#dc2626')),
+            ('TEXTCOLOR', (3, 0), (3, 0), HexColor('#ea580c')),
+            ('TEXTCOLOR', (0, 1), (-1, 1), HexColor('#6b7280')),
+            ('BACKGROUND', (0, 0), (-1, -1), HexColor('#f8fafc')),
+            ('BOX', (0, 0), (-1, -1), 1, HexColor('#e2e8f0')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, HexColor('#e2e8f0')),
+            ('TOPPADDING', (0, 0), (-1, 0), 15),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+            ('TOPPADDING', (0, 1), (-1, 1), 2),
+            ('BOTTOMPADDING', (0, 1), (-1, 1), 12),
         ]))
-        elements.append(summary_table)
-        elements.append(Spacer(1, 25))
-        
-        # Findings Summary Section
-        if scan_data.get('findings'):
-            findings_title = "Findings Summary" if current_lang == 'en' else "Overzicht Bevindingen"
-            elements.append(Paragraph(f"<b>{findings_title}</b>", heading_style))
-            elements.append(Spacer(1, 10))
-            
-            # Professional findings table with proper column widths
-            findings_header = ['#', 'Type', 'Severity', 'Location', 'Description'] if current_lang == 'en' else ['#', 'Type', 'Ernst', 'Locatie', 'Beschrijving']
-            findings_rows = [findings_header]
-            
-            for idx, finding in enumerate(scan_data.get('findings', [])[:50], 1):  # Limit to 50 findings
-                finding_type = finding.get('type', 'Unknown')
-                severity = finding.get('severity', finding.get('risk_level', 'Medium'))
-                
-                # Get location with smart fallbacks
-                location = finding.get('file', finding.get('location', ''))
-                if not location or location == 'N/A':
-                    location = finding.get('file_name', 'Document')
-                line = finding.get('line', '')
-                if line and line != 'N/A':
-                    location = f"{location}:{line}" if location else f"Line {line}"
-                
-                # Truncate long descriptions
-                description = finding.get('description', finding.get('value', ''))[:60]
-                if len(finding.get('description', finding.get('value', ''))) > 60:
-                    description += '...'
-                
-                findings_rows.append([str(idx), finding_type[:20], severity, location[:25], description])
-            
-            # Create findings table with color-coded severity
-            findings_table = Table(findings_rows, colWidths=[0.4*inch, 1.4*inch, 0.9*inch, 1.5*inch, 2.3*inch])
-            
-            # Build style with severity-based row colors
-            findings_style = [
-                ('BACKGROUND', (0, 0), (-1, 0), HexColor('#1e3a5f')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-                ('ALIGN', (1, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-                ('TOPPADDING', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-                ('TOPPADDING', (0, 1), (-1, -1), 6),
-                ('GRID', (0, 0), (-1, -1), 0.5, HexColor('#d1d5db')),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ]
-            
-            # Add severity-based row coloring
-            for i, row in enumerate(findings_rows[1:], 1):
-                severity = row[2].lower() if len(row) > 2 else 'low'
-                if severity == 'critical':
-                    findings_style.append(('BACKGROUND', (0, i), (-1, i), HexColor('#fef2f2')))
-                    findings_style.append(('TEXTCOLOR', (2, i), (2, i), HexColor('#dc2626')))
-                elif severity == 'high':
-                    findings_style.append(('BACKGROUND', (0, i), (-1, i), HexColor('#fff7ed')))
-                    findings_style.append(('TEXTCOLOR', (2, i), (2, i), HexColor('#ea580c')))
-                elif severity == 'medium':
-                    findings_style.append(('BACKGROUND', (0, i), (-1, i), HexColor('#fefce8')))
-                    findings_style.append(('TEXTCOLOR', (2, i), (2, i), HexColor('#ca8a04')))
-                else:
-                    findings_style.append(('BACKGROUND', (0, i), (-1, i), HexColor('#f0fdf4')))
-                    findings_style.append(('TEXTCOLOR', (2, i), (2, i), HexColor('#16a34a')))
-            
-            findings_table.setStyle(TableStyle(findings_style))
-            elements.append(findings_table)
-            elements.append(Spacer(1, 20))
-            
-            # Show truncation notice if needed
-            if len(scan_data.get('findings', [])) > 50:
-                truncation_msg = f"Showing 50 of {len(scan_data.get('findings', []))} total findings" if current_lang == 'en' else f"Toont 50 van {len(scan_data.get('findings', []))} totale bevindingen"
-                truncation_style = ParagraphStyle('TruncNote', parent=normal_style, fontSize=9, textColor=HexColor('#6b7280'), alignment=1)
-                elements.append(Paragraph(truncation_msg, truncation_style))
-                elements.append(Spacer(1, 15))
-        
-        # Footer
-        elements.append(Spacer(1, 30))
-        footer_line = Drawing(540, 2)
-        footer_line.add(Line(0, 1, 540, 1, strokeColor=HexColor('#e5e7eb'), strokeWidth=1))
-        elements.append(footer_line)
+        elements.append(metric_table)
         elements.append(Spacer(1, 10))
         
+        # Compliance Score
+        score_text = f"Compliance Score: {compliance_score:.1f}%"
+        score_style = ParagraphStyle('ScoreText', parent=normal_style, fontSize=11, textColor=HexColor('#166534') if compliance_score >= 80 else HexColor('#ca8a04') if compliance_score >= 60 else HexColor('#dc2626'), alignment=1, fontName='Helvetica-Bold')
+        elements.append(Paragraph(score_text, score_style))
+        elements.append(Spacer(1, 25))
+        
+        # === DETAILED FINDINGS SECTION ===
+        if scan_data.get('findings'):
+            findings_header_style = ParagraphStyle('FindingsHeader', parent=heading_style, fontSize=14, textColor=HexColor('#1e3a5f'), spaceBefore=15, spaceAfter=10)
+            elements.append(Paragraph("Detailed Findings" if current_lang == 'en' else "Gedetailleerde Bevindingen", findings_header_style))
+            
+            # Process each finding with full details like HTML
+            for idx, finding in enumerate(scan_data.get('findings', [])[:20], 1):
+                finding_type = finding.get('type', 'Security Finding')
+                severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+                severity_lower = severity.lower()
+                
+                # Severity badge color
+                if severity_lower == 'critical':
+                    badge_bg = HexColor('#dc2626')
+                elif severity_lower == 'high':
+                    badge_bg = HexColor('#ea580c')
+                elif severity_lower == 'medium':
+                    badge_bg = HexColor('#f59e0b')
+                else:
+                    badge_bg = HexColor('#22c55e')
+                
+                # Finding title with severity
+                finding_title_style = ParagraphStyle('FindingTitle', parent=normal_style, fontSize=11, textColor=HexColor('#1f2937'), fontName='Helvetica-Bold', spaceBefore=12, spaceAfter=6)
+                elements.append(Paragraph(f"Security Finding: {finding_type} - <font color='{'#dc2626' if severity_lower == 'critical' else '#ea580c' if severity_lower == 'high' else '#f59e0b' if severity_lower == 'medium' else '#22c55e'}'>{severity}</font>", finding_title_style))
+                
+                # Source file
+                source_file = finding.get('file', finding.get('file_name', finding.get('location', 'Document')))
+                if source_file and source_file != 'N/A':
+                    file_style = ParagraphStyle('FileStyle', parent=normal_style, fontSize=9, textColor=HexColor('#6b7280'))
+                    elements.append(Paragraph(f"Source File: {source_file}", file_style))
+                
+                # Description
+                description = finding.get('description', finding.get('context', ''))
+                if description:
+                    desc_style = ParagraphStyle('DescStyle', parent=normal_style, fontSize=10, textColor=HexColor('#374151'), spaceBefore=4, spaceAfter=4)
+                    elements.append(Paragraph(f"Description: {description[:200]}{'...' if len(description) > 200 else ''}", desc_style))
+                
+                # Context if different from description
+                context = finding.get('context', '')
+                if context and context != description:
+                    context_style = ParagraphStyle('ContextStyle', parent=normal_style, fontSize=9, textColor=HexColor('#4b5563'), leftIndent=10)
+                    elements.append(Paragraph(f"Context: {context[:150]}{'...' if len(context) > 150 else ''}", context_style))
+                
+                # Location
+                location = finding.get('location', finding.get('line', ''))
+                if location and location != 'N/A':
+                    loc_style = ParagraphStyle('LocStyle', parent=normal_style, fontSize=9, textColor=HexColor('#6b7280'))
+                    elements.append(Paragraph(f"Location: {location}", loc_style))
+                
+                # Business Impact
+                business_impact = finding.get('business_impact', '')
+                if business_impact:
+                    impact_style = ParagraphStyle('ImpactStyle', parent=normal_style, fontSize=9, textColor=HexColor('#7c3aed'))
+                    elements.append(Paragraph(f"Business Impact: {business_impact[:150]}", impact_style))
+                
+                # Priority
+                priority = finding.get('priority', '')
+                if priority:
+                    priority_style = ParagraphStyle('PriorityStyle', parent=normal_style, fontSize=9, textColor=HexColor('#dc2626') if 'Critical' in priority else HexColor('#ea580c') if 'High' in priority else HexColor('#6b7280'))
+                    elements.append(Paragraph(f"Priority: {priority}", priority_style))
+                
+                # Compliance Requirements section
+                compliance_reqs = finding.get('compliance_requirements', finding.get('gdpr_article', ''))
+                if compliance_reqs:
+                    comp_header = ParagraphStyle('CompHeader', parent=normal_style, fontSize=10, textColor=HexColor('#1e3a5f'), fontName='Helvetica-Bold', spaceBefore=6, spaceAfter=3)
+                    elements.append(Paragraph("Compliance Requirements", comp_header))
+                    comp_text = ParagraphStyle('CompText', parent=normal_style, fontSize=9, textColor=HexColor('#374151'), leftIndent=15)
+                    if isinstance(compliance_reqs, list):
+                        for req in compliance_reqs[:3]:
+                            elements.append(Paragraph(f"• {req}", comp_text))
+                    else:
+                        elements.append(Paragraph(f"• {compliance_reqs}", comp_text))
+                
+                # Recommendations
+                recommendations = finding.get('recommendations', finding.get('actionable_recommendations', []))
+                if recommendations:
+                    rec_header = ParagraphStyle('RecHeader', parent=normal_style, fontSize=10, textColor=HexColor('#166534'), fontName='Helvetica-Bold', spaceBefore=6, spaceAfter=3)
+                    elements.append(Paragraph("Actionable Recommendations" if current_lang == 'en' else "Aanbevolen Acties", rec_header))
+                    rec_text = ParagraphStyle('RecText', parent=normal_style, fontSize=9, textColor=HexColor('#374151'), leftIndent=15)
+                    if isinstance(recommendations, list):
+                        for rec in recommendations[:3]:
+                            if isinstance(rec, dict):
+                                elements.append(Paragraph(f"• {rec.get('description', rec.get('title', str(rec)))}", rec_text))
+                            else:
+                                elements.append(Paragraph(f"• {rec}", rec_text))
+                    else:
+                        elements.append(Paragraph(f"• {recommendations}", rec_text))
+                
+                # Separator line between findings
+                elements.append(Spacer(1, 8))
+                sep_line = Drawing(500, 1)
+                sep_line.add(Line(0, 0, 500, 0, strokeColor=HexColor('#e5e7eb'), strokeWidth=0.5))
+                elements.append(sep_line)
+            
+            # Truncation notice
+            if len(scan_data.get('findings', [])) > 20:
+                trunc_msg = f"Showing 20 of {len(scan_data.get('findings', []))} total findings" if current_lang == 'en' else f"Toont 20 van {len(scan_data.get('findings', []))} bevindingen"
+                trunc_style = ParagraphStyle('TruncStyle', parent=normal_style, fontSize=9, textColor=HexColor('#6b7280'), alignment=1, spaceBefore=10)
+                elements.append(Paragraph(trunc_msg, trunc_style))
+        
+        # === FOOTER ===
+        elements.append(Spacer(1, 30))
+        footer_line = Drawing(540, 2)
+        footer_line.add(Line(0, 1, 540, 1, strokeColor=HexColor('#1e3a5f'), strokeWidth=1))
+        elements.append(footer_line)
+        elements.append(Spacer(1, 8))
+        
         footer_style = ParagraphStyle('DocFooter', parent=normal_style, fontSize=9, textColor=HexColor('#6b7280'), alignment=1)
-        elements.append(Paragraph("Generated by DataGuardian Pro - Enterprise Privacy Compliance Platform", footer_style))
-        elements.append(Paragraph("GDPR | UAVG | EU AI Act 2025 Compliant", footer_style))
+        elements.append(Paragraph("Generated by DataGuardian Pro - Enterprise Privacy &amp; Sustainability Compliance Platform", footer_style))
+        report_id = scan_data.get('scan_id', 'N/A')
+        elements.append(Paragraph(f"Report ID: {report_id} | Generated: {scan_date}", footer_style))
         
     elif report_format == "website":
         # Website Scan Report Format
