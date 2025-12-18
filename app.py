@@ -6602,15 +6602,15 @@ def render_exact_online_connector(region: str, username: str):
     st.success(_('scan.exact_online_competitive_advantage', '🎯 **Unique Competitive Advantage**: Only privacy scanner with native Exact Online integration. 60% Netherlands SME market share - critical for enterprise deals.'))
     
     exact_sub_tab1, exact_sub_tab2 = st.tabs([
-        "🔌 API Connection Scanner",
-        "📂 Repository Scanner"
+        "📂 Repository Scanner",
+        "🔌 API Connection Scanner"
     ])
     
     with exact_sub_tab1:
-        render_exact_online_api_scanner(region, username)
+        render_exact_online_repo_scanner(region, username)
     
     with exact_sub_tab2:
-        render_exact_online_repo_scanner(region, username)
+        render_exact_online_api_scanner(region, username)
 
 
 def render_exact_online_repo_scanner(region: str, username: str):
@@ -6662,11 +6662,11 @@ def render_exact_online_repo_scanner(region: str, username: str):
     if scan_method == "🌐 Git Repository URL":
         repo_url = st.text_input(
             "Git Repository URL",
-            value="https://github.com/rubenmijwaart/ClientSDK",
+            placeholder="https://github.com/yourcompany/exact-integration.git",
             help="Public or accessible Git repository URL"
         )
         
-        st.caption("💡 Pre-filled with **Exact Online C# SDK** — Public repository safe for testing")
+        st.caption("💡 **Try it:** `https://github.com/rubenmijwaart/ClientSDK` — Public Exact Online C# SDK")
         st.warning("⚠️ For private repositories, upload files directly or use a personal access token in the URL")
     
     elif scan_method == "📁 Upload Files":
