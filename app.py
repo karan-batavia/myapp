@@ -6713,21 +6713,31 @@ def render_exact_online_repo_scanner(region: str, username: str):
             return
         
         try:
-            progress_placeholder = st.empty()
+            progress_container = st.container()
+            with progress_container:
+                st.markdown("**🔍 Scanning Repository**")
+                progress_bar = st.progress(0.0)
+                status_text = st.empty()
+                status_text.caption("🔄 Initializing...")
             
-            def status_callback(msg):
-                progress_placeholder.info(f"🔍 {msg}")
+            def progress_callback(current: int, total: int, stage: str, current_file: str = None):
+                progress_bar.progress(current / 100)
+                if current_file:
+                    display_file = current_file[:50] + "..." if len(current_file) > 50 else current_file
+                    status_text.caption(f"🔄 {stage} ({current}%) • {display_file}")
+                else:
+                    status_text.caption(f"🔄 {stage} ({current}%)")
             
-            with st.spinner("Scanning for Exact Online patterns..."):
-                scanner = ExactOnlineScanner(region=region)
-                results = scanner.scan(
-                    repo_url=repo_url,
-                    files_content=files_content if files_content else None,
-                    max_files=max_files,
-                    status_callback=status_callback
-                )
+            scanner = ExactOnlineScanner(region=region)
+            results = scanner.scan(
+                repo_url=repo_url,
+                files_content=files_content if files_content else None,
+                max_files=max_files,
+                progress_callback=progress_callback
+            )
             
-            progress_placeholder.empty()
+            progress_bar.progress(1.0)
+            status_text.caption("✅ Scan complete!")
             
             st.success(f"✅ Scan completed! Scanned {results.get('files_scanned', 0)} files in {results.get('duration_seconds', 0):.1f}s")
             

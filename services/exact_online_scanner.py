@@ -471,7 +471,8 @@ class ExactOnlineScanner:
         directory_path: Optional[str] = None,
         files_content: Optional[Dict[str, str]] = None,
         max_files: int = 500,
-        status_callback=None
+        status_callback=None,
+        progress_callback=None
     ) -> Dict[str, Any]:
         """
         Main scan entry point for Exact Online repository scanning.
@@ -481,7 +482,8 @@ class ExactOnlineScanner:
             directory_path: Local directory path to scan
             files_content: Dict of filename -> content for direct scanning
             max_files: Maximum number of files to scan
-            status_callback: Optional callback for progress updates
+            status_callback: Optional callback for status messages (legacy)
+            progress_callback: Optional callback for progress updates (current, total, stage, current_file)
             
         Returns:
             Comprehensive scan results with findings and compliance assessment
@@ -512,9 +514,18 @@ class ExactOnlineScanner:
             'errors': []
         }
         
-        try:
+        def update_progress(current: int, total: int, stage: str, current_file: str = None):
+            """Unified progress update"""
+            if progress_callback:
+                progress_callback(current, total, stage, current_file)
             if status_callback:
-                status_callback("Initializing Exact Online scan...")
+                if current_file:
+                    status_callback(f"{stage}: {current_file}")
+                else:
+                    status_callback(stage)
+        
+        try:
+            update_progress(0, 100, "Initializing scan")
             
             files_to_scan = {}
             temp_dir = None
@@ -522,20 +533,24 @@ class ExactOnlineScanner:
             if files_content:
                 files_to_scan = files_content
             elif repo_url:
-                if status_callback:
-                    status_callback("Cloning repository...")
+                update_progress(5, 100, "Cloning repository")
                 temp_dir, files_to_scan = self._clone_and_read_repo(repo_url, max_files)
             elif directory_path:
-                if status_callback:
-                    status_callback("Reading directory...")
+                update_progress(5, 100, "Reading directory")
                 files_to_scan = self._read_directory(directory_path, max_files)
             
-            results['files_scanned'] = len(files_to_scan)
+            total_files = len(files_to_scan)
+            results['files_scanned'] = total_files
             
-            if status_callback:
-                status_callback(f"Scanning {len(files_to_scan)} files for Exact Online patterns...")
+            update_progress(10, 100, f"Scanning {total_files} files")
             
-            for filename, content in files_to_scan.items():
+            scan_progress_base = 10
+            scan_progress_range = 80
+            
+            for idx, (filename, content) in enumerate(files_to_scan.items()):
+                progress_pct = scan_progress_base + int((idx / max(total_files, 1)) * scan_progress_range)
+                update_progress(progress_pct, 100, "Scanning files", filename)
+                
                 file_findings = self._scan_file(filename, content)
                 
                 for finding in file_findings:
@@ -556,21 +571,22 @@ class ExactOnlineScanner:
                     elif finding['category'] == 'pipeline':
                         results['pipeline_findings'].append(finding)
             
-            if status_callback:
-                status_callback("Analyzing data flows...")
+            update_progress(92, 100, "Analyzing data flows")
             results['data_flow_map'] = self._analyze_data_flows(results['data_flow_findings'])
             
-            if status_callback:
-                status_callback("Calculating risk assessment...")
+            update_progress(95, 100, "Calculating risk assessment")
             results['risk_summary'] = self._calculate_risk_summary(results)
             results['gdpr_compliance'] = self._assess_gdpr_compliance(results)
             results['uavg_compliance'] = self._assess_uavg_compliance(results)
             results['recommendations'] = self._generate_recommendations(results)
             
+            update_progress(98, 100, "Finalizing results")
             results['compliance_score'] = self._calculate_compliance_score(results)
             
             if temp_dir and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
+            
+            update_progress(100, 100, "Complete")
             
         except Exception as e:
             logger.error(f"Scan error: {str(e)}")
