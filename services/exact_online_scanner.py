@@ -582,26 +582,53 @@ class ExactOnlineScanner:
         return results
     
     def _clone_and_read_repo(self, repo_url: str, max_files: int) -> Tuple[str, Dict[str, str]]:
-        """Clone repository using RepoScanner for consistency with other scanners."""
+        """Clone repository with optimized settings."""
+        temp_dir = tempfile.mkdtemp(prefix='exact_scan_')
+        
         try:
-            repo_scanner = RepoScanner()
-            clone_result = repo_scanner.clone_repository(repo_url)
+            env = os.environ.copy()
+            env['GIT_TERMINAL_PROMPT'] = '0'
             
-            if clone_result.get('status') == 'error':
-                error_msg = clone_result.get('message', 'Clone failed')
-                logger.error(f"Clone failed via RepoScanner: {error_msg}")
-                raise RuntimeError(error_msg)
+            clone_cmd = [
+                'git', 'clone',
+                '--depth', '1',
+                '--single-branch',
+                '--no-tags',
+                repo_url,
+                temp_dir
+            ]
             
-            repo_path = clone_result.get('repo_path')
-            if not repo_path or not os.path.exists(repo_path):
+            logger.info(f"Cloning repository: {repo_url}")
+            
+            result = subprocess.run(
+                clone_cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                env=env
+            )
+            
+            if result.returncode != 0:
+                error_msg = result.stderr[:200] if result.stderr else "Unknown error"
+                logger.error(f"Git clone failed: {error_msg}")
+                raise RuntimeError(f"Git clone failed: {error_msg}")
+            
+            if not os.path.exists(os.path.join(temp_dir, '.git')):
                 raise RuntimeError("Repository clone produced no files")
             
-            files_content = self._read_directory(repo_path, max_files)
-            return repo_path, files_content
+            files_content = self._read_directory(temp_dir, max_files)
+            logger.info(f"Successfully read {len(files_content)} files from repository")
             
+            return temp_dir, files_content
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Git clone timed out after 120 seconds")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            raise RuntimeError("Repository clone timed out. Try uploading files directly.")
         except Exception as e:
             logger.error(f"Clone error: {e}")
-            raise RuntimeError(f"Failed to clone repository: {str(e)}")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            raise
     
     def _read_directory(self, directory: str, max_files: int) -> Dict[str, str]:
         """Read files from directory, prioritizing code files."""
