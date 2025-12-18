@@ -795,10 +795,23 @@ def main():
             render_safe_mode()
 
 def render_freemium_registration():
-    """Render freemium registration form for new users with database persistence"""
+    """Render freemium registration form for new users with database persistence and bot protection"""
     import secrets
     import string
+    import time
     from services.user_management_service import UserManagementService
+    from services.bot_protection import get_bot_protection
+    from services.auth_tracker import get_client_ip_from_streamlit
+    
+    bot_protection = get_bot_protection()
+    
+    if 'registration_form_start' not in st.session_state:
+        st.session_state.registration_form_start = time.time()
+    
+    if 'captcha_question' not in st.session_state or 'captcha_answer' not in st.session_state:
+        question, answer = bot_protection.generate_captcha()
+        st.session_state.captcha_question = question
+        st.session_state.captcha_answer = answer
     
     st.subheader("🚀 Start Your Free Trial")
     st.success("✨ Get 1 free Document scan to experience DataGuardian Pro - No credit card required!")
@@ -813,12 +826,40 @@ def render_freemium_registration():
         with col2:
             password = st.text_input("Choose Password *", type="password", placeholder="Min 8 characters")
         
+        st.markdown(f"**Security Check:** {st.session_state.captcha_question}")
+        captcha_input = st.text_input("Your answer *", placeholder="Enter the number", key="captcha_field")
+        
+        st.markdown("""
+        <div style="position:absolute;left:-9999px;top:-9999px;">
+            <input type="text" name="website_url" id="hp_field_container" autocomplete="off" tabindex="-1">
+        </div>
+        """, unsafe_allow_html=True)
+        honeypot = st.text_input("", key="hp_website_field", label_visibility="collapsed")
+        
         agree_terms = st.checkbox("I agree to Terms of Service and Privacy Policy")
             
         submitted = st.form_submit_button("🎯 Create Free Account", type="primary")
         
         if submitted:
-            if not email or not company or not password:
+            client_ip = get_client_ip_from_streamlit()
+            
+            bot_allowed, bot_error = bot_protection.validate_registration(
+                ip_address=client_ip,
+                email=email,
+                honeypot_value=honeypot,
+                form_start_time=st.session_state.get('registration_form_start', 0),
+                captcha_answer=captcha_input,
+                correct_captcha=st.session_state.get('captcha_answer', 0)
+            )
+            
+            if not bot_allowed:
+                bot_protection.log_suspicious_activity(client_ip, bot_error, {'email': email[:20] if email else ''})
+                question, answer = bot_protection.generate_captcha()
+                st.session_state.captcha_question = question
+                st.session_state.captcha_answer = answer
+                st.session_state.registration_form_start = time.time()
+                st.error(bot_error)
+            elif not email or not company or not password:
                 st.error("Please fill in all required fields")
             elif len(password) < 8:
                 st.error("Password must be at least 8 characters")
@@ -828,15 +869,12 @@ def render_freemium_registration():
                 st.error("Please enter a valid email address")
             else:
                 try:
-                    # Create user in database
                     user_service = UserManagementService()
                     
-                    # Check if email already exists
                     existing_user = user_service.get_user(email=email)
                     if existing_user:
                         st.error("An account with this email already exists. Please login instead.")
                     else:
-                        # Create new trial user
                         success, message, user_id = user_service.create_user(
                             username=email,
                             email=email,
@@ -848,7 +886,6 @@ def render_freemium_registration():
                         )
                         
                         if success:
-                            # Store free scan quota in user metadata
                             try:
                                 user_service.update_user(user_id, {
                                     'metadata': {'free_scans_remaining': 3, 'trial_started': True}
@@ -856,7 +893,6 @@ def render_freemium_registration():
                             except Exception:
                                 pass
                             
-                            # Auto-login the user
                             st.session_state.update({
                                 'authenticated': True,
                                 'username': email,
@@ -868,7 +904,13 @@ def render_freemium_registration():
                                 'show_registration': False
                             })
                             
-                            # Track successful registration
+                            if 'registration_form_start' in st.session_state:
+                                del st.session_state.registration_form_start
+                            if 'captcha_question' in st.session_state:
+                                del st.session_state.captcha_question
+                            if 'captcha_answer' in st.session_state:
+                                del st.session_state.captcha_answer
+                            
                             try:
                                 from services.auth_tracker import track_registration_success
                                 track_registration_success(role='trial')
@@ -878,7 +920,6 @@ def render_freemium_registration():
                             st.success("🎉 Account created successfully! You are now logged in.")
                             st.balloons()
                             
-                            # Show next steps (no password shown)
                             st.markdown("---")
                             st.markdown("### ✅ Welcome to DataGuardian Pro!")
                             st.info(f"""
