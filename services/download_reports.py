@@ -75,41 +75,35 @@ def generate_pdf_report(scan_results: Dict[str, Any], filename: str = "scan_repo
         section_header = ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, textColor=colors.HexColor('#1e3a5f'), spaceBefore=20, spaceAfter=15, fontName='Helvetica-Bold')
         story.append(Paragraph("Executive Summary", section_header))
         
-        # Create styled paragraphs for metric values
-        def styled_value(val, color):
-            return Paragraph(f'<font size="26" color="{color}"><b>{val}</b></font>', styles['Normal'])
-        
-        def styled_label(text):
-            return Paragraph(f'<font size="8" color="#6b7280">{text}</font>', styles['Normal'])
-        
-        # Build metric cards as a 2-row table (values row + labels row)
-        values_row = [
-            styled_value(files_scanned, '#2563eb'),
-            styled_value(total_findings, '#d97706'),
-            styled_value(critical_count, '#dc2626'),
-            styled_value(high_count, '#ea580c')
-        ]
-        labels_row = [
-            styled_label('Files Scanned'),
-            styled_label('Total Findings'),
-            styled_label('Critical Issues'),
-            styled_label('High Risk')
-        ]
-        
-        metrics_table = Table([values_row, labels_row], colWidths=[1.35*inch, 1.35*inch, 1.35*inch, 1.35*inch])
+        # Build metric cards using plain strings (more reliable in ReportLab)
+        metrics_table = Table(
+            [
+                [str(files_scanned), str(total_findings), str(critical_count), str(high_count)],
+                ['Files Scanned', 'Total Findings', 'Critical Issues', 'High Risk']
+            ],
+            colWidths=[1.35*inch, 1.35*inch, 1.35*inch, 1.35*inch]
+        )
         metrics_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 26),
+            ('FONTSIZE', (0, 1), (-1, 1), 9),
+            ('TEXTCOLOR', (0, 0), (0, 0), colors.HexColor('#2563eb')),
+            ('TEXTCOLOR', (1, 0), (1, 0), colors.HexColor('#d97706')),
+            ('TEXTCOLOR', (2, 0), (2, 0), colors.HexColor('#dc2626')),
+            ('TEXTCOLOR', (3, 0), (3, 0), colors.HexColor('#ea580c')),
+            ('TEXTCOLOR', (0, 1), (-1, 1), colors.HexColor('#6b7280')),
             ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#eff6ff')),
             ('BACKGROUND', (1, 0), (1, -1), colors.HexColor('#fffbeb')),
             ('BACKGROUND', (2, 0), (2, -1), colors.HexColor('#fef2f2')),
             ('BACKGROUND', (3, 0), (3, -1), colors.HexColor('#fff7ed')),
-            ('TOPPADDING', (0, 0), (-1, 0), 15),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-            ('TOPPADDING', (0, 1), (-1, 1), 2),
-            ('BOTTOMPADDING', (0, 1), (-1, 1), 12),
-            ('LEFTPADDING', (0, 0), (-1, -1), 10),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 10),
+            ('TOPPADDING', (0, 0), (-1, 0), 18),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 1), (-1, 1), 4),
+            ('BOTTOMPADDING', (0, 1), (-1, 1), 15),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#e2e8f0')),
             ('LINEBEFORE', (1, 0), (1, -1), 1, colors.HexColor('#e2e8f0')),
             ('LINEBEFORE', (2, 0), (2, -1), 1, colors.HexColor('#e2e8f0')),
@@ -123,14 +117,17 @@ def generate_pdf_report(scan_results: Dict[str, Any], filename: str = "scan_repo
         score_bg = '#dcfce7' if compliance_score >= 80 else '#fef3c7' if compliance_score >= 60 else '#fee2e2'
         score_status = 'Excellent' if compliance_score >= 80 else 'Needs Attention' if compliance_score >= 60 else 'Critical'
         
-        score_text = Paragraph(f'<font size="11" color="{score_color}"><b>Compliance Score: {compliance_score:.1f}%</b></font>', styles['Normal'])
-        status_text = Paragraph(f'<font size="11" color="{score_color}"><b>{score_status}</b></font>', styles['Normal'])
-        
-        score_table = Table([[score_text, status_text]], colWidths=[3.5*inch, 1.9*inch])
+        score_table = Table(
+            [[f"Compliance Score: {compliance_score:.1f}%", score_status]],
+            colWidths=[3.5*inch, 1.9*inch]
+        )
         score_table.setStyle(TableStyle([
             ('ALIGN', (0, 0), (0, 0), 'LEFT'),
             ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor(score_color)),
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(score_bg)),
             ('TOPPADDING', (0, 0), (-1, -1), 12),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
