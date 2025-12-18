@@ -54,23 +54,28 @@ def track_scan_failed_wrapper(scanner_type, user_id, session_id, error_msg):
     """Wrapper for track scan failed"""
     track_scan_failed_wrapper_safe(scanner_type, user_id, session_id, error_msg)
 
-def check_and_decrement_trial_scans(scan_type: str = "document") -> bool:
-    """Check if user has trial scans remaining and decrement if so"""
+def check_and_decrement_trial_scans(scan_type: str = "document") -> tuple:
+    """Check if user has trial scans remaining and decrement if so.
+    Returns (allowed: bool, message: str)
+    """
     try:
         license_tier = st.session_state.get('license_tier', 'free')
-        if license_tier in ['professional', 'enterprise', 'unlimited']:
-            return True
         
-        trial_key = f'trial_{scan_type}_scans'
-        remaining = st.session_state.get(trial_key, 1)
+        # Only enforce limits for trial users
+        if license_tier != 'trial':
+            return True, "Scan allowed"
         
-        if remaining > 0:
-            st.session_state[trial_key] = remaining - 1
-            return True
-        return False
+        free_scans = st.session_state.get('free_scans_remaining', 0)
+        
+        if free_scans <= 0:
+            return False, "You've used all your free trial scans. Please upgrade to continue scanning."
+        
+        # Decrement scans in session
+        st.session_state.free_scans_remaining = free_scans - 1
+        return True, f"Scan allowed. {free_scans - 1} scans remaining."
     except Exception as e:
         logger.debug(f"Trial check error: {e}")
-        return True
+        return True, "Scan allowed"
 
 def require_report_access(report_type: str = "standard") -> bool:
     """Check if user has access to report generation"""
