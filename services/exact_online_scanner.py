@@ -582,44 +582,65 @@ class ExactOnlineScanner:
         return results
     
     def _clone_and_read_repo(self, repo_url: str, max_files: int) -> Tuple[str, Dict[str, str]]:
-        """Clone repository and read files."""
+        """Clone repository with shallow clone for speed."""
         temp_dir = tempfile.mkdtemp(prefix='exact_scan_')
         
         try:
-            subprocess.run(
-                ['git', 'clone', '--depth', '1', repo_url, temp_dir],
+            result = subprocess.run(
+                ['git', 'clone', '--depth', '1', '--single-branch', repo_url, temp_dir],
                 capture_output=True,
-                timeout=120
+                timeout=45,
+                text=True
             )
+            
+            if result.returncode != 0:
+                logger.error(f"Clone failed: {result.stderr[:300]}")
+                raise RuntimeError(f"Git clone failed: {result.stderr[:100]}")
+            
             return temp_dir, self._read_directory(temp_dir, max_files)
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Clone timeout after 45 seconds")
+            raise RuntimeError("Repository clone timed out. Try uploading files directly.")
         except Exception as e:
-            logger.error(f"Clone failed: {e}")
-            return temp_dir, {}
+            logger.error(f"Clone error: {e}")
+            raise
     
     def _read_directory(self, directory: str, max_files: int) -> Dict[str, str]:
-        """Read files from directory."""
+        """Read files from directory, prioritizing code files."""
         files_content = {}
         file_count = 0
+        
+        priority_ext = {'.cs', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.env', '.config'}
         
         for root, dirs, files in os.walk(directory):
             dirs[:] = [d for d in dirs if d not in self.excluded_files and not d.startswith('.')]
             
-            for file in files:
+            sorted_files = sorted(files, key=lambda f: (0 if any(f.endswith(e) for e in priority_ext) else 1, f))
+            
+            for file in sorted_files:
                 if file_count >= max_files:
-                    break
+                    return files_content
                 
-                if any(file.endswith(ext) for ext in self.file_extensions):
-                    if file not in self.excluded_files:
-                        file_path = os.path.join(root, file)
-                        rel_path = os.path.relpath(file_path, directory)
+                if file in self.excluded_files:
+                    continue
+                    
+                if not any(file.endswith(ext) for ext in self.file_extensions):
+                    continue
+                
+                file_path = os.path.join(root, file)
+                
+                try:
+                    if os.path.getsize(file_path) > 150000:
+                        continue
                         
-                        try:
-                            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                                content = f.read(100000)
-                                files_content[rel_path] = content
-                                file_count += 1
-                        except Exception:
-                            pass
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        content = f.read(50000)
+                        rel_path = os.path.relpath(file_path, directory)
+                        files_content[rel_path] = content
+                        file_count += 1
+                except Exception:
+                    pass
         
         return files_content
     
