@@ -1200,6 +1200,27 @@ def _render_sustainability_scanner(region: str, username: str):
             st.error(f"Analysis error: {str(e)}")
 
 # === Document Scanner Functions (moved from app.py) ===
+def render_document_scanner_interface(region: str, username: str):
+    """Document scanner interface"""
+    from utils.activity_tracker import ScannerType
+    
+    session_id = st.session_state.get('session_id', str(uuid.uuid4()))
+    user_id = st.session_state.get('user_id', username)
+    
+    st.subheader("📄 Document Scanner Configuration")
+    
+    uploaded_files = st.file_uploader(
+        "Upload Documents",
+        accept_multiple_files=True,
+        type=['pdf', 'docx', 'txt', 'doc', 'csv', 'xlsx']
+    )
+    
+    if uploaded_files:
+        st.success(f"✅ {len(uploaded_files)} documents ready for scanning")
+        
+        if st.button("🚀 Start Document Scan", type="primary", use_container_width=True):
+            execute_document_scan(region, username, uploaded_files)
+
 def execute_document_scan(region, username, uploaded_files):
     """Execute document scanning with comprehensive activity tracking"""
     # Initialize activity tracking variables

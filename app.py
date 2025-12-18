@@ -3164,11 +3164,11 @@ def render_scanner_interface_safe():
     
     # Render interface based on scanner type - import from page_modules.scanner
     from page_modules.scanner import (
-        render_code_scanner_interface, render_image_scanner_interface,
-        render_database_scanner_interface, render_api_scanner_interface,
-        render_enterprise_connector_interface, render_ai_model_scanner_interface,
-        render_soc2_scanner_interface, render_website_scanner_interface,
-        render_sustainability_scanner_interface
+        render_code_scanner_interface, render_document_scanner_interface,
+        render_image_scanner_interface, render_database_scanner_interface, 
+        render_api_scanner_interface, render_enterprise_connector_interface, 
+        render_ai_model_scanner_interface, render_soc2_scanner_interface, 
+        render_website_scanner_interface, render_sustainability_scanner_interface
     )
     
     if _('scan.code', 'Code') in selected_scanner:
