@@ -41,7 +41,7 @@ class LicenseTier(Enum):
 TIER_LIMITS = {
     "trial": {
         "price_monthly": 0,
-        "scans_per_month": 10,
+        "scans_per_month": 3,
         "users": 1,
         "scanners": ["document", "website"],
         "features": ["basic_pii_detection"],

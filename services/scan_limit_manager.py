@@ -27,7 +27,7 @@ class ScanLimitManager:
     def __init__(self):
         self.daily_limits = {
             'trial': {
-                'daily_scans': 10,  # Total 10 scans for trial period
+                'daily_scans': 3,  # Total 3 scans for trial period
                 'scan_types': ['code', 'document', 'website'],
                 'features': ['basic_reports'],
                 'price': 0,
