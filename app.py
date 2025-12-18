@@ -623,6 +623,61 @@ def get_text(key, default=None):
     except ImportError:
         return default or key
 
+def check_and_decrement_trial_scans() -> tuple:
+    """Check if trial user has scans remaining and decrement if allowed.
+    Returns (allowed: bool, message: str)
+    """
+    license_tier = st.session_state.get('license_tier', 'free')
+    
+    # Only enforce limits for trial users
+    if license_tier != 'trial':
+        return True, "Scan allowed"
+    
+    free_scans = st.session_state.get('free_scans_remaining', 0)
+    
+    if free_scans <= 0:
+        return False, "You've used all your free trial scans. Please upgrade to continue scanning."
+    
+    # Decrement scans in session
+    st.session_state.free_scans_remaining = free_scans - 1
+    
+    # Update database
+    try:
+        import psycopg2
+        import json
+        db_url = os.environ.get('DATABASE_URL')
+        username = st.session_state.get('username', '')
+        
+        if db_url and username:
+            conn = psycopg2.connect(db_url)
+            cursor = conn.cursor()
+            
+            # Get current metadata
+            cursor.execute("""
+                SELECT metadata FROM platform_users 
+                WHERE username = %s OR email = %s
+            """, (username, username))
+            row = cursor.fetchone()
+            
+            if row:
+                metadata = row[0] if isinstance(row[0], dict) else json.loads(str(row[0])) if row[0] else {}
+                metadata['free_scans_remaining'] = free_scans - 1
+                
+                # Update metadata
+                cursor.execute("""
+                    UPDATE platform_users 
+                    SET metadata = %s 
+                    WHERE username = %s OR email = %s
+                """, (json.dumps(metadata), username, username))
+                conn.commit()
+            
+            cursor.close()
+            conn.close()
+    except Exception as e:
+        logger.error(f"Error updating free scans in database: {e}")
+    
+    return True, f"Scan allowed ({free_scans - 1} scans remaining)"
+
 def _(key, default=None):
     """Shorthand for get_text"""
     return get_text(key, default)
@@ -3166,6 +3221,15 @@ def render_code_scanner_interface(region: str, username: str):
     
     # Start scan button
     if st.button("🚀 Start Code Scan", type="primary", use_container_width=True):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            if st.button("View Pricing", key="upgrade_code_scan"):
+                st.session_state['show_pricing'] = True
+            return
+        
         if use_intelligent:
             # Use intelligent scanning wrapper
             from components.intelligent_scanner_wrapper import intelligent_wrapper
@@ -4164,6 +4228,12 @@ def render_document_scanner_interface(region: str, username: str):
         st.success(f"✅ {len(uploaded_files)} documents ready for scanning")
         
         if st.button("🚀 Start Document Scan", type="primary", use_container_width=True):
+            # Check trial scan limits
+            allowed, message = check_and_decrement_trial_scans()
+            if not allowed:
+                st.error(f"⚠️ {message}")
+                st.info("💡 Upgrade your plan to continue scanning.")
+                return
             execute_document_scan(region, username, uploaded_files)
 
 def execute_document_scan(region, username, uploaded_files):
@@ -4392,6 +4462,12 @@ def render_image_scanner_interface(region: str, username: str):
         st.success(f"✅ {len(uploaded_files)} images ready for scanning")
         
         if st.button("🚀 Start Image Scan", type="primary", use_container_width=True):
+            # Check trial scan limits
+            allowed, message = check_and_decrement_trial_scans()
+            if not allowed:
+                st.error(f"⚠️ {message}")
+                st.info("💡 Upgrade your plan to continue scanning.")
+                return
             if use_intelligent:
                 # Use intelligent scanning wrapper
                 from components.intelligent_scanner_wrapper import intelligent_wrapper
@@ -4902,6 +4978,12 @@ def render_database_scanner_interface(region: str, username: str):
                 st.success("☁️ **Cloud database detected** - SSL will be automatically enabled for secure connection")
     
     if st.button("🚀 Start Database Scan", type="primary", use_container_width=True):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         if connection_method == "Connection String (Cloud)":
             if not connection_string:
                 st.error("Please provide a connection string")
@@ -5285,6 +5367,12 @@ def render_api_scanner_interface(region: str, username: str):
     endpoints = st.text_area("Endpoints (one per line)", placeholder="/users\n/api/v1/customers\n/data")
     
     if st.button("🚀 Start API Scan", type="primary", use_container_width=True):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         execute_api_scan(region, username, base_url, endpoints, timeout)
 
 def generate_api_html_report(scan_results):
@@ -6315,6 +6403,12 @@ def render_microsoft365_connector(region: str, username: str):
     
     # Scan execution
     if st.button("🚀 Start Microsoft 365 Scan", type="primary"):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         if not credentials.get('tenant_id') and not credentials.get('access_token'):
             st.error("Please provide authentication credentials or use demo mode")
             return
@@ -6543,6 +6637,12 @@ def render_exact_online_connector(region: str, username: str):
         ap_reporting = st.checkbox("📊 AP Authority Reporting", value=True)
     
     if st.button("🚀 Start Exact Online Scan", type="primary"):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         try:
             # Check for resume from checkpoint
             checkpoint_id = st.session_state.get('exact_checkpoint_id')
@@ -6669,6 +6769,12 @@ def render_google_workspace_connector(region: str, username: str):
         scan_calendar = st.checkbox("📅 Calendar Events", value=False)
     
     if st.button("🚀 Start Google Workspace Scan", type="primary"):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         try:
             # Check for resume from checkpoint
             checkpoint_id = st.session_state.get('gworkspace_checkpoint_id')
@@ -6807,6 +6913,12 @@ def render_salesforce_connector(region: str, username: str):
             uavg_compliance = st.checkbox("⚖️ UAVG Compliance Analysis", value=True, help="Netherlands privacy law compliance")
         
         if st.button("🚀 Start Salesforce Scan", type="primary"):
+            # Check trial scan limits
+            allowed, message = check_and_decrement_trial_scans()
+            if not allowed:
+                st.error(f"⚠️ {message}")
+                st.info("💡 Upgrade your plan to continue scanning.")
+                return
             try:
                 scanner = EnterpriseConnectorScanner(
                     connector_type='salesforce',
@@ -6955,6 +7067,12 @@ def render_salesforce_repo_scanner(region: str, username: str):
         sf_include_vf = st.checkbox("Include Visualforce Pages", value=True, key="sf_vf")
     
     if st.button("🚀 Start Salesforce Code Scan", type="primary", key="sf_scan_btn"):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         if sf_source_type == "Repository URL" and not sf_repo_url:
             st.error("Please enter a repository URL")
             return
@@ -7160,6 +7278,12 @@ def render_sap_connector(region: str, username: str):
         include_hana = st.checkbox("Include HANA artifacts analysis", value=True)
     
     if st.button("🚀 Start SAP Code Scan", type="primary"):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         if source_type == "Repository URL" and not repo_url:
             st.error("Please enter a repository URL")
             return
@@ -8479,6 +8603,12 @@ def render_soc2_scanner_interface(region: str, username: str):
     
     # Scan button
     if st.button("🚀 Start SOC2 & NIS2 Compliance Scan", type="primary", use_container_width=True):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         if not repo_url:
             st.error("Please enter a repository URL for SOC2 analysis.")
             return
@@ -8864,6 +8994,12 @@ def render_website_scanner_interface(region: str, username: str):
             multilingual = st.checkbox("Dutch/English Detection", value=True)
     
     if st.button("🚀 Start GDPR Compliance Scan", type="primary", use_container_width=True):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         if use_intelligent:
             # Use intelligent scanning wrapper
             from components.intelligent_scanner_wrapper import intelligent_wrapper
@@ -10697,6 +10833,12 @@ def render_sustainability_scanner_interface(region: str, username: str):
     emissions_region = "eu-west-1 (Netherlands)"
     
     if st.button("🚀 Start Comprehensive Sustainability Scan", type="primary", use_container_width=True):
+        # Check trial scan limits
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
         # Pass all parameters to enhanced scan function
         scan_params = {
             'analysis_type': analysis_type,
