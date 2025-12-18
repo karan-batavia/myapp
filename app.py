@@ -3195,9 +3195,6 @@ def render_scanner_interface_safe():
     elif _('scan.sustainability', 'Sustainability') in selected_scanner:
         render_sustainability_scanner_interface(region, username)
 
-def render_code_scanner_interface(region: str, username: str):
-    """Code scanner interface with intelligent scanning capabilities"""
-    # Import required modules to avoid unbound variables
 def render_code_scanner_config():
     """Code scanner configuration"""
     st.subheader("📝 Code Scanner Configuration")
