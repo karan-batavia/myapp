@@ -6619,17 +6619,35 @@ def render_exact_online_repo_scanner(region: str, username: str):
     from services.unified_html_report_generator import generate_unified_html_report
     
     st.markdown("### 📂 Exact Online Repository Scanner")
-    st.write("Scan your codebase for Exact Online integration patterns, credentials, PII handling, and GDPR/UAVG compliance issues.")
+    st.write("**The only GDPR scanner that understands Exact Online at code level** - Country-specific, ERP-aware, Privacy-first, DevSecOps-ready.")
     
     st.info("""
 **What this scanner detects:**
-- 🔌 Exact Online SDK imports, API URLs, OAuth endpoints
-- 🔐 Exposed credentials (client secrets, access tokens, refresh tokens)
-- 🇳🇱 Netherlands PII patterns (BSN, KvK, IBAN, personal names)
-- 💰 Financial data handling (invoices, payments, debtor/creditor)
-- 📊 Data flow analysis (API → Storage → Logs)
-- ✅ GDPR compliance controls (encryption, consent, retention)
+
+🔌 **Exact Online integration usage** — SDK imports, API endpoints, OAuth2 flows
+
+🔐 **Credential exposure risks** — Hard-coded client secrets, access tokens, refresh tokens
+
+🇳🇱 **Netherlands-specific personal data** — BSN, KvK, IBAN, personal names (AVG/GDPR)
+
+💰 **Financial data processing** — Invoices, payments, debtor & creditor data
+
+🔄 **Data flow visibility** — API → Database → Files → Logs
+
+✅ **GDPR / AVG compliance gaps** — Encryption, consent, retention, least-privilege
     """)
+    
+    st.success("🔒 **No Exact Online credentials required** — Static analysis only. Safe for CI/CD and pre-production scans.")
+    
+    with st.expander("📄 Example Findings (What You'll See)", expanded=False):
+        st.markdown("""
+- 🔴 **Exact Online OAuth refresh token found in config file** — Severity: Critical
+- 🟠 **Invoice data written to application logs** — GDPR Article 5 risk
+- 🟡 **Missing retention policy for financial records** — GDPR Article 17 gap
+- 🔴 **BSN processing detected without masking** — UAVG Article 46 violation
+- 🟠 **Client secret hardcoded in source code** — Use Azure Key Vault or HashiCorp Vault
+- 🟡 **No encryption detected for PII at rest** — GDPR Article 32 requirement
+        """)
     
     scan_method = st.radio(
         "Scan Source",
@@ -6664,6 +6682,7 @@ def render_exact_online_repo_scanner(region: str, username: str):
             help="Public or accessible Git repository URL"
         )
         
+        st.caption("💡 **Try it now:** `https://github.com/ExactOnline/DotNet-SDK` — Public Exact Online SDK repository (safe for testing)")
         st.warning("⚠️ For private repositories, upload files directly or use a personal access token in the URL")
     
     else:
@@ -6712,14 +6731,71 @@ def render_exact_online_repo_scanner(region: str, username: str):
             st.success(f"✅ Scan completed! Scanned {results.get('files_scanned', 0)} files in {results.get('duration_seconds', 0):.1f}s")
             
             risk_summary = results.get('risk_summary', {})
+            total_critical = risk_summary.get('critical_count', 0)
+            total_high = risk_summary.get('high_count', 0)
+            total_findings = total_critical + total_high + risk_summary.get('medium_count', 0) + risk_summary.get('low_count', 0)
+            
+            if total_critical > 0:
+                risk_level = "CRITICAL"
+                risk_color = "#dc2626"
+                risk_bg = "#fef2f2"
+            elif total_high > 0:
+                risk_level = "HIGH"
+                risk_color = "#ea580c"
+                risk_bg = "#fff7ed"
+            elif total_findings > 0:
+                risk_level = "MEDIUM"
+                risk_color = "#d97706"
+                risk_bg = "#fffbeb"
+            else:
+                risk_level = "LOW"
+                risk_color = "#16a34a"
+                risk_bg = "#f0fdf4"
+            
+            gdpr_articles = []
+            if results.get('credential_findings'):
+                gdpr_articles.extend(["Art. 32"])
+            if results.get('uavg_compliance', {}).get('bsn_processing_detected'):
+                gdpr_articles.extend(["UAVG 46"])
+            if results.get('pii_findings'):
+                gdpr_articles.extend(["Art. 5", "Art. 6"])
+            if not results.get('gdpr_compliance', {}).get('has_retention_policy'):
+                gdpr_articles.append("Art. 17")
+            if not results.get('gdpr_compliance', {}).get('has_encryption'):
+                gdpr_articles.append("Art. 32")
+            gdpr_articles = list(dict.fromkeys(gdpr_articles))[:4]
+            
+            st.markdown(f"""
+            <div style="background: {risk_bg}; border: 2px solid {risk_color}; border-radius: 12px; padding: 20px; margin: 15px 0;">
+                <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Exact Online Integration</div>
+                        <div style="font-size: 24px; font-weight: bold; color: {'#16a34a' if results.get('exact_integration_detected') else '#dc2626'};">{'✔ Detected' if results.get('exact_integration_detected') else '✖ Not Found'}</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Risk Level</div>
+                        <div style="font-size: 24px; font-weight: bold; color: {risk_color};">{risk_level}</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">Affected Files</div>
+                        <div style="font-size: 24px; font-weight: bold; color: #374151;">{len(set(f.get('file', '') for f in results.get('credential_findings', []) + results.get('pii_findings', [])))}</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 12px; color: #666; text-transform: uppercase; font-weight: 600;">GDPR Articles</div>
+                        <div style="font-size: 18px; font-weight: bold; color: #374151;">{', '.join(gdpr_articles) if gdpr_articles else 'None'}</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
             col1, col2, col3, col4 = st.columns(4)
             with col1:
                 exact_status = "✅ Detected" if results.get('exact_integration_detected') else "❌ Not Found"
                 st.metric("Exact Online", exact_status)
             with col2:
-                st.metric("Critical Issues", risk_summary.get('critical_count', 0))
+                st.metric("Critical Issues", total_critical)
             with col3:
-                st.metric("High Risk", risk_summary.get('high_count', 0))
+                st.metric("High Risk", total_high)
             with col4:
                 st.metric("Compliance Score", f"{results.get('compliance_score', 0):.0f}%")
             
