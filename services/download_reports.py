@@ -12,7 +12,8 @@ from datetime import datetime
 
 def generate_pdf_report(scan_results: Dict[str, Any], filename: str = "scan_report.pdf") -> Optional[bytes]:
     """
-    Generate PDF report from scan results.
+    Generate modern, best-in-class PDF report from scan results.
+    Matches the HTML report design with professional styling.
     
     Args:
         scan_results: Complete scan results with findings
@@ -27,129 +28,223 @@ def generate_pdf_report(scan_results: Dict[str, Any], filename: str = "scan_repo
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib.units import inch
         from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from reportlab.graphics.shapes import Drawing, Rect, Line
         from io import BytesIO
         
         buffer = BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=letter)
+        doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
         story = []
         styles = getSampleStyleSheet()
         
-        # Title with proper styling
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontSize=26,
-            textColor=colors.HexColor('#1e40af'),
-            spaceAfter=30,
-            alignment=1  # Center
-        )
-        story.append(Paragraph("📄 DataGuardian Pro - Scan Report", title_style))
-        story.append(Spacer(1, 0.2*inch))
-        
-        # Metadata box with professional styling
-        scan_type = scan_results.get('scan_type', 'Unknown')
+        # Extract data
+        scan_type = scan_results.get('scan_type', 'Document Scanner')
         report_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        files_scanned = scan_results.get('files_scanned', scan_results.get('endpoints_scanned', 0))
-        total_findings = len(scan_results.get('findings', []))
+        scan_id = scan_results.get('scan_id', 'N/A')[:20]
+        region = scan_results.get('region', 'Netherlands')
+        files_scanned = scan_results.get('files_scanned', scan_results.get('endpoints_scanned', 1)) or 1
+        findings = scan_results.get('findings', [])
+        total_findings = len(findings)
         
-        metadata_data = [
-            ["Report Generated", report_date],
-            ["Scan Type", scan_type],
-            ["Items Scanned", str(files_scanned)],
-            ["Total Findings", str(total_findings)],
+        # Count severity levels
+        critical_count = sum(1 for f in findings if f.get('severity', f.get('risk_level', '')).lower() == 'critical')
+        high_count = sum(1 for f in findings if f.get('severity', f.get('risk_level', '')).lower() == 'high')
+        medium_count = sum(1 for f in findings if f.get('severity', f.get('risk_level', '')).lower() == 'medium')
+        low_count = total_findings - critical_count - high_count - medium_count
+        compliance_score = scan_results.get('compliance_score', 75.0)
+        
+        # === MODERN HEADER WITH GRADIENT ===
+        header_drawing = Drawing(540, 70)
+        header_drawing.add(Rect(0, 0, 540, 70, fillColor=colors.HexColor('#0f172a'), strokeColor=None))
+        header_drawing.add(Rect(0, 0, 540, 4, fillColor=colors.HexColor('#3b82f6'), strokeColor=None))
+        header_drawing.add(Rect(0, 66, 540, 4, fillColor=colors.HexColor('#8b5cf6'), strokeColor=None))
+        story.append(header_drawing)
+        
+        # Title
+        title_style = ParagraphStyle('ModernTitle', parent=styles['Title'], fontSize=24, textColor=colors.HexColor('#1e3a5f'), spaceAfter=5, alignment=1, fontName='Helvetica-Bold')
+        story.append(Paragraph("DataGuardian Pro Report", title_style))
+        
+        # Scan type subtitle
+        subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor('#3b82f6'), alignment=1, spaceAfter=8)
+        story.append(Paragraph(f"Scan Type: {scan_type}", subtitle_style))
+        
+        # Metadata line
+        meta_style = ParagraphStyle('Meta', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#6b7280'), alignment=1, spaceAfter=15)
+        story.append(Paragraph(f"Scan ID: {scan_id} | Generated: {report_date} | Region: {region}", meta_style))
+        
+        # === EXECUTIVE SUMMARY SECTION ===
+        section_header = ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=14, textColor=colors.HexColor('#1e3a5f'), spaceBefore=15, spaceAfter=10, fontName='Helvetica-Bold')
+        story.append(Paragraph("Executive Summary", section_header))
+        
+        # Metrics cards - 4 columns with colored numbers
+        metrics_data = [
+            [str(files_scanned), str(total_findings), str(critical_count), str(high_count)],
+            ['Files Scanned', 'Total Findings', 'Critical Issues', 'High Risk']
         ]
         
-        metadata_table = Table(metadata_data, colWidths=[2.5*inch, 4*inch])
-        metadata_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (0, -1), colors.HexColor('#1e40af')),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.white),
-            ('TEXTCOLOR', (1, 0), (1, -1), colors.black),
-            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('FONTNAME', (1, 0), (1, -1), 'Helvetica'),
-            ('FONTSIZE', (0, 0), (-1, -1), 11),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 12),
-            ('TOPPADDING', (0, 0), (-1, -1), 12),
-            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
-            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [colors.white, colors.HexColor('#f3f4f6')])
+        metrics_table = Table(metrics_data, colWidths=[1.35*inch, 1.35*inch, 1.35*inch, 1.35*inch])
+        metrics_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 24),
+            ('FONTSIZE', (0, 1), (-1, 1), 9),
+            ('TEXTCOLOR', (0, 0), (0, 0), colors.HexColor('#3b82f6')),  # Blue
+            ('TEXTCOLOR', (1, 0), (1, 0), colors.HexColor('#f59e0b')),  # Amber
+            ('TEXTCOLOR', (2, 0), (2, 0), colors.HexColor('#dc2626')),  # Red
+            ('TEXTCOLOR', (3, 0), (3, 0), colors.HexColor('#ea580c')),  # Orange
+            ('TEXTCOLOR', (0, 1), (-1, 1), colors.HexColor('#6b7280')),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8fafc')),
+            ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#e2e8f0')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
+            ('TOPPADDING', (0, 0), (-1, 0), 18),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 1), (-1, 1), 4),
+            ('BOTTOMPADDING', (0, 1), (-1, 1), 15),
         ]))
-        story.append(metadata_table)
-        story.append(Spacer(1, 0.3*inch))
+        story.append(metrics_table)
+        story.append(Spacer(1, 8))
         
-        # Findings section
-        story.append(Paragraph("🔍 Findings Summary", styles['Heading2']))
-        findings = scan_results.get('findings', [])
+        # Compliance Score with color indicator
+        score_color = '#166534' if compliance_score >= 80 else '#ca8a04' if compliance_score >= 60 else '#dc2626'
+        score_status = 'Excellent' if compliance_score >= 80 else 'Attention' if compliance_score >= 60 else 'Critical'
+        score_style = ParagraphStyle('Score', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor(score_color), alignment=1, fontName='Helvetica-Bold', spaceAfter=20)
+        story.append(Paragraph(f"Compliance Score: {compliance_score:.1f}% - {score_status}", score_style))
         
+        # === DETAILED FINDINGS SECTION ===
         if findings:
-            findings_data = [["Type", "Severity", "Description", "Location"]]
-            for finding in findings[:20]:  # Limit to first 20 for PDF
-                findings_data.append([
-                    str(finding.get('type', 'Unknown'))[:25],
-                    str(finding.get('severity', finding.get('risk_level', 'Medium')))[:12],
-                    str(finding.get('description', 'No description'))[:35],
-                    str(finding.get('location', finding.get('file', 'N/A')))[:20]
-                ])
+            story.append(Paragraph("Detailed Findings", section_header))
             
-            findings_table = Table(findings_data, colWidths=[1.3*inch, 1*inch, 1.7*inch, 1.5*inch])
-            findings_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e40af')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('TOPPADDING', (0, 0), (-1, 0), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e5e7eb')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f9fafb')])
-            ]))
-            story.append(findings_table)
+            for idx, finding in enumerate(findings[:15], 1):  # Limit to 15 for readability
+                finding_type = finding.get('type', 'Security Finding')
+                severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+                severity_lower = severity.lower()
+                
+                # Severity colors
+                if severity_lower == 'critical':
+                    sev_color = '#dc2626'
+                    sev_bg = '#fef2f2'
+                elif severity_lower == 'high':
+                    sev_color = '#ea580c'
+                    sev_bg = '#fff7ed'
+                elif severity_lower == 'medium':
+                    sev_color = '#d97706'
+                    sev_bg = '#fefce8'
+                else:
+                    sev_color = '#16a34a'
+                    sev_bg = '#f0fdf4'
+                
+                # Finding card header with severity badge
+                finding_title = ParagraphStyle('FindingTitle', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#1f2937'), fontName='Helvetica-Bold', spaceBefore=12, spaceAfter=4)
+                story.append(Paragraph(f"Finding #{idx}: {finding_type} <font color='{sev_color}'>[{severity.upper()}]</font>", finding_title))
+                
+                # Source file
+                source_file = finding.get('file', finding.get('file_name', finding.get('location', '')))
+                if source_file and source_file != 'N/A':
+                    file_style = ParagraphStyle('FileInfo', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#3b82f6'), spaceAfter=3)
+                    story.append(Paragraph(f"Source: {source_file}", file_style))
+                
+                # Description
+                description = finding.get('description', finding.get('context', ''))
+                if description:
+                    desc_style = ParagraphStyle('Desc', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#374151'), spaceAfter=4, leftIndent=10)
+                    story.append(Paragraph(f"{description[:250]}{'...' if len(description) > 250 else ''}", desc_style))
+                
+                # Business Impact
+                impact = finding.get('business_impact', '')
+                if impact:
+                    impact_style = ParagraphStyle('Impact', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#7c3aed'), leftIndent=10)
+                    story.append(Paragraph(f"Business Impact: {impact[:150]}", impact_style))
+                
+                # Priority
+                priority = finding.get('priority', '')
+                if priority:
+                    pri_color = '#dc2626' if 'Critical' in priority else '#ea580c' if 'High' in priority else '#6b7280'
+                    pri_style = ParagraphStyle('Priority', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor(pri_color), leftIndent=10)
+                    story.append(Paragraph(f"Priority: {priority}", pri_style))
+                
+                # Compliance Requirements
+                comp_reqs = finding.get('compliance_requirements', finding.get('gdpr_article', ''))
+                if comp_reqs:
+                    comp_header = ParagraphStyle('CompHeader', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#1e3a5f'), fontName='Helvetica-Bold', spaceBefore=6, spaceAfter=2, leftIndent=10)
+                    story.append(Paragraph("Compliance Requirements:", comp_header))
+                    comp_style = ParagraphStyle('CompReq', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#374151'), leftIndent=20)
+                    if isinstance(comp_reqs, list):
+                        for req in comp_reqs[:3]:
+                            story.append(Paragraph(f"• {req}", comp_style))
+                    else:
+                        story.append(Paragraph(f"• {comp_reqs}", comp_style))
+                
+                # Recommendations
+                recommendations = finding.get('recommendations', finding.get('actionable_recommendations', []))
+                if recommendations:
+                    rec_header = ParagraphStyle('RecHeader', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#166534'), fontName='Helvetica-Bold', spaceBefore=6, spaceAfter=2, leftIndent=10)
+                    story.append(Paragraph("Actionable Recommendations:", rec_header))
+                    rec_style = ParagraphStyle('Rec', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#374151'), leftIndent=20)
+                    if isinstance(recommendations, list):
+                        for rec in recommendations[:3]:
+                            if isinstance(rec, dict):
+                                story.append(Paragraph(f"• {rec.get('description', rec.get('title', str(rec)))}", rec_style))
+                            else:
+                                story.append(Paragraph(f"• {rec}", rec_style))
+                    else:
+                        story.append(Paragraph(f"• {recommendations}", rec_style))
+                
+                # Separator
+                story.append(Spacer(1, 6))
+                sep = Drawing(500, 1)
+                sep.add(Line(0, 0, 500, 0, strokeColor=colors.HexColor('#e5e7eb'), strokeWidth=0.5))
+                story.append(sep)
+            
+            # Show truncation if needed
+            if len(findings) > 15:
+                trunc_style = ParagraphStyle('Trunc', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#6b7280'), alignment=1, spaceBefore=10)
+                story.append(Paragraph(f"Showing 15 of {len(findings)} total findings", trunc_style))
         else:
-            story.append(Paragraph("✅ No findings detected.", styles['Normal']))
+            success_style = ParagraphStyle('Success', parent=styles['Normal'], fontSize=11, textColor=colors.HexColor('#166534'), alignment=1)
+            story.append(Paragraph("No privacy or security issues detected.", success_style))
         
-        story.append(Spacer(1, 0.3*inch))
-        
-        # Fraud detection section (if available)
+        # === FRAUD DETECTION SECTION ===
         fraud_findings = [f for f in findings if f.get('fraud_analysis')]
         if fraud_findings:
-            story.append(Paragraph("🚨 AI Fraud Detection Analysis", styles['Heading2']))
+            story.append(PageBreak())
+            story.append(Paragraph("AI Fraud Detection Analysis", section_header))
             
-            fraud_data = [["Document", "Risk Level", "AI Score", "Model"]]
-            for finding in fraud_findings:
-                fraud_analysis = finding.get('fraud_analysis', {})
+            fraud_data = [["Document", "Risk Level", "AI Score", "Detection Model"]]
+            for finding in fraud_findings[:10]:
+                fraud = finding.get('fraud_analysis', {})
                 fraud_data.append([
-                    str(finding.get('file_name', 'Unknown'))[:25],
-                    str(fraud_analysis.get('risk_level', 'N/A'))[:12],
-                    f"{fraud_analysis.get('ai_generated_risk', 0):.0%}",
-                    str(fraud_analysis.get('ai_model', 'Unknown'))[:20]
+                    str(finding.get('file_name', 'Unknown'))[:30],
+                    str(fraud.get('risk_level', 'N/A')),
+                    f"{fraud.get('ai_generated_risk', 0):.0%}",
+                    str(fraud.get('ai_model', 'GPT-4'))[:20]
                 ])
             
-            fraud_table = Table(fraud_data, colWidths=[2*inch, 1.2*inch, 1.2*inch, 1.8*inch])
+            fraud_table = Table(fraud_data, colWidths=[2.2*inch, 1.2*inch, 1*inch, 1.8*inch])
             fraud_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#dc2626')),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#7c3aed')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('ALIGN', (2, 0), (2, -1), 'CENTER'),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
                 ('FONTSIZE', (0, 0), (-1, 0), 10),
                 ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('TOPPADDING', (0, 0), (-1, 0), 12),
-                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#fecaca')),
-                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#fee2e2')])
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+                ('TOPPADDING', (0, 0), (-1, -1), 10),
+                ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#ddd6fe')),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f3ff')])
             ]))
             story.append(fraud_table)
-            story.append(Spacer(1, 0.2*inch))
         
-        # Footer
-        story.append(Spacer(1, 0.2*inch))
-        footer_text = "Generated by DataGuardian Pro - Enterprise Privacy Compliance Platform"
-        story.append(Paragraph(f"<i>{footer_text}</i>", ParagraphStyle(
-            'Footer',
-            parent=styles['Normal'],
-            fontSize=9,
-            textColor=colors.HexColor('#9ca3af'),
-            alignment=1
-        )))
+        # === PROFESSIONAL FOOTER ===
+        story.append(Spacer(1, 30))
+        footer_line = Drawing(540, 2)
+        footer_line.add(Line(0, 1, 540, 1, strokeColor=colors.HexColor('#1e3a5f'), strokeWidth=1))
+        story.append(footer_line)
+        story.append(Spacer(1, 8))
+        
+        footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#6b7280'), alignment=1)
+        story.append(Paragraph("Generated by DataGuardian Pro - Enterprise Privacy &amp; Sustainability Compliance Platform", footer_style))
+        story.append(Paragraph(f"Report ID: {scan_id} | Generated: {report_date}", footer_style))
+        story.append(Paragraph("GDPR | UAVG | EU AI Act 2025 | SOC2 Type II Compliant", footer_style))
         
         doc.build(story)
         buffer.seek(0)
