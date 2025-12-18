@@ -20,11 +20,32 @@ from typing import Dict, List, Optional, Any
 import threading
 from dataclasses import dataclass, asdict
 from enum import Enum
+from contextlib import contextmanager
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import os
 
 logger = logging.getLogger(__name__)
+
+_visitor_pool = None
+_visitor_pool_lock = threading.Lock()
+
+def get_visitor_pool(db_url: str, min_connections: int = 2, max_connections: int = 15):
+    """Get or create a thread-safe connection pool for visitor tracking."""
+    global _visitor_pool
+    if _visitor_pool is None:
+        with _visitor_pool_lock:
+            if _visitor_pool is None:
+                try:
+                    _visitor_pool = pool.ThreadedConnectionPool(
+                        min_connections, max_connections, db_url
+                    )
+                    logger.info(f"Visitor tracking connection pool initialized: min={min_connections}, max={max_connections}")
+                except Exception as e:
+                    logger.error(f"Failed to create visitor tracking pool: {e}")
+                    raise
+    return _visitor_pool
 
 class VisitorEventType(Enum):
     """Visitor event types for tracking"""
@@ -81,62 +102,92 @@ class VisitorTracker:
     def __init__(self):
         self.events: List[VisitorEvent] = []
         self.lock = threading.Lock()
-        self.db_connection = None
+        self._pool = None
+        self.db_url = os.getenv('DATABASE_URL')
+        if self.db_url:
+            try:
+                self._pool = get_visitor_pool(self.db_url)
+            except Exception as e:
+                logger.warning(f"Failed to initialize visitor pool: {e}")
         self._init_database()
+    
+    @contextmanager
+    def _get_connection(self):
+        """Get database connection from pool with automatic release"""
+        conn = None
+        try:
+            if self._pool:
+                conn = self._pool.getconn()
+            elif self.db_url:
+                conn = psycopg2.connect(self.db_url)
+            yield conn
+        finally:
+            if conn:
+                if self._pool:
+                    try:
+                        self._pool.putconn(conn)
+                    except Exception:
+                        try:
+                            conn.close()
+                        except:
+                            pass
+                else:
+                    try:
+                        conn.close()
+                    except:
+                        pass
         
     def _init_database(self):
         """Initialize PostgreSQL tables for visitor tracking"""
         try:
-            db_url = os.getenv('DATABASE_URL')
-            if not db_url:
+            if not self.db_url:
                 logger.warning("DATABASE_URL not set - using in-memory tracking only")
                 return
                 
-            conn = psycopg2.connect(db_url)
-            cursor = conn.cursor()
-            
-            # Create visitor_events table
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS visitor_events (
-                    event_id VARCHAR(36) PRIMARY KEY,
-                    session_id VARCHAR(36) NOT NULL,
-                    event_type VARCHAR(50) NOT NULL,
-                    timestamp TIMESTAMP NOT NULL,
-                    anonymized_ip VARCHAR(64) NOT NULL,
-                    user_agent TEXT,
-                    page_path VARCHAR(500),
-                    referrer VARCHAR(500),
-                    country VARCHAR(2),
-                    user_id VARCHAR(36),
-                    username VARCHAR(100),
-                    details JSONB,
-                    success BOOLEAN DEFAULT TRUE,
-                    error_message TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Create indexes for performance
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_visitor_events_timestamp 
-                ON visitor_events(timestamp DESC)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_visitor_events_session 
-                ON visitor_events(session_id)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_visitor_events_type 
-                ON visitor_events(event_type)
-            """)
-            cursor.execute("""
-                CREATE INDEX IF NOT EXISTS idx_visitor_events_user 
-                ON visitor_events(user_id)
-            """)
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
+            with self._get_connection() as conn:
+                if not conn:
+                    return
+                cursor = conn.cursor()
+                
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS visitor_events (
+                        event_id VARCHAR(36) PRIMARY KEY,
+                        session_id VARCHAR(36) NOT NULL,
+                        event_type VARCHAR(50) NOT NULL,
+                        timestamp TIMESTAMP NOT NULL,
+                        anonymized_ip VARCHAR(64) NOT NULL,
+                        user_agent TEXT,
+                        page_path VARCHAR(500),
+                        referrer VARCHAR(500),
+                        country VARCHAR(2),
+                        user_id VARCHAR(36),
+                        username VARCHAR(100),
+                        details JSONB,
+                        success BOOLEAN DEFAULT TRUE,
+                        error_message TEXT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_visitor_events_timestamp 
+                    ON visitor_events(timestamp DESC)
+                """)
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_visitor_events_session 
+                    ON visitor_events(session_id)
+                """)
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_visitor_events_type 
+                    ON visitor_events(event_type)
+                """)
+                cursor.execute("""
+                    CREATE INDEX IF NOT EXISTS idx_visitor_events_user 
+                    ON visitor_events(user_id)
+                """)
+                
+                conn.commit()
+                cursor.close()
             
             logger.info("✅ Visitor tracking database initialized")
             
@@ -269,44 +320,43 @@ class VisitorTracker:
         return event_id
     
     def _store_event_db(self, event: VisitorEvent):
-        """Store event in PostgreSQL database"""
+        """Store event in PostgreSQL database using connection pool"""
         try:
-            db_url = os.getenv('DATABASE_URL')
-            if not db_url:
+            if not self.db_url:
                 return
             
-            conn = psycopg2.connect(db_url)
-            cursor = conn.cursor()
-            
-            # Convert details dict to JSON string for PostgreSQL
-            details_json = json.dumps(event.details) if event.details else '{}'
-            
-            cursor.execute("""
-                INSERT INTO visitor_events (
-                    event_id, session_id, event_type, timestamp,
-                    anonymized_ip, user_agent, page_path, referrer,
-                    country, user_id, username, details, success, error_message
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (
-                event.event_id,
-                event.session_id,
-                event.event_type.value,
-                event.timestamp,
-                event.anonymized_ip,
-                event.user_agent,
-                event.page_path,
-                event.referrer,
-                event.country,
-                event.user_id,
-                event.username,
-                details_json,  # Use JSON string instead of dict
-                event.success,
-                event.error_message
-            ))
-            
-            conn.commit()
-            cursor.close()
-            conn.close()
+            with self._get_connection() as conn:
+                if not conn:
+                    return
+                cursor = conn.cursor()
+                
+                details_json = json.dumps(event.details) if event.details else '{}'
+                
+                cursor.execute("""
+                    INSERT INTO visitor_events (
+                        event_id, session_id, event_type, timestamp,
+                        anonymized_ip, user_agent, page_path, referrer,
+                        country, user_id, username, details, success, error_message
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (
+                    event.event_id,
+                    event.session_id,
+                    event.event_type.value,
+                    event.timestamp,
+                    event.anonymized_ip,
+                    event.user_agent,
+                    event.page_path,
+                    event.referrer,
+                    event.country,
+                    event.user_id,
+                    event.username,
+                    details_json,
+                    event.success,
+                    event.error_message
+                ))
+                
+                conn.commit()
+                cursor.close()
             
         except Exception as e:
             logger.error(f"Failed to store visitor event in database: {e}")
@@ -325,101 +375,94 @@ class VisitorTracker:
             - Country breakdown
         """
         try:
-            db_url = os.getenv('DATABASE_URL')
-            if not db_url:
+            if not self.db_url:
                 return self._get_memory_analytics(days)
             
-            conn = psycopg2.connect(db_url)
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            since = datetime.now() - timedelta(days=days)
-            
-            # Total unique visitors (sessions)
-            cursor.execute("""
-                SELECT COUNT(DISTINCT session_id) as total_visitors
-                FROM visitor_events
-                WHERE timestamp >= %s
-            """, (since,))
-            result = cursor.fetchone()
-            total_visitors = result['total_visitors'] if result else 0
-            
-            # Total page views
-            cursor.execute("""
-                SELECT COUNT(*) as total_pageviews
-                FROM visitor_events
-                WHERE timestamp >= %s AND event_type = 'page_view'
-            """, (since,))
-            result = cursor.fetchone()
-            total_pageviews = result['total_pageviews'] if result else 0
-            
-            # Login attempts
-            cursor.execute("""
-                SELECT 
-                    SUM(CASE WHEN event_type = 'login_success' THEN 1 ELSE 0 END) as login_success,
-                    SUM(CASE WHEN event_type = 'login_failure' THEN 1 ELSE 0 END) as login_failure
-                FROM visitor_events
-                WHERE timestamp >= %s
-            """, (since,))
-            login_stats = cursor.fetchone()
-            
-            # Registration attempts
-            cursor.execute("""
-                SELECT 
-                    SUM(CASE WHEN event_type = 'registration_success' THEN 1 ELSE 0 END) as registration_success,
-                    SUM(CASE WHEN event_type = 'registration_failure' THEN 1 ELSE 0 END) as registration_failure
-                FROM visitor_events
-                WHERE timestamp >= %s
-            """, (since,))
-            registration_stats = cursor.fetchone()
-            
-            # Top pages
-            cursor.execute("""
-                SELECT page_path, COUNT(*) as views
-                FROM visitor_events
-                WHERE timestamp >= %s AND event_type = 'page_view'
-                GROUP BY page_path
-                ORDER BY views DESC
-                LIMIT 10
-            """, (since,))
-            top_pages = cursor.fetchall()
-            
-            # Top referrers
-            cursor.execute("""
-                SELECT referrer, COUNT(*) as visits
-                FROM visitor_events
-                WHERE timestamp >= %s AND referrer IS NOT NULL
-                GROUP BY referrer
-                ORDER BY visits DESC
-                LIMIT 10
-            """, (since,))
-            top_referrers = cursor.fetchall()
-            
-            # Country breakdown
-            cursor.execute("""
-                SELECT country, COUNT(DISTINCT session_id) as visitors
-                FROM visitor_events
-                WHERE timestamp >= %s AND country IS NOT NULL
-                GROUP BY country
-                ORDER BY visitors DESC
-                LIMIT 10
-            """, (since,))
-            countries = cursor.fetchall()
-            
-            cursor.close()
-            conn.close()
-            
-            return {
-                'period_days': days,
-                'total_visitors': total_visitors,
-                'total_pageviews': total_pageviews,
-                'login_success': (login_stats['login_success'] if login_stats else 0) or 0,
-                'login_failure': (login_stats['login_failure'] if login_stats else 0) or 0,
-                'registration_success': (registration_stats['registration_success'] if registration_stats else 0) or 0,
-                'registration_failure': (registration_stats['registration_failure'] if registration_stats else 0) or 0,
-                'top_pages': [dict(p) for p in top_pages] if top_pages else [],
-                'top_referrers': [dict(r) for r in top_referrers] if top_referrers else [],
-                'countries': [dict(c) for c in countries] if countries else []
-            }
+            with self._get_connection() as conn:
+                if not conn:
+                    return self._get_memory_analytics(days)
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                
+                since = datetime.now() - timedelta(days=days)
+                
+                cursor.execute("""
+                    SELECT COUNT(DISTINCT session_id) as total_visitors
+                    FROM visitor_events
+                    WHERE timestamp >= %s
+                """, (since,))
+                result = cursor.fetchone()
+                total_visitors = result['total_visitors'] if result else 0
+                
+                cursor.execute("""
+                    SELECT COUNT(*) as total_pageviews
+                    FROM visitor_events
+                    WHERE timestamp >= %s AND event_type = 'page_view'
+                """, (since,))
+                result = cursor.fetchone()
+                total_pageviews = result['total_pageviews'] if result else 0
+                
+                cursor.execute("""
+                    SELECT 
+                        SUM(CASE WHEN event_type = 'login_success' THEN 1 ELSE 0 END) as login_success,
+                        SUM(CASE WHEN event_type = 'login_failure' THEN 1 ELSE 0 END) as login_failure
+                    FROM visitor_events
+                    WHERE timestamp >= %s
+                """, (since,))
+                login_stats = cursor.fetchone()
+                
+                cursor.execute("""
+                    SELECT 
+                        SUM(CASE WHEN event_type = 'registration_success' THEN 1 ELSE 0 END) as registration_success,
+                        SUM(CASE WHEN event_type = 'registration_failure' THEN 1 ELSE 0 END) as registration_failure
+                    FROM visitor_events
+                    WHERE timestamp >= %s
+                """, (since,))
+                registration_stats = cursor.fetchone()
+                
+                cursor.execute("""
+                    SELECT page_path, COUNT(*) as views
+                    FROM visitor_events
+                    WHERE timestamp >= %s AND event_type = 'page_view'
+                    GROUP BY page_path
+                    ORDER BY views DESC
+                    LIMIT 10
+                """, (since,))
+                top_pages = cursor.fetchall()
+                
+                cursor.execute("""
+                    SELECT referrer, COUNT(*) as visits
+                    FROM visitor_events
+                    WHERE timestamp >= %s AND referrer IS NOT NULL
+                    GROUP BY referrer
+                    ORDER BY visits DESC
+                    LIMIT 10
+                """, (since,))
+                top_referrers = cursor.fetchall()
+                
+                cursor.execute("""
+                    SELECT country, COUNT(DISTINCT session_id) as visitors
+                    FROM visitor_events
+                    WHERE timestamp >= %s AND country IS NOT NULL
+                    GROUP BY country
+                    ORDER BY visitors DESC
+                    LIMIT 10
+                """, (since,))
+                countries = cursor.fetchall()
+                
+                cursor.close()
+                
+                return {
+                    'period_days': days,
+                    'total_visitors': total_visitors,
+                    'total_pageviews': total_pageviews,
+                    'login_success': (login_stats['login_success'] if login_stats else 0) or 0,
+                    'login_failure': (login_stats['login_failure'] if login_stats else 0) or 0,
+                    'registration_success': (registration_stats['registration_success'] if registration_stats else 0) or 0,
+                    'registration_failure': (registration_stats['registration_failure'] if registration_stats else 0) or 0,
+                    'top_pages': [dict(p) for p in top_pages] if top_pages else [],
+                    'top_referrers': [dict(r) for r in top_referrers] if top_referrers else [],
+                    'countries': [dict(c) for c in countries] if countries else []
+                }
             
         except Exception as e:
             logger.error(f"Failed to get analytics: {e}")
@@ -457,24 +500,24 @@ class VisitorTracker:
         Default: 90 days retention for visitor analytics
         """
         try:
-            db_url = os.getenv('DATABASE_URL')
-            if not db_url:
+            if not self.db_url:
                 return
             
-            conn = psycopg2.connect(db_url)
-            cursor = conn.cursor()
-            
-            cutoff = datetime.now() - timedelta(days=retention_days)
-            
-            cursor.execute("""
-                DELETE FROM visitor_events
-                WHERE timestamp < %s
-            """, (cutoff,))
-            
-            deleted_count = cursor.rowcount
-            conn.commit()
-            cursor.close()
-            conn.close()
+            with self._get_connection() as conn:
+                if not conn:
+                    return
+                cursor = conn.cursor()
+                
+                cutoff = datetime.now() - timedelta(days=retention_days)
+                
+                cursor.execute("""
+                    DELETE FROM visitor_events
+                    WHERE timestamp < %s
+                """, (cutoff,))
+                
+                deleted_count = cursor.rowcount
+                conn.commit()
+                cursor.close()
             
             logger.info(f"🗑️  Cleaned up {deleted_count} old visitor events (>{retention_days} days)")
             
@@ -493,30 +536,30 @@ class VisitorTracker:
             List of event dictionaries
         """
         try:
-            db_url = os.getenv('DATABASE_URL')
-            if not db_url:
+            if not self.db_url:
                 return self._get_memory_recent_events(limit)
             
-            conn = psycopg2.connect(db_url)
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            since = datetime.now() - timedelta(days=days)
-            
-            cursor.execute("""
-                SELECT 
-                    event_id, session_id, event_type, timestamp,
-                    page_path, user_id, success, error_message
-                FROM visitor_events
-                WHERE timestamp >= %s
-                ORDER BY timestamp DESC
-                LIMIT %s
-            """, (since, limit))
-            
-            events = cursor.fetchall()
-            cursor.close()
-            conn.close()
-            
-            return [dict(e) for e in events] if events else []
+            with self._get_connection() as conn:
+                if not conn:
+                    return self._get_memory_recent_events(limit)
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                
+                since = datetime.now() - timedelta(days=days)
+                
+                cursor.execute("""
+                    SELECT 
+                        event_id, session_id, event_type, timestamp,
+                        page_path, user_id, success, error_message
+                    FROM visitor_events
+                    WHERE timestamp >= %s
+                    ORDER BY timestamp DESC
+                    LIMIT %s
+                """, (since, limit))
+                
+                events = cursor.fetchall()
+                cursor.close()
+                
+                return [dict(e) for e in events] if events else []
             
         except Exception as e:
             logger.error(f"Failed to get recent events: {e}")
@@ -546,37 +589,37 @@ class VisitorTracker:
         Returns list of sessions with their page views
         """
         try:
-            db_url = os.getenv('DATABASE_URL')
-            if not db_url:
+            if not self.db_url:
                 return []
             
-            conn = psycopg2.connect(db_url)
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            
-            since = datetime.now() - timedelta(days=days)
-            
-            cursor.execute("""
-                SELECT 
-                    session_id,
-                    MIN(timestamp) as session_start,
-                    MAX(timestamp) as last_activity,
-                    COUNT(*) as total_events,
-                    COUNT(CASE WHEN event_type = 'page_view' THEN 1 END) as page_views,
-                    ARRAY_AGG(DISTINCT page_path) as pages_visited,
-                    MAX(user_id) as user_id,
-                    BOOL_OR(event_type = 'login_success') as logged_in
-                FROM visitor_events
-                WHERE timestamp >= %s
-                GROUP BY session_id
-                ORDER BY session_start DESC
-                LIMIT %s
-            """, (since, limit))
-            
-            sessions = cursor.fetchall()
-            cursor.close()
-            conn.close()
-            
-            return [dict(s) for s in sessions] if sessions else []
+            with self._get_connection() as conn:
+                if not conn:
+                    return []
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                
+                since = datetime.now() - timedelta(days=days)
+                
+                cursor.execute("""
+                    SELECT 
+                        session_id,
+                        MIN(timestamp) as session_start,
+                        MAX(timestamp) as last_activity,
+                        COUNT(*) as total_events,
+                        COUNT(CASE WHEN event_type = 'page_view' THEN 1 END) as page_views,
+                        ARRAY_AGG(DISTINCT page_path) as pages_visited,
+                        MAX(user_id) as user_id,
+                        BOOL_OR(event_type = 'login_success') as logged_in
+                    FROM visitor_events
+                    WHERE timestamp >= %s
+                    GROUP BY session_id
+                    ORDER BY session_start DESC
+                    LIMIT %s
+                """, (since, limit))
+                
+                sessions = cursor.fetchall()
+                cursor.close()
+                
+                return [dict(s) for s in sessions] if sessions else []
             
         except Exception as e:
             logger.error(f"Failed to get visitor sessions: {e}")
