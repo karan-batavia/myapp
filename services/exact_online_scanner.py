@@ -588,6 +588,11 @@ class ExactOnlineScanner:
         try:
             env = os.environ.copy()
             env['GIT_TERMINAL_PROMPT'] = '0'
+            env['GIT_ASKPASS'] = ''
+            env['SSH_ASKPASS'] = ''
+            env['GIT_SSH_COMMAND'] = 'ssh -o BatchMode=yes -o StrictHostKeyChecking=no'
+            if 'REPLIT_ASKPASS_PID2_SESSION' in env:
+                del env['REPLIT_ASKPASS_PID2_SESSION']
             
             clone_cmd = [
                 'git', 'clone',
