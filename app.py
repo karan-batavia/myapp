@@ -4328,7 +4328,13 @@ def execute_document_scan(region, username, uploaded_files):
         track_scanner_usage('document', region, success=True, duration_ms=0)
         
         scanner = BlobScanner(region=region)
-        progress_bar = st.progress(0)
+        
+        progress_container = st.container()
+        with progress_container:
+            st.markdown("**📄 Scanning Documents**")
+            progress_bar = st.progress(0.0)
+            status_text = st.empty()
+            status_text.caption("🔄 Initializing...")
         
         scan_results = {
             "scan_id": str(uuid.uuid4()),
@@ -4339,8 +4345,12 @@ def execute_document_scan(region, username, uploaded_files):
             "document_results": []
         }
         
+        total_files = len(uploaded_files)
         for i, file in enumerate(uploaded_files):
-            progress_bar.progress((i + 1) / len(uploaded_files))
+            progress_pct = (i + 1) / total_files
+            progress_bar.progress(progress_pct)
+            display_name = file.name[:40] + "..." if len(file.name) > 40 else file.name
+            status_text.caption(f"🔄 Scanning ({i+1}/{total_files}) • {display_name}")
             
             # Save file temporarily
             import tempfile
@@ -4412,7 +4422,8 @@ def execute_document_scan(region, username, uploaded_files):
             }
         )
         
-        progress_bar.progress(100)
+        progress_bar.progress(1.0)
+        status_text.caption(f"✅ Scan complete! Processed {total_files} documents")
         
         # Store scan results in session state for download access
         st.session_state['last_scan_results'] = scan_results
