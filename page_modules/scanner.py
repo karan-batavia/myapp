@@ -5800,7 +5800,7 @@ def render_enterprise_connector_interface(region: str, username: str):
     current_lang = st.session_state.get('language', 'en')
     
     # Force reinitialize i18n to ensure fresh translations
-    from utils.i18n import initialize, set_language, _translations, load_translations
+    from utils.i18n import initialize, set_language, _translations, load_translations, get_text as _
     import json
     import os
     

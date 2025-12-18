@@ -137,6 +137,9 @@ class PerformanceProfiler:
                 start_time = time.time()
                 start_memory = psutil.Process().memory_info().rss
                 
+                # Get stats reference early so it's available in exception handler
+                stats = self.function_stats[name]
+                
                 try:
                     result = func(*args, **kwargs)
                     
@@ -144,7 +147,6 @@ class PerformanceProfiler:
                     memory_used = psutil.Process().memory_info().rss - start_memory
                     
                     # Update statistics
-                    stats = self.function_stats[name]
                     stats['call_count'] += 1
                     stats['total_time'] += execution_time
                     stats['avg_time'] = stats['total_time'] / stats['call_count']

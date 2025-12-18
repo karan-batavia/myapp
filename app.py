@@ -791,8 +791,9 @@ def main():
             st.write("**Error Details:**")
             st.code(f"{type(e).__name__}: {str(e)}")
             
-            # Fallback to basic interface
-            render_safe_mode()
+            # Show traceback for debugging
+            import traceback
+            st.code(traceback.format_exc())
 
 def render_freemium_registration():
     """Render freemium registration form for new users with database persistence and bot protection"""
