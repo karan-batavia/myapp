@@ -6682,7 +6682,7 @@ def render_exact_online_repo_scanner(region: str, username: str):
             help="Public or accessible Git repository URL"
         )
         
-        st.caption("💡 **Try it now:** `https://github.com/ExactOnline/DotNet-SDK` — Public Exact Online SDK repository (safe for testing)")
+        st.caption("💡 **Try it now:** `https://github.com/rubenmijwaart/ClientSDK` — Public Exact Online C# SDK (safe for testing)")
         st.warning("⚠️ For private repositories, upload files directly or use a personal access token in the URL")
     
     else:

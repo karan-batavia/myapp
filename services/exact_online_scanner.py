@@ -614,7 +614,11 @@ class ExactOnlineScanner:
             )
             
             if result.returncode != 0:
-                error_msg = result.stderr[:200] if result.stderr else "Unknown error"
+                stderr = result.stderr or ""
+                if "terminal prompts disabled" in stderr or "could not read Username" in stderr:
+                    logger.error(f"Repository not found or requires authentication: {repo_url}")
+                    raise RuntimeError("Repository not found or is private. Please verify the URL is correct and publicly accessible.")
+                error_msg = stderr[:200] if stderr else "Unknown error"
                 logger.error(f"Git clone failed: {error_msg}")
                 raise RuntimeError(f"Git clone failed: {error_msg}")
             
