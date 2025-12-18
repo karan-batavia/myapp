@@ -1,0 +1,327 @@
+================================================================================
+                    DATAGUARDIAN PRO - ARCHITECTURE DIAGRAM
+                         Enterprise Privacy Compliance Platform
+                              Version: December 2025
+================================================================================
+
+================================================================================
+                              SYSTEM OVERVIEW
+================================================================================
+
+Target: Netherlands & EU Market | Goal: €25K MRR
+Compliance: GDPR, UAVG, EU AI Act 2025, SOC2 Type II, NIS2
+
+================================================================================
+                           ARCHITECTURE LAYERS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            FRONTEND LAYER                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  STREAMLIT UI (app.py - 14,000+ lines)                                      │
+│  ├── Entry Point: app.py                                                    │
+│  ├── Multi-page Architecture: pages/ directory                             │
+│  │   ├── New Scan                                                           │
+│  │   ├── Dashboard                                                          │
+│  │   ├── Results                                                            │
+│  │   ├── History                                                            │
+│  │   ├── Settings (6 tabs including Billing)                               │
+│  │   ├── Pricing                                                            │
+│  │   └── Admin                                                              │
+│  │                                                                          │
+│  ├── Page Modules: page_modules/                                            │
+│  │   ├── scanner.py                                                         │
+│  │   ├── dashboard.py                                                       │
+│  │   ├── results.py                                                         │
+│  │   ├── history.py                                                         │
+│  │   ├── settings.py                                                        │
+│  │   ├── pricing.py                                                         │
+│  │   └── admin.py                                                           │
+│  │                                                                          │
+│  ├── Auth Wrapper: page_modules/auth_wrapper.py                             │
+│  │   └── JWT authentication + Role-based access control                     │
+│  │                                                                          │
+│  ├── Components: components/                                                │
+│  │   ├── auth_manager.py                                                    │
+│  │   ├── license_upgrade_prompt.py                                          │
+│  │   ├── document_fraud_detection_display.py                               │
+│  │   └── progress bars (utils/progress_bar.py)                             │
+│  │                                                                          │
+│  └── Internationalization: translations/ (EN/NL)                           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         BACKEND SERVICES LAYER                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  SCANNER SERVICES (services/)                                               │
+│  ├── blob_scanner.py          - Document scanning (PDF, DOCX, TXT, etc.)   │
+│  ├── code_scanner.py          - Source code scanning                        │
+│  ├── database_scanner.py      - MySQL/MSSQL/PostgreSQL scanning            │
+│  ├── website_scanner.py       - Website crawling and scanning              │
+│  ├── image_scanner.py         - OCR-based image scanning                   │
+│  ├── api_scanner.py           - REST API endpoint scanning                 │
+│  ├── ai_model_scanner.py      - EU AI Act 2025 compliance (113 articles)   │
+│  ├── soc2_audit_readiness.py  - SOC2 Type II audit preparation             │
+│  ├── sustainability_scanner.py - Cloud infrastructure sustainability       │
+│  ├── exact_online_scanner.py  - Exact Online repository scanning (NL)     │
+│  └── salesforce_repo_scanner.py - Salesforce code scanning                 │
+│                                                                              │
+│  ENTERPRISE SERVICES                                                         │
+│  ├── dsar_automation.py       - Data Subject Access Request automation     │
+│  ├── consent_management_platform.py - GDPR consent tracking                │
+│  ├── vendor_risk_management.py - Third-party risk assessment               │
+│  ├── soc2_audit_readiness.py  - Compliance evidence collection             │
+│  ├── ropa_data_inventory.py   - Records of Processing Activities           │
+│  └── enterprise_ticketing_integrations.py - Jira/Slack/Confluence         │
+│                                                                              │
+│  ORCHESTRATION                                                               │
+│  ├── enterprise_orchestrator.py                                             │
+│  │   ├── Event-driven architecture                                          │
+│  │   ├── Redis pub/sub for distributed events                              │
+│  │   └── Listener registration and coordination                            │
+│  │                                                                          │
+│  └── utils/event_bus.py - Event types and publishing                       │
+│                                                                              │
+│  SUPPORTING SERVICES                                                         │
+│  ├── user_management_service.py (Connection pool: 2-20 connections)        │
+│  ├── visitor_tracker.py (Connection pool: 2-15 connections)                │
+│  ├── license_integration.py - Tier-based feature gating                    │
+│  ├── stripe_payment.py - Payment processing                                │
+│  ├── webhook_server.py - Stripe webhooks (port 5001)                       │
+│  ├── results_aggregator.py - Scan history persistence                      │
+│  ├── unified_html_report_generator.py - HTML reports                       │
+│  ├── encryption_service.py - AES-256 encryption                            │
+│  ├── bot_protection.py - 5-layer registration defense                      │
+│  └── gdpr_data_protection.py - Retention, anonymization, export            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              DATA LAYER                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌───────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐  │
+│  │  POSTGRESQL           │  │  REDIS                │  │  FILE STORAGE   │  │
+│  │  (Primary Database)   │  │  (Cache/Events)       │  │                 │  │
+│  ├───────────────────────┤  ├───────────────────────┤  ├─────────────────┤  │
+│  │  Tables:              │  │  Functions:           │  │  Directories:   │  │
+│  │  • users              │  │  • Session cache      │  │  • reports/     │  │
+│  │  • scans              │  │  • Scan progress      │  │  • static/      │  │
+│  │  • licenses           │  │  • Event bus (pub/sub)│  │  • temp/        │  │
+│  │  • visitor_events     │  │  • Rate limiting      │  │  • exports/     │  │
+│  │  • billing            │  │                       │  │                 │  │
+│  │  • consent_records    │  │  Port: 6379           │  │                 │  │
+│  │  • dsar_requests      │  │  Required: Yes        │  │                 │  │
+│  │                       │  │                       │  │                 │  │
+│  │  Connection Pooling:  │  │                       │  │                 │  │
+│  │  ThreadedConnectionPool│ │                       │  │                 │  │
+│  └───────────────────────┘  └───────────────────────┘  └─────────────────┘  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        EXTERNAL INTEGRATIONS                                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  PAYMENT                    AI/ML                   ENTERPRISE CONNECTORS   │
+│  ├── Stripe                 ├── OpenAI              ├── Exact Online (NL)   │
+│  ├── iDEAL (NL)            └── Anthropic           ├── Salesforce           │
+│  └── SEPA                                           ├── SAP                  │
+│                                                     ├── Microsoft 365        │
+│  REPOSITORIES                                       ├── Google Workspace     │
+│  ├── GitHub                                         ├── Slack                │
+│  ├── GitLab                                         ├── Jira                 │
+│  └── Bitbucket                                      └── Confluence           │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            SECURITY LAYER                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  AUTHENTICATION & AUTHORIZATION                                              │
+│  ├── JWT token-based authentication                                         │
+│  ├── bcrypt password hashing                                                │
+│  ├── 7 predefined user roles                                                │
+│  └── Role-based access control (RBAC)                                       │
+│                                                                              │
+│  BOT PROTECTION (5-Layer Defense)                                           │
+│  ├── Layer 1: Honeypot fields                                               │
+│  ├── Layer 2: Timing analysis                                               │
+│  ├── Layer 3: CAPTCHA verification                                          │
+│  ├── Layer 4: Browser fingerprinting                                        │
+│  └── Layer 5: Behavioral analysis                                           │
+│                                                                              │
+│  DATA PROTECTION                                                             │
+│  ├── AES-256 encryption (DATAGUARDIAN_MASTER_KEY)                          │
+│  ├── PII anonymization with SHA256 hashing                                  │
+│  ├── Automatic data retention (365 days scans, 90 days analytics)          │
+│  ├── GDPR Art. 17 - Right to erasure                                       │
+│  └── GDPR Art. 20 - Data portability                                       │
+│                                                                              │
+│  WEBHOOK SECURITY                                                            │
+│  └── Stripe signature validation                                            │
+│                                                                              │
+│  DATA RESIDENCY                                                              │
+│  └── Netherlands/EU only hosting requirement                                │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                         COMPLIANCE COVERAGE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  Framework          │  Coverage  │  Key Articles/Controls                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  GDPR               │  100%      │  Art. 5, 6, 17, 25, 28, 32, 44-49       │
+│  UAVG (Netherlands) │  100%      │  Art. 46 (BSN specialization)           │
+│  EU AI Act 2025     │  100%      │  113 articles, 38+ detection functions  │
+│  SOC2 Type II       │  Ready     │  Audit evidence collection              │
+│  NIS2 EU Directive  │  Compliant │  Critical infrastructure security       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                         KEY DATA FLOWS
+================================================================================
+
+1. USER SCAN FLOW
+   User → Select Scanner → Configure Options → Start Scan
+   → Progress Bar Updates → Findings Detected → Results Stored (PostgreSQL)
+   → Report Generated (HTML/PDF) → Download Available
+
+2. PAYMENT FLOW
+   User → Select Plan → Stripe Checkout → Payment (iDEAL/SEPA/Card)
+   → Webhook (port 5001) → License Activated → Features Unlocked
+
+3. ENTERPRISE EVENT FLOW
+   Scanner → Finding Detected → Event Published (Redis)
+   → Enterprise Orchestrator → Listeners Notified
+   → Automated Actions (DSAR, Tickets, Alerts)
+
+4. AUTHENTICATION FLOW
+   User → Login Form → Bot Protection Check → Password Verification (bcrypt)
+   → JWT Token Generated → Session Created (Redis) → Access Granted
+
+================================================================================
+                    FUTURE-PROOFING RECOMMENDATIONS
+================================================================================
+
+1. ARCHITECTURAL IMPROVEMENTS
+
+   A. Modularization (Priority: HIGH)
+      - Split app.py (14,000+ lines) into smaller modules
+      - Create clear service boundaries
+      - Implement dependency injection for testability
+      
+   B. Background Job Queue (Priority: HIGH)
+      - Implement RQ (Redis Queue) for long-running scans
+      - Add job progress tracking and cancellation
+      - Enable parallel scan processing
+      
+   C. API Layer (Priority: MEDIUM)
+      - Complete REST API implementation (api/routes.py)
+      - Add GraphQL for flexible data queries
+      - Enable headless/CLI scanning mode
+
+2. SCALABILITY ENHANCEMENTS
+
+   A. Database Optimization
+      - Add read replicas for analytics queries
+      - Implement query caching layer
+      - Add database connection monitoring
+      
+   B. Horizontal Scaling
+      - Containerize with Docker for orchestration
+      - Add load balancer support
+      - Implement stateless session management
+      
+   C. Caching Strategy
+      - Expand Redis usage for scan result caching
+      - Add CDN for static assets
+      - Implement scan deduplication
+
+3. MAINTAINABILITY
+
+   A. Code Quality
+      - Increase unit test coverage (currently 41 tests)
+      - Add integration tests for critical paths
+      - Implement code linting and formatting CI
+      
+   B. Documentation
+      - API documentation (OpenAPI/Swagger)
+      - Service interaction diagrams
+      - Runbook for operations
+      
+   C. Monitoring
+      - Add application performance monitoring (APM)
+      - Implement structured logging
+      - Create alerting for critical errors
+
+4. SECURITY HARDENING
+
+   A. Authentication
+      - Add multi-factor authentication (MFA)
+      - Implement OAuth2/OIDC for SSO
+      - Add session timeout policies
+      
+   B. Data Protection
+      - Implement field-level encryption
+      - Add audit logging for all data access
+      - Regular penetration testing
+      
+   C. Compliance
+      - Automated compliance reporting
+      - Real-time violation alerts
+      - Compliance dashboard for admins
+
+5. FEATURE EXPANSION ROADMAP
+
+   Phase 1 (Q1 2025)
+   - Background job queue (RQ)
+   - API layer completion
+   - MFA implementation
+   
+   Phase 2 (Q2 2025)
+   - GraphQL support
+   - Enhanced analytics dashboard
+   - Custom report builder
+   
+   Phase 3 (Q3 2025)
+   - Multi-tenant architecture
+   - White-label capabilities
+   - Advanced AI features
+
+================================================================================
+                         TECHNOLOGY STACK
+================================================================================
+
+Frontend:        Streamlit 1.x
+Backend:         Python 3.11
+Database:        PostgreSQL 16
+Cache:           Redis 7.x
+Authentication:  JWT + bcrypt
+Encryption:      AES-256
+Payment:         Stripe
+AI/ML:           OpenAI, Anthropic
+Hosting:         Replit (Development), Hetzner Cloud (Production target)
+
+================================================================================
+                         CONTACT & OWNERSHIP
+================================================================================
+
+Platform:        DataGuardian Pro
+Target Market:   Netherlands & EU Enterprise
+Revenue Goal:    €25K MRR
+Support:         dataguardianpro.nl
+
+================================================================================
+                    Document Generated: December 2025
+================================================================================
