@@ -11,7 +11,7 @@
     {
       "limit_type": "scans_per_month",
       "limit_value": 350,
-      "current_usage": 68,
+      "current_usage": 69,
       "reset_period": "monthly",
       "last_reset": "2025-12-06T14:35:32.076720"
     },
@@ -25,7 +25,7 @@
     {
       "limit_type": "export_reports",
       "limit_value": 100,
-      "current_usage": 63,
+      "current_usage": 66,
       "reset_period": "monthly",
       "last_reset": "2025-12-06T14:35:32.076728"
     },
