@@ -184,8 +184,8 @@ def _render_download_options(scan_data):
     with col2:
         if st.button("📊 Download HTML Report", use_container_width=True):
             try:
-                from app import generate_html_report
-                html_data = generate_html_report(scan_data.get('result', scan_data))
+                from services.unified_html_report_generator import generate_unified_html_report
+                html_data = generate_unified_html_report(scan_data.get('result', scan_data))
                 
                 st.download_button(
                     label="📥 Save HTML",

@@ -1015,7 +1015,7 @@ def _render_dpia_scanner(region: str, username: str):
     st.markdown("Guided GDPR Article 35 DPIA wizard for systematic privacy risk assessment.")
     
     try:
-        from app import render_dpia_scanner_interface
+        from page_modules.dpia_ui import render_dpia_scanner_interface
         render_dpia_scanner_interface(region, username)
     except ImportError:
         st.info("DPIA wizard guides you through 5 steps to assess data protection risks.")
