@@ -6651,14 +6651,25 @@ def render_exact_online_repo_scanner(region: str, username: str):
     
     scan_method = st.radio(
         "Scan Source",
-        ["📁 Upload Files", "🌐 Git Repository URL", "📝 Paste Code"],
-        horizontal=True
+        ["🌐 Git Repository URL", "📁 Upload Files", "📝 Paste Code"],
+        horizontal=True,
+        index=0
     )
     
     files_content = {}
     repo_url = None
     
-    if scan_method == "📁 Upload Files":
+    if scan_method == "🌐 Git Repository URL":
+        repo_url = st.text_input(
+            "Git Repository URL",
+            value="https://github.com/rubenmijwaart/ClientSDK",
+            help="Public or accessible Git repository URL"
+        )
+        
+        st.caption("💡 Pre-filled with **Exact Online C# SDK** — Public repository safe for testing")
+        st.warning("⚠️ For private repositories, upload files directly or use a personal access token in the URL")
+    
+    elif scan_method == "📁 Upload Files":
         uploaded_files = st.file_uploader(
             "Upload code files to scan",
             accept_multiple_files=True,
@@ -6674,16 +6685,6 @@ def render_exact_online_repo_scanner(region: str, username: str):
                 except Exception:
                     pass
             st.success(f"✅ {len(files_content)} files ready for scanning")
-    
-    elif scan_method == "🌐 Git Repository URL":
-        repo_url = st.text_input(
-            "Git Repository URL",
-            placeholder="https://github.com/yourcompany/exact-integration.git",
-            help="Public or accessible Git repository URL"
-        )
-        
-        st.caption("💡 **Try it now:** `https://github.com/rubenmijwaart/ClientSDK` — Public Exact Online C# SDK (safe for testing)")
-        st.warning("⚠️ For private repositories, upload files directly or use a personal access token in the URL")
     
     else:
         code_content = st.text_area(
