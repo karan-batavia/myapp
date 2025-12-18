@@ -929,6 +929,8 @@ class UnifiedHTMLReportGenerator:
             return self._generate_document_scanner_content(scan_result)
         elif 'image' in scan_type:
             return self._generate_image_scanner_content(scan_result)
+        elif 'exact' in scan_type:
+            return self._generate_exact_online_content(scan_result)
         else:
             return ""
     
@@ -2325,6 +2327,209 @@ class UnifiedHTMLReportGenerator:
             </div>
         </div>
         """
+    
+    def _generate_exact_online_content(self, scan_result: Dict[str, Any]) -> str:
+        """Generate Exact Online scanner specific content with GDPR/UAVG compliance details."""
+        content_html = ""
+        
+        exact_detected = scan_result.get('exact_integration_detected', False)
+        integration_findings = scan_result.get('integration_findings', [])
+        pii_findings = scan_result.get('pii_findings', [])
+        credential_findings = scan_result.get('credential_findings', [])
+        data_flow_map = scan_result.get('data_flow_map', [])
+        risk_summary = scan_result.get('risk_summary', {})
+        gdpr_compliance = scan_result.get('gdpr_compliance', {})
+        uavg_compliance = scan_result.get('uavg_compliance', {})
+        recommendations = scan_result.get('recommendations', [])
+        
+        integration_status = "Detected" if exact_detected else "Not Found"
+        integration_color = "#37b24d" if exact_detected else "#868e96"
+        
+        content_html += f"""
+        <div class="exact-online-section" style="margin: 20px 0;">
+            <h2 style="color: #1e3a5f; border-bottom: 3px solid #3b82f6; padding-bottom: 10px;">
+                🔗 Exact Online Integration Analysis
+            </h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0;">
+                <div style="background: #f0f9ff; padding: 20px; border-radius: 10px; text-align: center; border-left: 4px solid {integration_color};">
+                    <div style="font-size: 1.8em; color: {integration_color}; font-weight: bold;">{integration_status}</div>
+                    <div style="color: #64748b; margin-top: 5px;">Exact Online</div>
+                </div>
+                <div style="background: #fef2f2; padding: 20px; border-radius: 10px; text-align: center; border-left: 4px solid #dc2626;">
+                    <div style="font-size: 1.8em; color: #dc2626; font-weight: bold;">{len(credential_findings)}</div>
+                    <div style="color: #64748b; margin-top: 5px;">Credential Issues</div>
+                </div>
+                <div style="background: #fff7ed; padding: 20px; border-radius: 10px; text-align: center; border-left: 4px solid #ea580c;">
+                    <div style="font-size: 1.8em; color: #ea580c; font-weight: bold;">{len(pii_findings)}</div>
+                    <div style="color: #64748b; margin-top: 5px;">PII Patterns</div>
+                </div>
+                <div style="background: #f0fdf4; padding: 20px; border-radius: 10px; text-align: center; border-left: 4px solid #16a34a;">
+                    <div style="font-size: 1.8em; color: #16a34a; font-weight: bold;">{len(data_flow_map)}</div>
+                    <div style="color: #64748b; margin-top: 5px;">Data Flows</div>
+                </div>
+            </div>
+        """
+        
+        if credential_findings:
+            content_html += """
+            <div style="background: #fef2f2; border: 2px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                <h3 style="color: #dc2626; margin-top: 0;">🚨 Critical: Credential Exposure Detected</h3>
+                <p style="color: #7f1d1d; margin-bottom: 15px;">The following credentials or secrets were found in the codebase. Immediate action required.</p>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #fee2e2;">
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fecaca;">File</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fecaca;">Type</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fecaca;">Line</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fecaca;">Action Required</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
+            for finding in credential_findings[:10]:
+                content_html += f"""
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #fecaca;">{finding.get('file', 'N/A')}</td>
+                            <td style="padding: 8px; border: 1px solid #fecaca; color: #dc2626; font-weight: bold;">{finding.get('description', finding.get('pattern_name', 'Unknown'))}</td>
+                            <td style="padding: 8px; border: 1px solid #fecaca;">{finding.get('line_number', 'N/A')}</td>
+                            <td style="padding: 8px; border: 1px solid #fecaca; font-size: 0.9em;">{finding.get('recommendation', 'Rotate immediately')}</td>
+                        </tr>
+                """
+            content_html += """
+                    </tbody>
+                </table>
+            </div>
+            """
+        
+        bsn_detected = uavg_compliance.get('bsn_processing_detected', False)
+        if bsn_detected or pii_findings:
+            content_html += """
+            <div style="background: #fffbeb; border: 2px solid #d97706; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                <h3 style="color: #92400e; margin-top: 0;">🇳🇱 Netherlands Privacy Data (UAVG Compliance)</h3>
+            """
+            
+            if bsn_detected:
+                content_html += """
+                <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #dc2626;">
+                    <strong style="color: #dc2626;">⚠️ BSN Processing Detected</strong>
+                    <p style="margin: 10px 0; color: #7f1d1d;">
+                        Burgerservicenummer (BSN) handling detected. Under UAVG Article 46, BSN processing requires explicit legal basis.
+                    </p>
+                    <ul style="margin: 10px 0; padding-left: 20px; color: #7f1d1d;">
+                        <li>Document legal basis for BSN processing</li>
+                        <li>Conduct Data Protection Impact Assessment (DPIA)</li>
+                        <li>Notify Data Protection Officer (DPO)</li>
+                        <li>Implement additional security measures</li>
+                    </ul>
+                </div>
+                """
+            
+            content_html += """
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #fef3c7;">
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fcd34d;">Data Type</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fcd34d;">File</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fcd34d;">GDPR Articles</th>
+                            <th style="padding: 10px; text-align: left; border: 1px solid #fcd34d;">Severity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            """
+            for finding in pii_findings[:15]:
+                gdpr_arts = ', '.join(finding.get('gdpr_articles', []))
+                severity = finding.get('severity', 'Medium')
+                sev_color = '#dc2626' if severity == 'Critical' else '#ea580c' if severity == 'High' else '#d97706'
+                content_html += f"""
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #fcd34d;">{finding.get('description', finding.get('pattern_name', 'Unknown'))}</td>
+                            <td style="padding: 8px; border: 1px solid #fcd34d; font-size: 0.85em;">{finding.get('file', 'N/A')}</td>
+                            <td style="padding: 8px; border: 1px solid #fcd34d;">{gdpr_arts or 'N/A'}</td>
+                            <td style="padding: 8px; border: 1px solid #fcd34d; color: {sev_color}; font-weight: bold;">{severity}</td>
+                        </tr>
+                """
+            content_html += """
+                    </tbody>
+                </table>
+            </div>
+            """
+        
+        if data_flow_map:
+            content_html += """
+            <div style="background: #f0f9ff; border: 2px solid #3b82f6; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                <h3 style="color: #1e40af; margin-top: 0;">📊 Data Flow Analysis</h3>
+                <p style="color: #1e3a5f; margin-bottom: 15px;">Inferred data flows from code structure. Review for GDPR compliance.</p>
+            """
+            for flow in data_flow_map:
+                content_html += f"""
+                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #3b82f6;">
+                    <strong style="color: #1e40af;">{flow.get('flow', 'Unknown Flow')}</strong>
+                    <p style="margin: 5px 0; color: #475569;">{flow.get('description', '')}</p>
+                    <p style="margin: 5px 0; color: #dc2626; font-size: 0.9em;">
+                        ⚠️ GDPR Concern: {flow.get('gdpr_concern', 'Review required')}
+                    </p>
+                </div>
+                """
+            content_html += "</div>"
+        
+        if gdpr_compliance:
+            controls_html = ""
+            controls = [
+                ('has_encryption', '🔐 Encryption', 'Art. 32'),
+                ('has_consent_management', '✅ Consent', 'Art. 6/7'),
+                ('has_access_control', '🔒 Access Control', 'Art. 25'),
+                ('has_audit_logging', '📋 Audit', 'Art. 30'),
+                ('has_retention_policy', '📅 Retention', 'Art. 5')
+            ]
+            for key, label, article in controls:
+                status = gdpr_compliance.get(key, False)
+                status_icon = "✓" if status else "✗"
+                status_color = "#16a34a" if status else "#dc2626"
+                controls_html += f"""
+                <div style="padding: 10px; text-align: center; background: {'#f0fdf4' if status else '#fef2f2'}; border-radius: 8px;">
+                    <div style="font-size: 1.5em; color: {status_color};">{status_icon}</div>
+                    <div style="font-weight: bold; color: #475569;">{label}</div>
+                    <div style="font-size: 0.8em; color: #64748b;">{article}</div>
+                </div>
+                """
+            
+            content_html += f"""
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                <h3 style="color: #1e3a5f; margin-top: 0;">📋 GDPR Compliance Controls</h3>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px;">
+                    {controls_html}
+                </div>
+            </div>
+            """
+        
+        if recommendations:
+            content_html += """
+            <div style="background: #f0fdf4; border: 2px solid #16a34a; padding: 20px; margin: 20px 0; border-radius: 10px;">
+                <h3 style="color: #166534; margin-top: 0;">📝 Prioritized Recommendations</h3>
+            """
+            for rec in recommendations:
+                priority = rec.get('priority', 'Medium')
+                priority_color = '#dc2626' if priority == 'Critical' else '#ea580c' if priority == 'High' else '#d97706'
+                actions = rec.get('actions', [])
+                actions_html = ''.join([f'<li>{action}</li>' for action in actions])
+                
+                content_html += f"""
+                <div style="background: white; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid {priority_color};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong style="color: #1e3a5f;">{rec.get('title', 'Recommendation')}</strong>
+                        <span style="background: {priority_color}; color: white; padding: 3px 10px; border-radius: 15px; font-size: 0.8em;">{priority}</span>
+                    </div>
+                    <p style="margin: 10px 0; color: #475569;">{rec.get('description', '')}</p>
+                    <ul style="margin: 10px 0; padding-left: 20px; color: #1e3a5f; font-size: 0.9em;">
+                        {actions_html}
+                    </ul>
+                </div>
+                """
+            content_html += "</div>"
+        
+        content_html += "</div>"
+        return content_html
     
     def _generate_footer(self, scan_id: str, timestamp: str) -> str:
         """Generate report footer."""

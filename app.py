@@ -6599,10 +6599,210 @@ def render_exact_online_connector(region: str, username: str):
     st.subheader(_('scan.exact_online_integration', '🇳🇱 Exact Online Integration'))
     st.write(_('scan.exact_online_integration_description', 'Netherlands-specialized ERP scanning with BSN validation and KvK verification.'))
     
-    # Netherlands competitive advantage highlight
     st.success(_('scan.exact_online_competitive_advantage', '🎯 **Unique Competitive Advantage**: Only privacy scanner with native Exact Online integration. 60% Netherlands SME market share - critical for enterprise deals.'))
     
-    # Authentication
+    exact_sub_tab1, exact_sub_tab2 = st.tabs([
+        "🔌 API Connection Scanner",
+        "📂 Repository Scanner"
+    ])
+    
+    with exact_sub_tab1:
+        render_exact_online_api_scanner(region, username)
+    
+    with exact_sub_tab2:
+        render_exact_online_repo_scanner(region, username)
+
+
+def render_exact_online_repo_scanner(region: str, username: str):
+    """Exact Online Repository Scanner - Scans code repos for Exact Online integration issues"""
+    from services.exact_online_scanner import ExactOnlineScanner, scan_exact_online_repo
+    from services.unified_html_report_generator import generate_unified_html_report
+    
+    st.markdown("### 📂 Exact Online Repository Scanner")
+    st.write("Scan your codebase for Exact Online integration patterns, credentials, PII handling, and GDPR/UAVG compliance issues.")
+    
+    st.info("""
+**What this scanner detects:**
+- 🔌 Exact Online SDK imports, API URLs, OAuth endpoints
+- 🔐 Exposed credentials (client secrets, access tokens, refresh tokens)
+- 🇳🇱 Netherlands PII patterns (BSN, KvK, IBAN, personal names)
+- 💰 Financial data handling (invoices, payments, debtor/creditor)
+- 📊 Data flow analysis (API → Storage → Logs)
+- ✅ GDPR compliance controls (encryption, consent, retention)
+    """)
+    
+    scan_method = st.radio(
+        "Scan Source",
+        ["📁 Upload Files", "🌐 Git Repository URL", "📝 Paste Code"],
+        horizontal=True
+    )
+    
+    files_content = {}
+    repo_url = None
+    
+    if scan_method == "📁 Upload Files":
+        uploaded_files = st.file_uploader(
+            "Upload code files to scan",
+            accept_multiple_files=True,
+            type=['py', 'js', 'ts', 'jsx', 'tsx', 'cs', 'java', 'php', 'json', 'yaml', 'yml', 'env', 'xml', 'md', 'txt', 'sh', 'tf', 'dockerfile'],
+            help="Upload your source code files containing Exact Online integration"
+        )
+        
+        if uploaded_files:
+            for uploaded_file in uploaded_files:
+                try:
+                    content = uploaded_file.read().decode('utf-8', errors='ignore')
+                    files_content[uploaded_file.name] = content
+                except Exception:
+                    pass
+            st.success(f"✅ {len(files_content)} files ready for scanning")
+    
+    elif scan_method == "🌐 Git Repository URL":
+        repo_url = st.text_input(
+            "Git Repository URL",
+            placeholder="https://github.com/yourcompany/exact-integration.git",
+            help="Public or accessible Git repository URL"
+        )
+        
+        st.warning("⚠️ For private repositories, upload files directly or use a personal access token in the URL")
+    
+    else:
+        code_content = st.text_area(
+            "Paste your code",
+            height=300,
+            placeholder="Paste your Exact Online integration code here...",
+            help="Paste code snippets or configuration files"
+        )
+        if code_content:
+            files_content['pasted_code.txt'] = code_content
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        max_files = st.slider("Max files to scan", 50, 1000, 300)
+    with col2:
+        st.write("")
+    
+    if st.button("🚀 Start Repository Scan", type="primary", key="exact_repo_scan"):
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            return
+        
+        if not files_content and not repo_url:
+            st.error("Please upload files, enter a repository URL, or paste code to scan")
+            return
+        
+        try:
+            progress_placeholder = st.empty()
+            
+            def status_callback(msg):
+                progress_placeholder.info(f"🔍 {msg}")
+            
+            with st.spinner("Scanning for Exact Online patterns..."):
+                scanner = ExactOnlineScanner(region=region)
+                results = scanner.scan(
+                    repo_url=repo_url,
+                    files_content=files_content if files_content else None,
+                    max_files=max_files,
+                    status_callback=status_callback
+                )
+            
+            progress_placeholder.empty()
+            
+            st.success(f"✅ Scan completed! Scanned {results.get('files_scanned', 0)} files in {results.get('duration_seconds', 0):.1f}s")
+            
+            risk_summary = results.get('risk_summary', {})
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                exact_status = "✅ Detected" if results.get('exact_integration_detected') else "❌ Not Found"
+                st.metric("Exact Online", exact_status)
+            with col2:
+                st.metric("Critical Issues", risk_summary.get('critical_count', 0))
+            with col3:
+                st.metric("High Risk", risk_summary.get('high_count', 0))
+            with col4:
+                st.metric("Compliance Score", f"{results.get('compliance_score', 0):.0f}%")
+            
+            if results.get('credential_findings'):
+                st.error(f"🚨 **{len(results['credential_findings'])} Credential Exposures Found!** Immediate action required.")
+                with st.expander("View Credential Issues", expanded=True):
+                    for finding in results['credential_findings'][:5]:
+                        st.markdown(f"""
+                        - **{finding.get('description')}** in `{finding.get('file')}`
+                          - Line {finding.get('line_number')}: `{finding.get('line_content', '')[:80]}...`
+                          - 🔧 {finding.get('recommendation')}
+                        """)
+            
+            uavg = results.get('uavg_compliance', {})
+            if uavg.get('bsn_processing_detected'):
+                st.warning("⚠️ **BSN Processing Detected** - UAVG Article 46 compliance required. Document legal basis.")
+            
+            if results.get('pii_findings'):
+                with st.expander(f"🔍 PII Patterns Found ({len(results['pii_findings'])})", expanded=False):
+                    for finding in results['pii_findings'][:10]:
+                        severity = finding.get('severity', 'Medium')
+                        icon = "🔴" if severity == 'Critical' else "🟠" if severity == 'High' else "🟡"
+                        st.markdown(f"{icon} **{finding.get('description')}** in `{finding.get('file')}`")
+            
+            if results.get('data_flow_map'):
+                with st.expander("📊 Data Flow Analysis", expanded=False):
+                    for flow in results['data_flow_map']:
+                        st.markdown(f"""
+                        **{flow.get('flow')}**
+                        - {flow.get('description')}
+                        - ⚠️ GDPR Concern: {flow.get('gdpr_concern')}
+                        """)
+            
+            if results.get('recommendations'):
+                with st.expander("📝 Recommendations", expanded=True):
+                    for rec in results['recommendations']:
+                        priority = rec.get('priority', 'Medium')
+                        color = "#dc2626" if priority == 'Critical' else "#ea580c" if priority == 'High' else "#d97706"
+                        st.markdown(f"""
+                        <div style="border-left: 4px solid {color}; padding-left: 15px; margin: 10px 0;">
+                            <strong style="color: {color};">[{priority}] {rec.get('title')}</strong>
+                            <p>{rec.get('description')}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+            
+            st.markdown("---")
+            st.subheader("📥 Download Report")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                try:
+                    html_report = generate_unified_html_report(results)
+                    st.download_button(
+                        label="📄 Download HTML Report",
+                        data=html_report,
+                        file_name=f"exact_online_scan_{results.get('scan_id', 'report')}.html",
+                        mime="text/html"
+                    )
+                except Exception as e:
+                    st.warning(f"HTML report generation failed: {e}")
+            
+            with col2:
+                import json
+                json_report = json.dumps(results, indent=2, default=str)
+                st.download_button(
+                    label="📋 Download JSON Data",
+                    data=json_report,
+                    file_name=f"exact_online_scan_{results.get('scan_id', 'report')}.json",
+                    mime="application/json"
+                )
+            
+            st.session_state['last_exact_scan_results'] = results
+            
+        except Exception as e:
+            st.error(f"Scan failed: {str(e)}")
+            import traceback
+            st.code(traceback.format_exc())
+
+
+def render_exact_online_api_scanner(region: str, username: str):
+    """Exact Online API Scanner - Original API-based scanner"""
+    from services.enterprise_connector_scanner import EnterpriseConnectorScanner
+    
     st.markdown(f"### {_('scan.exact_online_authentication', 'Exact Online Authentication')}")
     
     exact_auth = st.radio(
