@@ -32,7 +32,7 @@ class EnterpriseOrchestrator:
     while providing seamless integration through events.
     """
     
-    def __init__(self, use_redis: bool = False):
+    def __init__(self, use_redis: bool = True):
         self.event_bus = get_event_bus(use_redis)
         self.listeners_registered = False
         
@@ -313,12 +313,12 @@ class EnterpriseOrchestrator:
 # Global orchestrator instance
 _orchestrator: Optional[EnterpriseOrchestrator] = None
 
-def get_enterprise_orchestrator(use_redis: bool = False) -> EnterpriseOrchestrator:
+def get_enterprise_orchestrator(use_redis: bool = True) -> EnterpriseOrchestrator:
     """
     Get or create the global enterprise orchestrator instance
     
     Args:
-        use_redis: Enable Redis for distributed events
+        use_redis: Enable Redis for distributed events (default: True for scaling)
         
     Returns:
         EnterpriseOrchestrator instance
@@ -327,10 +327,10 @@ def get_enterprise_orchestrator(use_redis: bool = False) -> EnterpriseOrchestrat
     if _orchestrator is None:
         _orchestrator = EnterpriseOrchestrator(use_redis=use_redis)
         _orchestrator.register_listeners()
-        logger.info("EnterpriseOrchestrator: Initialized global orchestrator")
+        logger.info("EnterpriseOrchestrator: Initialized global orchestrator with Redis enabled")
     return _orchestrator
 
-def initialize_enterprise_integration(use_redis: bool = False) -> None:
+def initialize_enterprise_integration(use_redis: bool = True) -> None:
     """
     Initialize enterprise integration system
     
@@ -338,7 +338,7 @@ def initialize_enterprise_integration(use_redis: bool = False) -> None:
     Uses process-global singletons to prevent duplicate listeners in multi-session environment.
     
     Args:
-        use_redis: Enable Redis pub/sub for scaling
+        use_redis: Enable Redis pub/sub for scaling (default: True - required for production)
     """
     try:
         # Get or create process-global orchestrator (singleton pattern)
