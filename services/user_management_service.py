@@ -13,10 +13,32 @@ from dataclasses import dataclass, asdict
 from enum import Enum
 import json
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import bcrypt
+import threading
+from contextlib import contextmanager
 
 logger = logging.getLogger(__name__)
+
+_user_mgmt_pool = None
+_user_mgmt_pool_lock = threading.Lock()
+
+def get_user_mgmt_pool(db_url: str, min_connections: int = 2, max_connections: int = 20):
+    """Get or create a thread-safe connection pool for user management."""
+    global _user_mgmt_pool
+    if _user_mgmt_pool is None:
+        with _user_mgmt_pool_lock:
+            if _user_mgmt_pool is None:
+                try:
+                    _user_mgmt_pool = pool.ThreadedConnectionPool(
+                        min_connections, max_connections, db_url
+                    )
+                    logger.info(f"User management connection pool initialized: min={min_connections}, max={max_connections}")
+                except Exception as e:
+                    logger.error(f"Failed to create user management pool: {e}")
+                    raise
+    return _user_mgmt_pool
 
 class UserRole(Enum):
     """User roles with access levels"""
@@ -153,14 +175,44 @@ class BillingRecord:
     compliance_notes: str = ""
 
 class UserManagementService:
-    """Comprehensive user management service"""
+    """Comprehensive user management service with connection pooling"""
     
     def __init__(self):
         self.db_url = os.environ.get('DATABASE_URL')
+        self._pool = None
+        if self.db_url:
+            try:
+                self._pool = get_user_mgmt_pool(self.db_url)
+            except Exception as e:
+                logger.warning(f"Failed to initialize connection pool, will use direct connections: {e}")
         
+    @contextmanager
     def _get_connection(self):
-        """Get database connection"""
-        return psycopg2.connect(self.db_url, cursor_factory=RealDictCursor)
+        """Get database connection from pool with automatic release"""
+        conn = None
+        try:
+            if self._pool:
+                conn = self._pool.getconn()
+                conn.cursor_factory = RealDictCursor
+            else:
+                conn = psycopg2.connect(self.db_url, cursor_factory=RealDictCursor)
+            yield conn
+        finally:
+            if conn:
+                if self._pool:
+                    try:
+                        self._pool.putconn(conn)
+                    except Exception as e:
+                        logger.warning(f"Error returning connection to pool: {e}")
+                        try:
+                            conn.close()
+                        except:
+                            pass
+                else:
+                    try:
+                        conn.close()
+                    except:
+                        pass
     
     def _hash_password(self, password: str) -> str:
         """Hash password using bcrypt"""
