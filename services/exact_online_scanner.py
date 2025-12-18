@@ -582,29 +582,26 @@ class ExactOnlineScanner:
         return results
     
     def _clone_and_read_repo(self, repo_url: str, max_files: int) -> Tuple[str, Dict[str, str]]:
-        """Clone repository with shallow clone for speed."""
-        temp_dir = tempfile.mkdtemp(prefix='exact_scan_')
-        
+        """Clone repository using RepoScanner for consistency with other scanners."""
         try:
-            result = subprocess.run(
-                ['git', 'clone', '--depth', '1', '--single-branch', repo_url, temp_dir],
-                capture_output=True,
-                timeout=45,
-                text=True
-            )
+            repo_scanner = RepoScanner()
+            clone_result = repo_scanner.clone_repository(repo_url)
             
-            if result.returncode != 0:
-                logger.error(f"Clone failed: {result.stderr[:300]}")
-                raise RuntimeError(f"Git clone failed: {result.stderr[:100]}")
+            if clone_result.get('status') == 'error':
+                error_msg = clone_result.get('message', 'Clone failed')
+                logger.error(f"Clone failed via RepoScanner: {error_msg}")
+                raise RuntimeError(error_msg)
             
-            return temp_dir, self._read_directory(temp_dir, max_files)
+            repo_path = clone_result.get('repo_path')
+            if not repo_path or not os.path.exists(repo_path):
+                raise RuntimeError("Repository clone produced no files")
             
-        except subprocess.TimeoutExpired:
-            logger.error("Clone timeout after 45 seconds")
-            raise RuntimeError("Repository clone timed out. Try uploading files directly.")
+            files_content = self._read_directory(repo_path, max_files)
+            return repo_path, files_content
+            
         except Exception as e:
             logger.error(f"Clone error: {e}")
-            raise
+            raise RuntimeError(f"Failed to clone repository: {str(e)}")
     
     def _read_directory(self, directory: str, max_files: int) -> Dict[str, str]:
         """Read files from directory, prioritizing code files."""
