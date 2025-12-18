@@ -5,6 +5,7 @@ Main scanner interface with all scan types
 
 import streamlit as st
 import logging
+from utils.i18n import get_text as _
 
 logger = logging.getLogger(__name__)
 
