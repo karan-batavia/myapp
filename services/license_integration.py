@@ -247,7 +247,7 @@ class LicenseIntegration:
             st.sidebar.success("✅ License Active")
             
             tier_names = {
-                'trial': 'Free Trial (10 scans)',
+                'trial': 'Free Trial',
                 'startup': 'Startup',
                 'professional': 'Professional',
                 'growth': 'Growth',
