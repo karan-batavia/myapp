@@ -189,12 +189,18 @@ class RepoScanner:
             # Execute optimized git clone command with shorter timeout
             logger.info(f"Fast cloning repository from {repo_url}" + (f" (branch: {branch})" if branch else " (default branch)"))
             
+            # Set environment to disable credential prompts (prevents hanging on auth)
+            env = os.environ.copy()
+            env['GIT_TERMINAL_PROMPT'] = '0'
+            env['GIT_ASKPASS'] = 'echo'
+            
             # Reduce timeout for faster feedback
             result = subprocess.run(
                 clone_cmd, 
                 capture_output=True, 
                 text=True,
-                timeout=300  # 5 min timeout (reduced from 10)
+                timeout=300,  # 5 min timeout (reduced from 10)
+                env=env
             )
             
             if result.returncode == 0:
@@ -219,7 +225,8 @@ class RepoScanner:
                             default_cmd, 
                             capture_output=True, 
                             text=True,
-                            timeout=300  # 5 min timeout
+                            timeout=300,  # 5 min timeout
+                            env=env  # Use same env to disable credential prompts
                         )
                         
                         if result.returncode == 0:
