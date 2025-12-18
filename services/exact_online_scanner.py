@@ -844,8 +844,10 @@ class ExactOnlineScanner:
     def _calculate_compliance_score(self, results: Dict) -> float:
         """Calculate overall compliance score (0-100).
         
-        Uses a normalized scoring model that accounts for repository size
-        and distinguishes between actual credential leaks vs. code patterns.
+        Uses a balanced scoring model that:
+        - Penalizes real credential leaks heavily
+        - Applies proportional penalties for findings relative to repo size
+        - Gives bonuses for good security practices
         """
         score = 100.0
         files_scanned = max(1, results.get('files_scanned', 1))
@@ -853,40 +855,51 @@ class ExactOnlineScanner:
         critical = results['risk_summary'].get('critical_count', 0)
         high = results['risk_summary'].get('high_count', 0)
         medium = results['risk_summary'].get('medium_count', 0)
-        low = results['risk_summary'].get('low_count', 0)
         
         real_credential_leaks = sum(
             1 for f in results.get('credential_findings', [])
             if f.get('severity') == 'Critical' and 
-            not any(x in f.get('matched_text', '').lower() for x in ['example', 'sample', 'test', 'placeholder', 'xxx', '***'])
+            not any(x in f.get('matched_text', '').lower() for x in ['example', 'sample', 'test', 'placeholder', 'xxx', '***', 'your_', 'dummy'])
         )
         
-        score -= min(50, real_credential_leaks * 25)
+        score -= min(40, real_credential_leaks * 15)
         
-        normalized_critical = min(10, critical) / files_scanned * 100
-        normalized_high = min(50, high) / files_scanned * 100
-        normalized_medium = min(100, medium) / files_scanned * 100
+        score -= min(20, critical * 5)
         
-        score -= min(15, normalized_critical * 0.5)
-        score -= min(20, normalized_high * 0.3)
-        score -= min(10, normalized_medium * 0.1)
+        high_ratio = high / files_scanned
+        if high_ratio > 0.5:
+            score -= 25
+        elif high_ratio > 0.3:
+            score -= 18
+        elif high_ratio > 0.1:
+            score -= 12
+        elif high > 0:
+            score -= 5
+        
+        medium_ratio = medium / files_scanned
+        if medium_ratio > 0.5:
+            score -= 10
+        elif medium_ratio > 0.2:
+            score -= 5
         
         gdpr = results['gdpr_compliance']
+        bonuses = 0
         if gdpr.get('has_encryption'):
-            score += 5
+            bonuses += 3
         if gdpr.get('has_consent_management'):
-            score += 5
+            bonuses += 3
         if gdpr.get('has_access_control'):
-            score += 5
+            bonuses += 3
         if gdpr.get('has_audit_logging'):
-            score += 5
+            bonuses += 3
         if gdpr.get('has_retention_policy'):
-            score += 5
+            bonuses += 3
+        score += min(10, bonuses)
         
         if results.get('exact_integration_detected'):
-            score += 10
+            score += 5
         
-        return max(15, min(100, score))
+        return max(20, min(100, round(score)))
     
     def _generate_recommendations(self, results: Dict) -> List[Dict[str, Any]]:
         """Generate prioritized recommendations."""
