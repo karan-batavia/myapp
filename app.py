@@ -829,14 +829,9 @@ def render_freemium_registration():
         st.markdown(f"**Security Check:** {st.session_state.captcha_question}")
         captcha_input = st.text_input("Your answer *", placeholder="Enter the number", key="captcha_field")
         
-        st.markdown("""
-        <div style="position:absolute;left:-9999px;top:-9999px;">
-            <input type="text" name="website_url" id="hp_field_container" autocomplete="off" tabindex="-1">
-        </div>
-        """, unsafe_allow_html=True)
-        honeypot = st.text_input("", key="hp_website_field", label_visibility="collapsed")
-        
         agree_terms = st.checkbox("I agree to Terms of Service and Privacy Policy")
+        
+        honeypot = ""
             
         submitted = st.form_submit_button("🎯 Create Free Account", type="primary")
         
