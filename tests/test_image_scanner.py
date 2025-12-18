@@ -206,18 +206,19 @@ class TestQRBarcodeDetection:
         """Test QR detection triggers on filename patterns."""
         scanner = ImageScanner()
         
-        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as f:
-            f.name = '/tmp/my_qr_code.png'
+        test_file = '/tmp/my_qr_code.png'
+        try:
             img = Image.new('RGB', (100, 100), color='white')
-            img.save(f.name)
+            img.save(test_file)
             
-            findings = scanner._detect_qr_barcodes(f.name)
+            findings = scanner._detect_qr_barcodes(test_file)
             
             qr_findings = [f for f in findings if 'QR' in f['type']]
             assert len(qr_findings) > 0
             assert qr_findings[0]['risk_level'] == 'Medium'
-            
-            os.unlink(f.name)
+        finally:
+            if os.path.exists(test_file):
+                os.unlink(test_file)
     
     def test_qr_content_analysis_email(self):
         """Test QR content analysis detects email."""

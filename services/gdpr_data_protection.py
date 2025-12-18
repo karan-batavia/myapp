@@ -143,21 +143,27 @@ class GDPRDataProtection:
     
     def _get_db_connection(self):
         """Get database connection for consent storage."""
-        import psycopg2
         if not self.db_url:
             return None
         try:
-            return psycopg2.connect(self.db_url)
+            import psycopg2
+            return psycopg2.connect(self.db_url, connect_timeout=5)
+        except ImportError:
+            logger.warning("psycopg2 not available - consent storage disabled")
+            return None
         except Exception as e:
-            logger.error(f"Database connection error: {e}")
+            logger.warning(f"Database connection unavailable: {e}")
             return None
     
     def _init_consent_db(self):
-        """Initialize consent table in database."""
-        conn = self._get_db_connection()
-        if conn:
-            self._GDPRDataProtection__init_consent_table(conn)
-            conn.close()
+        """Initialize consent table in database - graceful fallback if unavailable."""
+        try:
+            conn = self._get_db_connection()
+            if conn:
+                self._GDPRDataProtection__init_consent_table(conn)
+                conn.close()
+        except Exception as e:
+            logger.warning(f"Consent database initialization skipped: {e}")
     
     def check_consent(self, user_id: str, category: DataCategory) -> bool:
         """Check if user has given consent for data category requiring consent."""
