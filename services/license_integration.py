@@ -263,12 +263,12 @@ class LicenseIntegration:
                 
                 # Show free scans remaining for trial users
                 if user_license_tier == 'trial':
-                    free_scans = st.session_state.get('free_scans_remaining', 10)
+                    free_scans = st.session_state.get('free_scans_remaining', 3)
                     st.write(f"**Free Scans:** {free_scans} remaining")
-                    if free_scans <= 3:
+                    if free_scans <= 1:
                         st.warning("⚠️ Running low on scans!")
-                        if st.button("Upgrade Now", key="upgrade_sidebar"):
-                            st.session_state['show_pricing'] = True
+                    if st.button("Upgrade Now", key="upgrade_sidebar"):
+                        st.session_state['show_pricing'] = True
             return
         
         # Fall back to global license info
