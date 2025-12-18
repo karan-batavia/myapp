@@ -3684,3 +3684,6 @@ def render_history_trends(scans_data):
 
 
 
+
+# Run main application
+main()

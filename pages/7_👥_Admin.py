@@ -26,5 +26,4 @@ def main():
         import traceback
         st.code(traceback.format_exc())
 
-if __name__ == "__main__":
-    main()
+main()
