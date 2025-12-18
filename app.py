@@ -7229,135 +7229,13 @@ def render_dutch_banking_connector(region: str, username: str):
         st.success("✅ Demo banking scan completed - PSD2 integration coming soon!")
 
 def render_salesforce_connector(region: str, username: str):
-    """Salesforce CRM connector interface"""
-    from services.enterprise_connector_scanner import EnterpriseConnectorScanner
-    from utils.activity_tracker import ScannerType
-    
+    """Salesforce Code Repository Scanner interface"""
     st.subheader("💼 Salesforce Integration")
-    st.write("Scan Salesforce CRM data or code repositories for PII with Netherlands BSN/KvK specialization.")
+    st.write("Scan Salesforce code repositories for PII with Netherlands BSN/KvK specialization.")
     
     st.success("🎯 **Enterprise Revenue Driver**: Salesforce integration enables €5K-10K enterprise deals vs €250 SME pricing. Critical for €25K MRR achievement.")
     
-    salesforce_tab1, salesforce_tab2 = st.tabs(["🏢 CRM Data Scan", "📁 Code Repository Scan"])
-    
-    with salesforce_tab2:
-        render_salesforce_repo_scanner(region, username)
-    
-    with salesforce_tab1:
-        st.markdown("### CRM Data Integration")
-        st.write("Scan Salesforce Accounts, Contacts, and Leads for PII.")
-        
-        st.info("🔒 This scan uses Demo Mode with sample Netherlands Salesforce data.")
-        credentials = {'access_token': 'salesforce_demo_token', 'instance_url': 'https://demo.salesforce.com'}
-        
-        st.markdown("### Scan Configuration")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            scan_accounts = st.checkbox("🏢 Accounts", value=True, help="Scan Account records with KvK numbers")
-            scan_contacts = st.checkbox("👤 Contacts", value=True, help="Scan Contact records with BSN data")
-        with col2:
-            scan_leads = st.checkbox("📋 Leads", value=True, help="Scan Lead records with Netherlands PII")
-            scan_custom_objects = st.checkbox("🔧 Custom Objects", value=False, help="Scan custom objects (if any)")
-        
-        st.markdown("### Netherlands Specialization")
-        col1, col2 = st.columns(2)
-        with col1:
-            scan_bsn_fields = st.checkbox("🔍 BSN Field Detection", value=True, help="Detect BSN__c and similar custom fields")
-            scan_kvk_fields = st.checkbox("🏢 KvK Number Detection", value=True, help="Detect KvK_Number__c and business registry fields")
-        with col2:
-            scan_iban_fields = st.checkbox("💳 IBAN Detection", value=True, help="Detect IBAN__c and banking fields")
-            uavg_compliance = st.checkbox("⚖️ UAVG Compliance Analysis", value=True, help="Netherlands privacy law compliance")
-        
-        if st.button("🚀 Start Salesforce Scan", type="primary"):
-            # Check trial scan limits
-            allowed, message = check_and_decrement_trial_scans()
-            if not allowed:
-                st.error(f"⚠️ {message}")
-                st.info("💡 Upgrade your plan to continue scanning.")
-                return
-            try:
-                scanner = EnterpriseConnectorScanner(
-                    connector_type='salesforce',
-                    credentials=credentials,
-                    region=region
-                )
-                
-                scan_config = {
-                    'scan_accounts': scan_accounts,
-                    'scan_contacts': scan_contacts,
-                    'scan_leads': scan_leads,
-                    'scan_custom_objects': scan_custom_objects,
-                    'scan_bsn_fields': scan_bsn_fields,
-                    'scan_kvk_fields': scan_kvk_fields,
-                    'scan_iban_fields': scan_iban_fields,
-                    'uavg_compliance': uavg_compliance
-                }
-                
-                with st.spinner("Scanning Salesforce CRM..."):
-                    scan_results = scanner.scan_enterprise_source(scan_config)
-                
-                if scan_results.get('status') == 'auth_required' or scan_results.get('auth_status') == 'expired':
-                    st.error("🔐 **Salesforce Authentication Expired**")
-                    st.warning(f"""
-                    ⚠️ **Scan Incomplete** - Your Salesforce connection has expired.
-                    
-                    {scan_results.get('auth_message', 'Please re-authenticate to complete the scan.')}
-                    
-                    **To fix this:**
-                    1. Go to your Salesforce account settings
-                    2. Generate a new access token or refresh your OAuth connection
-                    3. Update the credentials above and try again
-                    """)
-                    
-                    items_scanned = scan_results.get('items_scanned', 0)
-                    if items_scanned > 0:
-                        st.info(f"📊 Partial scan: {items_scanned} items were scanned before authentication expired.")
-                    
-                    col1, col2, col3, col4 = st.columns(4)
-                    with col1:
-                        st.metric("Items Scanned", items_scanned)
-                    with col2:
-                        st.metric("PII Findings", scan_results.get('pii_findings', 0))
-                    with col3:
-                        st.metric("High Risk", scan_results.get('high_risk_count', 0))
-                    with col4:
-                        st.metric("Compliance Score", "N/A", help="Cannot calculate - authentication expired")
-                        
-                elif scan_results.get('success'):
-                    try:
-                        from services.results_aggregator import ResultsAggregator
-                        aggregator = ResultsAggregator()
-                        
-                        complete_result = {
-                            **scan_results,
-                            'scan_type': 'enterprise connector',
-                            'total_pii_found': scan_results.get('pii_instances_found', 0),
-                            'high_risk_count': scan_results.get('high_risk_findings', 0),
-                            'region': region,
-                            'files_scanned': scan_results.get('total_items_scanned', 0),
-                            'username': username,
-                            'user_id': st.session_state.get('user_id', username),
-                            'connector_type': 'Salesforce'
-                        }
-                        
-                        aggregator.save_scan_result(username=username, result=complete_result)
-                        
-                    except Exception as store_error:
-                        st.error(f"Failed to store scan results: {store_error}")
-                    
-                    display_enterprise_scan_results(scan_results, 'Salesforce')
-                    
-                    if scan_results.get('bsn_fields_found', 0) > 0:
-                        st.warning(f"⚠️ {scan_results['bsn_fields_found']} BSN instances found in Salesforce - UAVG compliance review required")
-                    
-                    if scan_results.get('kvk_fields_found', 0) > 0:
-                        st.info(f"🏢 {scan_results['kvk_fields_found']} KvK numbers detected in Salesforce")
-                else:
-                    st.error(f"Salesforce scan failed: {scan_results.get('error', 'Unknown error')}")
-            
-            except Exception as e:
-                st.error(f"Salesforce connector failed: {str(e)}")
+    render_salesforce_repo_scanner(region, username)
 
 def render_salesforce_repo_scanner(region: str, username: str):
     """Salesforce Code Repository Scanner interface"""
