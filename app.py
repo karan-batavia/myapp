@@ -4052,6 +4052,29 @@ def display_scan_results(scan_results):
                     file_location = finding.get('file', 'N/A')
                     line_location = finding.get('line', 'N/A')
                 
+                # Handle AI Act compliance findings (not file-based)
+                finding_type_lower = finding_type.lower()
+                if 'ai_act' in finding_type_lower or file_location == 'N/A':
+                    if 'quality' in finding_type_lower or 'quality' in description.lower():
+                        file_location = 'AI System Policy'
+                        line_location = 'Quality Management'
+                    elif 'autom' in finding_type_lower or 'logging' in description.lower():
+                        file_location = 'AI System Policy'
+                        line_location = 'Audit Logging'
+                    elif 'human' in finding_type_lower or 'oversight' in description.lower():
+                        file_location = 'AI System Policy'
+                        line_location = 'Human Oversight'
+                    elif 'transparency' in finding_type_lower or 'transparency' in description.lower():
+                        file_location = 'AI System Policy'
+                        line_location = 'Transparency'
+                    elif 'risk' in finding_type_lower:
+                        file_location = 'AI System Policy'
+                        line_location = 'Risk Assessment'
+                    elif file_location == 'N/A':
+                        file_location = 'System Configuration'
+                        if line_location == 'N/A':
+                            line_location = 'Policy Review'
+                
                 findings_data.append({
                     'Type': finding_type,
                     'Severity': severity,
