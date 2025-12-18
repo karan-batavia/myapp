@@ -72,42 +72,74 @@ def generate_pdf_report(scan_results: Dict[str, Any], filename: str = "scan_repo
         story.append(Paragraph(f"Scan ID: {scan_id} | Generated: {report_date} | Region: {region}", meta_style))
         
         # === EXECUTIVE SUMMARY SECTION ===
-        section_header = ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=14, textColor=colors.HexColor('#1e3a5f'), spaceBefore=15, spaceAfter=10, fontName='Helvetica-Bold')
+        section_header = ParagraphStyle('SectionHeader', parent=styles['Heading2'], fontSize=16, textColor=colors.HexColor('#1e3a5f'), spaceBefore=20, spaceAfter=15, fontName='Helvetica-Bold')
         story.append(Paragraph("Executive Summary", section_header))
         
-        # Metrics cards - 4 columns with colored numbers
-        metrics_data = [
-            [str(files_scanned), str(total_findings), str(critical_count), str(high_count)],
-            ['Files Scanned', 'Total Findings', 'Critical Issues', 'High Risk']
-        ]
+        # Create individual metric cards with distinct backgrounds
+        def create_metric_card(value, label, value_color, bg_color):
+            """Create a styled metric card table"""
+            card_data = [[str(value)], [label]]
+            card = Table(card_data, colWidths=[1.25*inch])
+            card.setStyle(TableStyle([
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('FONTNAME', (0, 0), (0, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (0, 0), 28),
+                ('FONTSIZE', (0, 1), (0, 1), 8),
+                ('TEXTCOLOR', (0, 0), (0, 0), colors.HexColor(value_color)),
+                ('TEXTCOLOR', (0, 1), (0, 1), colors.HexColor('#4b5563')),
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(bg_color)),
+                ('TOPPADDING', (0, 0), (0, 0), 15),
+                ('BOTTOMPADDING', (0, 0), (0, 0), 5),
+                ('TOPPADDING', (0, 1), (0, 1), 0),
+                ('BOTTOMPADDING', (0, 1), (0, 1), 12),
+                ('LEFTPADDING', (0, 0), (-1, -1), 8),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ]))
+            return card
         
-        metrics_table = Table(metrics_data, colWidths=[1.35*inch, 1.35*inch, 1.35*inch, 1.35*inch])
-        metrics_table.setStyle(TableStyle([
+        # Create 4 metric cards with different colors
+        card1 = create_metric_card(files_scanned, "Files Scanned", '#2563eb', '#eff6ff')
+        card2 = create_metric_card(total_findings, "Total Findings", '#d97706', '#fffbeb')
+        card3 = create_metric_card(critical_count, "Critical Issues", '#dc2626', '#fef2f2')
+        card4 = create_metric_card(high_count, "High Risk", '#ea580c', '#fff7ed')
+        
+        # Wrap cards in outer table for layout
+        cards_row = Table([[card1, card2, card3, card4]], colWidths=[1.35*inch, 1.35*inch, 1.35*inch, 1.35*inch])
+        cards_row.setStyle(TableStyle([
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('FONTSIZE', (0, 0), (-1, 0), 24),
-            ('FONTSIZE', (0, 1), (-1, 1), 9),
-            ('TEXTCOLOR', (0, 0), (0, 0), colors.HexColor('#3b82f6')),  # Blue
-            ('TEXTCOLOR', (1, 0), (1, 0), colors.HexColor('#f59e0b')),  # Amber
-            ('TEXTCOLOR', (2, 0), (2, 0), colors.HexColor('#dc2626')),  # Red
-            ('TEXTCOLOR', (3, 0), (3, 0), colors.HexColor('#ea580c')),  # Orange
-            ('TEXTCOLOR', (0, 1), (-1, 1), colors.HexColor('#6b7280')),
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f8fafc')),
-            ('BOX', (0, 0), (-1, -1), 1.5, colors.HexColor('#e2e8f0')),
-            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#e2e8f0')),
-            ('TOPPADDING', (0, 0), (-1, 0), 18),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('TOPPADDING', (0, 1), (-1, 1), 4),
-            ('BOTTOMPADDING', (0, 1), (-1, 1), 15),
+            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 4),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 4),
         ]))
-        story.append(metrics_table)
-        story.append(Spacer(1, 8))
+        story.append(cards_row)
+        story.append(Spacer(1, 15))
         
-        # Compliance Score with color indicator
-        score_color = '#166534' if compliance_score >= 80 else '#ca8a04' if compliance_score >= 60 else '#dc2626'
-        score_status = 'Excellent' if compliance_score >= 80 else 'Attention' if compliance_score >= 60 else 'Critical'
-        score_style = ParagraphStyle('Score', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor(score_color), alignment=1, fontName='Helvetica-Bold', spaceAfter=20)
-        story.append(Paragraph(f"Compliance Score: {compliance_score:.1f}% - {score_status}", score_style))
+        # Compliance Score with visual bar
+        score_color = '#166534' if compliance_score >= 80 else '#d97706' if compliance_score >= 60 else '#dc2626'
+        score_bg = '#dcfce7' if compliance_score >= 80 else '#fef3c7' if compliance_score >= 60 else '#fee2e2'
+        score_status = 'Excellent' if compliance_score >= 80 else 'Needs Attention' if compliance_score >= 60 else 'Critical'
+        score_icon = '✓' if compliance_score >= 80 else '⚠' if compliance_score >= 60 else '✗'
+        
+        # Create score display with background
+        score_data = [[f"{score_icon} Compliance Score: {compliance_score:.1f}%", score_status]]
+        score_table = Table(score_data, colWidths=[3.5*inch, 1.5*inch])
+        score_table.setStyle(TableStyle([
+            ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 11),
+            ('TEXTCOLOR', (0, 0), (-1, -1), colors.HexColor(score_color)),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor(score_bg)),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+            ('LEFTPADDING', (0, 0), (-1, -1), 15),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 15),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor(score_color)),
+        ]))
+        story.append(score_table)
+        story.append(Spacer(1, 20))
         
         # === DETAILED FINDINGS SECTION ===
         if findings:
