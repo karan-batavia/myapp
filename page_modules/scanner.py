@@ -24,13 +24,25 @@ def get_user_id():
     """Get current user ID"""
     return st.session_state.get('user_id', 0)
 
-def track_scanner_usage(scanner_type: str, action: str, metadata: dict = None):
-    """Track scanner usage for analytics"""
+def track_scanner_usage(scanner_type: str, action: str = None, metadata: dict = None, success: bool = True, duration_ms: int = 0):
+    """Track scanner usage for analytics
+    
+    Args:
+        scanner_type: Type of scanner (code, document, image, etc.)
+        action: Action being tracked (can be region or action name)
+        metadata: Additional metadata dict
+        success: Whether the scan was successful
+        duration_ms: Duration of the scan in milliseconds
+    """
     try:
         from services.usage_analytics import UsageAnalytics
         analytics = UsageAnalytics()
         user_id = get_user_id()
-        analytics.track_event(f"scanner_{action}", user_id, metadata or {})
+        event_metadata = metadata or {}
+        event_metadata['success'] = success
+        event_metadata['duration_ms'] = duration_ms
+        event_metadata['region'] = action if action else 'default'
+        analytics.track_event(f"scanner_{scanner_type}", user_id, event_metadata)
     except Exception as e:
         logger.debug(f"Usage tracking unavailable: {e}")
 
@@ -42,11 +54,20 @@ def track_scan_completed_wrapper_safe(scanner_type, user_id, session_id, metadat
     except Exception as e:
         logger.debug(f"Scan tracking unavailable: {e}")
 
-def track_scan_failed_wrapper_safe(scanner_type, user_id, session_id, error_msg):
-    """Safely track scan failure"""
+def track_scan_failed_wrapper_safe(scanner_type, user_id, session_id, error_msg=None, error_message=None):
+    """Safely track scan failure
+    
+    Args:
+        scanner_type: Type of scanner
+        user_id: User identifier  
+        session_id: Session identifier
+        error_msg: Error message (legacy parameter)
+        error_message: Error message (alternative parameter name)
+    """
     try:
         from utils.activity_tracker import track_scan_failed
-        track_scan_failed(scanner_type, user_id, session_id, error_msg)
+        msg = error_msg or error_message or "Unknown error"
+        track_scan_failed(scanner_type, user_id, session_id, msg)
     except Exception as e:
         logger.debug(f"Failure tracking unavailable: {e}")
 
