@@ -121,17 +121,17 @@ def require_report_access(report_type: str = "standard") -> bool:
         return True
     return False
 
-def track_report_usage(report_type: str, user_id: int):
+def track_report_usage(report_type: str, user_id: int = None, success: bool = True, **kwargs):
     """Track report generation usage"""
     try:
-        track_scanner_usage("report", "generated", {"report_type": report_type})
+        track_scanner_usage("report", "generated", {"report_type": report_type, "success": success, **kwargs})
     except Exception:
         pass
 
-def track_download_usage(download_type: str, user_id: int):
+def track_download_usage(download_type: str, user_id: int = None, success: bool = True, **kwargs):
     """Track download usage"""
     try:
-        track_scanner_usage("download", "completed", {"download_type": download_type})
+        track_scanner_usage("download", "completed", {"download_type": download_type, "success": success, **kwargs})
     except Exception:
         pass
 
