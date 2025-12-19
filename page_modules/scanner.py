@@ -46,15 +46,26 @@ def track_scanner_usage(scanner_type: str, action: str = None, metadata: dict = 
     except Exception as e:
         logger.debug(f"Usage tracking unavailable: {e}")
 
-def track_scan_completed_wrapper_safe(scanner_type, user_id, session_id, metadata=None):
-    """Safely track scan completion"""
+def track_scan_completed_wrapper_safe(scanner_type, user_id, session_id, metadata=None, **kwargs):
+    """Safely track scan completion
+    
+    Args:
+        scanner_type: Type of scanner
+        user_id: User identifier
+        session_id: Session identifier
+        metadata: Optional metadata dict
+        **kwargs: Additional keyword arguments (findings_count, files_scanned, etc.)
+    """
     try:
         from utils.activity_tracker import track_scan_completed
-        track_scan_completed(scanner_type, user_id, session_id, metadata)
+        # Merge metadata and kwargs
+        full_metadata = metadata or {}
+        full_metadata.update(kwargs)
+        track_scan_completed(scanner_type, user_id, session_id, full_metadata)
     except Exception as e:
         logger.debug(f"Scan tracking unavailable: {e}")
 
-def track_scan_failed_wrapper_safe(scanner_type, user_id, session_id, error_msg=None, error_message=None):
+def track_scan_failed_wrapper_safe(scanner_type, user_id=None, session_id=None, error_msg=None, error_message=None, **kwargs):
     """Safely track scan failure
     
     Args:
@@ -63,11 +74,14 @@ def track_scan_failed_wrapper_safe(scanner_type, user_id, session_id, error_msg=
         session_id: Session identifier
         error_msg: Error message (legacy parameter)
         error_message: Error message (alternative parameter name)
+        **kwargs: Additional keyword arguments (region, details, etc.)
     """
     try:
         from utils.activity_tracker import track_scan_failed
-        msg = error_msg or error_message or "Unknown error"
-        track_scan_failed(scanner_type, user_id, session_id, msg)
+        msg = error_msg or error_message or kwargs.get('details', {}).get('error', 'Unknown error') if isinstance(kwargs.get('details'), dict) else str(error_msg or error_message or "Unknown error")
+        uid = user_id or get_user_id()
+        sid = session_id or get_session_id()
+        track_scan_failed(scanner_type, uid, sid, msg)
     except Exception as e:
         logger.debug(f"Failure tracking unavailable: {e}")
 
