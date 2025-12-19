@@ -218,14 +218,18 @@ def language_selector(key_suffix: str = None) -> None:
         key_suffix: A suffix to ensure unique keys for multiple language selectors
                    If None, a random suffix will be generated
     """
-    import uuid
-    # Create a unique key if none provided
+    # Use a consistent session-based key to avoid duplicates on re-renders
     if key_suffix is None:
-        key_suffix = str(uuid.uuid4())[:8]
-        
-    # Create a selectbox for language selection with guaranteed unique key
+        key_suffix = "default"
+    
+    # Clean up any old session keys from previous implementation
+    old_keys_to_remove = [k for k in st.session_state.keys() if k.startswith('_lang_selector_key_') or k.startswith('_lang_selector_rendered_')]
+    for old_key in old_keys_to_remove:
+        del st.session_state[old_key]
+    
+    # Use a simple consistent key based on suffix (no random UUIDs)
+    selector_key = f"lang_sel_{key_suffix}"
     current_lang = st.session_state.get('language', 'en')
-    selector_key = f"lang_selector_{key_suffix}"
     
     # Define callback for language change - without st.rerun() to avoid no-op warning
     def on_language_change():
