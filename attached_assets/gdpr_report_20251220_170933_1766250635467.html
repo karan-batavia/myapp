@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataGuardian Pro - Document Scanner Report</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1f77b4, #2196F3);
+            color: white;
+            padding: 30px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.2em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 5px 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .summary {
+            margin: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #2c5282;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f77b4;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .findings {
+            margin: 30px;
+        }
+        .findings h2 {
+            color: #2c5282;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .finding {
+            margin: 15px 0;
+            padding: 20px;
+            border-left: 4px solid #dc3545;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .finding.critical {
+            border-left-color: #dc3545;
+            background: #fef2f2;
+        }
+        .finding.high {
+            border-left-color: #fd7e14;
+            background: #fef3e8;
+        }
+        .finding.medium {
+            border-left-color: #ffc107;
+            background: #fffbeb;
+        }
+        .finding.low {
+            border-left-color: #28a745;
+            background: #f0fdf4;
+        }
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .finding-type {
+            font-weight: 600;
+            color: #374151;
+        }
+        .finding-severity {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .severity-critical {
+            background: #dc3545;
+            color: white;
+        }
+        .severity-high {
+            background: #fd7e14;
+            color: white;
+        }
+        .severity-medium {
+            background: #ffc107;
+            color: #000;
+        }
+        .severity-low {
+            background: #28a745;
+            color: white;
+        }
+        .finding-description {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        .finding-location {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .scanner-specific {
+            margin: 30px;
+            padding: 25px;
+            background: #e8f5e8;
+            border-radius: 10px;
+        }
+        .footer {
+            margin-top: 0;
+            padding: 20px 30px;
+            background: #6c757d;
+            color: white;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        th {
+            background: #6c757d;
+            color: white;
+            font-weight: 600;
+        }
+        .compliance-score {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+        }
+        .score-excellent { color: #28a745; }
+        .score-good { color: #17a2b8; }
+        .score-warning { color: #ffc107; }
+        .score-danger { color: #dc3545; }
+        
+        /* Enhanced findings styles */
+        .enhanced-finding {
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .finding-content {
+            margin-top: 15px;
+        }
+        .finding-content > div {
+            margin: 10px 0;
+            padding: 8px 0;
+        }
+        .finding-context, .business-impact {
+            background: rgba(0,0,0,0.02);
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        .compliance-section {
+            background: #e3f2fd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .compliance-section h4 {
+            margin: 0 0 10px 0;
+            color: #1565c0;
+        }
+        .compliance-list {
+            list-style: none;
+            padding: 0;
+        }
+        .compliance-list li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .compliance-list li::before {
+            content: "⚖️";
+            position: absolute;
+            left: 0;
+        }
+        .recommendations-section {
+            background: #f3e5f5;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .recommendations-section h4 {
+            margin: 0 0 15px 0;
+            color: #7b1fa2;
+        }
+        .recommendation {
+            background: white;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+            border-left: 4px solid #9c27b0;
+        }
+        .recommendation-header {
+            font-weight: bold;
+            color: #4a148c;
+            margin-bottom: 8px;
+        }
+        .recommendation-details {
+            font-size: 0.9em;
+            color: #666;
+            margin: 6px 0;
+        }
+        .recommendation-priority {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .priority-critical {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .priority-high {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        .priority-medium {
+            background: #fffde7;
+            color: #f57f17;
+        }
+        .priority-low {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        /* Compliance Forecast Section Styles */
+        .compliance-forecast-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+        .compliance-forecast-section h2 {
+            color: #1565c0;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        .forecast-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .forecast-metric {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .forecast-metric .metric-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .forecast-metric .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .trend-improving {
+            color: #2e7d32 !important;
+        }
+        .trend-declining {
+            color: #d32f2f !important;
+        }
+        .trend-stable {
+            color: #1976d2 !important;
+        }
+        #compliance-forecast-chart {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .forecast-explanation {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .forecast-explanation h4 {
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .explanation-item {
+            padding: 8px 0;
+            font-size: 0.9em;
+        }
+        .risk-zone-guide {
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        .risk-zone-guide h5 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .risk-zone-guide ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .risk-zone-guide li {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+    </style>
+        
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header">
+            <h1>🛡️ DataGuardian Pro Report</h1>
+            <p><strong>Scan Type:</strong> Document Scanner</p>
+            <p><strong>Scan ID:</strong> 456a3f34...</p>
+            <p><strong>Generated:</strong> 2025-12-20 17:09:23</p>
+            <p><strong>Region:</strong> Netherlands</p>
+        </div>
+        
+        
+        <div class="summary">
+            <h2>📊 Executive Summary</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1</div>
+                    <div class="metric-label">Files Scanned</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">24</div>
+                    <div class="metric-label">Total Findings</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Critical Issues</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4</div>
+                    <div class="metric-label">High Risk Issues</div>
+                </div>
+            </div>
+            <div class="compliance-score score-danger">
+                Compliance Score: 0%
+            </div>
+        </div>
+        
+        
+        <div class="compliance-forecast-section">
+            <h2>🎯 Compliance Score Analysis</h2>
+            <div class="forecast-summary">
+                <div class="forecast-metric">
+                    <span class="metric-value">70.0%</span>
+                    <span class="metric-label">📊 Current Compliance Score</span>
+                </div>
+                <div class="forecast-metric">
+                    <span class="metric-value">🟠 Attention</span>
+                    <span class="metric-label">🚨 Risk Level</span>
+                </div>
+                <div class="forecast-metric">
+                    <span class="metric-value">Financial Services: 78.5%</span>
+                    <span class="metric-label">🏢 Industry Benchmark</span>
+                </div>
+            </div>
+            
+            <div class="forecast-explanation">
+                <h4>📊 Compliance Score Analysis</h4>
+                <div class="explanation-grid">
+                    <div class="explanation-item">
+                        <strong>📊 Current Status:</strong> Your compliance score of 70.0% indicates moderate compliance posture.
+                    </div>
+                    <div class="explanation-item">
+                        <strong>🏢 Industry Comparison:</strong> Below average compared to industry benchmarks.
+                    </div>
+                    <div class="explanation-item">
+                        <strong>📈 Recommendations:</strong> Implement systematic improvements.
+                    </div>
+                </div>
+            </div>
+            
+            <p style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">
+                💡 <strong>Pro Tip:</strong> Advanced AI-powered compliance forecasting is available with full system dependencies installed.
+            </p>
+        </div>
+        
+        
+            <div class="fraud-section" style="background: #fff3cd; border-left: 5px solid #dc3545; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                <h3 style="color: #c92a2a; margin-top: 0;">
+                    🚨 AI Document Fraud Detection
+                    <span style="font-size: 0.8em; color: #e67700;">(EU AI Act Article 50)</span>
+                </h3>
+                <p style="margin: 10px 0; font-size: 0.95em; color: #555;">
+                    Automated detection of AI-generated or tampered documents requiring verification under EU AI Act 2025 transparency obligations.
+                </p>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 15px 0;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #495057;">1</div>
+                        <div style="color: #6c757d;">Documents Scanned</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #e67700;">1</div>
+                        <div style="color: #6c757d;">AI Indicators Found</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 2em; color: #c92a2a;">0</div>
+                        <div style="color: #6c757d;">High Risk Documents</div>
+                    </div>
+                </div>
+            
+                <div class="fraud-finding" style="background: white; border: 2px solid #37b24d; padding: 20px; margin: 15px 0; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h4 style="margin: 0; color: #495057;">
+                            📄 credentials.txt
+                        </h4>
+                        <span style="background: #37b24d; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">
+                            Low Risk
+                        </span>
+                    </div>
+                    
+                    <div style="margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 6px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                            <div>
+                                <strong>AI Generated Risk:</strong>
+                                <div style="color: #37b24d; font-size: 1.5em; font-weight: bold;">22%</div>
+                            </div>
+                            <div>
+                                <strong>Detection Confidence:</strong>
+                                <div style="color: #495057; font-size: 1.5em; font-weight: bold;">19.6%</div>
+                            </div>
+                            <div>
+                                <strong>Suspected Model:</strong>
+                                <div style="color: #495057; font-size: 1.2em; font-weight: bold;">Unknown AI Model</div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div style="margin: 15px 0;">
+                        <strong>🔍 Detection Indicators:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                    
+                            <li style="margin: 5px 0;">
+                                <strong>Chatgpt Patterns:</strong> 50% - Pattern density: 0.000, Contractions: 0/110
+                            </li>
+                            
+                            <li style="margin: 5px 0;">
+                                <strong>Statistical Anomalies:</strong> 28% - Sentence variance: 0.000, Vocab repetition: 0.565
+                            </li>
+                            </ul></div>
+                    <div style="margin: 15px 0; padding: 12px; background: #e7f5ff; border-left: 4px solid #1c7ed6; border-radius: 4px;">
+                        <strong style="color: #1864ab;">📋 Recommended Actions:</strong>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                    <li style='margin: 5px 0;'>Ensure compliance with UAVG document verification requirements</li><li style='margin: 5px 0;'>For invoices: verify vendor in KvK Handelsregister</li></ul></div></div></div>
+        
+        <div class="findings">
+            <h2>🔍 Detailed Findings</h2>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Email</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Email found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Email found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 12
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Email found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Email</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Email found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Email found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 29
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Email found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Email</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Email found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Email found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 54
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Email found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Email</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Email found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Email found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 54
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Email found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Email</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Email found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Email found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 54
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Email found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Email</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Email found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Email found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 88
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Email found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Dutch Address Component</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Dutch Address Component found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Dutch Address Component found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 69
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Dutch Address Component found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Credentials</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Credentials found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Credentials found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 45
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Credentials found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Credentials</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Credentials found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Credentials found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 54
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Credentials found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Credentials</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Credentials found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Credentials found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 50
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Credentials found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Credentials</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Credentials found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Credentials found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 7
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Credentials found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Credentials</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Credentials found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Credentials found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Line 7
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Credentials found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Credentials</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Credentials found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Compliance finding requiring review: Credentials found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Document
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Credentials found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Github Personal Access Token</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> GitHub Personal Access Token found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> GitHub Personal Access Token found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Document
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Personal Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: GitHub Personal Access Token found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Personal Access Token</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Personal Access Token found in document
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Personal Access Token found in document</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Document
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Personal Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Personal Access Token found in document
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Ai Act Quality Management Insufficient</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing 7 required quality management elements
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> EU AI Act Article 16 requires quality management systems for high-risk AI. Missing elements indicate compliance gaps.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Article 16 - Quality Management System
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Non-compliance with EU AI Act QMS requirements can result in fines up to €15M or 3% of global turnover</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 16 - Quality Management Systems</li></ul>
+            <ul class='compliance-list'><li>Implement documented QMS procedures</li><li>Establish risk management processes</li><li>Create audit trails</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Implement Quality Management System
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Establish AI-specific QMS per Article 16
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document procedures, risk assessments, testing protocols, and incident response
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Third-party QMS audit
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Ai Act Automatic Logging Insufficient</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing 7 required logging capabilities
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> EU AI Act Article 17 requires automatic logging for high-risk AI systems to ensure traceability.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Article 17 - Automatic Logging System
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Insufficient logging prevents incident investigation and violates transparency requirements</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 17 - Automatic Logging</li></ul>
+            <ul class='compliance-list'><li>Implement comprehensive event logging</li><li>Maintain audit trails</li><li>Enable log retention</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Implement Comprehensive Logging
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Add automatic logging per Article 17
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Log inputs, outputs, decisions, and system events with timestamps
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Verify log completeness and retention
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Ai Act Human Oversight Insufficient</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing 6 required human oversight capabilities
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> EU AI Act Article 26 requires human oversight mechanisms for high-risk AI systems to ensure human control.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Article 26 - Human Oversight Framework
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Missing human oversight can lead to uncontrolled AI decisions and regulatory non-compliance</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 26 - Human Oversight</li></ul>
+            <ul class='compliance-list'><li>Implement human-in-the-loop controls</li><li>Enable operator intervention</li><li>Provide override capabilities</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Implement Human Oversight Controls
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Add human-in-the-loop mechanisms per Article 26
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Design intervention points, override controls, and monitoring dashboards
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Test human override capabilities
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Ai Act Fundamental Rights Insufficient</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing 7 fundamental rights considerations
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> EU AI Act Article 29 requires consideration of fundamental rights impact for high-risk AI systems.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Article 29 - Fundamental Rights Framework
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> AI systems affecting fundamental rights require documented impact assessments and mitigation measures</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 29 - Fundamental Rights Impact Assessment</li></ul>
+            <ul class='compliance-list'><li>Conduct fundamental rights assessment</li><li>Document impact on individuals</li><li>Implement safeguards</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Conduct Fundamental Rights Assessment
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Assess AI impact on fundamental rights per Article 29
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document potential impacts on privacy, non-discrimination, due process
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Legal review of assessment
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Ai Governance Framework Insufficient</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Only 0.0% of governance components implemented
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Only 0.0% of governance components implemented. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Unknown location
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Attribution Violation</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> GitHub hosted content requiring license compliance
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> GitHub hosted content requiring license compliance</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Position 463-473
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: GitHub hosted content requiring license compliance
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Missing Pet</span>
+                    <span class="finding-severity severity-medium">medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> synthetic_data not implemented but may be beneficial
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> synthetic_data not implemented but may be beneficial</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Unknown location
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: synthetic_data not implemented but may be beneficial
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Missing Pet</span>
+                    <span class="finding-severity severity-medium">medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> anonymization not implemented but may be beneficial
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> anonymization not implemented but may be beneficial</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Unknown location
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: anonymization not implemented but may be beneficial
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Security Finding: Missing Pet</span>
+                    <span class="finding-severity severity-medium">medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    <div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">credentials.txt</code></div>
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> pseudonymization not implemented but may be beneficial
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> pseudonymization not implemented but may be beneficial</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> Unknown location
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Actionable Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: pseudonymization not implemented but may be beneficial
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+        </div>
+        
+        
+        <div class="footer">
+            <p>Generated by DataGuardian Pro - Enterprise Privacy & Sustainability Compliance Platform</p>
+            <p>Report ID: 456a3f34-40b1-4892-9e22-7cafed4daf28 | Generated: 2025-12-20 17:09:23</p>
+        </div>
+        
+    </div>
+</body>
+</html>
