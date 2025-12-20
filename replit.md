@@ -33,7 +33,8 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
 - **Database**: PostgreSQL 16 with connection pooling and schema management.
 - **Containerization**: Docker with multi-stage builds and Docker Compose.
 - **Deployment**: Support for Azure DevOps, GitHub workflows, and local deployments; also supports a hybrid deployment model with SaaS (Hetzner Cloud) and standalone enterprise packages (Docker, VM, native installation).
-- **Core Scanning Services**: Includes Code, Blob, Image (OCR-based), Website, Database, DPIA, AI Model, SOC2, and Sustainability scanners.
+- **Core Scanning Services**: Includes Code, Blob, Image (OCR-based), Website, Database, DPIA, AI Model, SOC2, Sustainability, and Audio/Video (Deepfake Detection) scanners.
+- **Audio/Video Scanner**: Enterprise deepfake detection for audio (MP3, WAV, FLAC, M4A) and video (MP4, AVI, MOV, MKV) files. Features spectral analysis, voice cloning detection, face swap detection, frame consistency analysis, metadata forensics, and EU AI Act compliance flagging. Generates comprehensive HTML reports with authenticity scores and recommendations.
 - **Sustainability Scanner**: Scans code repositories (not live cloud environments) for cloud infrastructure files including Terraform (.tf), AWS CloudFormation, Azure ARM/Bicep, GCP Deployment Manager, Kubernetes YAML, and Docker files. Detects oversized instances, missing auto-scaling, and sustainability issues.
 - **GDPR Data Protection Layer**: Database-persisted consent management, automatic data retention enforcement (365 days scans, 90 days analytics), PII anonymization with SHA256 hashing, user data export (GDPR Art. 20), and user data deletion (GDPR Art. 17). Privacy & GDPR tab in Settings page.
 - **Risk Analysis Engine**: AI-powered Smart Risk Analyzer for severity assessment and region-specific GDPR rules (Netherlands, Germany, France, Belgium).

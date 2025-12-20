@@ -9732,3 +9732,264 @@ def generate_findings_html(findings):
     
     return findings_html
 
+
+# === Audio/Video Scanner Interface (Deepfake Detection) ===
+def render_audio_video_scanner_interface(region: str, username: str):
+    """Audio/Video Scanner interface for deepfake and media manipulation detection"""
+    from utils.activity_tracker import ScannerType
+    
+    session_id = st.session_state.get('session_id', str(uuid.uuid4()))
+    user_id = st.session_state.get('user_id', username)
+    
+    st.subheader("🎬 Audio/Video Scanner Configuration")
+    st.markdown("""
+    Detect deepfakes, voice cloning, AI-generated content, and media manipulation.
+    Supports audio (MP3, WAV, FLAC, M4A) and video (MP4, AVI, MOV, MKV, WEBM) files.
+    """)
+    
+    uploaded_files = st.file_uploader(
+        "Upload Audio/Video Files",
+        accept_multiple_files=True,
+        type=['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv']
+    )
+    
+    with st.expander("🔧 Detection Options"):
+        col1, col2 = st.columns(2)
+        with col1:
+            detect_audio_deepfake = st.checkbox("Audio Deepfake Detection", value=True)
+            detect_voice_cloning = st.checkbox("Voice Cloning Detection", value=True)
+            detect_ai_speech = st.checkbox("AI-Generated Speech Detection", value=True)
+        with col2:
+            detect_video_deepfake = st.checkbox("Video Deepfake Detection", value=True)
+            detect_face_swap = st.checkbox("Face Swap Detection", value=True)
+            detect_metadata_tampering = st.checkbox("Metadata Tampering Detection", value=True)
+    
+    sensitivity = st.select_slider(
+        "Detection Sensitivity",
+        options=["low", "medium", "high", "maximum"],
+        value="high"
+    )
+    
+    if st.button("🚀 Start Deepfake Detection Scan", type="primary", use_container_width=True):
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
+        
+        if not uploaded_files:
+            st.warning("Please upload at least one audio or video file.")
+            return
+        
+        execute_audio_video_scan(
+            region=region,
+            username=username,
+            uploaded_files=uploaded_files,
+            sensitivity=sensitivity,
+            options={
+                'detect_audio_deepfake': detect_audio_deepfake,
+                'detect_voice_cloning': detect_voice_cloning,
+                'detect_ai_speech': detect_ai_speech,
+                'detect_video_deepfake': detect_video_deepfake,
+                'detect_face_swap': detect_face_swap,
+                'detect_metadata_tampering': detect_metadata_tampering
+            }
+        )
+
+
+def execute_audio_video_scan(region: str, username: str, uploaded_files, sensitivity: str, options: dict):
+    """Execute audio/video deepfake detection scan"""
+    import time
+    import tempfile
+    import os
+    from datetime import datetime
+    from utils.activity_tracker import track_scan_started, track_scan_completed, ScannerType
+    
+    session_id = st.session_state.get('session_id', str(uuid.uuid4()))
+    user_id = st.session_state.get('user_id', username)
+    
+    scan_start_time = datetime.now()
+    
+    try:
+        track_scan_started(
+            session_id=session_id,
+            user_id=user_id,
+            username=username,
+            scanner_type=ScannerType.AUDIO_VIDEO,
+            region=region,
+            details={
+                'file_count': len(uploaded_files),
+                'sensitivity': sensitivity,
+                'options': options
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Failed to track scan start: {e}")
+    
+    track_scanner_usage('audio_video', region, success=True, duration_ms=0)
+    
+    progress_bar = st.progress(0)
+    status = st.empty()
+    
+    try:
+        from services.audio_video_scanner import AudioVideoScanner
+        scanner = AudioVideoScanner(region=region, sensitivity=sensitivity)
+    except ImportError as e:
+        st.error(f"Audio/Video Scanner not available: {e}")
+        return
+    
+    all_results = []
+    total_files = len(uploaded_files)
+    
+    for idx, uploaded_file in enumerate(uploaded_files):
+        progress = int((idx / total_files) * 100)
+        progress_bar.progress(progress)
+        status.text(f"🔍 Analyzing: {uploaded_file.name} ({idx + 1}/{total_files})")
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix=f".{uploaded_file.name.split('.')[-1]}") as tmp:
+            tmp.write(uploaded_file.read())
+            tmp_path = tmp.name
+        
+        try:
+            result = scanner.scan_file(tmp_path, uploaded_file.name)
+            all_results.append(result)
+        except Exception as e:
+            logger.error(f"Failed to scan {uploaded_file.name}: {e}")
+            st.warning(f"⚠️ Failed to analyze {uploaded_file.name}: {str(e)}")
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except:
+                pass
+    
+    progress_bar.progress(100)
+    status.text("✅ Analysis complete!")
+    time.sleep(0.5)
+    status.empty()
+    progress_bar.empty()
+    
+    if not all_results:
+        st.error("No files could be analyzed.")
+        return
+    
+    scan_end_time = datetime.now()
+    duration_ms = int((scan_end_time - scan_start_time).total_seconds() * 1000)
+    
+    total_suspicious = sum(1 for r in all_results if not r.is_authentic)
+    total_authentic = sum(1 for r in all_results if r.is_authentic)
+    avg_authenticity = sum(r.authenticity_score for r in all_results) / len(all_results)
+    
+    st.markdown("---")
+    st.subheader("📊 Scan Results Summary")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Files Analyzed", len(all_results))
+    with col2:
+        st.metric("Authentic", total_authentic, delta=None)
+    with col3:
+        st.metric("Suspicious", total_suspicious, delta=None if total_suspicious == 0 else f"-{total_suspicious}")
+    with col4:
+        st.metric("Avg. Authenticity", f"{avg_authenticity:.1f}%")
+    
+    st.markdown("---")
+    st.subheader("📋 Detailed Results")
+    
+    for result in all_results:
+        risk_color = {
+            'critical': '🔴',
+            'high': '🟠',
+            'medium': '🟡',
+            'low': '🟢',
+            'none': '🔵'
+        }.get(result.risk_level.value, '⚪')
+        
+        with st.expander(f"{risk_color} {result.file_name} - {result.authenticity_score:.0f}% Authentic"):
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write(f"**Media Type:** {result.media_type.upper()}")
+                st.write(f"**Duration:** {result.duration_seconds:.1f} seconds")
+                st.write(f"**File Size:** {result.file_size / 1024 / 1024:.2f} MB")
+            with col2:
+                st.write(f"**Risk Level:** {result.risk_level.value.upper()}")
+                st.write(f"**Authentic:** {'✅ Yes' if result.is_authentic else '❌ No'}")
+                st.write(f"**Scan ID:** {result.scan_id}")
+            
+            if result.fraud_types_detected:
+                st.warning(f"⚠️ **Detected Issues:** {', '.join([ft.value.replace('_', ' ').title() for ft in result.fraud_types_detected])}")
+            
+            if result.findings:
+                st.markdown("**Findings:**")
+                for finding in result.findings:
+                    severity_icon = {'high': '🔴', 'medium': '🟡', 'low': '🟢', 'info': '🔵', 'error': '⚫'}.get(finding.get('severity', 'info'), '⚪')
+                    st.markdown(f"- {severity_icon} **{finding.get('title', 'Finding')}**: {finding.get('description', '')}")
+            
+            if result.recommendations:
+                st.markdown("**Recommendations:**")
+                for rec in result.recommendations:
+                    st.markdown(f"- {rec}")
+            
+            if result.eu_ai_act_flags:
+                st.info(f"🇪🇺 **EU AI Act Flags:** {', '.join(result.eu_ai_act_flags)}")
+    
+    st.markdown("---")
+    st.subheader("📥 Download Reports")
+    
+    for result in all_results:
+        html_report = scanner.generate_html_report(result)
+        safe_filename = result.file_name.replace(' ', '_').replace('.', '_')
+        st.download_button(
+            label=f"📄 Download Report: {result.file_name}",
+            data=html_report,
+            file_name=f"deepfake_report_{safe_filename}_{result.scan_id}.html",
+            mime="text/html",
+            key=f"download_{result.scan_id}"
+        )
+    
+    combined_result = {
+        'scan_id': str(uuid.uuid4())[:8],
+        'scan_type': 'audio_video',
+        'timestamp': datetime.now().isoformat(),
+        'region': region,
+        'username': username,
+        'file_count': len(all_results),
+        'files_scanned': len(all_results),
+        'total_pii_found': total_suspicious,
+        'authenticity_score': avg_authenticity,
+        'findings': [],
+        'processing_time_ms': duration_ms
+    }
+    
+    for result in all_results:
+        combined_result['findings'].extend(result.findings)
+    
+    try:
+        from services.results_aggregator import ResultsAggregator
+        aggregator = ResultsAggregator()
+        stored_id = aggregator.save_scan_result(username=username, result=combined_result)
+        if stored_id:
+            st.session_state['last_scan_id'] = stored_id
+            logger.info(f"Audio/Video scan saved: {stored_id}")
+    except Exception as e:
+        logger.warning(f"Failed to save scan results: {e}")
+    
+    try:
+        track_scan_completed(
+            session_id=session_id,
+            user_id=user_id,
+            username=username,
+            scanner_type=ScannerType.AUDIO_VIDEO,
+            region=region,
+            duration_ms=duration_ms,
+            details={
+                'file_count': len(all_results),
+                'suspicious_count': total_suspicious,
+                'authentic_count': total_authentic,
+                'avg_authenticity': avg_authenticity
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Failed to track scan completion: {e}")
+    
+    st.success(f"✅ Audio/Video scan completed! Analyzed {len(all_results)} files in {duration_ms/1000:.1f}s")
+

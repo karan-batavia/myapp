@@ -2826,6 +2826,16 @@ def render_dashboard():
                     'tracking': '🍪 Tracking Scanner',
                     'consent': '🍪 Consent Scanner',
                     
+                    # 12. Audio/Video Scanner (Deepfake Detection)
+                    'audio_video': '🎬 Audio/Video Scanner',
+                    'audio/video': '🎬 Audio/Video Scanner',
+                    'audio-video': '🎬 Audio/Video Scanner',
+                    'audio/video scanner': '🎬 Audio/Video Scanner',
+                    'deepfake': '🎬 Deepfake Scanner',
+                    'video': '🎬 Video Scanner',
+                    'audio': '🎬 Audio Scanner',
+                    'media': '🎬 Media Scanner',
+                    
                     # Additional fallbacks for unrecognized types
                     'general': '💻 Code Scanner',  # Map general to Code Scanner since most are code scans
                     'scan': '💻 Code Scanner',
@@ -3134,7 +3144,8 @@ def render_scanner_interface_safe():
         f"🤖 {_('scan.ai_model', 'AI Model')}": _('scan.ai_model_description', 'ML model privacy risks and bias detection'),
         f"🛡️ {_('scan.soc2', 'SOC2 & NIS2')}": _('scan.soc2_description', 'SOC2 + NIS2 EU Directive compliance with TSC mapping'),
         f"📋 {_('scan.dpia', 'DPIA')}": _('scan.dpia_description', 'Data Protection Impact Assessment workflow'),
-        f"🌱 {_('scan.sustainability', 'Sustainability')}": _('scan.sustainability_description', 'Environmental impact and green coding analysis')
+        f"🌱 {_('scan.sustainability', 'Sustainability')}": _('scan.sustainability_description', 'Environmental impact and green coding analysis'),
+        f"🎬 {_('scan.audio_video', 'Audio/Video')}": _('scan.audio_video_description', 'Deepfake detection and media authenticity analysis')
     }
     
     selected_scanner = st.selectbox(
@@ -3174,6 +3185,8 @@ def render_scanner_interface_safe():
         scanner_type = 'dpia'
     elif _('scan.sustainability', 'Sustainability') in selected_scanner:
         scanner_type = 'sustainability'
+    elif _('scan.audio_video', 'Audio/Video') in selected_scanner:
+        scanner_type = 'audio_video'
     
     # Check specific scanner permissions
     if scanner_type and not require_scanner_access(scanner_type, region):
@@ -3211,6 +3224,8 @@ def render_scanner_interface_safe():
         render_dpia(region, username)
     elif _('scan.sustainability', 'Sustainability') in selected_scanner:
         render_sustainability_scanner_interface(region, username)
+    elif _('scan.audio_video', 'Audio/Video') in selected_scanner:
+        render_audio_video_scanner_interface(region, username)
 
 def render_code_scanner_config():
     """Code scanner configuration"""

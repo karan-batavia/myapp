@@ -42,6 +42,7 @@ class ScannerType(Enum):
     BLOB = "blob"                         # Blob storage scanner
     COOKIE = "cookie"                     # Cookie compliance scanner
     CONNECTORS_E2E = "connectors_e2e"     # Connectors E2E Testing
+    AUDIO_VIDEO = "audio_video"           # Audio/Video Deepfake Scanner
 
 @dataclass
 class ActivityEntry:
