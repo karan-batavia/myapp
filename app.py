@@ -1652,91 +1652,92 @@ def render_authenticated_interface():
     username = st.session_state.get('username', 'User')
     user_role = st.session_state.get('user_role', 'user')
     
-    # Guard against duplicate sidebar rendering in the same script run
-    try:
-        from streamlit.runtime.scriptrunner import get_script_run_ctx
-        ctx = get_script_run_ctx()
-        current_run_id = ctx.script_run_id if ctx else "unknown"
-    except:
-        current_run_id = "unknown"
-    
-    sidebar_rendered_key = "_sidebar_rendered_run_id"
-    if st.session_state.get(sidebar_rendered_key) == current_run_id:
-        # Sidebar already rendered, just get the navigation value from session state
-        selected_nav = st.session_state.get('navigation', f"🏠 {_('sidebar.dashboard', 'Dashboard')}")
-    else:
-        st.session_state[sidebar_rendered_key] = current_run_id
+    # Sidebar navigation with translations
+    with st.sidebar:
+        st.success(f"{_('sidebar.welcome', 'Welcome')}, {username}!")
         
-        # Sidebar navigation with translations
-        with st.sidebar:
-            st.success(f"{_('sidebar.welcome', 'Welcome')}, {username}!")
+        # Add language selector for authenticated users
+        from utils.i18n import language_selector
+        language_selector("authenticated")
+        
+        # Navigation menu with translations
+        nav_options = [
+            f"🔍 {_('scan.new_scan_title', 'New Scan')}", 
+            f"🏠 {_('sidebar.dashboard', 'Dashboard')}", 
+            "🤖 Predictive Analytics",
+            f"📊 {_('results.title', 'Results')}", 
+            f"📋 {_('history.title', 'History')}", 
+            f"⚙️ {_('sidebar.settings', 'Settings')}",
+            f"🔒 {_('sidebar.privacy_rights', 'Privacy Rights')}",
+            "💰 Pricing & Plans",
+            "🚀 Upgrade License",
+            "💳 iDEAL Payment Test"
+        ]
+        if user_role == "admin":
+            nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard"])
+        
+        # Get current navigation index from session state, default to Dashboard (index 1)
+        current_nav_value = st.session_state.get('_nav_value', nav_options[1])
+        try:
+            default_index = nav_options.index(current_nav_value)
+        except ValueError:
+            default_index = 1  # Default to Dashboard
+        
+        # Use index parameter instead of key to avoid duplicate widget ID issues
+        selected_nav = st.selectbox(
+            _('sidebar.navigation', 'Navigation'), 
+            nav_options, 
+            index=default_index,
+            key="navigation"
+        )
+        
+        # Store the selection for next rerun
+        st.session_state['_nav_value'] = selected_nav
+        
+        # Handle navigation requests from dashboard buttons
+        if st.session_state.get('view_detailed_results', False):
+            st.session_state['view_detailed_results'] = False
+            selected_nav = f"📊 {_('results.title', 'Results')}"
+        elif st.session_state.get('view_history', False):
+            st.session_state['view_history'] = False
+            selected_nav = f"📋 {_('history.title', 'History')}"
+        elif st.session_state.get('start_new_scan', False):
+            st.session_state['start_new_scan'] = False
+            selected_nav = f"🔍 {_('scan.new_scan_title', 'New Scan')}"
+        elif st.session_state.get('start_first_scan', False):
+            st.session_state['start_first_scan'] = False
+            selected_nav = f"🔍 {_('scan.new_scan_title', 'New Scan')}"
+        
+        st.markdown("---")
+        
+        # License status display
+        show_license_sidebar()
+        
+        # Pricing info in sidebar
+        show_pricing_in_sidebar()
+        
+        st.markdown("---")
+        
+        # User info with translations
+        st.write(f"**{_('sidebar.current_role', 'Role')}:** {user_role.title()}")
+        
+        # Logout
+        if st.button(_('sidebar.sign_out', 'Logout')):
+            # Track logout event
+            try:
+                from services.auth_tracker import track_logout
+                track_logout(
+                    user_id=st.session_state.get('user_id', username),
+                    username=username
+                )
+            except Exception:
+                pass  # Silent fail - tracking is optional
             
-            # Add language selector for authenticated users
-            from utils.i18n import language_selector
-            language_selector("authenticated")
-            
-            # Navigation menu with translations
-            nav_options = [
-                f"🔍 {_('scan.new_scan_title', 'New Scan')}", 
-                f"🏠 {_('sidebar.dashboard', 'Dashboard')}", 
-                "🤖 Predictive Analytics",
-                f"📊 {_('results.title', 'Results')}", 
-                f"📋 {_('history.title', 'History')}", 
-                f"⚙️ {_('sidebar.settings', 'Settings')}",
-                f"🔒 {_('sidebar.privacy_rights', 'Privacy Rights')}",
-                "💰 Pricing & Plans",
-                "🚀 Upgrade License",
-                "💳 iDEAL Payment Test"
-            ]
-            if user_role == "admin":
-                nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard"])
-            
-            selected_nav = st.selectbox(_('sidebar.navigation', 'Navigation'), nav_options, key="navigation")
-            
-            # Handle navigation requests from dashboard buttons
-            if st.session_state.get('view_detailed_results', False):
-                st.session_state['view_detailed_results'] = False
-                selected_nav = f"📊 {_('results.title', 'Results')}"
-            elif st.session_state.get('view_history', False):
-                st.session_state['view_history'] = False
-                selected_nav = f"📋 {_('history.title', 'History')}"
-            elif st.session_state.get('start_new_scan', False):
-                st.session_state['start_new_scan'] = False
-                selected_nav = f"🔍 {_('scan.new_scan_title', 'New Scan')}"
-            elif st.session_state.get('start_first_scan', False):
-                st.session_state['start_first_scan'] = False
-                selected_nav = f"🔍 {_('scan.new_scan_title', 'New Scan')}"
-            
-            st.markdown("---")
-            
-            # License status display
-            show_license_sidebar()
-            
-            # Pricing info in sidebar
-            show_pricing_in_sidebar()
-            
-            st.markdown("---")
-            
-            # User info with translations
-            st.write(f"**{_('sidebar.current_role', 'Role')}:** {user_role.title()}")
-            
-            # Logout
-            if st.button(_('sidebar.sign_out', 'Logout')):
-                # Track logout event
-                try:
-                    from services.auth_tracker import track_logout
-                    track_logout(
-                        user_id=st.session_state.get('user_id', username),
-                        username=username
-                    )
-                except Exception:
-                    pass  # Silent fail - tracking is optional
-                
-                for key in ['authenticated', 'username', 'user_role']:
-                    if key in st.session_state:
-                        del st.session_state[key]
-                # Force app rerun to refresh after logout
-                st.rerun()
+            for key in ['authenticated', 'username', 'user_role']:
+                if key in st.session_state:
+                    del st.session_state[key]
+            # Force app rerun to refresh after logout
+            st.rerun()
     
     # Language-aware navigation mapping to prevent state loss during language switching
     # Create mapping from all possible language variants to internal keys
