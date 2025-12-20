@@ -222,10 +222,31 @@ def language_selector(key_suffix: str = None) -> None:
     if key_suffix is None:
         key_suffix = "default"
     
-    # Clean up any old session keys from previous implementation
-    old_keys_to_remove = [k for k in st.session_state.keys() if k.startswith('_lang_selector_key_') or k.startswith('_lang_selector_rendered_')]
-    for old_key in old_keys_to_remove:
-        del st.session_state[old_key]
+    # Get Streamlit's script run ID to detect new script runs
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx = get_script_run_ctx()
+        current_run_id = ctx.script_run_id if ctx else "unknown"
+    except:
+        current_run_id = "unknown"
+    
+    # Track which selectors have been rendered in this script run
+    run_tracker_key = "_lang_sel_run_id"
+    rendered_tracker_key = "_lang_sel_rendered"
+    
+    # Reset rendered tracking if this is a new script run
+    if st.session_state.get(run_tracker_key) != current_run_id:
+        st.session_state[run_tracker_key] = current_run_id
+        st.session_state[rendered_tracker_key] = set()
+    
+    # Skip if this specific selector was already rendered in this run
+    rendered_set = st.session_state.get(rendered_tracker_key, set())
+    if key_suffix in rendered_set:
+        return  # Already rendered in this script run
+    
+    # Mark this selector as rendered
+    rendered_set.add(key_suffix)
+    st.session_state[rendered_tracker_key] = rendered_set
     
     # Use a simple consistent key based on suffix (no random UUIDs)
     selector_key = f"lang_sel_{key_suffix}"
