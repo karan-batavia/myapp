@@ -76,12 +76,12 @@ class AdvancedFraudDetector:
         self.region = region
         self.ela_quality = 90  # JPEG quality for ELA
         
-        # Sensitivity levels: low=0.50, medium=0.35, high=0.20, maximum=0.12
+        # Sensitivity levels: low=0.50, medium=0.35, high=0.20, maximum=0.08
         sensitivity_thresholds = {
             "low": 0.50,
             "medium": 0.35,
             "high": 0.20,
-            "maximum": 0.12
+            "maximum": 0.08  # Lowered to catch more subtle manipulation
         }
         self.detection_threshold = sensitivity_thresholds.get(sensitivity, 0.20)
         self.sensitivity = sensitivity
