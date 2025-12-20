@@ -655,9 +655,22 @@ class RepoScanner:
                         scan_results['skipped_files'] += 1
                         continue
                     
+                    # Skip lock files and large dependency manifests (these are auto-generated, slow to scan)
+                    lock_files = {'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'Cargo.lock', 
+                                 'poetry.lock', 'Pipfile.lock', 'composer.lock', 'Gemfile.lock',
+                                 'packages.lock.json', 'shrinkwrap.json'}
+                    if os.path.basename(full_path) in lock_files:
+                        scan_results['skipped_files'] += 1
+                        continue
+                    
                     # Skip files larger than 50MB
                     try:
-                        if os.path.getsize(full_path) > 50 * 1024 * 1024:
+                        file_size = os.path.getsize(full_path)
+                        if file_size > 50 * 1024 * 1024:
+                            scan_results['skipped_files'] += 1
+                            continue
+                        # Skip large JSON files (>500KB) as they're usually auto-generated
+                        if full_path.endswith('.json') and file_size > 500 * 1024:
                             scan_results['skipped_files'] += 1
                             continue
                     except:
