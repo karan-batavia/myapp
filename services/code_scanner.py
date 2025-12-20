@@ -987,11 +987,17 @@ class CodeScanner:
                     current_batch = scan_tasks[batch_start:batch_end]
                     
                     # Submit work to process pool for parallel processing
+                    # Note: Don't pass progress_callback to workers - it can't be pickled
                     batch_results = pool.map_async(
                         self._scan_file_wrapper, 
-                        [(file_path, directory_path, self.progress_callback, i, len(filtered_files)) 
+                        [(file_path, directory_path, None, i, len(filtered_files)) 
                          for i, file_path in current_batch]
                     )
+                    
+                    # Report progress from main thread (after batch completes)
+                    if self.progress_callback:
+                        progress = min(90, 30 + int((batch_end / len(filtered_files)) * 60))
+                        self.progress_callback(progress, 100, f"Scanned {batch_end}/{len(filtered_files)} files...")
                     
                     # Process results as they complete
                     for result in batch_results.get():
