@@ -34,6 +34,19 @@ class IntelligentScannerWrapper:
         self.scanner_manager = intelligent_scanner_manager
         self.results_aggregator = ResultsAggregator()
     
+    def _calculate_risk_summary(self, findings: List[Dict[str, Any]]) -> Dict[str, int]:
+        """Calculate risk summary from findings."""
+        summary = {'Critical': 0, 'High': 0, 'Medium': 0, 'Low': 0}
+        for finding in findings:
+            severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+            if isinstance(severity, str):
+                severity = severity.capitalize()
+                if severity in summary:
+                    summary[severity] += 1
+                else:
+                    summary['Medium'] += 1
+        return summary
+    
     def execute_code_scan_intelligent(self, region: str, username: str, 
                                     uploaded_files=None, repo_url=None, 
                                     directory_path=None, include_comments=True,
@@ -119,7 +132,9 @@ class IntelligentScannerWrapper:
         try:
             # Prepare scan target based on source type
             if uploaded_files:
-                # Handle uploaded files
+                # Handle uploaded files - scan directly without multiprocessing
+                progress_callback(10, 100, "Processing uploaded files...")
+                
                 with tempfile.TemporaryDirectory() as temp_dir:
                     file_paths = []
                     for uploaded_file in uploaded_files:
@@ -128,17 +143,44 @@ class IntelligentScannerWrapper:
                             f.write(uploaded_file.getbuffer())
                         file_paths.append(file_path)
                     
-                    # Use intelligent code scanner for uploaded files
-                    scan_result = self.scanner_manager.scan_intelligent(
-                        scan_type='code',
-                        scan_target=temp_dir,  # Scan the directory containing uploaded files
-                        scan_mode=scan_mode,
-                        max_items=100,
-                        progress_callback=progress_callback,
+                    progress_callback(30, 100, "Scanning files for PII and code issues...")
+                    
+                    # Scan uploaded files directly (avoid multiprocessing pickle issues)
+                    from services.code_scanner import CodeScanner
+                    code_scanner = CodeScanner(
                         region=region,
                         include_comments=include_comments,
-                        detect_secrets=detect_secrets
+                        use_entropy=use_entropy
                     )
+                    
+                    all_findings = []
+                    files_scanned = 0
+                    total_files = len(file_paths)
+                    
+                    for idx, file_path in enumerate(file_paths):
+                        progress_callback(30 + int((idx / total_files) * 50), 100, f"Scanning {os.path.basename(file_path)}...")
+                        try:
+                            result = code_scanner.scan_file(file_path)
+                            if result and result.get('pii_found'):
+                                all_findings.extend(result['pii_found'])
+                            files_scanned += 1
+                        except Exception as e:
+                            logger.warning(f"Error scanning {file_path}: {e}")
+                    
+                    progress_callback(85, 100, "Processing scan results...")
+                    
+                    # Build scan result
+                    scan_result = {
+                        'findings': all_findings,
+                        'pii_count': len(all_findings),
+                        'files_scanned': files_scanned,
+                        'files_skipped': 0,
+                        'status': 'success',
+                        'scan_type': 'code',
+                        'scan_mode': scan_mode,
+                        'intelligence_applied': True,
+                        'risk_summary': self._calculate_risk_summary(all_findings)
+                    }
             
             elif repo_url:
                 # Use intelligent repository scanner
