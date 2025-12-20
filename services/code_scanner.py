@@ -311,6 +311,76 @@ class CodeScanner:
             ]
         }
         
+        # Code Fraud Detection Patterns - Plagiarism, License Violations, IP Theft
+        self.code_fraud_patterns = {
+            'license_violations': [
+                r'\b(GPL|GNU|LGPL|AGPL|MIT|Apache|BSD|MPL|CC[-\s]BY|Creative\s+Commons)\b',
+                r'\b(copyleft|copyright|©|all\s+rights\s+reserved|proprietary)\b',
+                r'\b(license|licensing|licensed\s+under|distributed\s+under)\b',
+                r'\b(open[-\s]?source|closed[-\s]?source|commercial\s+use)\b'
+            ],
+            'attribution_missing': [
+                r'\b(based\s+on|derived\s+from|forked\s+from|adapted\s+from|copied\s+from)\b',
+                r'\b(original\s+author|credit|attribution|acknowledgment)\b',
+                r'\b(stackoverflow|github|gitlab|bitbucket|gist)\s*[:/]',
+                r'\b(source|origin|reference):\s*http[s]?://'
+            ],
+            'code_duplication_indicators': [
+                r'#\s*(TODO|FIXME|XXX|HACK):\s*(remove|replace|original|copied)',
+                r'//\s*(TODO|FIXME|XXX|HACK):\s*(remove|replace|original|copied)',
+                r'/\*\s*(TODO|FIXME|XXX|HACK):\s*(remove|replace|original|copied)',
+                r'\b(duplicate|duplicated|copy[-\s]?paste|plagiari[sz])',
+                r'\b(temporary|temp|placeholder)\s+(code|implementation|solution)'
+            ],
+            'stolen_code_markers': [
+                r'\b(stolen|pirated|cracked|keygen|nulled|warez)\b',
+                r'\b(decompiled|reverse[-\s]?engineer|disassembl)',
+                r'\b(bypass|crack|patch)\s+(license|activation|drm|protection)',
+                r'\b(serial|registration)\s*(key|code|number)\s*[:=]',
+                r'\b(license\s*key|product\s*key|activation\s*code)\s*[:=]\s*["\'][^"\']{8,}'
+            ],
+            'obfuscation_indicators': [
+                r'\b(obfuscate[dr]?|minified|packed|encrypted\s+code)\b',
+                r'eval\s*\(\s*["\'][A-Za-z0-9+/=]{50,}',  # Base64 eval
+                r'\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2}\\x[0-9a-fA-F]{2}',  # Hex encoded
+                r'String\.fromCharCode\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+',  # JS char codes
+                r'_0x[a-fA-F0-9]{4,}',  # Obfuscated variable names
+                r'\\u[0-9a-fA-F]{4}\\u[0-9a-fA-F]{4}\\u[0-9a-fA-F]{4}'  # Unicode escape
+            ],
+            'ip_theft_indicators': [
+                r'\b(trade[-\s]?secret|proprietary\s+algorithm|confidential\s+code)\b',
+                r'\b(intellectual\s+property|IP\s+theft|code\s+theft)\b',
+                r'\b(non[-\s]?disclosure|NDA|confidential)\b.*\b(code|algorithm|implementation)\b',
+                r'\b(competitor|competing|rival)\s+(code|product|implementation)'
+            ],
+            'backdoor_indicators': [
+                r'\b(backdoor|rootkit|trojan|malware|keylogger)\b',
+                r'\b(remote\s+access|shell\s+access|command\s+injection)\b',
+                r'socket\.connect\s*\([^)]*\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}',  # Hardcoded IPs
+                r'\b(reverse\s+shell|bind\s+shell|netcat|nc\s+-[lpe])',
+                r'subprocess\.call\s*\(\s*["\'].*\b(sh|bash|cmd|powershell)\b'
+            ],
+            'copyright_infringement': [
+                r'©\s*\d{4}(?:\s*-\s*\d{4})?\s+[A-Z][a-zA-Z\s]+',  # Copyright notices
+                r'\b(all\s+rights\s+reserved|unauthorized.*prohibited)\b',
+                r'\bpatent(?:ed|s)?\s*(?:pending|#|no\.?|number)',
+                r'\b(trademark|®|™)\b',
+                r'\b(proprietary|confidential|internal\s+use\s+only)\b'
+            ],
+            'license_compatibility_issues': [
+                r'\b(GPL|AGPL)\b.*\b(proprietary|commercial|closed[-\s]?source)\b',
+                r'\b(MIT|BSD|Apache)\b.*\b(GPL[-\s]?3|AGPL)\b.*\b(incompatible|conflict)\b',
+                r'\blicense\s+(?:conflict|incompatib|violation)',
+                r'\b(dual[-\s]?licens|relicens|sublicens)\b'
+            ],
+            'code_origin_suspicious': [
+                r'\b(dark[-\s]?web|underground|black[-\s]?market)\b',
+                r'\b(leaked|dump|breach).*\b(code|source|repository)\b',
+                r'\b(unlicensed|unauthorized|illegal)\s+(copy|use|distribution)',
+                r'\b(anonymous|unknown)\s+(?:author|source|origin)'
+            ]
+        }
+        
         # UAVG (Dutch GDPR implementation) specific compliance patterns
         self.uavg_patterns = {
             'bsn_numbers': [
@@ -511,7 +581,18 @@ class CodeScanner:
                     logger.warning(f"Failed to compile UAVG pattern for {category}: {e}")
             self.compiled_uavg_patterns[category] = compiled_category_patterns
         
-        logger.info(f"Successfully compiled {len(self.compiled_patterns)} secret patterns, {len(self.compiled_comment_patterns)} comment patterns, {len(self.compiled_ai_patterns)} AI Act patterns, and {len(self.compiled_uavg_patterns)} UAVG patterns")
+        # Compile Code Fraud Detection patterns
+        self.compiled_code_fraud_patterns = {}
+        for category, patterns in self.code_fraud_patterns.items():
+            compiled_category_patterns = []
+            for pattern in patterns:
+                try:
+                    compiled_category_patterns.append(re.compile(pattern, re.IGNORECASE | re.MULTILINE))
+                except re.error as e:
+                    logger.warning(f"Failed to compile code fraud pattern for {category}: {e}")
+            self.compiled_code_fraud_patterns[category] = compiled_category_patterns
+        
+        logger.info(f"Successfully compiled {len(self.compiled_patterns)} secret patterns, {len(self.compiled_comment_patterns)} comment patterns, {len(self.compiled_ai_patterns)} AI Act patterns, {len(self.compiled_uavg_patterns)} UAVG patterns, and {len(self.compiled_code_fraud_patterns)} code fraud patterns")
         
     def set_progress_callback(self, callback_function: Optional[Callable[[int, int, str], None]]):
         """
@@ -1249,6 +1330,114 @@ class CodeScanner:
         
         return findings
     
+    def _detect_code_fraud(self, content: str, file_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect code fraud indicators including plagiarism, license violations, IP theft.
+        
+        Args:
+            content: File content to analyze
+            file_path: Path to the file being analyzed
+            
+        Returns:
+            List of code fraud findings
+        """
+        findings = []
+        
+        # Severity mapping for different fraud categories
+        severity_map = {
+            'stolen_code_markers': 'Critical',
+            'backdoor_indicators': 'Critical',
+            'ip_theft_indicators': 'Critical',
+            'license_violations': 'High',
+            'license_compatibility_issues': 'High',
+            'code_origin_suspicious': 'High',
+            'copyright_infringement': 'High',
+            'obfuscation_indicators': 'Medium',
+            'attribution_missing': 'Medium',
+            'code_duplication_indicators': 'Low'
+        }
+        
+        # Compliance mapping
+        compliance_refs = {
+            'license_violations': 'EU Copyright Directive (2019/790) + NL Auteurswet',
+            'stolen_code_markers': 'EU Copyright Directive + Criminal Code (Art. 310 NL)',
+            'backdoor_indicators': 'NIS2 Directive Art. 21 + GDPR Art. 32',
+            'ip_theft_indicators': 'Trade Secrets Directive (2016/943) + NL Trade Secrets Act',
+            'copyright_infringement': 'EU Copyright Directive (2019/790) + NL Auteurswet',
+            'obfuscation_indicators': 'EU AI Act Art. 52 (Transparency) + GDPR Art. 5',
+            'attribution_missing': 'Open Source License Requirements + NL Auteurswet Art. 25',
+            'code_duplication_indicators': 'Software Quality Standards + ISO/IEC 25010',
+            'license_compatibility_issues': 'GPL/AGPL/Apache/MIT License Terms',
+            'code_origin_suspicious': 'GDPR Art. 32 + NIS2 Directive Art. 21'
+        }
+        
+        for category, compiled_patterns in self.compiled_code_fraud_patterns.items():
+            for pattern in compiled_patterns:
+                for match in pattern.finditer(content):
+                    matched_text = match.group(0)
+                    start_pos = match.start()
+                    
+                    # Get line number
+                    line_number = content[:start_pos].count('\n') + 1
+                    
+                    # Get context (surrounding lines)
+                    lines = content.split('\n')
+                    context_start = max(0, line_number - 2)
+                    context_end = min(len(lines), line_number + 1)
+                    context = '\n'.join(lines[context_start:context_end])
+                    
+                    finding = {
+                        'type': f'Code Fraud: {category.replace("_", " ").title()}',
+                        'category': 'Code Fraud Detection',
+                        'value': matched_text[:100] + ('...' if len(matched_text) > 100 else ''),
+                        'location': f'Line {line_number}',
+                        'file_path': file_path,
+                        'risk_level': severity_map.get(category, 'Medium'),
+                        'severity': severity_map.get(category, 'Medium'),
+                        'context': context[:300] if context else '',
+                        'compliance_reference': compliance_refs.get(category, 'EU/NL IP & Copyright Law'),
+                        'fraud_category': category,
+                        'description': self._get_fraud_description(category, matched_text),
+                        'remediation': self._get_fraud_remediation(category),
+                        'netherlands_specific': True
+                    }
+                    
+                    findings.append(finding)
+        
+        return findings
+    
+    def _get_fraud_description(self, category: str, matched_text: str) -> str:
+        """Get description for code fraud finding."""
+        descriptions = {
+            'license_violations': f'License indicator detected: "{matched_text}". Verify compliance with license terms.',
+            'attribution_missing': f'Attribution reference detected: "{matched_text}". Ensure proper credit is given.',
+            'code_duplication_indicators': f'Code duplication marker found: "{matched_text}". Review for plagiarism.',
+            'stolen_code_markers': f'Suspicious code marker detected: "{matched_text}". Investigate code origin immediately.',
+            'obfuscation_indicators': f'Code obfuscation detected: "{matched_text}". May hide malicious or stolen code.',
+            'ip_theft_indicators': f'IP theft indicator found: "{matched_text}". Verify code ownership and rights.',
+            'backdoor_indicators': f'Potential backdoor/malware indicator: "{matched_text}". Security review required.',
+            'copyright_infringement': f'Copyright indicator: "{matched_text}". Verify usage rights.',
+            'license_compatibility_issues': f'License compatibility issue: "{matched_text}". Legal review recommended.',
+            'code_origin_suspicious': f'Suspicious code origin: "{matched_text}". Verify legitimate source.'
+        }
+        return descriptions.get(category, f'Code fraud indicator detected: {matched_text}')
+    
+    def _get_fraud_remediation(self, category: str) -> str:
+        """Get remediation guidance for code fraud finding."""
+        remediations = {
+            'license_violations': 'Review and comply with all applicable license terms. Consult legal if uncertain.',
+            'attribution_missing': 'Add proper attribution to original authors as required by license terms.',
+            'code_duplication_indicators': 'Remove or properly attribute copied code. Implement original solution.',
+            'stolen_code_markers': 'Remove suspicious code immediately. Conduct security and legal review.',
+            'obfuscation_indicators': 'Deobfuscate and review code. Replace with transparent implementation.',
+            'ip_theft_indicators': 'Verify code ownership. Remove any unauthorized proprietary code.',
+            'backdoor_indicators': 'Remove potential backdoor code. Conduct full security audit.',
+            'copyright_infringement': 'Obtain proper licenses or remove infringing code.',
+            'license_compatibility_issues': 'Resolve license conflicts. Consider dual licensing or code replacement.',
+            'code_origin_suspicious': 'Verify code source. Replace with code from trusted repositories.'
+        }
+        return remediations.get(category, 'Review code origin and ensure compliance with applicable laws.')
+    
     def _create_scan_result(self, file_path: str, all_pii: List[Dict[str, Any]], 
                            file_metadata: Dict[str, Any], scan_method: str = "in-memory") -> Dict[str, Any]:
         """
@@ -1278,6 +1467,23 @@ class CodeScanner:
             logger.info(f"Netherlands GDPR/UAVG compliance check completed: {len(nl_violations)} violations found")
         except Exception as e:
             logger.warning(f"Netherlands GDPR/UAVG violation detection failed: {e}")
+        
+        # Add code fraud detection
+        try:
+            # Read file content for fraud analysis
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    file_content = f.read()
+            except:
+                file_content = ""
+            
+            if file_content:
+                fraud_findings = self._detect_code_fraud(file_content, file_path)
+                all_pii.extend(fraud_findings)
+                if fraud_findings:
+                    logger.info(f"Code fraud detection completed for {file_path}: {len(fraud_findings)} indicators found")
+        except Exception as e:
+            logger.warning(f"Code fraud detection failed for {file_path}: {e}")
         
         # Calculate risk metrics
         risk_counts = {'Low': 0, 'Medium': 0, 'High': 0, 'Critical': 0}
