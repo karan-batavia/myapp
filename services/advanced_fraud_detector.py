@@ -72,12 +72,21 @@ class AdvancedFraudDetector:
     6. Copy-Move Detection - Detects cloned regions
     """
     
-    def __init__(self, region: str = "Netherlands"):
+    def __init__(self, region: str = "Netherlands", sensitivity: str = "high"):
         self.region = region
         self.ela_quality = 90  # JPEG quality for ELA
-        self.detection_threshold = 0.35  # Overall fraud threshold
         
-        logger.info(f"AdvancedFraudDetector initialized for region: {region}")
+        # Sensitivity levels: low=0.50, medium=0.35, high=0.20, maximum=0.12
+        sensitivity_thresholds = {
+            "low": 0.50,
+            "medium": 0.35,
+            "high": 0.20,
+            "maximum": 0.12
+        }
+        self.detection_threshold = sensitivity_thresholds.get(sensitivity, 0.20)
+        self.sensitivity = sensitivity
+        
+        logger.info(f"AdvancedFraudDetector initialized for region: {region}, sensitivity: {sensitivity}, threshold: {self.detection_threshold}")
     
     def analyze_image(self, image_path: str) -> FraudDetectionResult:
         """
@@ -259,13 +268,20 @@ class AdvancedFraudDetector:
             # AI-generated images often have too smooth or too uniform noise
             score = 0.0
             
+            # ENHANCED: More sensitive thresholds for AI detection
             # Very low noise variance (too smooth - AI generated)
+            if laplacian_var < 200:  # Raised from 100
+                score += 0.25
             if laplacian_var < 100:
-                score += 0.4
+                score += 0.25
+            if laplacian_var < 50:
+                score += 0.2
             
             # Very uniform noise (unnatural)
+            if noise_std < 10:  # Raised from 5
+                score += 0.2
             if noise_std < 5:
-                score += 0.3
+                score += 0.2
             
             # Check for periodic patterns in noise (GAN artifacts)
             fft = np.fft.fft2(noise)
@@ -274,8 +290,10 @@ class AdvancedFraudDetector:
             
             # Periodic artifacts show as peaks in FFT
             peak_ratio = np.max(magnitude) / (np.mean(magnitude) + 1e-10)
+            if peak_ratio > 500:  # Lowered from 1000
+                score += 0.2
             if peak_ratio > 1000:
-                score += 0.3
+                score += 0.2
             
             return {
                 "score": min(score, 1.0),
@@ -523,19 +541,29 @@ class AdvancedFraudDetector:
             score = 0.0
             indicators = []
             
+            # ENHANCED: More aggressive AI detection with lower thresholds
             # Check for unusual aspect ratios (AI often uses standard sizes)
-            common_ai_sizes = [(512, 512), (768, 768), (1024, 1024), (512, 768), (768, 512)]
-            if (w, h) in common_ai_sizes or (h, w) in common_ai_sizes:
-                score += 0.15
-                indicators.append("Common AI generation size detected")
+            common_ai_sizes = [(512, 512), (768, 768), (1024, 1024), (512, 768), (768, 512),
+                               (256, 256), (640, 640), (800, 800), (1080, 1080), (452, 413)]
+            # Also check nearby sizes (within 15%)
+            size_match = False
+            for ai_w, ai_h in common_ai_sizes:
+                if abs(w - ai_w) < ai_w * 0.15 and abs(h - ai_h) < ai_h * 0.15:
+                    score += 0.1
+                    indicators.append(f"Near-standard AI size: {w}x{h}")
+                    size_match = True
+                    break
             
             # Check for symmetric patterns (common in AI)
             left_half = gray[:, :w//2]
             right_half = cv2.flip(gray[:, w//2:], 1)
             if left_half.shape == right_half.shape:
                 symmetry = np.corrcoef(left_half.flatten(), right_half.flatten())[0, 1]
-                if symmetry > 0.8:
-                    score += 0.2
+                if symmetry > 0.6:  # Lowered threshold
+                    score += 0.1
+                    indicators.append(f"Moderate symmetry: {symmetry:.2f}")
+                if symmetry > 0.75:
+                    score += 0.15
                     indicators.append(f"High symmetry detected: {symmetry:.2f}")
             
             # Check for texture consistency (AI images often too consistent)
@@ -548,8 +576,11 @@ class AdvancedFraudDetector:
             
             if texture_blocks:
                 texture_variance = np.var(texture_blocks)
+                if texture_variance < 150:  # Raised from 50
+                    score += 0.1
+                    indicators.append(f"Low texture variance: {texture_variance:.1f}")
                 if texture_variance < 50:
-                    score += 0.2
+                    score += 0.15
                     indicators.append("Unnaturally consistent texture")
             
             # Check color histogram for unnatural distributions
@@ -559,9 +590,12 @@ class AdvancedFraudDetector:
             
             # AI images often have unusual hue distributions
             h_entropy = -np.sum(h_hist * np.log2(h_hist + 1e-10))
-            if h_entropy < 4.0:  # Low entropy = limited color palette
+            if h_entropy < 5.5:  # Raised from 4.0
+                score += 0.1
+                indicators.append(f"Moderate color diversity (entropy: {h_entropy:.2f})")
+            if h_entropy < 4.0:
                 score += 0.15
-                indicators.append(f"Limited color diversity (entropy: {h_entropy:.2f})")
+                indicators.append(f"Limited color diversity")
             
             # Check for high-frequency artifacts (GAN fingerprints)
             fft = np.fft.fft2(gray)
@@ -662,9 +696,15 @@ class AdvancedFraudDetector:
 # Singleton instance
 _fraud_detector_instance = None
 
-def get_fraud_detector(region: str = "Netherlands") -> AdvancedFraudDetector:
-    """Get singleton fraud detector instance."""
+def get_fraud_detector(region: str = "Netherlands", sensitivity: str = "maximum") -> AdvancedFraudDetector:
+    """Get singleton fraud detector instance with maximum sensitivity by default."""
     global _fraud_detector_instance
     if _fraud_detector_instance is None:
-        _fraud_detector_instance = AdvancedFraudDetector(region)
+        _fraud_detector_instance = AdvancedFraudDetector(region, sensitivity)
     return _fraud_detector_instance
+
+
+def reset_fraud_detector():
+    """Reset the singleton to allow reconfiguration."""
+    global _fraud_detector_instance
+    _fraud_detector_instance = None
