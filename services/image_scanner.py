@@ -2109,6 +2109,9 @@ class ImageScanner:
             detector = get_fraud_detector(self.region)
             result = detector.analyze_image(image_path)
             
+            # Log the analysis result for debugging
+            logger.info(f"Advanced fraud detection for {os.path.basename(image_path)}: score={result.fraud_score:.3f}, suspicious={result.is_suspicious}, types={[ft.value for ft in result.fraud_types]}")
+            
             if result.is_suspicious:
                 # Create main fraud finding
                 fraud_types_str = ", ".join([ft.value for ft in result.fraud_types])
