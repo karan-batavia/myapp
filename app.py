@@ -1621,6 +1621,19 @@ def render_landing_page():
 def render_authenticated_interface():
     """Render the main authenticated user interface with performance optimization"""
     
+    # Guard against multiple renders in the same script run
+    try:
+        from streamlit.runtime.scriptrunner import get_script_run_ctx
+        ctx = get_script_run_ctx()
+        current_run_id = ctx.script_run_id if ctx else "unknown"
+    except:
+        current_run_id = "unknown"
+    
+    run_tracker_key = "_auth_interface_run_id"
+    if st.session_state.get(run_tracker_key) == current_run_id:
+        return  # Already rendered in this script run
+    st.session_state[run_tracker_key] = current_run_id
+    
     # Hide the duplicate "app" label in sidebar navigation for authenticated users
     st.markdown("""
     <style>
