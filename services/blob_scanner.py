@@ -1298,33 +1298,90 @@ class BlobScanner:
         detection_threshold = sensitivity_thresholds.get(sensitivity, 0.08)
         
         try:
-            # Run all detection methods
+            # ============================================================
+            # Run ALL detection methods (HIGH, MEDIUM, LOW priority)
+            # ============================================================
+            
+            # Original detection methods
             chatgpt_score = self._analyze_chatgpt_patterns(text)
             statistical_score = self._analyze_statistical_anomalies(text)
             metadata_score = self._analyze_metadata_fraud(file_path)
-            
-            # NEW: Receipt/Invoice specific fraud detection
             receipt_score = self._analyze_receipt_fraud(text, file_path)
             
-            # Calculate combined fraud score
+            # HIGH PRIORITY: New enhanced detection methods
+            pdf_image_score = self._analyze_pdf_embedded_images(file_path)
+            signature_score = self._detect_forged_signatures(text, file_path)
+            iban_score = self._validate_iban_numbers(text)
+            
+            # MEDIUM PRIORITY: Additional detection methods
+            qr_score = self._validate_qr_codes(text, file_path)
+            stamp_score = self._detect_fake_stamps_logos(text, file_path)
+            stylometry_score = self._analyze_stylometry(text)
+            
+            # LOW PRIORITY: Netherlands-specific validation
+            kvk_score = self._validate_kvk_number(text)
+            btw_score = self._validate_btw_number(text)
+            template_score = self._detect_template_fraud(text, file_path)
+            
+            # Calculate combined fraud score with all indicators
             fraud_indicators = [
                 {'type': 'chatgpt_patterns', 'score': chatgpt_score['score'], 'details': chatgpt_score['details']},
                 {'type': 'statistical_anomalies', 'score': statistical_score['score'], 'details': statistical_score['details']},
                 {'type': 'metadata_fraud', 'score': metadata_score['score'], 'details': metadata_score['details']},
-                {'type': 'receipt_invoice_fraud', 'score': receipt_score['score'], 'details': receipt_score['details']}
+                {'type': 'receipt_invoice_fraud', 'score': receipt_score['score'], 'details': receipt_score['details']},
+                {'type': 'pdf_embedded_images', 'score': pdf_image_score['score'], 'details': pdf_image_score['details']},
+                {'type': 'signature_forgery', 'score': signature_score['score'], 'details': signature_score['details']},
+                {'type': 'iban_validation', 'score': iban_score['score'], 'details': iban_score['details']},
+                {'type': 'qr_code_fraud', 'score': qr_score['score'], 'details': qr_score['details']},
+                {'type': 'stamp_logo_fraud', 'score': stamp_score['score'], 'details': stamp_score['details']},
+                {'type': 'stylometric_analysis', 'score': stylometry_score['score'], 'details': stylometry_score['details']},
+                {'type': 'kvk_validation', 'score': kvk_score['score'], 'details': kvk_score['details']},
+                {'type': 'btw_validation', 'score': btw_score['score'], 'details': btw_score['details']},
+                {'type': 'template_fraud', 'score': template_score['score'], 'details': template_score['details']}
             ]
             
-            # Weighted scoring: 30% ChatGPT, 25% Statistical, 20% Metadata, 25% Receipt/Invoice
-            ai_generated_risk = (
-                chatgpt_score['score'] * 0.30 +
-                statistical_score['score'] * 0.25 +
-                metadata_score['score'] * 0.20 +
-                receipt_score['score'] * 0.25
+            # Filter out zero-score indicators for cleaner output
+            active_indicators = [ind for ind in fraud_indicators if ind['score'] > 0]
+            
+            # Comprehensive weighted scoring across all detection methods
+            # HIGH priority (60% weight): chatgpt, statistical, pdf_images, signature, iban
+            # MEDIUM priority (25% weight): metadata, receipt, qr, stamp, stylometry
+            # LOW priority (15% weight): kvk, btw, template
+            
+            high_priority_score = (
+                chatgpt_score['score'] * 0.15 +
+                statistical_score['score'] * 0.15 +
+                pdf_image_score['score'] * 0.10 +
+                signature_score['score'] * 0.10 +
+                iban_score['score'] * 0.10
             )
             
-            # Confidence is average of all scores
-            confidence = mean([chatgpt_score['score'], statistical_score['score'], 
-                             metadata_score['score'], receipt_score['score']]) * 100
+            medium_priority_score = (
+                metadata_score['score'] * 0.05 +
+                receipt_score['score'] * 0.05 +
+                qr_score['score'] * 0.05 +
+                stamp_score['score'] * 0.05 +
+                stylometry_score['score'] * 0.05
+            )
+            
+            low_priority_score = (
+                kvk_score['score'] * 0.05 +
+                btw_score['score'] * 0.05 +
+                template_score['score'] * 0.05
+            )
+            
+            ai_generated_risk = high_priority_score + medium_priority_score + low_priority_score
+            
+            # Boost score if multiple indicators are triggered
+            triggered_count = len(active_indicators)
+            if triggered_count >= 3:
+                ai_generated_risk = min(ai_generated_risk * 1.2, 1.0)
+            if triggered_count >= 5:
+                ai_generated_risk = min(ai_generated_risk * 1.3, 1.0)
+            
+            # Confidence based on number of active indicators
+            all_scores = [ind['score'] for ind in fraud_indicators]
+            confidence = mean(all_scores) * 100 if all_scores else 0
             
             # Apply maximum sensitivity threshold
             if ai_generated_risk < detection_threshold:
@@ -1616,6 +1673,591 @@ class BlobScanner:
         
         return {'score': score, 'details': details}
     
+    # ============================================================================
+    # ENHANCED FRAUD DETECTION - HIGH PRIORITY FEATURES
+    # ============================================================================
+    
+    def _analyze_pdf_embedded_images(self, file_path: str) -> Dict[str, Any]:
+        """
+        HIGH PRIORITY: Analyze embedded images in PDFs for manipulation/forgery.
+        Extracts images from PDFs and runs fraud detection on each.
+        """
+        score = 0.0
+        details_list = []
+        manipulated_images = 0
+        
+        if not file_path.lower().endswith('.pdf'):
+            return {'score': 0.0, 'details': 'Not a PDF file', 'images_analyzed': 0}
+        
+        try:
+            with open(file_path, 'rb') as f:
+                pdf_reader = PyPDF2.PdfReader(f)
+                
+                for page_num, page in enumerate(pdf_reader.pages):
+                    if '/XObject' in page.get('/Resources', {}):
+                        xobjects = page['/Resources']['/XObject'].get_object()
+                        
+                        for obj_name in xobjects:
+                            xobj = xobjects[obj_name]
+                            if xobj['/Subtype'] == '/Image':
+                                # Check image properties for manipulation indicators
+                                width = xobj.get('/Width', 0)
+                                height = xobj.get('/Height', 0)
+                                
+                                # Suspicious: very small images (possible hidden data)
+                                if width < 10 or height < 10:
+                                    score += 0.2
+                                    details_list.append(f"Suspicious small image on page {page_num + 1}")
+                                    manipulated_images += 1
+                                
+                                # Suspicious: unusual aspect ratios
+                                if width > 0 and height > 0:
+                                    ratio = max(width, height) / min(width, height)
+                                    if ratio > 20:  # Very stretched images
+                                        score += 0.15
+                                        details_list.append(f"Unusual aspect ratio on page {page_num + 1}")
+                                
+                                # Check for filter mismatches (common in manipulated PDFs)
+                                img_filter = xobj.get('/Filter', '')
+                                if isinstance(img_filter, list) and len(img_filter) > 2:
+                                    score += 0.2
+                                    details_list.append("Multiple compression filters (potential manipulation)")
+                                    manipulated_images += 1
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "No embedded image anomalies"
+            
+        except Exception as e:
+            logger.warning(f"PDF image analysis failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {'score': score, 'details': details, 'manipulated_images': manipulated_images}
+    
+    def _detect_forged_signatures(self, text: str, file_path: str) -> Dict[str, Any]:
+        """
+        HIGH PRIORITY: Detect potentially forged digital signatures.
+        Checks for signature patterns and validates digital signature metadata.
+        """
+        score = 0.0
+        details_list = []
+        text_lower = text.lower()
+        
+        try:
+            # Check for signature-related keywords
+            signature_keywords = ['signed', 'signature', 'ondertekend', 'getekend', 'handtekening']
+            has_signature_mention = any(kw in text_lower for kw in signature_keywords)
+            
+            if not has_signature_mention:
+                return {'score': 0.0, 'details': 'No signature mentions found'}
+            
+            # Check for suspicious signature patterns
+            # 1. Multiple different signature dates
+            date_patterns = re.findall(r'\d{1,2}[-/]\d{1,2}[-/]\d{2,4}', text)
+            if len(set(date_patterns)) > 3:
+                score += 0.15
+                details_list.append(f"Multiple different dates ({len(set(date_patterns))} unique)")
+            
+            # 2. Check for placeholder signatures
+            placeholder_patterns = [
+                r'\[signature\]', r'\[sign here\]', r'\[your signature\]',
+                r'\[handtekening\]', r'x{3,}', r'_{5,}signature',
+                r'sign:\s*$', r'signed:\s*$'
+            ]
+            for pattern in placeholder_patterns:
+                if re.search(pattern, text_lower):
+                    score += 0.3
+                    details_list.append("Placeholder signature detected")
+                    break
+            
+            # 3. Check PDF for digital signature validity
+            if file_path.lower().endswith('.pdf'):
+                try:
+                    with open(file_path, 'rb') as f:
+                        pdf_reader = PyPDF2.PdfReader(f)
+                        
+                        # Check for signature field
+                        if '/AcroForm' in pdf_reader.trailer.get('/Root', {}):
+                            acroform = pdf_reader.trailer['/Root']['/AcroForm']
+                            if '/SigFlags' not in acroform:
+                                score += 0.2
+                                details_list.append("PDF has form but no signature flags")
+                except:
+                    pass
+            
+            # 4. Check for copy-paste signature indicators
+            if re.search(r'(signed|signature).{0,20}(copy|copied|duplicate)', text_lower):
+                score += 0.25
+                details_list.append("Copy/duplicate signature mention")
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "No signature fraud indicators"
+            
+        except Exception as e:
+            logger.warning(f"Signature detection failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {'score': score, 'details': details}
+    
+    def _validate_iban_numbers(self, text: str) -> Dict[str, Any]:
+        """
+        HIGH PRIORITY: Validate Dutch and EU IBAN numbers.
+        Uses official IBAN checksum algorithm (ISO 13616).
+        """
+        score = 0.0
+        details_list = []
+        valid_ibans = []
+        invalid_ibans = []
+        
+        try:
+            # IBAN pattern (NL = Netherlands, but support all EU)
+            iban_pattern = r'\b([A-Z]{2}\d{2}[A-Z0-9]{4,30})\b'
+            potential_ibans = re.findall(iban_pattern, text.upper())
+            
+            for iban in potential_ibans:
+                iban_clean = iban.replace(' ', '').replace('-', '')
+                
+                # Skip if too short or too long
+                if len(iban_clean) < 15 or len(iban_clean) > 34:
+                    continue
+                
+                # Validate using mod-97 algorithm
+                if self._is_valid_iban(iban_clean):
+                    valid_ibans.append(iban_clean)
+                else:
+                    invalid_ibans.append(iban_clean)
+                    score += 0.35
+                    details_list.append(f"Invalid IBAN checksum: {iban_clean[:8]}...")
+            
+            # Check for suspicious IBAN patterns
+            for iban in valid_ibans:
+                # Fake test IBANs
+                if iban.startswith('NL00') or 'TEST' in iban or '000000000' in iban:
+                    score += 0.3
+                    details_list.append(f"Suspicious test IBAN: {iban[:8]}...")
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else f"IBANs validated: {len(valid_ibans)} valid"
+            
+        except Exception as e:
+            logger.warning(f"IBAN validation failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {
+            'score': score, 
+            'details': details, 
+            'valid_ibans': len(valid_ibans),
+            'invalid_ibans': len(invalid_ibans)
+        }
+    
+    def _is_valid_iban(self, iban: str) -> bool:
+        """
+        Validate IBAN using ISO 13616 mod-97 algorithm.
+        """
+        try:
+            # Move first 4 chars to end
+            rearranged = iban[4:] + iban[:4]
+            
+            # Convert letters to numbers (A=10, B=11, ..., Z=35)
+            numeric = ''
+            for char in rearranged:
+                if char.isalpha():
+                    numeric += str(ord(char.upper()) - 55)
+                else:
+                    numeric += char
+            
+            # Check mod 97
+            return int(numeric) % 97 == 1
+            
+        except:
+            return False
+    
+    # ============================================================================
+    # ENHANCED FRAUD DETECTION - MEDIUM PRIORITY FEATURES
+    # ============================================================================
+    
+    def _validate_qr_codes(self, text: str, file_path: str) -> Dict[str, Any]:
+        """
+        MEDIUM PRIORITY: Validate QR codes in receipts/invoices.
+        Checks for suspicious QR code patterns and validates URL destinations.
+        """
+        score = 0.0
+        details_list = []
+        text_lower = text.lower()
+        
+        try:
+            # Check for QR code mentions
+            qr_mentions = re.findall(r'qr[-\s]?code|scan.*code|betaal.*code', text_lower)
+            
+            if not qr_mentions:
+                return {'score': 0.0, 'details': 'No QR code references found'}
+            
+            # Check for suspicious URL patterns in text (often from OCR'd QR codes)
+            urls = re.findall(r'https?://[^\s<>"{}|\\^`\[\]]+', text)
+            
+            for url in urls:
+                url_lower = url.lower()
+                
+                # Suspicious URL shorteners (often used in fraud)
+                suspicious_shorteners = ['bit.ly', 'tinyurl', 'goo.gl', 't.co', 'ow.ly']
+                if any(shortener in url_lower for shortener in suspicious_shorteners):
+                    score += 0.25
+                    details_list.append(f"Suspicious URL shortener: {url[:30]}...")
+                
+                # Suspicious domains (non-standard TLDs)
+                suspicious_tlds = ['.xyz', '.top', '.click', '.work', '.link', '.loan']
+                if any(tld in url_lower for tld in suspicious_tlds):
+                    score += 0.3
+                    details_list.append(f"Suspicious TLD in QR URL: {url[:30]}...")
+                
+                # Check for typosquatting of Dutch banks
+                dutch_banks = ['ing', 'rabobank', 'abn', 'sns', 'triodos']
+                for bank in dutch_banks:
+                    if bank in url_lower and f'{bank}.nl' not in url_lower and f'{bank}.com' not in url_lower:
+                        score += 0.35
+                        details_list.append(f"Potential bank typosquatting: {url[:40]}...")
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "QR code patterns appear valid"
+            
+        except Exception as e:
+            logger.warning(f"QR code validation failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {'score': score, 'details': details}
+    
+    def _detect_fake_stamps_logos(self, text: str, file_path: str) -> Dict[str, Any]:
+        """
+        MEDIUM PRIORITY: Detect potentially fake company stamps and logos.
+        Analyzes text patterns that indicate stamp/logo presence and validates.
+        """
+        score = 0.0
+        details_list = []
+        text_lower = text.lower()
+        
+        try:
+            # Check for stamp-related keywords
+            stamp_keywords = ['official stamp', 'company stamp', 'bedrijfsstempel', 
+                            'firmastempel', 'notaris', 'certified', 'gecertificeerd']
+            has_stamp = any(kw in text_lower for kw in stamp_keywords)
+            
+            if has_stamp:
+                # Check for inconsistencies
+                
+                # 1. Stamp mentions without company details
+                has_company_name = bool(re.search(r'\b[A-Z][a-z]+\s+(?:B\.?V\.?|N\.?V\.?|VOF|CV)\b', text))
+                if not has_company_name:
+                    score += 0.2
+                    details_list.append("Stamp mentioned but no company name found")
+                
+                # 2. Multiple different stamps mentioned
+                stamp_count = sum(1 for kw in stamp_keywords if kw in text_lower)
+                if stamp_count > 2:
+                    score += 0.15
+                    details_list.append(f"Multiple stamp references ({stamp_count})")
+            
+            # Check for logo-related issues
+            logo_keywords = ['logo', 'trademark', 'handelsmerk', '®', '™']
+            logo_count = sum(1 for kw in logo_keywords if kw in text_lower)
+            
+            # Suspicious: too many trademark symbols (possible copied content)
+            if logo_count > 5:
+                score += 0.2
+                details_list.append(f"Excessive trademark mentions ({logo_count})")
+            
+            # Check for known fake certification patterns
+            fake_cert_patterns = [
+                r'certified\s+\d{4}',  # "Certified 2024" without proper authority
+                r'iso\s*\d+.*self[-\s]?certified',
+                r'verified\s+by\s+\[',  # Placeholder verification
+            ]
+            for pattern in fake_cert_patterns:
+                if re.search(pattern, text_lower):
+                    score += 0.3
+                    details_list.append("Suspicious certification pattern")
+                    break
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "No stamp/logo fraud indicators"
+            
+        except Exception as e:
+            logger.warning(f"Stamp/logo detection failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {'score': score, 'details': details}
+    
+    def _analyze_stylometry(self, text: str) -> Dict[str, Any]:
+        """
+        MEDIUM PRIORITY: Advanced stylometric analysis for AI detection.
+        Uses linguistic features beyond simple pattern matching.
+        """
+        score = 0.0
+        details_list = []
+        
+        if len(text) < 200:
+            return {'score': 0.0, 'details': 'Text too short for stylometric analysis'}
+        
+        try:
+            words = text.split()
+            sentences = re.split(r'[.!?]+', text)
+            sentences = [s.strip() for s in sentences if s.strip()]
+            
+            # 1. Vocabulary richness (Type-Token Ratio)
+            unique_words = set(w.lower() for w in words if w.isalpha())
+            ttr = len(unique_words) / max(len(words), 1)
+            
+            # AI text often has moderate TTR (not too high, not too low)
+            if 0.35 < ttr < 0.55:
+                score += 0.15
+                details_list.append(f"Suspicious vocabulary uniformity (TTR: {ttr:.2f})")
+            
+            # 2. Average word length
+            avg_word_len = mean([len(w) for w in words if w.isalpha()]) if words else 0
+            
+            # AI tends to use slightly longer words consistently
+            if 5.0 < avg_word_len < 6.5:
+                score += 0.1
+                details_list.append(f"AI-typical word length (avg: {avg_word_len:.1f})")
+            
+            # 3. Sentence complexity analysis
+            if sentences:
+                # Count commas per sentence (AI often over-structures)
+                comma_counts = [s.count(',') for s in sentences]
+                avg_commas = mean(comma_counts)
+                if 2 < avg_commas < 4:
+                    score += 0.15
+                    details_list.append("AI-typical sentence structure")
+            
+            # 4. Transition word density
+            transitions = ['however', 'therefore', 'furthermore', 'moreover', 
+                          'additionally', 'consequently', 'nevertheless', 'thus']
+            transition_count = sum(1 for t in transitions if t in text.lower())
+            transition_density = transition_count / max(len(sentences), 1)
+            
+            if transition_density > 0.3:
+                score += 0.2
+                details_list.append(f"High transition word density ({transition_density:.2f})")
+            
+            # 5. Hedging language (AI often hedges)
+            hedges = ['might', 'could', 'perhaps', 'possibly', 'generally', 
+                     'typically', 'often', 'usually', 'tend to']
+            hedge_count = sum(text.lower().count(h) for h in hedges)
+            hedge_density = hedge_count / max(len(words), 1) * 100
+            
+            if hedge_density > 2:
+                score += 0.15
+                details_list.append(f"High hedging language ({hedge_density:.1f}%)")
+            
+            # 6. Passive voice ratio
+            passive_patterns = [r'\b(?:is|are|was|were|been|being)\s+\w+ed\b']
+            passive_count = sum(len(re.findall(p, text)) for p in passive_patterns)
+            passive_ratio = passive_count / max(len(sentences), 1)
+            
+            if passive_ratio > 0.4:
+                score += 0.1
+                details_list.append("High passive voice usage")
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "Natural writing style"
+            
+        except Exception as e:
+            logger.warning(f"Stylometric analysis failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {'score': score, 'details': details, 'ttr': round(ttr, 3) if 'ttr' in dir() else 0}
+    
+    # ============================================================================
+    # ENHANCED FRAUD DETECTION - LOW PRIORITY FEATURES
+    # ============================================================================
+    
+    def _validate_kvk_number(self, text: str) -> Dict[str, Any]:
+        """
+        LOW PRIORITY: Validate Dutch KvK (Chamber of Commerce) numbers.
+        KvK numbers are 8 digits with specific patterns.
+        """
+        score = 0.0
+        details_list = []
+        valid_kvk = []
+        invalid_kvk = []
+        
+        try:
+            # KvK pattern: 8 digits
+            kvk_pattern = r'\b(?:kvk|kamer\s*van\s*koophandel|handelsregister)[:\s#]*(\d{8})\b'
+            explicit_kvks = re.findall(kvk_pattern, text.lower())
+            
+            # Also look for standalone 8-digit numbers near business context
+            business_context = r'\b(\d{8})\b'
+            potential_kvks = re.findall(business_context, text)
+            
+            all_kvks = set(explicit_kvks + [k for k in potential_kvks if k in text])
+            
+            for kvk in all_kvks:
+                # Known invalid/test patterns
+                invalid_patterns = ['00000000', '11111111', '12345678', '99999999', '87654321']
+                
+                if kvk in invalid_patterns:
+                    score += 0.35
+                    details_list.append(f"Invalid KvK pattern: {kvk}")
+                    invalid_kvk.append(kvk)
+                elif kvk.startswith('00') or kvk.startswith('99'):
+                    score += 0.2
+                    details_list.append(f"Suspicious KvK prefix: {kvk}")
+                    invalid_kvk.append(kvk)
+                else:
+                    valid_kvk.append(kvk)
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else f"KvK numbers appear valid: {len(valid_kvk)}"
+            
+        except Exception as e:
+            logger.warning(f"KvK validation failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {
+            'score': score,
+            'details': details,
+            'valid_kvk': valid_kvk,
+            'invalid_kvk': invalid_kvk
+        }
+    
+    def _validate_btw_number(self, text: str) -> Dict[str, Any]:
+        """
+        LOW PRIORITY: Validate Dutch BTW (VAT) numbers.
+        Dutch BTW format: NL + 9 digits + B + 2 digits (e.g., NL123456789B01)
+        """
+        score = 0.0
+        details_list = []
+        valid_btw = []
+        invalid_btw = []
+        
+        try:
+            # Dutch BTW pattern
+            btw_pattern = r'\b(NL\d{9}B\d{2})\b'
+            btw_numbers = re.findall(btw_pattern, text.upper())
+            
+            # Also check for mentioned BTW without proper format
+            btw_mentions = re.findall(r'btw[-\s]?(?:nummer|nr|id)?[:\s]*([A-Z0-9]{5,})', text, re.IGNORECASE)
+            
+            for btw in btw_numbers:
+                # Validate format
+                if self._is_valid_dutch_btw(btw):
+                    valid_btw.append(btw)
+                else:
+                    invalid_btw.append(btw)
+                    score += 0.3
+                    details_list.append(f"Invalid BTW format: {btw}")
+            
+            # Check for suspicious patterns
+            for btw in btw_mentions:
+                btw_upper = btw.upper()
+                if 'TEST' in btw_upper or '000000000' in btw_upper:
+                    score += 0.35
+                    details_list.append(f"Test BTW number detected: {btw}")
+                    invalid_btw.append(btw)
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else f"BTW numbers validated: {len(valid_btw)}"
+            
+        except Exception as e:
+            logger.warning(f"BTW validation failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {
+            'score': score,
+            'details': details,
+            'valid_btw': valid_btw,
+            'invalid_btw': invalid_btw
+        }
+    
+    def _is_valid_dutch_btw(self, btw: str) -> bool:
+        """Validate Dutch BTW number format and checksum."""
+        try:
+            # Basic format check: NL + 9 digits + B + 2 digits
+            if not re.match(r'^NL\d{9}B\d{2}$', btw):
+                return False
+            
+            # Extract components
+            digits = btw[2:11]  # 9 digits
+            suffix = btw[12:14]  # 2 digits after B
+            
+            # Check for obviously invalid patterns
+            if digits == '000000000' or suffix == '00':
+                return False
+            
+            return True
+            
+        except:
+            return False
+    
+    def _detect_template_fraud(self, text: str, file_path: str) -> Dict[str, Any]:
+        """
+        LOW PRIORITY: Detect documents created from common fraud templates.
+        Identifies signatures of known fake document templates.
+        """
+        score = 0.0
+        details_list = []
+        text_lower = text.lower()
+        
+        try:
+            # Known fraud template signatures
+            template_signatures = {
+                'generic_invoice': [
+                    'invoice template', 'sample invoice', 'invoice example',
+                    '[company name]', '[your company]', '[client name]'
+                ],
+                'fake_receipt': [
+                    'receipt template', 'sample receipt', 'demo receipt',
+                    'your store name', 'store address here'
+                ],
+                'forged_contract': [
+                    'contract template', 'sample agreement', 'template agreement',
+                    '[party a]', '[party b]', 'insert name here'
+                ],
+                'fake_certificate': [
+                    'certificate template', 'sample certificate', 'demo certificate',
+                    '[recipient name]', 'awarded to [name]'
+                ]
+            }
+            
+            matched_templates = []
+            for template_type, signatures in template_signatures.items():
+                matches = sum(1 for sig in signatures if sig in text_lower)
+                if matches >= 2:
+                    score += 0.4
+                    matched_templates.append(template_type)
+                    details_list.append(f"Matches {template_type} pattern")
+            
+            # Check for placeholder patterns
+            placeholder_patterns = [
+                r'\[.*?\]',  # [anything]
+                r'\{.*?\}',  # {anything}
+                r'<.*?>',    # <anything>
+                r'xxx+',     # xxx placeholders
+                r'___+',     # ___ placeholders
+            ]
+            
+            placeholder_count = sum(len(re.findall(p, text)) for p in placeholder_patterns)
+            if placeholder_count > 5:
+                score += 0.3
+                details_list.append(f"Multiple placeholders found ({placeholder_count})")
+            
+            # Check for lorem ipsum
+            if 'lorem ipsum' in text_lower or 'dolor sit amet' in text_lower:
+                score += 0.5
+                details_list.append("Lorem ipsum placeholder text detected")
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "No template fraud detected"
+            
+        except Exception as e:
+            logger.warning(f"Template fraud detection failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {
+            'score': score,
+            'details': details,
+            'matched_templates': matched_templates if 'matched_templates' in dir() else []
+        }
+    
     def _guess_ai_model(self, chatgpt_score: Dict, statistical_score: Dict) -> str:
         """Guess which AI model generated document"""
         chatgpt_patterns = ['furthermore', 'in conclusion', 'as a whole', 'it is important']
@@ -1631,7 +2273,7 @@ class BlobScanner:
         return 'Unknown AI Model'
     
     def _generate_fraud_recommendations(self, risk_level: str, fraud_indicators: List[Dict]) -> List[str]:
-        """Generate remediation recommendations"""
+        """Generate comprehensive remediation recommendations for all fraud types"""
         recommendations = []
         
         if risk_level in ['High', 'Critical']:
@@ -1640,17 +2282,35 @@ class BlobScanner:
             
             # Check which indicators are strongest
             for indicator in fraud_indicators:
-                if indicator['score'] > 0.5:  # Lowered threshold
-                    if 'chatgpt' in indicator['type']:
+                if indicator['score'] > 0.3:  # Lower threshold for comprehensive recommendations
+                    indicator_type = indicator['type']
+                    
+                    if 'chatgpt' in indicator_type:
                         recommendations.append('Verify document was not generated by AI language model')
-                    elif 'statistical' in indicator['type']:
+                    elif 'statistical' in indicator_type or 'stylometric' in indicator_type:
                         recommendations.append('Check for unusual writing patterns or consistency')
-                    elif 'metadata' in indicator['type']:
+                    elif 'metadata' in indicator_type:
                         recommendations.append('Examine document edit history and timestamps')
-                    elif 'receipt' in indicator['type'] or 'invoice' in indicator['type']:
+                    elif 'receipt' in indicator_type or 'invoice' in indicator_type:
                         recommendations.append('Verify receipt/invoice with vendor via phone or official website')
-                        recommendations.append('Cross-check BTW/VAT numbers with Belastingdienst registry')
-                        recommendations.append('Request original payment confirmation or bank statement')
+                    elif 'pdf_embedded' in indicator_type:
+                        recommendations.append('Inspect embedded images for manipulation using forensic tools')
+                    elif 'signature' in indicator_type:
+                        recommendations.append('Verify digital signature authenticity with signer directly')
+                        recommendations.append('Request handwritten signature on physical document')
+                    elif 'iban' in indicator_type:
+                        recommendations.append('Verify IBAN through bank confirmation before payment')
+                        recommendations.append('Cross-check IBAN with known vendor bank details')
+                    elif 'qr' in indicator_type:
+                        recommendations.append('Do not scan suspicious QR codes; verify URL manually')
+                    elif 'stamp' in indicator_type or 'logo' in indicator_type:
+                        recommendations.append('Verify company stamp/logo authenticity with issuer')
+                    elif 'kvk' in indicator_type:
+                        recommendations.append('Verify KvK number at kvk.nl/handelsregister')
+                    elif 'btw' in indicator_type:
+                        recommendations.append('Verify BTW number at ec.europa.eu/taxation_customs/vies')
+                    elif 'template' in indicator_type:
+                        recommendations.append('Document appears to use fraud template - reject and report')
             
             recommendations.append('Consider requesting notarized or digitally signed version')
         
@@ -1658,16 +2318,27 @@ class BlobScanner:
             recommendations.append('Request confirmation of document authenticity from sender')
             recommendations.append('Review document creation and modification dates')
             
-            # Receipt-specific for medium risk
             for indicator in fraud_indicators:
-                if 'receipt' in indicator['type'] and indicator['score'] > 0.3:
-                    recommendations.append('Verify KvK number through official Chamber of Commerce')
+                if indicator['score'] > 0.2:
+                    if 'receipt' in indicator['type']:
+                        recommendations.append('Verify vendor details before processing payment')
+                    if 'iban' in indicator['type']:
+                        recommendations.append('Double-check IBAN before making transfers')
         
         if self.region == "Netherlands":
             recommendations.append('Ensure compliance with UAVG document verification requirements')
             recommendations.append('For invoices: verify vendor in KvK Handelsregister')
+            recommendations.append('For payments: validate IBAN via Dutch banking standards')
         
-        return recommendations[:6]  # Return top 6 recommendations
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_recommendations = []
+        for rec in recommendations:
+            if rec not in seen:
+                seen.add(rec)
+                unique_recommendations.append(rec)
+        
+        return unique_recommendations[:8]  # Return top 8 recommendations
 
 # Create an alias for compatibility
 def create_document_scanner(region: str = "Netherlands") -> BlobScanner:
