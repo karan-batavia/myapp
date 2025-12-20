@@ -627,18 +627,22 @@ class AdvancedFraudDetector:
         return recommendations
     
     def _check_eu_ai_act_compliance(self, score: float, fraud_types: List[FraudType]) -> List[str]:
-        """Check EU AI Act compliance requirements."""
+        """
+        Check EU AI Act compliance requirements.
+        Only returns flags when AI/synthetic content is actually detected.
+        """
         flags = []
         
-        if FraudType.DEEPFAKE in fraud_types or FraudType.AI_GENERATED in fraud_types:
+        # Only flag Article 50 when actual synthetic content is detected
+        is_synthetic = FraudType.DEEPFAKE in fraud_types or FraudType.AI_GENERATED in fraud_types
+        
+        if is_synthetic:
             flags.append("Article 50(2): Synthetic content labeling required")
             flags.append("Article 50(4): AI-generated content transparency obligation")
-        
-        if score >= 0.5:
-            flags.append("Article 52: Transparency requirements may apply")
-        
-        if self.region == "Netherlands":
-            flags.append("Dutch AI Act Implementation: AP enforcement applies")
+            
+            # Add region-specific enforcement note only for synthetic content
+            if self.region == "Netherlands":
+                flags.append("Dutch AI Act Implementation: AP enforcement applies")
         
         return flags
     
