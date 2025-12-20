@@ -2630,7 +2630,7 @@ def render_dashboard():
                 # Sort by timestamp descending (most recent first)
                 fresh_scans.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
                 
-            recent_scans = fresh_scans[:10]  # Show last 10 scans
+            recent_scans = fresh_scans[:20]  # Show last 20 scans for better visibility
             
         except Exception as e:
             logger.warning(f"Failed to refresh recent scans: {e}")
