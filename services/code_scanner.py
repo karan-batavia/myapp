@@ -32,6 +32,14 @@ except ImportError:
     def detect_nl_violations(content):
         return []
 
+# Import advanced code analyzers for world-class scanning
+try:
+    from services.advanced_code_analyzers import advanced_analyzer_manager
+    ADVANCED_ANALYZERS_AVAILABLE = True
+except ImportError:
+    ADVANCED_ANALYZERS_AVAILABLE = False
+    advanced_analyzer_manager = None
+
 # Custom exception classes for better error handling
 class ScannerError(Exception):
     """Base exception for code scanner errors"""
@@ -728,6 +736,22 @@ class CodeScanner:
         # Mark scan as complete
         self.is_running = False
         
+        # Scan Git history for secrets if available
+        git_history_findings = []
+        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager:
+            try:
+                git_dir = os.path.join(directory_path, '.git')
+                if os.path.isdir(git_dir):
+                    git_history_findings = advanced_analyzer_manager.git_scanner.scan_git_history(
+                        directory_path, max_commits=50
+                    )
+                    if git_history_findings:
+                        self.scan_checkpoint_data['findings'].extend(git_history_findings)
+                        self.scan_checkpoint_data['stats']['total_findings'] += len(git_history_findings)
+                        logger.info(f"Git history scan found {len(git_history_findings)} secrets")
+            except Exception as e:
+                logger.debug(f"Git history scan failed: {e}")
+        
         # Create final result
         result = {
             'scan_id': scan_id,
@@ -740,6 +764,7 @@ class CodeScanner:
             'files_skipped': self.scan_checkpoint_data['stats']['files_skipped'],
             'total_findings': self.scan_checkpoint_data['stats']['total_findings'],
             'findings': self.scan_checkpoint_data['findings'],
+            'git_history_findings': len(git_history_findings),
             'status': 'completed' if len(all_files) == len(self.scan_checkpoint_data['completed_files']) else 'partial',
             'completion_percentage': int(100 * len(self.scan_checkpoint_data['completed_files']) / max(1, len(all_files)))
         }
@@ -1250,6 +1275,19 @@ class CodeScanner:
         if self.use_entropy:
             entropy_findings = self._detect_high_entropy_strings(content, file_path)
             all_pii.extend(entropy_findings)
+        
+        # Apply advanced code analysis (semantic, complexity, binary, dependencies)
+        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager:
+            try:
+                advanced_findings = advanced_analyzer_manager.analyze_file(
+                    file_path, content,
+                    enable_semantic=True,
+                    enable_complexity=True,
+                    enable_binary=True
+                )
+                all_pii.extend(advanced_findings)
+            except Exception as e:
+                logger.debug(f"Advanced analysis failed for {file_path}: {e}")
         
         # Create final result
         return self._create_scan_result(file_path, all_pii, file_metadata)
