@@ -32,6 +32,13 @@ from trafilatura import fetch_url, extract
 import whois
 import dns.resolver
 
+# Import PII detection for content scanning
+try:
+    from utils.pii_detection import identify_pii_in_text
+    PII_DETECTION_AVAILABLE = True
+except ImportError:
+    PII_DETECTION_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -974,6 +981,10 @@ class WebsiteScanner:
                 }
                 break
         
+        # Scan page content for PII (BSN, email, phone, etc.)
+        pii_findings = self._scan_content_for_pii(main_content, url)
+        findings.extend(pii_findings)
+        
         # Return the page analysis results
         return {
             'url': url,
@@ -1197,6 +1208,159 @@ class WebsiteScanner:
             )
         
         return recommendations
+    
+    def _scan_content_for_pii(self, content: str, url: str) -> List[Dict[str, Any]]:
+        """
+        Scan page content for PII including Dutch BSN numbers with 11-proef validation.
+        
+        Args:
+            content: The text content from the page
+            url: The URL of the page
+            
+        Returns:
+            List of PII findings
+        """
+        findings = []
+        
+        if not content or content == "No content extracted" or content == "Failed to extract content":
+            return findings
+        
+        # Use centralized PII detection if available
+        if PII_DETECTION_AVAILABLE:
+            try:
+                pii_items = identify_pii_in_text(content, self.region)
+                for item in pii_items:
+                    severity = 'Critical' if item.get('type') in ['BSN', 'Credit Card', 'SSN', 'Passport Number'] else 'High'
+                    findings.append({
+                        'type': 'pii_exposure',
+                        'subtype': item.get('type', 'Unknown PII'),
+                        'url': url,
+                        'location': 'Page Content',
+                        'element': 'body',
+                        'description': f"PII detected in page content: {item.get('type')}",
+                        'severity': severity,
+                        'privacy_risk': 'Critical' if item.get('type') == 'BSN' else 'High',
+                        'gdpr_article': 'Art. 5(1)(f) - Integrity and confidentiality',
+                        'uavg_article': 'Article 46' if item.get('type') == 'BSN' else None,
+                        'recommendation': f"Remove or redact {item.get('type')} from public page content"
+                    })
+                return findings
+            except Exception as e:
+                logger.warning(f"PII detection module error: {e}")
+        
+        # Fallback: Direct BSN detection with 11-proef validation
+        bsn_findings = self._detect_bsn_in_content(content, url)
+        findings.extend(bsn_findings)
+        
+        # Detect other common PII patterns
+        pii_patterns = {
+            'EMAIL': (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b', 'Medium'),
+            'PHONE_NL': (r'\b(?:\+31|0031|0)[\s-]?(?:[1-9]\d{1,2})[\s-]?\d{6,8}\b', 'Medium'),
+            'IBAN': (r'\b[A-Z]{2}\d{2}[A-Z0-9]{4,30}\b', 'High'),
+            'CREDIT_CARD': (r'\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b', 'Critical')
+        }
+        
+        for pii_type, (pattern, severity) in pii_patterns.items():
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for match in matches[:5]:  # Limit to 5 matches per type
+                findings.append({
+                    'type': 'pii_exposure',
+                    'subtype': pii_type,
+                    'url': url,
+                    'location': 'Page Content',
+                    'element': 'body',
+                    'description': f"{pii_type} detected in publicly accessible page content",
+                    'severity': severity,
+                    'privacy_risk': severity,
+                    'gdpr_article': 'Art. 5(1)(f) - Integrity and confidentiality',
+                    'recommendation': f"Remove or redact {pii_type} from public page content"
+                })
+        
+        return findings
+    
+    def _detect_bsn_in_content(self, content: str, url: str) -> List[Dict[str, Any]]:
+        """
+        Detect Dutch BSN numbers in page content with 11-proef validation.
+        
+        Args:
+            content: The text content to scan
+            url: The source URL
+            
+        Returns:
+            List of BSN findings
+        """
+        findings = []
+        
+        # Pattern for explicit BSN mentions
+        explicit_pattern = r'\b(?:BSN|Burgerservicenummer|burger\s*service\s*nummer)(?:[:\s-]+)?(\d{9})\b'
+        for match in re.finditer(explicit_pattern, content, re.IGNORECASE):
+            bsn = match.group(1) if match.lastindex else match.group(0)
+            bsn = re.sub(r'\D', '', bsn)
+            if len(bsn) == 9 and self._validate_bsn_11_proef(bsn):
+                findings.append({
+                    'type': 'pii_exposure',
+                    'subtype': 'BSN',
+                    'url': url,
+                    'location': 'Page Content',
+                    'element': 'body',
+                    'description': 'Dutch BSN (Burgerservicenummer) detected in publicly accessible page content',
+                    'severity': 'Critical',
+                    'privacy_risk': 'Critical',
+                    'gdpr_article': 'Art. 87 - Processing of national identification number',
+                    'uavg_article': 'Article 46 - Use of BSN',
+                    'recommendation': 'Immediately remove BSN from public page content. BSN processing requires explicit legal basis under Dutch UAVG.',
+                    'uavg_compliant': False
+                })
+        
+        # Pattern for potential standalone 9-digit BSN numbers
+        potential_pattern = r'\b(\d{9})\b'
+        for match in re.finditer(potential_pattern, content):
+            bsn = match.group(1)
+            if self._validate_bsn_11_proef(bsn):
+                # Avoid duplicates
+                if not any(f.get('subtype') == 'BSN' for f in findings):
+                    findings.append({
+                        'type': 'pii_exposure',
+                        'subtype': 'BSN',
+                        'url': url,
+                        'location': 'Page Content',
+                        'element': 'body',
+                        'description': 'Potential Dutch BSN detected (passes 11-proef validation)',
+                        'severity': 'Critical',
+                        'privacy_risk': 'Critical',
+                        'gdpr_article': 'Art. 87 - Processing of national identification number',
+                        'uavg_article': 'Article 46 - Use of BSN',
+                        'recommendation': 'Verify and remove if this is a BSN. BSN processing requires explicit legal basis under Dutch UAVG.',
+                        'uavg_compliant': False
+                    })
+        
+        return findings
+    
+    def _validate_bsn_11_proef(self, bsn: str) -> bool:
+        """
+        Validate Dutch BSN using the official 11-proef algorithm.
+        
+        The BSN must be exactly 9 digits.
+        Checksum: (9*d1 + 8*d2 + 7*d3 + 6*d4 + 5*d5 + 4*d6 + 3*d7 + 2*d8 - 1*d9) mod 11 == 0
+        
+        Args:
+            bsn: The BSN string to validate
+            
+        Returns:
+            True if valid BSN, False otherwise
+        """
+        if not bsn.isdigit() or len(bsn) != 9:
+            return False
+        
+        # Apply the official Dutch 11-proef
+        total = 0
+        for i in range(9):
+            if i == 8:
+                total -= int(bsn[i]) * 1
+            else:
+                total += int(bsn[i]) * (9 - i)
+        
+        return total % 11 == 0
     
     def _check_domain_info(self, domain: str) -> Dict[str, Any]:
         """

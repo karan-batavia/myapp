@@ -372,7 +372,7 @@ class ImageScanner:
         """
         findings = []
         
-        # PII detection patterns
+        # PII detection patterns including Dutch BSN
         pii_patterns = {
             "NAME": r"\b[A-Z][a-z]+ [A-Z][a-z]+\b",
             "DATE_OF_BIRTH": r"\b\d{1,2}[-/]\d{1,2}[-/]\d{2,4}\b",
@@ -380,7 +380,10 @@ class ImageScanner:
             "PASSPORT_NUMBER": r"\b[A-Z]{1,2}\d{6,9}\b",
             "CREDIT_CARD": r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b",
             "DRIVERS_LICENSE": r"\bDL\d{6,9}\b",
-            "MEDICAL_ID": r"\bP\d{6}\b"
+            "MEDICAL_ID": r"\bP\d{6}\b",
+            "IBAN": r"\b[A-Z]{2}\d{2}[A-Z0-9]{4,30}\b",
+            "EMAIL": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b",
+            "PHONE_NL": r"\b(?:\+31|0031|0)[\s-]?(?:[1-9]\d{1,2})[\s-]?\d{6,8}\b"
         }
         
         for pii_type, pattern in pii_patterns.items():
@@ -399,6 +402,94 @@ class ImageScanner:
                     "reason": self._get_reason(pii_type, self.region)
                 }
                 findings.append(finding)
+        
+        # Dutch BSN Detection with 11-proef validation
+        bsn_findings = self._detect_dutch_bsn(text, file_path)
+        findings.extend(bsn_findings)
+        
+        return findings
+    
+    def _validate_bsn_11_proef(self, bsn: str) -> bool:
+        """
+        Validate Dutch BSN using the official 11-proef algorithm.
+        
+        The BSN must be exactly 9 digits.
+        Checksum: (9*d1 + 8*d2 + 7*d3 + 6*d4 + 5*d5 + 4*d6 + 3*d7 + 2*d8 - 1*d9) mod 11 == 0
+        
+        Args:
+            bsn: The BSN string to validate
+            
+        Returns:
+            True if valid BSN, False otherwise
+        """
+        if not bsn.isdigit() or len(bsn) != 9:
+            return False
+        
+        # Apply the official Dutch 11-proef
+        total = 0
+        for i in range(9):
+            if i == 8:
+                total -= int(bsn[i]) * 1
+            else:
+                total += int(bsn[i]) * (9 - i)
+        
+        return total % 11 == 0
+    
+    def _detect_dutch_bsn(self, text: str, file_path: str) -> List[Dict[str, Any]]:
+        """
+        Detect Dutch BSN (Burgerservicenummer) in text with 11-proef validation.
+        
+        Args:
+            text: The text to scan
+            file_path: Source file path
+            
+        Returns:
+            List of BSN findings
+        """
+        findings = []
+        
+        # Pattern for explicit BSN mentions
+        explicit_pattern = r'\b(?:BSN|Burgerservicenummer|burger\s*service\s*nummer)(?:[:\s-]+)?(\d{9})\b'
+        for match in re.finditer(explicit_pattern, text, re.IGNORECASE):
+            bsn = match.group(1) if match.lastindex else match.group(0)
+            bsn = re.sub(r'\D', '', bsn)
+            if len(bsn) == 9 and self._validate_bsn_11_proef(bsn):
+                findings.append({
+                    "type": "BSN",
+                    "value": bsn[:3] + "***" + bsn[6:],
+                    "source": file_path,
+                    "source_type": "image_ocr",
+                    "confidence": 0.98,
+                    "context": "Dutch BSN (Burgerservicenummer) detected via OCR",
+                    "extraction_method": "ocr_bsn_11_proef_validation",
+                    "risk_level": "Critical",
+                    "location": "extracted_text",
+                    "reason": "BSN is highly protected under Dutch UAVG (Article 46) and GDPR. Requires explicit legal basis for processing.",
+                    "gdpr_articles": ["Article 87 - National identification number", "UAVG Article 46"],
+                    "uavg_compliant": False
+                })
+        
+        # Pattern for potential 9-digit BSN numbers
+        potential_pattern = r'\b(\d{9})\b'
+        for match in re.finditer(potential_pattern, text):
+            bsn = match.group(1)
+            if self._validate_bsn_11_proef(bsn):
+                # Check if already found as explicit BSN
+                if not any(f.get('value', '').replace('*', '') in bsn for f in findings):
+                    findings.append({
+                        "type": "BSN",
+                        "value": bsn[:3] + "***" + bsn[6:],
+                        "source": file_path,
+                        "source_type": "image_ocr",
+                        "confidence": 0.85,
+                        "context": "Potential Dutch BSN detected (passes 11-proef validation)",
+                        "extraction_method": "ocr_bsn_11_proef_validation",
+                        "risk_level": "Critical",
+                        "location": "extracted_text",
+                        "reason": "BSN is highly protected under Dutch UAVG (Article 46) and GDPR. Requires explicit legal basis for processing.",
+                        "gdpr_articles": ["Article 87 - National identification number", "UAVG Article 46"],
+                        "uavg_compliant": False
+                    })
         
         return findings
     
