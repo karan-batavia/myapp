@@ -1269,21 +1269,33 @@ class BlobScanner:
         self, 
         file_path: str, 
         text: str, 
-        file_type: str
+        file_type: str,
+        sensitivity: str = "maximum"
     ) -> Optional[Dict[str, Any]]:
         """
         Detect if document is AI-generated using multiple detection methods.
+        Enhanced with receipt/invoice fraud detection and maximum sensitivity.
         
         Args:
             file_path: Path to the document
             text: Extracted text content
             file_type: Type of document (PDF, DOCX, etc.)
+            sensitivity: Detection sensitivity (low, medium, high, maximum)
         
         Returns:
             Dict with fraud analysis OR None if low risk
         """
-        if not text or len(text) < 100:
+        if not text or len(text) < 50:  # Lowered from 100 for short receipts
             return None
+        
+        # Sensitivity thresholds (matching image scanner)
+        sensitivity_thresholds = {
+            "low": 0.50,
+            "medium": 0.35,
+            "high": 0.20,
+            "maximum": 0.08  # Maximum sensitivity for catching all fraud
+        }
+        detection_threshold = sensitivity_thresholds.get(sensitivity, 0.08)
         
         try:
             # Run all detection methods
@@ -1291,25 +1303,31 @@ class BlobScanner:
             statistical_score = self._analyze_statistical_anomalies(text)
             metadata_score = self._analyze_metadata_fraud(file_path)
             
+            # NEW: Receipt/Invoice specific fraud detection
+            receipt_score = self._analyze_receipt_fraud(text, file_path)
+            
             # Calculate combined fraud score
             fraud_indicators = [
                 {'type': 'chatgpt_patterns', 'score': chatgpt_score['score'], 'details': chatgpt_score['details']},
                 {'type': 'statistical_anomalies', 'score': statistical_score['score'], 'details': statistical_score['details']},
-                {'type': 'metadata_fraud', 'score': metadata_score['score'], 'details': metadata_score['details']}
+                {'type': 'metadata_fraud', 'score': metadata_score['score'], 'details': metadata_score['details']},
+                {'type': 'receipt_invoice_fraud', 'score': receipt_score['score'], 'details': receipt_score['details']}
             ]
             
-            # Weighted scoring: 40% ChatGPT, 35% Statistical, 25% Metadata
+            # Weighted scoring: 30% ChatGPT, 25% Statistical, 20% Metadata, 25% Receipt/Invoice
             ai_generated_risk = (
-                chatgpt_score['score'] * 0.40 +
-                statistical_score['score'] * 0.35 +
-                metadata_score['score'] * 0.25
+                chatgpt_score['score'] * 0.30 +
+                statistical_score['score'] * 0.25 +
+                metadata_score['score'] * 0.20 +
+                receipt_score['score'] * 0.25
             )
             
             # Confidence is average of all scores
-            confidence = mean([chatgpt_score['score'], statistical_score['score'], metadata_score['score']]) * 100
+            confidence = mean([chatgpt_score['score'], statistical_score['score'], 
+                             metadata_score['score'], receipt_score['score']]) * 100
             
-            # Below 30% risk threshold - don't flag
-            if ai_generated_risk < 0.30:
+            # Apply maximum sensitivity threshold
+            if ai_generated_risk < detection_threshold:
                 return None
             
             # Determine risk level
@@ -1465,6 +1483,139 @@ class BlobScanner:
         
         return {'score': score, 'details': details}
     
+    def _analyze_receipt_fraud(self, text: str, file_path: str) -> Dict[str, Any]:
+        """
+        Enhanced receipt/invoice fraud detection.
+        Detects forged receipts, fake invoices, and AI-generated financial documents.
+        """
+        score = 0.0
+        details_list = []
+        text_lower = text.lower()
+        
+        try:
+            # 1. Check for invoice/receipt keywords
+            is_receipt = any(kw in text_lower for kw in ['receipt', 'invoice', 'factuur', 'bon', 'kassabon', 'btw', 'vat', 'total', 'totaal', 'subtotal'])
+            
+            if not is_receipt:
+                return {'score': 0.0, 'details': 'Not a receipt/invoice document'}
+            
+            # 2. BTW/VAT Calculation Verification (Netherlands: 21%, 9%, 0%)
+            amounts = re.findall(r'[€$]\s*(\d+[.,]\d{2})', text)
+            btw_mentions = re.findall(r'btw|vat|tax', text_lower)
+            
+            if amounts and btw_mentions:
+                # Check if BTW percentages are valid Dutch rates
+                btw_rates = re.findall(r'(\d+(?:[.,]\d+)?)\s*%', text)
+                invalid_rates = [r for r in btw_rates if float(r.replace(',', '.')) not in [0, 6, 9, 21]]
+                if invalid_rates:
+                    score += 0.3
+                    details_list.append(f"Invalid BTW rates: {invalid_rates}")
+            
+            # 3. Check for suspiciously round numbers (AI often generates €10.00, €100.00)
+            round_amounts = re.findall(r'[€$]\s*(\d+)[.,]00', text)
+            if len(round_amounts) >= 3:
+                score += 0.2
+                details_list.append(f"Multiple round amounts: {len(round_amounts)} found")
+            
+            # 4. Check for fake/suspicious vendor patterns
+            fake_vendor_patterns = [
+                r'example\s*(?:company|store|shop)',
+                r'test\s*(?:vendor|shop|store)',
+                r'sample\s*(?:receipt|invoice)',
+                r'acme\s*(?:corp|company)',
+                r'your\s*(?:company|business)\s*name',
+                r'lorem\s*ipsum',
+                r'\[company\s*name\]',
+                r'\[your\s*name\]'
+            ]
+            for pattern in fake_vendor_patterns:
+                if re.search(pattern, text_lower):
+                    score += 0.4
+                    details_list.append(f"Fake vendor pattern: {pattern}")
+                    break
+            
+            # 5. Check for missing essential receipt elements
+            essential_elements = {
+                'date': r'\d{1,2}[-/]\d{1,2}[-/]\d{2,4}',
+                'amount': r'[€$]\s*\d+[.,]\d{2}',
+                'vendor_name': r'^[A-Z][a-zA-Z\s]{2,}'
+            }
+            missing_elements = []
+            for element, pattern in essential_elements.items():
+                if not re.search(pattern, text):
+                    missing_elements.append(element)
+            
+            if missing_elements:
+                score += 0.15 * len(missing_elements)
+                details_list.append(f"Missing: {', '.join(missing_elements)}")
+            
+            # 6. Check for Dutch KvK (Chamber of Commerce) number validity
+            kvk_pattern = re.findall(r'kvk[:\s]*(\d{8})', text_lower)
+            if kvk_pattern:
+                # KvK numbers should be 8 digits, check for suspicious patterns
+                for kvk in kvk_pattern:
+                    if kvk in ['00000000', '12345678', '11111111', '99999999']:
+                        score += 0.35
+                        details_list.append(f"Suspicious KvK: {kvk}")
+            
+            # 7. Check for suspicious address patterns
+            fake_address_patterns = [
+                r'123\s*main\s*street',
+                r'1234\s*example',
+                r'test\s*address',
+                r'\[address\]',
+                r'city,?\s*state\s*\d{5}'
+            ]
+            for pattern in fake_address_patterns:
+                if re.search(pattern, text_lower):
+                    score += 0.3
+                    details_list.append("Fake address pattern detected")
+                    break
+            
+            # 8. Check for AI-generated receipt templates (common phrases)
+            ai_receipt_phrases = [
+                'thank you for your purchase',
+                'we appreciate your business',
+                'your satisfaction is our priority',
+                'please retain this receipt',
+                'for your records'
+            ]
+            ai_phrase_count = sum(1 for phrase in ai_receipt_phrases if phrase in text_lower)
+            if ai_phrase_count >= 2:
+                score += 0.15
+                details_list.append(f"AI-style phrases: {ai_phrase_count}")
+            
+            # 9. Verify total matches line items (if parseable)
+            line_amounts = re.findall(r'[€$]?\s*(\d+[.,]\d{2})', text)
+            if len(line_amounts) >= 3:
+                try:
+                    amounts_float = [float(a.replace(',', '.')) for a in line_amounts]
+                    # Check if last amount equals sum of others (simple validation)
+                    if len(amounts_float) >= 2:
+                        potential_total = max(amounts_float)
+                        other_amounts = [a for a in amounts_float if a != potential_total]
+                        if other_amounts and abs(sum(other_amounts) - potential_total) > 0.1:
+                            score += 0.2
+                            details_list.append("Total doesn't match line items")
+                except:
+                    pass
+            
+            # 10. Check for currency format anomalies (Dutch uses €1.234,56)
+            us_format = re.findall(r'\$\d+\.\d{2}', text)
+            eu_format = re.findall(r'€\s*\d+[.,]\d{2}', text)
+            if us_format and self.region == "Netherlands":
+                score += 0.15
+                details_list.append("US currency format in Dutch document")
+            
+            score = min(score, 1.0)
+            details = " | ".join(details_list) if details_list else "No receipt fraud indicators"
+            
+        except Exception as e:
+            logger.warning(f"Receipt fraud analysis failed: {str(e)}")
+            details = f"Analysis error: {str(e)}"
+        
+        return {'score': score, 'details': details}
+    
     def _guess_ai_model(self, chatgpt_score: Dict, statistical_score: Dict) -> str:
         """Guess which AI model generated document"""
         chatgpt_patterns = ['furthermore', 'in conclusion', 'as a whole', 'it is important']
@@ -1489,24 +1640,34 @@ class BlobScanner:
             
             # Check which indicators are strongest
             for indicator in fraud_indicators:
-                if indicator['score'] > 0.7:
+                if indicator['score'] > 0.5:  # Lowered threshold
                     if 'chatgpt' in indicator['type']:
                         recommendations.append('Verify document was not generated by AI language model')
                     elif 'statistical' in indicator['type']:
                         recommendations.append('Check for unusual writing patterns or consistency')
                     elif 'metadata' in indicator['type']:
                         recommendations.append('Examine document edit history and timestamps')
+                    elif 'receipt' in indicator['type'] or 'invoice' in indicator['type']:
+                        recommendations.append('Verify receipt/invoice with vendor via phone or official website')
+                        recommendations.append('Cross-check BTW/VAT numbers with Belastingdienst registry')
+                        recommendations.append('Request original payment confirmation or bank statement')
             
             recommendations.append('Consider requesting notarized or digitally signed version')
         
         elif risk_level == 'Medium':
             recommendations.append('Request confirmation of document authenticity from sender')
             recommendations.append('Review document creation and modification dates')
+            
+            # Receipt-specific for medium risk
+            for indicator in fraud_indicators:
+                if 'receipt' in indicator['type'] and indicator['score'] > 0.3:
+                    recommendations.append('Verify KvK number through official Chamber of Commerce')
         
         if self.region == "Netherlands":
             recommendations.append('Ensure compliance with UAVG document verification requirements')
+            recommendations.append('For invoices: verify vendor in KvK Handelsregister')
         
-        return recommendations[:5]  # Return top 5 recommendations
+        return recommendations[:6]  # Return top 6 recommendations
 
 # Create an alias for compatibility
 def create_document_scanner(region: str = "Netherlands") -> BlobScanner:
