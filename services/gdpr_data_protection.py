@@ -57,7 +57,7 @@ class GDPRDataProtection:
     - Persistent consent records (not in-memory)
     """
     
-    def __init_consent_table(self, conn):
+    def _init_consent_table(self, conn):
         """Initialize consent table in database for persistent consent records."""
         try:
             cursor = conn.cursor()
@@ -137,7 +137,7 @@ class GDPRDataProtection:
         if custom_policies:
             self.policies.update(custom_policies)
         self.db_url = db_url or os.environ.get('DATABASE_URL')
-        self._consent_cache: Dict[str, Dict[str, bool]] = {}
+        self._consent_cache: Dict[str, bool] = {}
         self._init_consent_db()
         logger.info("GDPR Data Protection layer initialized with persistent consent storage")
     
@@ -160,7 +160,7 @@ class GDPRDataProtection:
         try:
             conn = self._get_db_connection()
             if conn:
-                self._GDPRDataProtection__init_consent_table(conn)
+                self._init_consent_table(conn)
                 conn.close()
         except Exception as e:
             logger.warning(f"Consent database initialization skipped: {e}")
@@ -417,9 +417,15 @@ class GDPRDataProtection:
             deleted["scans_deleted"] = len(scan_ids)
             deleted["deleted_categories"].append("scan_results")
             
-            if user_id in self.consent_records:
-                del self.consent_records[user_id]
-                deleted["deleted_categories"].append("consent_records")
+            cursor.execute(
+                "DELETE FROM gdpr_consent WHERE user_id = %s",
+                (user_id,)
+            )
+            deleted["deleted_categories"].append("consent_records")
+            
+            for key in list(self._consent_cache.keys()):
+                if key.startswith(f"{user_id}:"):
+                    del self._consent_cache[key]
             
             db_connection.commit()
             logger.info(f"GDPR erasure completed for user {user_id}: {deleted}")
@@ -463,7 +469,21 @@ class GDPRDataProtection:
                 for s in scans
             ]
             
-            export["data"]["consent_records"] = self.consent_records.get(user_id, {})
+            cursor.execute(
+                """SELECT consent_id, category, granted, timestamp 
+                   FROM gdpr_consent WHERE user_id = %s""",
+                (user_id,)
+            )
+            consent_rows = cursor.fetchall()
+            export["data"]["consent_records"] = [
+                {
+                    "consent_id": c[0],
+                    "category": c[1],
+                    "granted": c[2],
+                    "timestamp": c[3].isoformat() if c[3] else None
+                }
+                for c in consent_rows
+            ]
             
             export["data"]["retention_policies"] = self.get_retention_info()
             
