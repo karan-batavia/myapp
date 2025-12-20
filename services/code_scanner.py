@@ -1277,13 +1277,18 @@ class CodeScanner:
             all_pii.extend(entropy_findings)
         
         # Apply advanced code analysis (semantic, complexity, binary, dependencies)
-        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager:
+        # Only run on supported file types to prevent slowdowns on large repos
+        _, file_ext = os.path.splitext(file_path)
+        supported_exts = {'.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go', '.rb', '.php'}
+        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager and file_ext.lower() in supported_exts:
             try:
+                # Limit content size for advanced analysis to prevent hangs
+                content_for_analysis = content[:100000] if len(content) > 100000 else content
                 advanced_findings = advanced_analyzer_manager.analyze_file(
-                    file_path, content,
+                    file_path, content_for_analysis,
                     enable_semantic=True,
                     enable_complexity=True,
-                    enable_binary=True
+                    enable_binary=False  # Disable binary for text files
                 )
                 all_pii.extend(advanced_findings)
             except Exception as e:

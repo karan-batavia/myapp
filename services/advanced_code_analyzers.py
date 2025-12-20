@@ -649,6 +649,9 @@ class CodeComplexityAnalyzer:
     def analyze(self, code: str, file_path: str) -> List[Dict[str, Any]]:
         """Run all complexity analyses."""
         findings = []
+        # Skip very large files to prevent performance issues
+        if len(code) > 50000:
+            return findings
         findings.extend(self.calculate_cyclomatic_complexity(code, file_path))
         findings.extend(self.calculate_tech_debt(code, file_path))
         return findings
