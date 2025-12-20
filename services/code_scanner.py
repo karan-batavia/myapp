@@ -378,6 +378,67 @@ class CodeScanner:
                 r'\b(leaked|dump|breach).*\b(code|source|repository)\b',
                 r'\b(unlicensed|unauthorized|illegal)\s+(copy|use|distribution)',
                 r'\b(anonymous|unknown)\s+(?:author|source|origin)'
+            ],
+            'ai_generated_code': [
+                # Direct AI attribution markers
+                r'\b(generated\s+by|created\s+by|written\s+by)\s+(chatgpt|gpt[-\s]?[34]|openai|claude|anthropic|copilot|gemini|bard|llama|mistral)\b',
+                r'\b(ai[-\s]?generated|llm[-\s]?generated|machine[-\s]?generated)\s+(code|function|class|script)\b',
+                r'#\s*(chatgpt|gpt|copilot|claude|gemini|ai[-\s]?generated)',
+                r'//\s*(chatgpt|gpt|copilot|claude|gemini|ai[-\s]?generated)',
+                r'/\*\s*(chatgpt|gpt|copilot|claude|gemini|ai[-\s]?generated)',
+                # AI assistant acknowledgment patterns
+                r'\b(github\s+copilot|copilot\s+suggestion|copilot[-\s]?generated)\b',
+                r'\b(cursor\s+ai|tabnine|codeium|amazon\s+codewhisperer)\b',
+                # Common AI-generated comment patterns
+                r'#\s*This\s+(code|function|class|method)\s+(was\s+)?generated',
+                r'//\s*This\s+(code|function|class|method)\s+(was\s+)?generated',
+                r'#\s*Auto[-\s]?generated\s+(by|using|with)',
+                r'//\s*Auto[-\s]?generated\s+(by|using|with)'
+            ],
+            'ai_code_style_indicators': [
+                # Overly verbose/explanatory comments typical of AI
+                r'#\s*This\s+function\s+(takes|accepts|receives)\s+\w+\s+as\s+(a\s+)?parameter\s+and\s+(returns|outputs)',
+                r'//\s*This\s+function\s+(takes|accepts|receives)\s+\w+\s+as\s+(a\s+)?parameter\s+and\s+(returns|outputs)',
+                r'#\s*The\s+following\s+(code|implementation|function)\s+(will|does|is\s+used\s+to)',
+                r'//\s*The\s+following\s+(code|implementation|function)\s+(will|does|is\s+used\s+to)',
+                # AI-typical variable naming patterns
+                r'\b(result_value|return_value|output_result|input_data|data_input)\b',
+                r'\b(is_valid_\w+|has_\w+_property|should_\w+_be)\b.*\b(is_valid_\w+|has_\w+_property|should_\w+_be)\b',
+                # Excessive docstring patterns
+                r'"""[\s\S]{200,}?Args:[\s\S]+?Returns:[\s\S]+?Raises:[\s\S]+?Example:[\s\S]+?"""',
+                # AI-typical error handling patterns
+                r'except\s+Exception\s+as\s+e:\s*\n\s*#\s*Handle\s+(the\s+)?exception',
+                r'catch\s*\(\s*error\s*\)\s*\{\s*//\s*Handle\s+(the\s+)?error',
+                # AI placeholder patterns
+                r'#\s*TODO:\s*(Implement|Add|Complete)\s+(the\s+)?(logic|functionality|implementation)\s+(here|below)',
+                r'//\s*TODO:\s*(Implement|Add|Complete)\s+(the\s+)?(logic|functionality|implementation)\s+(here|below)',
+                r'pass\s*#\s*(Placeholder|TODO|Not\s+implemented)',
+                # Repetitive structure patterns
+                r'def\s+\w+\([^)]*\):\s*\n\s*"""[^"]+"""\s*\n\s*#\s*\w+',
+                # AI-typical print/log statements
+                r'print\s*\(\s*f?["\'](?:Starting|Processing|Completed|Finished|Error occurred)',
+                r'console\.log\s*\(\s*["\'](?:Starting|Processing|Completed|Finished|Error occurred)'
+            ],
+            'ai_code_patterns_advanced': [
+                # Uniform formatting typical of AI
+                r'(?:def\s+\w+\([^)]*\):\s*\n\s*""".+?"""\s*\n){3,}',  # Multiple similar docstrings
+                # AI-typical import organization
+                r'^import\s+\w+\s*\n(?:import\s+\w+\s*\n){5,}',  # Many single imports
+                # Standard AI boilerplate
+                r'if\s+__name__\s*==\s*["\']__main__["\']\s*:\s*\n\s*#\s*(Run|Execute|Start)',
+                # AI-generated test patterns
+                r'def\s+test_\w+\([^)]*\):\s*\n\s*"""Test\s+(that|if|whether)',
+                r'it\s*\(\s*["\']should\s+\w+',  # Jest/Mocha style
+                # Excessive type hints (AI loves these)
+                r'def\s+\w+\([^)]*:\s*\w+(?:\s*,\s*\w+\s*:\s*\w+){4,}[^)]*\)\s*->\s*\w+',
+                # AI attribution in docstrings
+                r'"""[\s\S]*?(generated|created|written)\s+by\s+(an?\s+)?(AI|LLM|language\s+model)[\s\S]*?"""',
+                r"'''[\s\S]*?(generated|created|written)\s+by\s+(an?\s+)?(AI|LLM|language\s+model)[\s\S]*?'''",
+                # Suspiciously perfect code comments ratio
+                r'(?:#[^\n]+\n[^\n#]+\n){5,}',  # Alternating comments and code
+                # AI hallucination patterns (common mistakes)
+                r'import\s+(?:fake_module|nonexistent_lib|placeholder_package)\b',
+                r'from\s+\w+\s+import\s+\w+\s*#\s*(?:May|Might)\s+not\s+exist'
             ]
         }
         
@@ -1352,6 +1413,9 @@ class CodeScanner:
             'license_compatibility_issues': 'High',
             'code_origin_suspicious': 'High',
             'copyright_infringement': 'High',
+            'ai_generated_code': 'High',
+            'ai_code_patterns_advanced': 'Medium',
+            'ai_code_style_indicators': 'Medium',
             'obfuscation_indicators': 'Medium',
             'attribution_missing': 'Medium',
             'code_duplication_indicators': 'Low'
@@ -1368,7 +1432,10 @@ class CodeScanner:
             'attribution_missing': 'Open Source License Requirements + NL Auteurswet Art. 25',
             'code_duplication_indicators': 'Software Quality Standards + ISO/IEC 25010',
             'license_compatibility_issues': 'GPL/AGPL/Apache/MIT License Terms',
-            'code_origin_suspicious': 'GDPR Art. 32 + NIS2 Directive Art. 21'
+            'code_origin_suspicious': 'GDPR Art. 32 + NIS2 Directive Art. 21',
+            'ai_generated_code': 'EU AI Act Art. 50 (Transparency) + Art. 52 (Disclosure)',
+            'ai_code_style_indicators': 'EU AI Act Art. 50 + ISO/IEC 42001 AI Management',
+            'ai_code_patterns_advanced': 'EU AI Act Art. 50 + NL AI Guidelines 2024'
         }
         
         for category, compiled_patterns in self.compiled_code_fraud_patterns.items():
@@ -1418,7 +1485,10 @@ class CodeScanner:
             'backdoor_indicators': f'Potential backdoor/malware indicator: "{matched_text}". Security review required.',
             'copyright_infringement': f'Copyright indicator: "{matched_text}". Verify usage rights.',
             'license_compatibility_issues': f'License compatibility issue: "{matched_text}". Legal review recommended.',
-            'code_origin_suspicious': f'Suspicious code origin: "{matched_text}". Verify legitimate source.'
+            'code_origin_suspicious': f'Suspicious code origin: "{matched_text}". Verify legitimate source.',
+            'ai_generated_code': f'AI-generated code indicator detected: "{matched_text}". Code may have been generated by ChatGPT, Copilot, Claude, or other AI systems. EU AI Act Art. 50 requires disclosure.',
+            'ai_code_style_indicators': f'AI coding style pattern detected: "{matched_text}". This pattern is commonly produced by AI code generators. Review for accuracy and security.',
+            'ai_code_patterns_advanced': f'Advanced AI code signature found: "{matched_text}". This code exhibits characteristics typical of LLM-generated code. Verify correctness and licensing.'
         }
         return descriptions.get(category, f'Code fraud indicator detected: {matched_text}')
     
@@ -1434,7 +1504,10 @@ class CodeScanner:
             'backdoor_indicators': 'Remove potential backdoor code. Conduct full security audit.',
             'copyright_infringement': 'Obtain proper licenses or remove infringing code.',
             'license_compatibility_issues': 'Resolve license conflicts. Consider dual licensing or code replacement.',
-            'code_origin_suspicious': 'Verify code source. Replace with code from trusted repositories.'
+            'code_origin_suspicious': 'Verify code source. Replace with code from trusted repositories.',
+            'ai_generated_code': 'Per EU AI Act Art. 50: Disclose AI-generated code in documentation. Review for accuracy, security vulnerabilities, and hallucinated dependencies. Ensure proper testing coverage.',
+            'ai_code_style_indicators': 'Review AI-generated code patterns for correctness. Test thoroughly for edge cases. Consider refactoring to improve maintainability and remove AI-typical verbosity.',
+            'ai_code_patterns_advanced': 'Document AI assistance usage per EU AI Act. Verify all imports and dependencies exist. Review business logic for AI hallucinations. Conduct security audit for potential vulnerabilities.'
         }
         return remediations.get(category, 'Review code origin and ensure compliance with applicable laws.')
     
