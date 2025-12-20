@@ -76,6 +76,42 @@ class RepoScanner:
             except Exception as e:
                 logger.error(f"Error cleaning up temporary directory {temp_dir}: {str(e)}")
     
+    def normalize_repo_url(self, repo_url: str) -> str:
+        """
+        Normalize a repository URL to a valid Git clone URL.
+        Converts GitHub/GitLab tree/blob URLs to proper clone URLs.
+        
+        Args:
+            repo_url: Raw repository URL (may include /tree/, /blob/, etc.)
+            
+        Returns:
+            Normalized URL suitable for git clone
+        """
+        if not repo_url:
+            return repo_url
+            
+        # Strip whitespace
+        repo_url = repo_url.strip()
+        
+        # Remove trailing slashes
+        repo_url = repo_url.rstrip('/')
+        
+        # Handle GitHub/GitLab/Bitbucket tree and blob URLs
+        # Pattern: https://github.com/owner/repo/tree/branch/path
+        #       -> https://github.com/owner/repo
+        tree_blob_pattern = r'^(https?://(?:www\.)?(?:github\.com|gitlab\.com|bitbucket\.org)/[^/]+/[^/]+)/(?:tree|blob|raw)/.*$'
+        match = re.match(tree_blob_pattern, repo_url)
+        if match:
+            normalized = match.group(1)
+            logger.info(f"Normalized repo URL: {repo_url} -> {normalized}")
+            return normalized
+        
+        # Handle URLs that already end with .git
+        if repo_url.endswith('.git'):
+            return repo_url
+        
+        return repo_url
+    
     def is_valid_repo_url(self, repo_url: str) -> bool:
         """
         Check if a repository URL is valid.
@@ -89,6 +125,9 @@ class RepoScanner:
         # Handle empty URL
         if not repo_url or repo_url.strip() == "":
             return False
+            
+        # Normalize the URL first
+        repo_url = self.normalize_repo_url(repo_url)
             
         # Basic URL validation - allow URLs with repository paths (like /tree/master/.github)
         # More permissive pattern - just ensure it's an http(s) URL with at least org/repo pattern
@@ -156,6 +195,9 @@ class RepoScanner:
             Dictionary with cloning results and local path
         """
         start_time = time.time()
+        
+        # Normalize the URL first (convert tree/blob URLs to proper clone URLs)
+        repo_url = self.normalize_repo_url(repo_url)
         
         if not self.is_valid_repo_url(repo_url):
             return {
