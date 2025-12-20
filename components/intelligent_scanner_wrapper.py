@@ -917,7 +917,7 @@ class IntelligentScannerWrapper:
         # Display HTML report download if available
         st.subheader("📄 Download Report")
         try:
-            from app import generate_html_report
+            from page_modules.scanner import generate_html_report
             html_content = generate_html_report(scan_result)
             st.download_button(
                 label="📥 Download HTML Report",
