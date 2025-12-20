@@ -44,6 +44,8 @@ class RepoScanner:
             code_scanner: An instance of CodeScanner to use for scanning files
         """
         self.code_scanner = code_scanner
+        # Enable fast_mode for repo scanning (skip advanced analyzers)
+        self.code_scanner.fast_mode = True
         # Expanded list to include more GitHub domains and variations
         self.supported_platforms = [
             'github.com', 
@@ -626,7 +628,7 @@ class RepoScanner:
             scan_results['total_files'] = len(all_files)
             
             # Limit files to scan for large repositories (prevent timeout)
-            MAX_FILES_TO_SCAN = 500
+            MAX_FILES_TO_SCAN = 200
             if len(all_files) > MAX_FILES_TO_SCAN:
                 logger.info(f"Large repository detected: {len(all_files)} files. Limiting to {MAX_FILES_TO_SCAN} files.")
                 # Prioritize important files: sort by extension priority

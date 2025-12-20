@@ -74,7 +74,8 @@ class CodeScanner:
     def __init__(self, extensions: Optional[List[str]] = None, include_comments: bool = True, 
                  region: str = "Netherlands", use_entropy: bool = True, 
                  use_git_metadata: bool = False, include_article_refs: bool = True,
-                 max_timeout: int = 3600, checkpoint_interval: int = 300):
+                 max_timeout: int = 3600, checkpoint_interval: int = 300,
+                 fast_mode: bool = False):
         """
         Initialize the code scanner with advanced detection capabilities.
         
@@ -87,7 +88,9 @@ class CodeScanner:
             include_article_refs: Whether to include regulatory article references
             max_timeout: Maximum runtime in seconds before timeout (default: 1 hour)
             checkpoint_interval: Interval in seconds for saving scan checkpoints (default: 5 minutes)
+            fast_mode: Whether to skip advanced analyzers for faster scanning (default: False)
         """
+        self.fast_mode = fast_mode
         # Long-running scan settings
         self.max_timeout = max_timeout
         self.checkpoint_interval = checkpoint_interval
@@ -736,9 +739,9 @@ class CodeScanner:
         # Mark scan as complete
         self.is_running = False
         
-        # Scan Git history for secrets if available
+        # Scan Git history for secrets if available (skip in fast_mode)
         git_history_findings = []
-        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager:
+        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager and not getattr(self, 'fast_mode', False):
             try:
                 git_dir = os.path.join(directory_path, '.git')
                 if os.path.isdir(git_dir):
@@ -1278,9 +1281,10 @@ class CodeScanner:
         
         # Apply advanced code analysis (semantic, complexity, binary, dependencies)
         # Only run on supported file types to prevent slowdowns on large repos
+        # Skip in fast_mode for repository scans
         _, file_ext = os.path.splitext(file_path)
         supported_exts = {'.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go', '.rb', '.php'}
-        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager and file_ext.lower() in supported_exts:
+        if ADVANCED_ANALYZERS_AVAILABLE and advanced_analyzer_manager and file_ext.lower() in supported_exts and not self.fast_mode:
             try:
                 # Limit content size for advanced analysis to prevent hangs
                 content_for_analysis = content[:100000] if len(content) > 100000 else content
