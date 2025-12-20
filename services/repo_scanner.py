@@ -625,6 +625,27 @@ class RepoScanner:
             # Update total files count
             scan_results['total_files'] = len(all_files)
             
+            # Limit files to scan for large repositories (prevent timeout)
+            MAX_FILES_TO_SCAN = 500
+            if len(all_files) > MAX_FILES_TO_SCAN:
+                logger.info(f"Large repository detected: {len(all_files)} files. Limiting to {MAX_FILES_TO_SCAN} files.")
+                # Prioritize important files: sort by extension priority
+                priority_extensions = ['.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go', '.rb', 
+                                      '.php', '.cs', '.env', '.yml', '.yaml', '.json', '.sql', '.sh']
+                
+                def get_priority(f):
+                    ext = os.path.splitext(f)[1].lower()
+                    try:
+                        return priority_extensions.index(ext)
+                    except ValueError:
+                        return len(priority_extensions)
+                
+                all_files.sort(key=get_priority)
+                all_files = all_files[:MAX_FILES_TO_SCAN]
+                scan_results['limited_scan'] = True
+                scan_results['original_file_count'] = scan_results['total_files']
+                scan_results['total_files'] = len(all_files)
+            
             # Process files sequentially to avoid multiprocessing issues
             for i, file_path in enumerate(all_files):
                 # Update progress if callback is provided
