@@ -835,9 +835,9 @@ class WebsiteScanner:
                                 'data_collected': tracker_info.get('data_collected', 'User behavior data'),
                                 'gdpr_basis': tracker_info.get('gdpr_basis', 'Consent or legitimate interest required')
                             })
-                            # Map privacy_risk to severity level
+                            # Map privacy_risk to severity level (appropriate for website scanning)
                             privacy_risk = tracker_info.get('privacy_risk', 'Medium')
-                            severity_map = {'High': 'Critical', 'Medium': 'High', 'Low': 'Medium'}
+                            severity_map = {'High': 'High', 'Medium': 'Medium', 'Low': 'Low'}
                             severity = severity_map.get(privacy_risk, 'Medium')
                             
                             findings.append({
@@ -868,9 +868,9 @@ class WebsiteScanner:
                                 'data_collected': tracker_info.get('data_collected', 'User behavior data'),
                                 'gdpr_basis': tracker_info.get('gdpr_basis', 'Consent or legitimate interest required')
                             })
-                            # Map privacy_risk to severity level
+                            # Map privacy_risk to severity level (appropriate for website scanning)
                             privacy_risk = tracker_info.get('privacy_risk', 'Medium')
-                            severity_map = {'High': 'Critical', 'Medium': 'High', 'Low': 'Medium'}
+                            severity_map = {'High': 'High', 'Medium': 'Medium', 'Low': 'Low'}
                             severity = severity_map.get(privacy_risk, 'Medium')
                             
                             findings.append({
@@ -1068,9 +1068,9 @@ class WebsiteScanner:
             
             # Add cookie findings based on privacy risk
             if cookie_info.get('privacy_risk') in ['High', 'Critical']:
-                # High-risk cookies should generate findings
+                # High-risk cookies should generate findings (appropriate for website scanning)
                 privacy_risk = cookie_info.get('privacy_risk', 'Medium')
-                severity_map = {'High': 'Critical', 'Critical': 'Critical', 'Medium': 'High', 'Low': 'Medium'}
+                severity_map = {'High': 'High', 'Critical': 'High', 'Medium': 'Medium', 'Low': 'Low'}
                 severity = severity_map.get(privacy_risk, 'Medium')
                 
                 # Create finding for high-risk cookie
