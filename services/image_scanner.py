@@ -237,6 +237,10 @@ class ImageScanner:
             deepfake_findings = self._detect_deepfake(image_path)
             findings.extend(deepfake_findings)
         
+        # ENHANCED: Advanced AI-powered fraud detection
+        fraud_findings = self._advanced_fraud_detection(image_path)
+        findings.extend(fraud_findings)
+        
         # NEW: Extract EXIF metadata (GPS, timestamps, camera info)
         if self.use_exif_extraction:
             exif_findings = self._extract_exif_metadata(image_path)
@@ -2086,6 +2090,81 @@ class ImageScanner:
             "errors": errors,
             "risk_summary": overall_risk
         }
+
+    def _advanced_fraud_detection(self, image_path: str) -> List[Dict[str, Any]]:
+        """
+        Perform advanced fraud detection using AI-powered analysis.
+        
+        Args:
+            image_path: Path to the image file
+            
+        Returns:
+            List of fraud detection findings
+        """
+        findings = []
+        
+        try:
+            from services.advanced_fraud_detector import get_fraud_detector
+            
+            detector = get_fraud_detector(self.region)
+            result = detector.analyze_image(image_path)
+            
+            if result.is_suspicious:
+                # Create main fraud finding
+                fraud_types_str = ", ".join([ft.value for ft in result.fraud_types])
+                
+                finding = {
+                    "type": "IMAGE_FRAUD",
+                    "subtype": fraud_types_str or "manipulation_detected",
+                    "source": image_path,
+                    "source_type": "image_fraud_analysis",
+                    "confidence": result.confidence,
+                    "fraud_score": result.fraud_score,
+                    "context": f"Advanced fraud analysis detected potential manipulation (score: {result.fraud_score:.1%})",
+                    "extraction_method": "advanced_fraud_detector",
+                    "risk_level": "Critical" if result.fraud_score >= 0.6 else "High" if result.fraud_score >= 0.4 else "Medium",
+                    "location": "image_content",
+                    "reason": "; ".join(result.recommendations[:2]),
+                    "fraud_types": [ft.value for ft in result.fraud_types],
+                    "eu_ai_act_flags": result.eu_ai_act_flags,
+                    "analysis_details": {
+                        "ela_score": result.details.get("ela_analysis", {}).get("score", 0),
+                        "noise_score": result.details.get("noise_analysis", {}).get("score", 0),
+                        "ai_generation_score": result.details.get("ai_generation_analysis", {}).get("score", 0),
+                        "face_consistency_score": result.details.get("face_analysis", {}).get("score", 0)
+                    },
+                    "gdpr_articles": ["Article 5 - Data accuracy", "Article 32 - Security"],
+                    "severity": "Critical" if result.fraud_score >= 0.6 else "High" if result.fraud_score >= 0.4 else "Medium"
+                }
+                findings.append(finding)
+                
+                # Add EU AI Act compliance finding if applicable
+                if result.eu_ai_act_flags:
+                    ai_act_finding = {
+                        "type": "EU_AI_ACT_VIOLATION",
+                        "subtype": "synthetic_content_unlabeled",
+                        "source": image_path,
+                        "source_type": "image_fraud_analysis",
+                        "confidence": result.confidence,
+                        "context": "Potential synthetic/AI-generated content detected without proper labeling",
+                        "extraction_method": "eu_ai_act_article_50_check",
+                        "risk_level": "High",
+                        "location": "image_content",
+                        "reason": "EU AI Act Article 50 requires synthetic content to be clearly labeled",
+                        "eu_ai_act_articles": result.eu_ai_act_flags,
+                        "severity": "High"
+                    }
+                    findings.append(ai_act_finding)
+                
+                logger.info(f"Advanced fraud detection found {len(findings)} issues in {image_path}")
+            
+        except ImportError as e:
+            logger.warning(f"Advanced fraud detector not available: {e}")
+        except Exception as e:
+            logger.error(f"Advanced fraud detection failed: {e}")
+        
+        return findings
+
 
 # Create an alias for compatibility
 def create_image_scanner(region: str = "Netherlands") -> ImageScanner:
