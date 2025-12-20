@@ -1676,12 +1676,12 @@ def render_authenticated_interface():
         if user_role == "admin":
             nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard"])
         
-        # Get current navigation index from session state, default to Dashboard (index 1)
-        current_nav_value = st.session_state.get('_nav_value', nav_options[1])
+        # Get current navigation index from session state, default to New Scan (index 0)
+        current_nav_value = st.session_state.get('_nav_value', nav_options[0])
         try:
             default_index = nav_options.index(current_nav_value)
         except ValueError:
-            default_index = 1  # Default to Dashboard
+            default_index = 0  # Default to New Scan
         
         # Use index parameter instead of key to avoid duplicate widget ID issues
         selected_nav = st.selectbox(
