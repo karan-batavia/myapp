@@ -69,7 +69,11 @@ def check_authentication():
         try:
             import jwt
             import os
-            secret = os.environ.get('JWT_SECRET', 'dataguardian-jwt-secret-2024')
+            secret = os.environ.get('JWT_SECRET')
+            if not secret:
+                logger.error("JWT_SECRET environment variable is not set - authentication disabled")
+                st.session_state['authenticated'] = False
+                return False
             jwt.decode(auth_token, secret, algorithms=['HS256'])
             return True
         except Exception:
