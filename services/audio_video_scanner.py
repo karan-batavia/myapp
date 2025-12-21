@@ -936,7 +936,7 @@ class AudioVideoScanner:
         )
     
     def generate_html_report(self, result: MediaScanResult) -> str:
-        """Generate comprehensive HTML report for the scan result."""
+        """Generate comprehensive professional HTML report for the scan result."""
         risk_colors = {
             RiskLevel.CRITICAL: '#dc3545',
             RiskLevel.HIGH: '#fd7e14',
@@ -946,6 +946,7 @@ class AudioVideoScanner:
         }
         
         risk_color = risk_colors.get(result.risk_level, '#6c757d')
+        authenticity_color = '#28a745' if result.authenticity_score >= 70 else '#fd7e14' if result.authenticity_score >= 40 else '#dc3545'
         
         fraud_types_html = ""
         if result.fraud_types_detected:
@@ -953,359 +954,662 @@ class AudioVideoScanner:
                 f'<span class="fraud-badge">{self._get_fraud_type_title(ft)}</span>'
                 for ft in result.fraud_types_detected
             ])
-            fraud_types_html = f'<div class="fraud-types">{fraud_items}</div>'
+            fraud_types_html = f'''
+            <div class="alert-section">
+                <h3>⚠️ Detected Manipulation Types</h3>
+                <div class="fraud-types">{fraud_items}</div>
+            </div>'''
         
         findings_html = ""
         for finding in result.findings:
-            severity_class = finding.get('severity', 'info')
+            severity = finding.get('severity', 'info').lower()
+            severity_icon = {'high': '🔴', 'critical': '🔴', 'medium': '🟡', 'low': '🟢', 'info': '🔵'}.get(severity, '⚪')
             findings_html += f'''
-            <div class="finding-card {severity_class}">
-                <h4>{finding.get('title', 'Finding')}</h4>
-                <p>{finding.get('description', '')}</p>
-                <div class="finding-meta">
-                    <span class="category">{finding.get('category', 'General')}</span>
-                    <span class="severity">{severity_class.upper()}</span>
+            <div class="finding-card {severity}">
+                <div class="finding-header">
+                    <span class="severity-icon">{severity_icon}</span>
+                    <h4>{finding.get('title', 'Finding')}</h4>
+                    <span class="severity-badge {severity}">{severity.upper()}</span>
                 </div>
-                <p class="gdpr-note"><strong>GDPR Relevance:</strong> {finding.get('gdpr_relevance', 'N/A')}</p>
-                <p class="recommendation"><strong>Recommendation:</strong> {finding.get('recommendation', '')}</p>
+                <p class="finding-description">{finding.get('description', '')}</p>
+                <div class="finding-details">
+                    <div class="detail-row">
+                        <span class="detail-label">Category:</span>
+                        <span class="detail-value">{finding.get('category', 'General')}</span>
+                    </div>
+                    <div class="detail-row gdpr">
+                        <span class="detail-label">🇪🇺 GDPR Relevance:</span>
+                        <span class="detail-value">{finding.get('gdpr_relevance', 'N/A')}</span>
+                    </div>
+                    <div class="detail-row recommendation">
+                        <span class="detail-label">💡 Recommendation:</span>
+                        <span class="detail-value">{finding.get('recommendation', '')}</span>
+                    </div>
+                </div>
             </div>
             '''
         
-        recommendations_html = "<ul>" + "".join([
-            f'<li>{rec}</li>' for rec in result.recommendations
-        ]) + "</ul>"
+        recommendations_html = ""
+        for idx, rec in enumerate(result.recommendations, 1):
+            recommendations_html += f'''
+            <div class="recommendation-item">
+                <span class="rec-number">{idx}</span>
+                <span class="rec-text">{rec}</span>
+            </div>'''
         
         eu_ai_act_html = ""
         if result.eu_ai_act_flags:
+            flags_html = "".join([f'''
+            <div class="eu-flag-item">
+                <span class="flag-icon">⚖️</span>
+                <span class="flag-text">{flag}</span>
+            </div>''' for flag in result.eu_ai_act_flags])
             eu_ai_act_html = f'''
-            <div class="section eu-ai-act">
-                <h3>EU AI Act Compliance Flags</h3>
-                <ul>
-                    {"".join([f'<li>{flag}</li>' for flag in result.eu_ai_act_flags])}
-                </ul>
-            </div>
-            '''
+            <div class="section eu-ai-act-section">
+                <h3>🇪🇺 EU AI Act 2025 Compliance Flags</h3>
+                <p class="section-intro">The following EU AI Act requirements may apply to this media content:</p>
+                <div class="eu-flags-container">{flags_html}</div>
+            </div>'''
         
         audio_details_html = ""
         if result.audio_analysis:
             audio = result.audio_analysis
+            fraud_score_color = '#dc3545' if audio.fraud_score > 0.5 else '#fd7e14' if audio.fraud_score > 0.3 else '#28a745'
             audio_details_html = f'''
-            <div class="analysis-section">
-                <h4>Audio Analysis</h4>
-                <table class="details-table">
-                    <tr><td>Duration</td><td>{audio.details.get('duration', 0):.2f} seconds</td></tr>
-                    <tr><td>Sample Rate</td><td>{audio.details.get('sample_rate', 'N/A')} Hz</td></tr>
-                    <tr><td>Channels</td><td>{audio.details.get('channels', 'N/A')}</td></tr>
-                    <tr><td>Fraud Score</td><td>{audio.fraud_score:.2%}</td></tr>
-                    <tr><td>Confidence</td><td>{audio.confidence:.2%}</td></tr>
-                </table>
-            </div>
-            '''
+            <div class="analysis-card audio">
+                <div class="analysis-header">
+                    <span class="analysis-icon">🎵</span>
+                    <h4>Audio Analysis Results</h4>
+                </div>
+                <div class="analysis-grid">
+                    <div class="analysis-metric">
+                        <span class="metric-label">Duration</span>
+                        <span class="metric-value">{audio.details.get('duration', 0):.2f}s</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Sample Rate</span>
+                        <span class="metric-value">{audio.details.get('sample_rate', 'N/A')} Hz</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Channels</span>
+                        <span class="metric-value">{audio.details.get('channels', 'N/A')}</span>
+                    </div>
+                    <div class="analysis-metric highlight">
+                        <span class="metric-label">Manipulation Score</span>
+                        <span class="metric-value" style="color: {fraud_score_color}">{audio.fraud_score:.0%}</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Detection Confidence</span>
+                        <span class="metric-value">{audio.confidence:.0%}</span>
+                    </div>
+                </div>
+            </div>'''
         
         video_details_html = ""
         if result.video_analysis:
             video = result.video_analysis
+            fraud_score_color = '#dc3545' if video.fraud_score > 0.5 else '#fd7e14' if video.fraud_score > 0.3 else '#28a745'
+            resolution = video.details.get('resolution', (0, 0))
+            res_str = f"{resolution[0]}x{resolution[1]}" if isinstance(resolution, (tuple, list)) else str(resolution)
             video_details_html = f'''
-            <div class="analysis-section">
-                <h4>Video Analysis</h4>
-                <table class="details-table">
-                    <tr><td>Duration</td><td>{video.details.get('duration', 0):.2f} seconds</td></tr>
-                    <tr><td>Resolution</td><td>{video.details.get('resolution', ('N/A', 'N/A'))}</td></tr>
-                    <tr><td>FPS</td><td>{video.details.get('fps', 'N/A')}</td></tr>
-                    <tr><td>Frame Count</td><td>{video.details.get('frame_count', 'N/A')}</td></tr>
-                    <tr><td>Faces Detected</td><td>{video.face_analysis.get('count', 0)}</td></tr>
-                    <tr><td>Fraud Score</td><td>{video.fraud_score:.2%}</td></tr>
-                    <tr><td>Confidence</td><td>{video.confidence:.2%}</td></tr>
-                </table>
-            </div>
-            '''
+            <div class="analysis-card video">
+                <div class="analysis-header">
+                    <span class="analysis-icon">🎬</span>
+                    <h4>Video Analysis Results</h4>
+                </div>
+                <div class="analysis-grid">
+                    <div class="analysis-metric">
+                        <span class="metric-label">Duration</span>
+                        <span class="metric-value">{video.details.get('duration', 0):.2f}s</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Resolution</span>
+                        <span class="metric-value">{res_str}</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Frame Rate</span>
+                        <span class="metric-value">{video.details.get('fps', 'N/A')} FPS</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Total Frames</span>
+                        <span class="metric-value">{video.details.get('frame_count', 'N/A')}</span>
+                    </div>
+                    <div class="analysis-metric">
+                        <span class="metric-label">Faces Detected</span>
+                        <span class="metric-value">{video.face_analysis.get('count', 0)}</span>
+                    </div>
+                    <div class="analysis-metric highlight">
+                        <span class="metric-label">Manipulation Score</span>
+                        <span class="metric-value" style="color: {fraud_score_color}">{video.fraud_score:.0%}</span>
+                    </div>
+                </div>
+            </div>'''
+        
+        status_text = "✅ AUTHENTIC" if result.is_authentic else "⚠️ SUSPICIOUS"
+        status_class = "authentic" if result.is_authentic else "suspicious"
         
         html = f'''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audio/Video Scan Report - {result.file_name}</title>
+    <title>DataGuardian Pro - Audio/Video Deepfake Detection Report</title>
     <style>
+        :root {{
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --success: #28a745;
+            --warning: #fd7e14;
+            --danger: #dc3545;
+            --info: #17a2b8;
+        }}
         * {{ margin: 0; padding: 0; box-sizing: border-box; }}
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
             color: #333;
-            background: #f5f7fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             padding: 2rem;
         }}
         .container {{
             max-width: 1200px;
             margin: 0 auto;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             overflow: hidden;
         }}
         .header {{
-            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+            background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #3949ab 100%);
             color: white;
-            padding: 2rem;
+            padding: 2.5rem;
+            position: relative;
+        }}
+        .header::before {{
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='80' cy='20' r='40' fill='rgba(255,255,255,0.05)'/%3E%3Ccircle cx='100' cy='80' r='60' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E");
+            background-size: cover;
+        }}
+        .header-content {{
+            position: relative;
+            z-index: 1;
+        }}
+        .logo {{
+            font-size: 0.9rem;
+            font-weight: 600;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
         }}
         .header h1 {{
-            font-size: 1.8rem;
+            font-size: 2rem;
             margin-bottom: 0.5rem;
+            font-weight: 700;
         }}
         .header .subtitle {{
-            opacity: 0.9;
-            font-size: 1rem;
+            opacity: 0.85;
+            font-size: 1.1rem;
         }}
-        .meta-info {{
+        .meta-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
-            margin-top: 1.5rem;
+            margin-top: 2rem;
         }}
         .meta-item {{
             background: rgba(255,255,255,0.1);
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
         }}
         .meta-item label {{
-            font-size: 0.8rem;
-            opacity: 0.8;
+            font-size: 0.75rem;
+            opacity: 0.7;
             display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
         }}
         .meta-item span {{
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
         }}
-        .summary {{
+        .executive-summary {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 1.5rem;
             padding: 2rem;
-            background: #f8f9fa;
+            background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
         }}
         .summary-card {{
             background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
+            padding: 1.75rem;
+            border-radius: 12px;
             text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #eee;
+            transition: transform 0.2s, box-shadow 0.2s;
         }}
-        .summary-card.authenticity {{
-            border-left: 4px solid {risk_color};
+        .summary-card:hover {{
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }}
+        .summary-card.primary {{
+            border-top: 4px solid {authenticity_color};
+        }}
+        .summary-card.{status_class} {{
+            border-top: 4px solid {risk_color};
         }}
         .summary-card h3 {{
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: #666;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }}
         .summary-card .value {{
-            font-size: 2rem;
-            font-weight: 700;
-            color: {risk_color};
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1.2;
         }}
         .summary-card .label {{
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #888;
+            margin-top: 0.5rem;
+        }}
+        .status-badge {{
+            display: inline-block;
+            padding: 0.5rem 1.25rem;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }}
+        .status-badge.authentic {{
+            background: #d4edda;
+            color: #155724;
+        }}
+        .status-badge.suspicious {{
+            background: #fff3cd;
+            color: #856404;
+        }}
+        .alert-section {{
+            background: linear-gradient(90deg, #fff5f5 0%, #ffebee 100%);
+            padding: 1.5rem 2rem;
+            border-left: 4px solid #dc3545;
+        }}
+        .alert-section h3 {{
+            color: #c62828;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }}
+        .fraud-types {{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }}
+        .fraud-badge {{
+            background: linear-gradient(135deg, #dc3545 0%, #c62828 100%);
+            color: white;
+            padding: 0.6rem 1.25rem;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(220,53,69,0.3);
         }}
         .section {{
             padding: 2rem;
             border-bottom: 1px solid #eee;
         }}
         .section h3 {{
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             margin-bottom: 1.5rem;
             color: #1a237e;
-        }}
-        .fraud-types {{
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
             gap: 0.5rem;
-            margin-bottom: 1rem;
         }}
-        .fraud-badge {{
-            background: #ffebee;
-            color: #c62828;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
+        .section-intro {{
+            color: #666;
+            margin-bottom: 1.5rem;
+        }}
+        .analysis-card {{
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }}
+        .analysis-header {{
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }}
+        .analysis-icon {{
+            font-size: 1.5rem;
+        }}
+        .analysis-header h4 {{
+            color: #1a237e;
+            font-size: 1.1rem;
+        }}
+        .analysis-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+        }}
+        .analysis-metric {{
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+        }}
+        .analysis-metric.highlight {{
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+        }}
+        .metric-label {{
+            display: block;
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }}
+        .metric-value {{
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #333;
         }}
         .finding-card {{
-            background: #f8f9fa;
-            border-radius: 8px;
+            background: white;
+            border-radius: 10px;
             padding: 1.5rem;
             margin-bottom: 1rem;
-            border-left: 4px solid #ddd;
+            border: 1px solid #e9ecef;
+            border-left: 5px solid #ddd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }}
-        .finding-card.high {{
+        .finding-card.high, .finding-card.critical {{
             border-left-color: #dc3545;
-            background: #fff5f5;
+            background: linear-gradient(90deg, #fff5f5 0%, white 100%);
         }}
         .finding-card.medium {{
             border-left-color: #ffc107;
-            background: #fffbeb;
+            background: linear-gradient(90deg, #fffbeb 0%, white 100%);
         }}
         .finding-card.low {{
             border-left-color: #28a745;
-            background: #f0fff4;
+            background: linear-gradient(90deg, #f0fff4 0%, white 100%);
         }}
         .finding-card.info {{
             border-left-color: #17a2b8;
-            background: #f0f9ff;
+            background: linear-gradient(90deg, #f0f9ff 0%, white 100%);
         }}
-        .finding-card.error {{
-            border-left-color: #dc3545;
-            background: #fff5f5;
+        .finding-header {{
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
         }}
-        .finding-card h4 {{
-            margin-bottom: 0.5rem;
+        .severity-icon {{
+            font-size: 1.25rem;
+        }}
+        .finding-header h4 {{
+            flex: 1;
+            color: #333;
+            font-size: 1.1rem;
+        }}
+        .severity-badge {{
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }}
+        .severity-badge.high, .severity-badge.critical {{
+            background: #dc3545;
+            color: white;
+        }}
+        .severity-badge.medium {{
+            background: #ffc107;
             color: #333;
         }}
-        .finding-meta {{
-            display: flex;
-            gap: 1rem;
-            margin: 0.75rem 0;
+        .severity-badge.low {{
+            background: #28a745;
+            color: white;
         }}
-        .finding-meta span {{
-            font-size: 0.75rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px;
-            background: #e9ecef;
+        .severity-badge.info {{
+            background: #17a2b8;
+            color: white;
         }}
-        .gdpr-note, .recommendation {{
-            font-size: 0.9rem;
-            margin-top: 0.75rem;
-            padding: 0.5rem;
-            background: rgba(0,0,0,0.03);
-            border-radius: 4px;
+        .finding-description {{
+            color: #555;
+            margin-bottom: 1rem;
+            line-height: 1.7;
         }}
-        .analysis-section {{
+        .finding-details {{
             background: #f8f9fa;
-            padding: 1.5rem;
             border-radius: 8px;
-            margin-bottom: 1rem;
+            padding: 1rem;
         }}
-        .analysis-section h4 {{
-            margin-bottom: 1rem;
-            color: #1a237e;
-        }}
-        .details-table {{
-            width: 100%;
-            border-collapse: collapse;
-        }}
-        .details-table td {{
-            padding: 0.5rem;
+        .detail-row {{
+            display: flex;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
             border-bottom: 1px solid #eee;
         }}
-        .details-table td:first-child {{
-            font-weight: 500;
-            color: #666;
-            width: 40%;
+        .detail-row:last-child {{
+            border-bottom: none;
         }}
-        .eu-ai-act {{
-            background: #e3f2fd;
+        .detail-label {{
+            font-weight: 600;
+            color: #555;
+            min-width: 150px;
         }}
-        .eu-ai-act ul {{
-            list-style: none;
-            padding: 0;
+        .detail-value {{
+            color: #333;
         }}
-        .eu-ai-act li {{
-            padding: 0.75rem 1rem;
+        .eu-ai-act-section {{
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }}
+        .eu-flags-container {{
+            display: grid;
+            gap: 0.75rem;
+        }}
+        .eu-flag-item {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
             background: white;
-            margin-bottom: 0.5rem;
-            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
             border-left: 4px solid #1976d2;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }}
+        .flag-icon {{
+            font-size: 1.25rem;
+        }}
+        .flag-text {{
+            color: #1565c0;
+            font-weight: 500;
+        }}
+        .recommendations-section {{
+            background: #f8f9fa;
+        }}
+        .recommendation-item {{
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            background: white;
+            padding: 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 0.75rem;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }}
+        .rec-number {{
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }}
+        .rec-text {{
+            color: #333;
+            line-height: 1.6;
         }}
         .footer {{
-            padding: 1.5rem 2rem;
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 2rem;
             text-align: center;
-            color: #666;
-            font-size: 0.85rem;
         }}
-        .footer .logo {{
+        .footer-logo {{
+            font-size: 1.25rem;
             font-weight: 700;
-            color: #1a237e;
+            margin-bottom: 0.5rem;
+        }}
+        .footer-meta {{
+            opacity: 0.8;
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+        }}
+        .footer-badges {{
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
+        }}
+        .footer-badge {{
+            background: rgba(255,255,255,0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
         }}
         @media print {{
             body {{ background: white; padding: 0; }}
             .container {{ box-shadow: none; }}
+        }}
+        @media (max-width: 768px) {{
+            body {{ padding: 1rem; }}
+            .header {{ padding: 1.5rem; }}
+            .section {{ padding: 1.5rem; }}
         }}
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Audio/Video Deepfake Detection Report</h1>
-            <p class="subtitle">Enterprise Media Authenticity Analysis</p>
-            <div class="meta-info">
-                <div class="meta-item">
-                    <label>File Name</label>
-                    <span>{result.file_name}</span>
-                </div>
-                <div class="meta-item">
-                    <label>Scan ID</label>
-                    <span>{result.scan_id}</span>
-                </div>
-                <div class="meta-item">
-                    <label>Media Type</label>
-                    <span>{result.media_type.upper()}</span>
-                </div>
-                <div class="meta-item">
-                    <label>Scan Date</label>
-                    <span>{result.timestamp[:19]}</span>
+            <div class="header-content">
+                <div class="logo">DATAGUARDIAN PRO</div>
+                <h1>🎬 Audio/Video Deepfake Detection Report</h1>
+                <p class="subtitle">Enterprise Media Authenticity & EU AI Act Compliance Analysis</p>
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <label>File Name</label>
+                        <span>{result.file_name}</span>
+                    </div>
+                    <div class="meta-item">
+                        <label>Scan ID</label>
+                        <span>{result.scan_id}</span>
+                    </div>
+                    <div class="meta-item">
+                        <label>Media Type</label>
+                        <span>{result.media_type.upper()}</span>
+                    </div>
+                    <div class="meta-item">
+                        <label>Scan Date</label>
+                        <span>{result.timestamp[:19].replace('T', ' ')}</span>
+                    </div>
+                    <div class="meta-item">
+                        <label>Region</label>
+                        <span>🇳🇱 {result.region}</span>
+                    </div>
                 </div>
             </div>
         </div>
         
-        <div class="summary">
-            <div class="summary-card authenticity">
+        <div class="executive-summary">
+            <div class="summary-card primary">
                 <h3>Authenticity Score</h3>
-                <div class="value">{result.authenticity_score:.0f}%</div>
-                <div class="label">{"Likely Authentic" if result.is_authentic else "Potentially Manipulated"}</div>
+                <div class="value" style="color: {authenticity_color}">{result.authenticity_score:.0f}%</div>
+                <div class="status-badge {status_class}">{status_text}</div>
             </div>
-            <div class="summary-card">
+            <div class="summary-card {status_class}">
                 <h3>Risk Level</h3>
                 <div class="value" style="color: {risk_color}">{result.risk_level.value.upper()}</div>
                 <div class="label">Detection Confidence</div>
             </div>
             <div class="summary-card">
                 <h3>File Size</h3>
-                <div class="value">{result.file_size / 1024 / 1024:.2f}</div>
+                <div class="value" style="color: #667eea">{result.file_size / 1024 / 1024:.2f}</div>
                 <div class="label">Megabytes</div>
             </div>
             <div class="summary-card">
                 <h3>Duration</h3>
-                <div class="value">{result.duration_seconds:.1f}</div>
+                <div class="value" style="color: #667eea">{result.duration_seconds:.1f}</div>
                 <div class="label">Seconds</div>
+            </div>
+            <div class="summary-card">
+                <h3>Issues Found</h3>
+                <div class="value" style="color: {'#dc3545' if len(result.findings) > 0 else '#28a745'}">{len(result.findings)}</div>
+                <div class="label">Findings</div>
             </div>
         </div>
         
-        {f'<div class="section">{fraud_types_html}</div>' if fraud_types_html else ''}
+        {fraud_types_html}
         
         <div class="section">
-            <h3>Detailed Analysis</h3>
+            <h3>📊 Detailed Analysis</h3>
             {audio_details_html}
             {video_details_html}
+            {f'<p style="color: #666; font-style: italic;">No detailed analysis data available.</p>' if not audio_details_html and not video_details_html else ''}
         </div>
         
         <div class="section">
-            <h3>Findings</h3>
-            {findings_html}
+            <h3>🔍 Findings</h3>
+            {findings_html if findings_html else '<p style="color: #28a745;">✅ No issues detected in this media file.</p>'}
         </div>
         
         {eu_ai_act_html}
         
-        <div class="section">
-            <h3>Recommendations</h3>
-            {recommendations_html}
+        <div class="section recommendations-section">
+            <h3>💡 Recommendations</h3>
+            {recommendations_html if recommendations_html else '<p style="color: #666;">No specific recommendations at this time.</p>'}
         </div>
         
         <div class="footer">
-            <p><span class="logo">DataGuardian Pro</span> - Audio/Video Deepfake Detection</p>
-            <p>Report generated on {result.timestamp[:19]} | Region: {result.region} | Processing time: {result.processing_time_ms}ms</p>
-            <p>File Hash: {result.file_hash}</p>
+            <div class="footer-logo">DataGuardian Pro</div>
+            <p class="footer-meta">Audio/Video Deepfake Detection & Media Authenticity Analysis</p>
+            <p class="footer-meta">Report generated: {result.timestamp[:19].replace('T', ' ')} | Processing time: {result.processing_time_ms}ms</p>
+            <p class="footer-meta">File Hash: {result.file_hash}</p>
+            <div class="footer-badges">
+                <span class="footer-badge">🇪🇺 GDPR Compliant</span>
+                <span class="footer-badge">🇳🇱 UAVG Ready</span>
+                <span class="footer-badge">⚖️ EU AI Act 2025</span>
+                <span class="footer-badge">🔒 Enterprise Grade</span>
+            </div>
         </div>
     </div>
 </body>

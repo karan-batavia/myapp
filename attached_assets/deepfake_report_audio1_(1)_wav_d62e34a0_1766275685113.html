@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio/Video Scan Report - audio1 (1).wav</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f7fa;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+            color: white;
+            padding: 2rem;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+        .meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        .meta-item {
+            background: rgba(255,255,255,0.1);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+        }
+        .meta-item label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            display: block;
+        }
+        .meta-item span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+        .summary-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .summary-card.authenticity {
+            border-left: 4px solid #fd7e14;
+        }
+        .summary-card h3 {
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fd7e14;
+        }
+        .summary-card .label {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .section {
+            padding: 2rem;
+            border-bottom: 1px solid #eee;
+        }
+        .section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            color: #1a237e;
+        }
+        .fraud-types {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .fraud-badge {
+            background: #ffebee;
+            color: #c62828;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .finding-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #ddd;
+        }
+        .finding-card.high {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .finding-card.medium {
+            border-left-color: #ffc107;
+            background: #fffbeb;
+        }
+        .finding-card.low {
+            border-left-color: #28a745;
+            background: #f0fff4;
+        }
+        .finding-card.info {
+            border-left-color: #17a2b8;
+            background: #f0f9ff;
+        }
+        .finding-card.error {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        .finding-card h4 {
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+        .finding-meta {
+            display: flex;
+            gap: 1rem;
+            margin: 0.75rem 0;
+        }
+        .finding-meta span {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            background: #e9ecef;
+        }
+        .gdpr-note, .recommendation {
+            font-size: 0.9rem;
+            margin-top: 0.75rem;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.03);
+            border-radius: 4px;
+        }
+        .analysis-section {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .analysis-section h4 {
+            margin-bottom: 1rem;
+            color: #1a237e;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .details-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .details-table td:first-child {
+            font-weight: 500;
+            color: #666;
+            width: 40%;
+        }
+        .eu-ai-act {
+            background: #e3f2fd;
+        }
+        .eu-ai-act ul {
+            list-style: none;
+            padding: 0;
+        }
+        .eu-ai-act li {
+            padding: 0.75rem 1rem;
+            background: white;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-left: 4px solid #1976d2;
+        }
+        .footer {
+            padding: 1.5rem 2rem;
+            background: #f8f9fa;
+            text-align: center;
+            color: #666;
+            font-size: 0.85rem;
+        }
+        .footer .logo {
+            font-weight: 700;
+            color: #1a237e;
+        }
+        @media print {
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Audio/Video Deepfake Detection Report</h1>
+            <p class="subtitle">Enterprise Media Authenticity Analysis</p>
+            <div class="meta-info">
+                <div class="meta-item">
+                    <label>File Name</label>
+                    <span>audio1 (1).wav</span>
+                </div>
+                <div class="meta-item">
+                    <label>Scan ID</label>
+                    <span>d62e34a0</span>
+                </div>
+                <div class="meta-item">
+                    <label>Media Type</label>
+                    <span>AUDIO</span>
+                </div>
+                <div class="meta-item">
+                    <label>Scan Date</label>
+                    <span>2025-12-21T00:07:18</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card authenticity">
+                <h3>Authenticity Score</h3>
+                <div class="value">40%</div>
+                <div class="label">Potentially Manipulated</div>
+            </div>
+            <div class="summary-card">
+                <h3>Risk Level</h3>
+                <div class="value" style="color: #fd7e14">HIGH</div>
+                <div class="label">Detection Confidence</div>
+            </div>
+            <div class="summary-card">
+                <h3>File Size</h3>
+                <div class="value">37.09</div>
+                <div class="label">Megabytes</div>
+            </div>
+            <div class="summary-card">
+                <h3>Duration</h3>
+                <div class="value">405.1</div>
+                <div class="label">Seconds</div>
+            </div>
+        </div>
+        
+        <div class="section"><div class="fraud-types"><span class="fraud-badge">AI-Generated Speech Detected</span></div></div>
+        
+        <div class="section">
+            <h3>Detailed Analysis</h3>
+            
+            <div class="analysis-section">
+                <h4>Audio Analysis</h4>
+                <table class="details-table">
+                    <tr><td>Duration</td><td>405.08 seconds</td></tr>
+                    <tr><td>Sample Rate</td><td>48000 Hz</td></tr>
+                    <tr><td>Channels</td><td>1</td></tr>
+                    <tr><td>Fraud Score</td><td>60.00%</td></tr>
+                    <tr><td>Confidence</td><td>85.00%</td></tr>
+                </table>
+            </div>
+            
+            
+        </div>
+        
+        <div class="section">
+            <h3>Findings</h3>
+            
+            <div class="finding-card medium">
+                <h4>AI-Generated Speech Detected</h4>
+                <p>Speech characteristics indicate AI text-to-speech generation rather than natural recording.</p>
+                <div class="finding-meta">
+                    <span class="category">Media Manipulation</span>
+                    <span class="severity">MEDIUM</span>
+                </div>
+                <p class="gdpr-note"><strong>GDPR Relevance:</strong> Processing manipulated media may violate GDPR Article 5 (accuracy principle)</p>
+                <p class="recommendation"><strong>Recommendation:</strong> Confirm content through official written communication.</p>
+            </div>
+            
+            <div class="finding-card high">
+                <h4>Audio Anomaly: unnaturally_clean_spectrum</h4>
+                <p>Audio shows unusually clean spectral characteristics typical of AI generation</p>
+                <div class="finding-meta">
+                    <span class="category">Audio Analysis</span>
+                    <span class="severity">HIGH</span>
+                </div>
+                <p class="gdpr-note"><strong>GDPR Relevance:</strong> Audio authenticity affects data accuracy requirements</p>
+                <p class="recommendation"><strong>Recommendation:</strong> Verify audio source and authenticity</p>
+            </div>
+            
+        </div>
+        
+        
+            <div class="section eu-ai-act">
+                <h3>EU AI Act Compliance Flags</h3>
+                <ul>
+                    <li>Article 52(3) - Synthetic audio content disclosure</li>
+                </ul>
+            </div>
+            
+        
+        <div class="section">
+            <h3>Recommendations</h3>
+            <ul><li>Do not use this media for official purposes without verification</li><li>Consult with digital forensics expert for detailed analysis</li><li>Document the detection for compliance records</li><li>Do not rely on audio for identity verification</li><li>Request video call confirmation if identity is critical</li></ul>
+        </div>
+        
+        <div class="footer">
+            <p><span class="logo">DataGuardian Pro</span> - Audio/Video Deepfake Detection</p>
+            <p>Report generated on 2025-12-21T00:07:18 | Region: Netherlands | Processing time: 112ms</p>
+            <p>File Hash: bbc5de0ec29af264</p>
+        </div>
+    </div>
+</body>
+</html>
