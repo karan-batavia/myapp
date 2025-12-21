@@ -1340,7 +1340,7 @@ def render_landing_page():
     st.markdown(f"""
     <div style="text-align: center; margin: 2rem 0;">
         <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
-            {_('landing.scanner_showcase_title', '11 Powerful Privacy Scanners')}
+            {_('landing.scanner_showcase_title', '12 Powerful Privacy Scanners')}
         </h2>
         <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
             {_('landing.scanner_showcase_subtitle', 'Everything you need for complete GDPR, EU AI Act, and data protection compliance')}
@@ -1492,6 +1492,19 @@ def render_landing_page():
             ],
             "color": "#4CAF50",
             "image": "attached_assets/stock_images/sustainable_business_35700aa4.jpg"
+        },
+        {
+            "icon": "🎬", 
+            "title": _('landing.scanner.audio_video_title', 'Audio/Video Scanner'),
+            "description": _('landing.scanner.audio_video_desc', 'Detect deepfakes, voice cloning, and AI-generated media. Protect your organization from synthetic media fraud with EU AI Act 2025 compliance analysis.'),
+            "features": [
+                _('landing.scanner.audio_video_f1', 'Deepfake detection'),
+                _('landing.scanner.audio_video_f2', 'Voice cloning identification'),
+                _('landing.scanner.audio_video_f3', 'EU AI Act 2025 compliance'),
+                _('landing.scanner.audio_video_f4', 'Media authenticity scoring')
+            ],
+            "color": "#9C27B0",
+            "image": "attached_assets/stock_images/digital_photo_scanni_dc2f2d4c.jpg"
         }
     ]
     

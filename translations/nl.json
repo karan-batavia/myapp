@@ -75,7 +75,13 @@
       "sustainability_f1": "Carbon footprint analyse",
       "sustainability_f2": "Energieverbruik tracking",
       "sustainability_f3": "Afval resource detectie",
-      "sustainability_f4": "Duurzaamheid scoring"
+      "sustainability_f4": "Duurzaamheid scoring",
+      "audio_video_title": "Audio/Video Scanner",
+      "audio_video_desc": "Deepfake detectie, stemklonen identificatie en AI-gegenereerde media analyse",
+      "audio_video_f1": "Deepfake detectie",
+      "audio_video_f2": "Stemklonen identificatie",
+      "audio_video_f3": "EU AI Act 2025 compliance",
+      "audio_video_f4": "Media authenticiteit analyse"
     },
     "compliance_dashboard": {
       "regulatory_coverage_title": "Regulatoire Dekking Overzicht",
