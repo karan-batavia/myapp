@@ -310,7 +310,7 @@ class LicenseManager:
         
         all_scanners = [
             "code", "document", "image", "database", "api", "enterprise", 
-            "ai_model", "website", "soc2", "dpia", "sustainability"
+            "ai_model", "website", "soc2", "dpia", "sustainability", "audio_video"
         ]
         
         all_regions = ["Netherlands", "Germany", "France", "Belgium", "EU", "Global"]
@@ -581,7 +581,7 @@ class LicenseManager:
         # All scanners available for valid active licenses
         all_scanners = [
             "code", "document", "image", "database", "api", "enterprise", 
-            "ai_model", "website", "soc2", "dpia", "sustainability"
+            "ai_model", "website", "soc2", "dpia", "sustainability", "audio_video"
         ]
         return scanner_type in all_scanners
     
