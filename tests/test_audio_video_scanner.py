@@ -265,12 +265,18 @@ class TestLicenseIntegration:
     
     def test_audio_video_in_license_scanners(self):
         """Test that audio_video is in the license manager scanners list"""
-        from services.license_manager import LicenseManager
+        from services.license_manager import LicenseManager, LicenseType
         
         manager = LicenseManager()
+        license_config = manager.generate_license(
+            license_type=LicenseType.ENTERPRISE,
+            customer_id="test",
+            customer_name="Test Customer",
+            company_name="Test Company",
+            email="test@example.com"
+        )
         
-        allowed = manager.get_allowed_scanners("enterprise")
-        assert "audio_video" in allowed
+        assert "audio_video" in license_config.allowed_scanners
     
     def test_audio_video_tier_restrictions(self):
         """Test that audio_video has proper tier restrictions"""
