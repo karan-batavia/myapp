@@ -1504,7 +1504,7 @@ def render_landing_page():
                 _('landing.scanner.audio_video_f4', 'Media authenticity scoring')
             ],
             "color": "#9C27B0",
-            "image": "attached_assets/stock_images/digital_photo_scanni_dc2f2d4c.jpg"
+            "image": "attached_assets/stock_images/video_production_stu_aa808aec.jpg"
         }
     ]
     
