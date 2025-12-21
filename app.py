@@ -3198,7 +3198,8 @@ def render_scanner_interface_safe():
         render_image_scanner_interface, render_database_scanner_interface, 
         render_api_scanner_interface, render_enterprise_connector_interface, 
         render_ai_model_scanner_interface, render_soc2_scanner_interface, 
-        render_website_scanner_interface, render_sustainability_scanner_interface
+        render_website_scanner_interface, render_sustainability_scanner_interface,
+        render_audio_video_scanner_interface
     )
     
     if _('scan.code', 'Code') in selected_scanner:
