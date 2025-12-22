@@ -457,19 +457,37 @@ class EnhancedFindingGenerator:
     
     def _create_generic_enhanced_finding(self, finding: Dict[str, Any]) -> EnhancedFinding:
         """Create enhanced finding with intelligent context based on finding type"""
-        finding_type = finding.get('type', 'unknown').lower().replace('_', ' ')
+        finding_type = (finding.get('type') or 
+                        finding.get('pattern_type') or 
+                        finding.get('category') or 
+                        finding.get('pattern_name') or 
+                        'unknown').lower().replace('_', ' ')
         
         # Extract description from multiple possible fields (different scanners use different fields)
         description = (finding.get('description') or 
                        finding.get('reason') or 
                        finding.get('context') or 
+                       finding.get('line_content') or
                        'Security or privacy issue detected')
         
         # For EXIF findings, use reason as it contains the detailed explanation
         if 'exif' in finding_type and finding.get('reason'):
             description = finding.get('reason')
         
-        location = finding.get('location', 'Unknown location')
+        # Build location from multiple possible fields
+        location = finding.get('location')
+        if not location:
+            file_info = finding.get('file', finding.get('filename', ''))
+            line_num = finding.get('line_number', finding.get('line', ''))
+            if file_info and line_num:
+                location = f"{file_info}:{line_num}"
+            elif file_info:
+                location = file_info
+            elif line_num:
+                location = f"Line {line_num}"
+            else:
+                location = finding.get('match', 'Source file')[:50] if finding.get('match') else 'Source file'
+        
         severity = finding.get('severity', finding.get('risk_level', 'Medium'))
         
         # Generate intelligent context based on finding type
@@ -477,10 +495,12 @@ class EnhancedFindingGenerator:
             finding_type, description, location, severity
         )
         
+        display_type = finding_type.replace('_', ' ').title() if finding_type != 'unknown' else (finding.get('pattern_name', 'Security Issue').replace('_', ' ').title())
+        
         return EnhancedFinding(
-            type=finding.get('type', 'unknown'),
-            subtype=finding.get('subtype', 'generic'),
-            title=f"Security Finding: {finding.get('type', 'Unknown').replace('_', ' ').title()}",
+            type=finding.get('type') or finding.get('pattern_type') or 'unknown',
+            subtype=finding.get('subtype') or finding.get('category') or 'generic',
+            title=f"{display_type} Finding",
             description=description,
             location=location,
             context=context,
