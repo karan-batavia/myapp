@@ -9733,6 +9733,235 @@ def generate_findings_html(findings):
     return findings_html
 
 
+def generate_url_scan_html_report(metadata: dict, findings: list, recommendations: list,
+                                   eu_ai_act_flags: list, risk_level: str, authenticity_score: float,
+                                   scan_id: str, media_url: str, duration_ms: int, region: str) -> str:
+    """Generate professional HTML report for URL media metadata analysis"""
+    from datetime import datetime
+    
+    risk_colors = {
+        'critical': '#dc3545',
+        'high': '#fd7e14',
+        'medium': '#ffc107',
+        'low': '#28a745',
+        'none': '#17a2b8'
+    }
+    risk_color = risk_colors.get(risk_level, '#6c757d')
+    
+    severity_colors = {
+        'high': '#dc3545',
+        'medium': '#ffc107',
+        'low': '#28a745',
+        'info': '#17a2b8'
+    }
+    
+    findings_html = ""
+    for finding in findings:
+        sev = finding.get('severity', 'info')
+        sev_color = severity_colors.get(sev, '#6c757d')
+        findings_html += f"""
+        <div class="finding" style="border-left: 4px solid {sev_color}; padding: 12px; margin: 10px 0; background: #f8f9fa; border-radius: 4px;">
+            <strong style="color: {sev_color};">[{sev.upper()}]</strong> {finding.get('title', 'Finding')}
+            <p style="margin: 5px 0 0 0; color: #555;">{finding.get('description', '')}</p>
+        </div>
+        """
+    
+    recommendations_html = ""
+    for rec in recommendations:
+        recommendations_html += f"<li>{rec}</li>"
+    
+    eu_flags_html = ""
+    if eu_ai_act_flags:
+        eu_flags_html = f"""
+        <div class="section">
+            <h2>EU AI Act Compliance Flags</h2>
+            <ul>{''.join(f'<li>{flag}</li>' for flag in eu_ai_act_flags)}</ul>
+        </div>
+        """
+    
+    view_count = metadata.get('view_count', 0) or 0
+    like_count = metadata.get('like_count', 0) or 0
+    channel_followers = metadata.get('channel_follower_count', 0) or 0
+    
+    html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Media Analysis Report - {scan_id}</title>
+    <style>
+        * {{ box-sizing: border-box; }}
+        body {{ 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+            color: #333;
+        }}
+        .container {{ max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }}
+        .header {{ 
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); 
+            color: white; 
+            padding: 30px; 
+            text-align: center; 
+        }}
+        .header h1 {{ margin: 0 0 10px 0; font-size: 24px; }}
+        .header p {{ margin: 0; opacity: 0.9; }}
+        .summary {{ 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            padding: 20px 30px; 
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }}
+        .summary-card {{ 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }}
+        .summary-card .value {{ font-size: 24px; font-weight: bold; color: {risk_color}; }}
+        .summary-card .label {{ font-size: 12px; color: #666; margin-top: 5px; }}
+        .section {{ padding: 25px 30px; border-bottom: 1px solid #e9ecef; }}
+        .section:last-child {{ border-bottom: none; }}
+        .section h2 {{ 
+            margin: 0 0 15px 0; 
+            color: #1a237e; 
+            font-size: 18px;
+            border-bottom: 2px solid #e8eaf6;
+            padding-bottom: 10px;
+        }}
+        .media-info {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }}
+        .info-group {{ }}
+        .info-item {{ margin: 8px 0; }}
+        .info-item strong {{ color: #555; }}
+        .warning-box {{
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }}
+        .warning-box strong {{ color: #856404; }}
+        ul {{ margin: 10px 0; padding-left: 20px; }}
+        li {{ margin: 5px 0; }}
+        .footer {{ 
+            background: #f8f9fa; 
+            padding: 20px 30px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #666; 
+        }}
+        .risk-badge {{
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: {risk_color};
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }}
+        @media (max-width: 600px) {{
+            .summary {{ grid-template-columns: repeat(2, 1fr); }}
+            .media-info {{ grid-template-columns: 1fr; }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>URL Media Metadata Analysis Report</h1>
+            <p>DataGuardian Pro - Enterprise Deepfake Detection</p>
+            <div style="margin-top: 15px;">
+                <span class="risk-badge">Risk Level: {risk_level.upper()}</span>
+            </div>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <div class="value">Metadata</div>
+                <div class="label">Analysis Type</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: {risk_color};">{risk_level.upper()}</div>
+                <div class="label">Risk Level</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">{authenticity_score:.0f}%</div>
+                <div class="label">Confidence Score</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">{len([f for f in findings if f.get('severity') in ['high', 'medium']])}</div>
+                <div class="label">Flags Found</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="warning-box">
+                <strong>Note:</strong> This analysis is based on metadata and thumbnail inspection only. 
+                For comprehensive deepfake detection of actual audio/video content, please upload the media file directly.
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Media Information</h2>
+            <div class="media-info">
+                <div class="info-group">
+                    <div class="info-item"><strong>Title:</strong> {metadata.get('title', 'Unknown')}</div>
+                    <div class="info-item"><strong>Platform:</strong> {metadata.get('platform', 'Unknown')}</div>
+                    <div class="info-item"><strong>Uploader:</strong> {metadata.get('uploader', 'Unknown')}</div>
+                    <div class="info-item"><strong>Duration:</strong> {metadata.get('duration', 0)} seconds</div>
+                    <div class="info-item"><strong>Upload Date:</strong> {metadata.get('upload_date', 'Unknown')}</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-item"><strong>Views:</strong> {view_count:,}</div>
+                    <div class="info-item"><strong>Likes:</strong> {like_count:,}</div>
+                    <div class="info-item"><strong>Channel Followers:</strong> {channel_followers:,}</div>
+                    <div class="info-item"><strong>Subtitles Available:</strong> {'Yes' if metadata.get('subtitles_available') else 'No'}</div>
+                    <div class="info-item"><strong>Live/Was Live:</strong> {'Yes' if metadata.get('is_live') or metadata.get('was_live') else 'No'}</div>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <div class="info-item"><strong>Source URL:</strong> <a href="{media_url}" target="_blank" style="color: #1a237e;">{media_url[:80]}{'...' if len(media_url) > 80 else ''}</a></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Analysis Findings</h2>
+            {findings_html if findings_html else '<p style="color: #666;">No significant findings detected in metadata analysis.</p>'}
+        </div>
+        
+        <div class="section">
+            <h2>Recommendations</h2>
+            <ul>
+                {recommendations_html if recommendations_html else '<li>No specific recommendations at this time.</li>'}
+            </ul>
+        </div>
+        
+        {eu_flags_html}
+        
+        <div class="section">
+            <h2>Scan Details</h2>
+            <div class="info-item"><strong>Scan ID:</strong> {scan_id}</div>
+            <div class="info-item"><strong>Scan Date:</strong> {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
+            <div class="info-item"><strong>Processing Time:</strong> {duration_ms/1000:.1f} seconds</div>
+            <div class="info-item"><strong>Region:</strong> {region}</div>
+        </div>
+        
+        <div class="footer">
+            <p>Generated by DataGuardian Pro - Enterprise Privacy Compliance Platform</p>
+            <p>This report analyzes publicly available metadata only. For comprehensive deepfake detection, upload media files directly.</p>
+            <p>© {datetime.now().year} DataGuardian Pro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>"""
+    
+    return html
+
+
 # === URL Media Analyzer for Audio/Video Scanner ===
 def analyze_media_from_url(url: str) -> tuple:
     """
@@ -10397,6 +10626,31 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
         
         if eu_ai_act_flags:
             st.info(f"🇪🇺 **EU AI Act Flags:** {', '.join(eu_ai_act_flags)}")
+    
+    st.markdown("---")
+    st.subheader("📥 Download Report")
+    
+    html_report = generate_url_scan_html_report(
+        metadata=metadata,
+        findings=findings,
+        recommendations=recommendations,
+        eu_ai_act_flags=eu_ai_act_flags,
+        risk_level=risk_level,
+        authenticity_score=authenticity_score,
+        scan_id=scan_id,
+        media_url=media_url,
+        duration_ms=duration_ms,
+        region=region
+    )
+    
+    safe_title = (metadata.get('title', 'url_media')[:30]).replace(' ', '_').replace('/', '_').replace('\\', '_')
+    st.download_button(
+        label="📄 Download URL Analysis Report (HTML)",
+        data=html_report,
+        file_name=f"url_deepfake_analysis_{safe_title}_{scan_id}.html",
+        mime="text/html",
+        key=f"download_url_report_{scan_id}"
+    )
     
     combined_result = {
         'scan_id': scan_id,
