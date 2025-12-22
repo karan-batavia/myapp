@@ -9733,43 +9733,40 @@ def generate_findings_html(findings):
     return findings_html
 
 
-# === URL Media Downloader for Audio/Video Scanner ===
-def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
+# === URL Media Analyzer for Audio/Video Scanner ===
+def analyze_media_from_url(url: str) -> tuple:
     """
-    Download audio/video media from URL using yt-dlp.
-    Supports YouTube, Vimeo, Twitter, and 1000+ other platforms.
+    Analyze media from URL using metadata extraction and thumbnail analysis.
+    Works without downloading the full video - uses platform APIs and metadata.
     
     Args:
-        url: Media URL (YouTube, direct link, etc.)
-        max_duration: Maximum duration in seconds (default 10 minutes)
+        url: Media URL (YouTube, Vimeo, Twitter, etc.)
     
     Returns:
-        tuple: (success, file_path or error_message, metadata)
+        tuple: (success, analysis_data or error_message, metadata)
     """
     import tempfile
     import os
+    import shutil
+    import requests
     
     try:
         import yt_dlp
     except ImportError:
-        return False, "yt-dlp not installed. Please contact support.", {}
+        return False, "Media analyzer not available. Please contact support.", {}
     
-    temp_dir = tempfile.mkdtemp(prefix="dataguardian_media_")
+    temp_dir = tempfile.mkdtemp(prefix="dataguardian_url_")
     
     ydl_opts = {
-        'format': 'worst[ext=mp4]/worst[ext=webm]/worstaudio/worst',
-        'outtmpl': os.path.join(temp_dir, '%(id)s.%(ext)s'),
         'quiet': True,
         'no_warnings': True,
         'extract_flat': False,
-        'max_downloads': 1,
-        'socket_timeout': 60,
-        'retries': 2,
+        'skip_download': True,
         'noplaylist': True,
-        'http_chunk_size': 10485760,
+        'writesubtitles': False,
+        'writethumbnail': True,
+        'outtmpl': os.path.join(temp_dir, '%(id)s.%(ext)s'),
     }
-    
-    import shutil
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -9779,32 +9776,60 @@ def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
                 shutil.rmtree(temp_dir, ignore_errors=True)
                 return False, "Could not extract media information from URL", {}
             
-            duration = info.get('duration', 0) or 0
-            if duration > max_duration:
-                shutil.rmtree(temp_dir, ignore_errors=True)
-                return False, f"Media duration ({duration}s) exceeds maximum ({max_duration}s). Please use shorter clips.", {}
-            
-            ydl.download([url])
-            
-            downloaded_files = [f for f in os.listdir(temp_dir) if os.path.isfile(os.path.join(temp_dir, f))]
-            if not downloaded_files:
-                shutil.rmtree(temp_dir, ignore_errors=True)
-                return False, "Download completed but no file found", {}
-            
-            file_path = os.path.join(temp_dir, downloaded_files[0])
-            
             metadata = {
                 'title': info.get('title', 'Unknown'),
-                'duration': duration,
+                'duration': info.get('duration', 0) or 0,
                 'uploader': info.get('uploader', 'Unknown'),
+                'uploader_id': info.get('uploader_id', ''),
                 'upload_date': info.get('upload_date', 'Unknown'),
                 'platform': info.get('extractor', 'Unknown'),
                 'original_url': url,
                 'view_count': info.get('view_count', 0),
-                'description': info.get('description', '')[:500] if info.get('description') else ''
+                'like_count': info.get('like_count', 0),
+                'comment_count': info.get('comment_count', 0),
+                'description': info.get('description', '')[:1000] if info.get('description') else '',
+                'categories': info.get('categories', []),
+                'tags': info.get('tags', [])[:20] if info.get('tags') else [],
+                'age_limit': info.get('age_limit', 0),
+                'is_live': info.get('is_live', False),
+                'was_live': info.get('was_live', False),
+                'channel_id': info.get('channel_id', ''),
+                'channel_follower_count': info.get('channel_follower_count', 0),
+                'availability': info.get('availability', 'public'),
+                'video_id': info.get('id', ''),
+                'resolution': info.get('resolution', 'unknown'),
+                'fps': info.get('fps', 0),
+                'format_note': info.get('format_note', ''),
             }
             
-            return True, file_path, metadata
+            thumbnail_path = None
+            thumbnails = info.get('thumbnails', [])
+            if thumbnails:
+                best_thumb = max(thumbnails, key=lambda x: x.get('preference', 0) if x.get('preference') else 0)
+                thumb_url = best_thumb.get('url')
+                if thumb_url:
+                    try:
+                        resp = requests.get(thumb_url, timeout=10)
+                        if resp.status_code == 200:
+                            ext = thumb_url.split('.')[-1].split('?')[0][:4] or 'jpg'
+                            thumbnail_path = os.path.join(temp_dir, f"thumb.{ext}")
+                            with open(thumbnail_path, 'wb') as f:
+                                f.write(resp.content)
+                            metadata['thumbnail_path'] = thumbnail_path
+                    except:
+                        pass
+            
+            metadata['subtitles_available'] = bool(info.get('subtitles') or info.get('automatic_captions'))
+            metadata['chapters'] = len(info.get('chapters', []) or [])
+            
+            analysis_data = {
+                'temp_dir': temp_dir,
+                'thumbnail_path': thumbnail_path,
+                'metadata': metadata,
+                'formats_available': len(info.get('formats', [])),
+            }
+            
+            return True, analysis_data, metadata
             
     except yt_dlp.utils.DownloadError as e:
         shutil.rmtree(temp_dir, ignore_errors=True)
@@ -9816,10 +9841,10 @@ def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
         elif "age" in error_msg.lower():
             return False, "This video requires age verification", {}
         else:
-            return False, f"Download failed: {error_msg[:200]}", {}
+            return False, f"Analysis failed: {error_msg[:200]}", {}
     except Exception as e:
         shutil.rmtree(temp_dir, ignore_errors=True)
-        return False, f"Error downloading media: {str(e)[:200]}", {}
+        return False, f"Error analyzing media: {str(e)[:200]}", {}
 
 
 # === Audio/Video Scanner Interface (Deepfake Detection) ===
@@ -10117,9 +10142,8 @@ def execute_audio_video_scan(region: str, username: str, uploaded_files, sensiti
 
 
 def execute_audio_video_url_scan(region: str, username: str, media_url: str, sensitivity: str, options: dict):
-    """Execute audio/video deepfake detection scan from URL"""
+    """Execute audio/video deepfake detection scan from URL using metadata analysis"""
     import time
-    import tempfile
     import os
     import shutil
     from datetime import datetime
@@ -10152,60 +10176,165 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
     progress_bar = st.progress(0)
     status = st.empty()
     
-    status.text("📥 Downloading media from URL...")
+    status.text("🔍 Extracting media metadata...")
     progress_bar.progress(10)
     
-    success, result, metadata = download_media_from_url(media_url)
+    success, analysis_data, metadata = analyze_media_from_url(media_url)
     
     if not success:
         progress_bar.empty()
         status.empty()
-        st.error(f"❌ {result}")
+        st.error(f"❌ {analysis_data}")
         return
     
-    file_path = result
+    temp_dir = analysis_data.get('temp_dir')
+    thumbnail_path = analysis_data.get('thumbnail_path')
     progress_bar.progress(30)
     
     if metadata:
+        duration_str = f"{metadata.get('duration', 0)}s" if metadata.get('duration') else "Live"
         st.info(f"📺 **{metadata.get('title', 'Unknown')}** from {metadata.get('platform', 'Unknown')} "
-               f"({metadata.get('duration', 0)}s) by {metadata.get('uploader', 'Unknown')}")
+               f"({duration_str}) by {metadata.get('uploader', 'Unknown')}")
     
-    try:
-        from services.audio_video_scanner import AudioVideoScanner
-        scanner = AudioVideoScanner(region=region, sensitivity=sensitivity)
-    except ImportError as e:
-        try:
-            shutil.rmtree(os.path.dirname(file_path))
-        except:
-            pass
-        st.error(f"Audio/Video Scanner not available: {e}")
-        return
-    
-    status.text("🔍 Analyzing media for deepfakes and manipulation...")
+    status.text("🔍 Analyzing metadata and thumbnail for authenticity indicators...")
     progress_bar.progress(50)
     
+    findings = []
+    risk_score = 0
+    recommendations = []
+    eu_ai_act_flags = []
+    scan_id = str(uuid.uuid4())[:8]
+    
     try:
-        file_name = os.path.basename(file_path)
-        result = scanner.scan_file(file_path, file_name)
+        title = metadata.get('title', '').lower()
+        description = metadata.get('description', '').lower()
         
-        if metadata:
-            result.metadata_analysis['url_source'] = metadata
+        deepfake_keywords = ['deepfake', 'ai generated', 'fake', 'synthetic', 'generated by ai', 
+                            'voice clone', 'face swap', 'ai voice', 'parody', 'satire']
+        for kw in deepfake_keywords:
+            if kw in title or kw in description:
+                findings.append({
+                    'title': 'Deepfake Keyword Detected',
+                    'description': f'Content contains keyword "{kw}" indicating possible AI-generated content',
+                    'severity': 'high'
+                })
+                risk_score += 30
+                eu_ai_act_flags.append('Article 52: Transparency for AI-generated content')
+                break
+        
+        view_count = metadata.get('view_count', 0) or 0
+        like_count = metadata.get('like_count', 0) or 0
+        if view_count > 100000 and like_count < view_count * 0.001:
+            findings.append({
+                'title': 'Suspicious Engagement Pattern',
+                'description': f'High views ({view_count:,}) but very low engagement ratio - possible manipulation',
+                'severity': 'medium'
+            })
+            risk_score += 15
+        
+        channel_followers = metadata.get('channel_follower_count', 0) or 0
+        if channel_followers < 100 and view_count > 50000:
+            findings.append({
+                'title': 'New/Small Channel with Viral Content',
+                'description': 'Content from small channel with unusually high reach - verify source authenticity',
+                'severity': 'medium'
+            })
+            risk_score += 10
+        
+        if metadata.get('is_live') or metadata.get('was_live'):
+            findings.append({
+                'title': 'Live/Previously Live Content',
+                'description': 'Content was streamed live - lower deepfake risk for real-time content',
+                'severity': 'low'
+            })
+            risk_score -= 10
+        
+        if metadata.get('subtitles_available'):
+            findings.append({
+                'title': 'Subtitles Available',
+                'description': 'Content has subtitles/captions - indicates more established content',
+                'severity': 'info'
+            })
+        
+        if thumbnail_path and os.path.exists(thumbnail_path):
+            try:
+                from PIL import Image
+                img = Image.open(thumbnail_path)
+                width, height = img.size
+                
+                findings.append({
+                    'title': 'Thumbnail Analysis',
+                    'description': f'Thumbnail resolution: {width}x{height}',
+                    'severity': 'info'
+                })
+                
+                try:
+                    import cv2
+                    import numpy as np
+                    cv_img = cv2.imread(thumbnail_path)
+                    if cv_img is not None:
+                        gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+                        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                        faces = face_cascade.detectMultiScale(gray, 1.1, 4)
+                        if len(faces) > 0:
+                            findings.append({
+                                'title': 'Face Detection',
+                                'description': f'Detected {len(faces)} face(s) in thumbnail - recommend full video analysis for deepfake detection',
+                                'severity': 'medium'
+                            })
+                            risk_score += 5
+                            recommendations.append('For comprehensive face swap/deepfake detection, upload the actual video file')
+                except Exception as e:
+                    logger.debug(f"Face detection skipped: {e}")
+            except Exception as e:
+                logger.debug(f"Thumbnail analysis error: {e}")
+        
+        platform = metadata.get('platform', '').lower()
+        if platform in ['youtube', 'vimeo']:
+            findings.append({
+                'title': 'Trusted Platform',
+                'description': f'Content hosted on {platform.title()} - has content policies against deceptive media',
+                'severity': 'info'
+            })
+        
+        if not findings:
+            findings.append({
+                'title': 'No Red Flags Detected',
+                'description': 'Metadata analysis did not reveal obvious manipulation indicators',
+                'severity': 'info'
+            })
+        
+        recommendations.append('For definitive deepfake detection, download and upload the video file directly')
+        recommendations.append('Cross-reference uploader identity with official sources')
+        recommendations.append('Check video upload date vs claimed event date')
         
         progress_bar.progress(90)
         
     except Exception as e:
-        logger.error(f"Failed to scan URL media: {e}")
-        st.error(f"⚠️ Failed to analyze media: {str(e)}")
-        try:
-            shutil.rmtree(os.path.dirname(file_path))
-        except:
-            pass
-        return
+        logger.error(f"Failed to analyze URL media: {e}")
+        findings.append({
+            'title': 'Analysis Error',
+            'description': f'Some analysis checks could not be completed: {str(e)[:100]}',
+            'severity': 'medium'
+        })
     finally:
         try:
-            shutil.rmtree(os.path.dirname(file_path))
+            if temp_dir:
+                shutil.rmtree(temp_dir)
         except:
             pass
+    
+    risk_score = max(0, min(100, risk_score))
+    authenticity_score = 100 - risk_score
+    
+    if risk_score >= 50:
+        risk_level = 'high'
+    elif risk_score >= 30:
+        risk_level = 'medium'
+    elif risk_score >= 10:
+        risk_level = 'low'
+    else:
+        risk_level = 'none'
     
     progress_bar.progress(100)
     status.text("✅ Analysis complete!")
@@ -10217,23 +10346,24 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
     duration_ms = int((scan_end_time - scan_start_time).total_seconds() * 1000)
     
     st.markdown("---")
-    st.subheader("📊 Scan Results Summary")
+    st.subheader("📊 URL Media Analysis Results")
+    
+    st.warning("⚠️ **Note:** URL scanning analyzes metadata and thumbnails only. For comprehensive deepfake detection, please upload the actual video/audio file.")
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Source", "URL")
+        st.metric("Analysis Type", "Metadata")
     with col2:
-        risk_text = result.risk_level.value.upper()
-        st.metric("Risk Level", risk_text)
+        st.metric("Risk Level", risk_level.upper())
     with col3:
-        st.metric("Authenticity", f"{result.authenticity_score:.1f}%")
+        st.metric("Confidence", f"{authenticity_score:.0f}%")
     with col4:
-        st.metric("Issues Found", len(result.fraud_types_detected))
+        st.metric("Flags Found", len([f for f in findings if f['severity'] in ['high', 'medium']]))
     
     if metadata:
         st.markdown("---")
         st.subheader("📺 Media Information")
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.write(f"**Title:** {metadata.get('title', 'Unknown')}")
             st.write(f"**Platform:** {metadata.get('platform', 'Unknown')}")
@@ -10243,73 +10373,48 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
             st.write(f"**Upload Date:** {metadata.get('upload_date', 'Unknown')}")
             if metadata.get('view_count'):
                 st.write(f"**Views:** {metadata.get('view_count'):,}")
+        with col3:
+            if metadata.get('like_count'):
+                st.write(f"**Likes:** {metadata.get('like_count'):,}")
+            if metadata.get('channel_follower_count'):
+                st.write(f"**Channel Followers:** {metadata.get('channel_follower_count'):,}")
+            st.write(f"**Has Subtitles:** {'Yes' if metadata.get('subtitles_available') else 'No'}")
     
     st.markdown("---")
-    st.subheader("📋 Detailed Results")
+    st.subheader("📋 Analysis Findings")
     
-    risk_color = {
-        'critical': '🔴',
-        'high': '🟠',
-        'medium': '🟡',
-        'low': '🟢',
-        'none': '🔵'
-    }.get(result.risk_level.value, '⚪')
+    risk_icon = {'high': '🟠', 'medium': '🟡', 'low': '🟢', 'none': '🔵'}.get(risk_level, '⚪')
     
-    with st.expander(f"{risk_color} {result.file_name} - {result.authenticity_score:.0f}% Authentic", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write(f"**Media Type:** {result.media_type.upper()}")
-            st.write(f"**Duration:** {result.duration_seconds:.1f} seconds")
-            st.write(f"**File Size:** {result.file_size / 1024 / 1024:.2f} MB")
-        with col2:
-            st.write(f"**Risk Level:** {result.risk_level.value.upper()}")
-            st.write(f"**Authentic:** {'✅ Yes' if result.is_authentic else '❌ No'}")
-            st.write(f"**Scan ID:** {result.scan_id}")
+    with st.expander(f"{risk_icon} {metadata.get('title', 'URL Media')[:50]} - {authenticity_score:.0f}% Confidence", expanded=True):
+        for finding in findings:
+            severity_icon = {'high': '🔴', 'medium': '🟡', 'low': '🟢', 'info': '🔵'}.get(finding.get('severity', 'info'), '⚪')
+            st.markdown(f"- {severity_icon} **{finding.get('title', 'Finding')}**: {finding.get('description', '')}")
         
-        if result.fraud_types_detected:
-            st.warning(f"⚠️ **Detected Issues:** {', '.join([ft.value.replace('_', ' ').title() for ft in result.fraud_types_detected])}")
-        
-        if result.findings:
-            st.markdown("**Findings:**")
-            for finding in result.findings:
-                severity_icon = {'high': '🔴', 'medium': '🟡', 'low': '🟢', 'info': '🔵', 'error': '⚫'}.get(finding.get('severity', 'info'), '⚪')
-                st.markdown(f"- {severity_icon} **{finding.get('title', 'Finding')}**: {finding.get('description', '')}")
-        
-        if result.recommendations:
+        if recommendations:
             st.markdown("**Recommendations:**")
-            for rec in result.recommendations:
+            for rec in recommendations:
                 st.markdown(f"- {rec}")
         
-        if result.eu_ai_act_flags:
-            st.info(f"🇪🇺 **EU AI Act Flags:** {', '.join(result.eu_ai_act_flags)}")
-    
-    st.markdown("---")
-    st.subheader("📥 Download Report")
-    
-    html_report = scanner.generate_html_report(result)
-    safe_filename = result.file_name.replace(' ', '_').replace('.', '_')
-    st.download_button(
-        label=f"📄 Download Deepfake Analysis Report",
-        data=html_report,
-        file_name=f"deepfake_url_report_{safe_filename}_{result.scan_id}.html",
-        mime="text/html",
-        key=f"download_url_{result.scan_id}"
-    )
+        if eu_ai_act_flags:
+            st.info(f"🇪🇺 **EU AI Act Flags:** {', '.join(eu_ai_act_flags)}")
     
     combined_result = {
-        'scan_id': str(uuid.uuid4())[:8],
-        'scan_type': 'audio_video_url',
+        'scan_id': scan_id,
+        'scan_type': 'audio_video_url_metadata',
         'timestamp': datetime.now().isoformat(),
         'region': region,
         'username': username,
         'source_url': media_url,
         'file_count': 1,
         'files_scanned': 1,
-        'total_pii_found': 0 if result.is_authentic else 1,
-        'authenticity_score': result.authenticity_score,
-        'findings': result.findings,
+        'risk_level': risk_level,
+        'authenticity_score': authenticity_score,
+        'findings': findings,
+        'recommendations': recommendations,
+        'eu_ai_act_flags': eu_ai_act_flags,
         'processing_time_ms': duration_ms,
-        'url_metadata': metadata
+        'url_metadata': metadata,
+        'analysis_type': 'metadata_only'
     }
     
     try:
@@ -10333,12 +10438,12 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
             details={
                 'source': 'url',
                 'url': media_url[:100],
-                'is_authentic': result.is_authentic,
-                'authenticity_score': result.authenticity_score,
-                'fraud_types': [ft.value for ft in result.fraud_types_detected]
+                'risk_level': risk_level,
+                'authenticity_score': authenticity_score,
+                'analysis_type': 'metadata'
             }
         )
     except Exception as e:
         logger.warning(f"Failed to track scan completion: {e}")
     
-    st.success(f"✅ URL media scan completed in {duration_ms/1000:.1f}s")
+    st.success(f"✅ URL metadata analysis completed in {duration_ms/1000:.1f}s")
