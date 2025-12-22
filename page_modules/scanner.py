@@ -9757,14 +9757,16 @@ def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
     temp_dir = tempfile.mkdtemp(prefix="dataguardian_media_")
     
     ydl_opts = {
-        'format': 'best[ext=mp4]/best[ext=webm]/best',
-        'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
+        'format': 'worst[ext=mp4]/worst[ext=webm]/worstaudio/worst',
+        'outtmpl': os.path.join(temp_dir, '%(id)s.%(ext)s'),
         'quiet': True,
         'no_warnings': True,
         'extract_flat': False,
         'max_downloads': 1,
-        'socket_timeout': 30,
-        'retries': 3,
+        'socket_timeout': 60,
+        'retries': 2,
+        'noplaylist': True,
+        'http_chunk_size': 10485760,
     }
     
     import shutil
