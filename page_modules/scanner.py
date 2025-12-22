@@ -9733,6 +9733,86 @@ def generate_findings_html(findings):
     return findings_html
 
 
+# === URL Media Downloader for Audio/Video Scanner ===
+def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
+    """
+    Download audio/video media from URL using yt-dlp.
+    Supports YouTube, Vimeo, Twitter, and 1000+ other platforms.
+    
+    Args:
+        url: Media URL (YouTube, direct link, etc.)
+        max_duration: Maximum duration in seconds (default 10 minutes)
+    
+    Returns:
+        tuple: (success, file_path or error_message, metadata)
+    """
+    import tempfile
+    import os
+    
+    try:
+        import yt_dlp
+    except ImportError:
+        return False, "yt-dlp not installed. Please contact support.", {}
+    
+    temp_dir = tempfile.mkdtemp(prefix="dataguardian_media_")
+    
+    ydl_opts = {
+        'format': 'best[ext=mp4]/best[ext=webm]/best',
+        'outtmpl': os.path.join(temp_dir, '%(title)s.%(ext)s'),
+        'quiet': True,
+        'no_warnings': True,
+        'extract_flat': False,
+        'max_downloads': 1,
+        'socket_timeout': 30,
+        'retries': 3,
+    }
+    
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            
+            if info is None:
+                return False, "Could not extract media information from URL", {}
+            
+            duration = info.get('duration', 0) or 0
+            if duration > max_duration:
+                return False, f"Media duration ({duration}s) exceeds maximum ({max_duration}s). Please use shorter clips.", {}
+            
+            ydl.download([url])
+            
+            downloaded_files = [f for f in os.listdir(temp_dir) if os.path.isfile(os.path.join(temp_dir, f))]
+            if not downloaded_files:
+                return False, "Download completed but no file found", {}
+            
+            file_path = os.path.join(temp_dir, downloaded_files[0])
+            
+            metadata = {
+                'title': info.get('title', 'Unknown'),
+                'duration': duration,
+                'uploader': info.get('uploader', 'Unknown'),
+                'upload_date': info.get('upload_date', 'Unknown'),
+                'platform': info.get('extractor', 'Unknown'),
+                'original_url': url,
+                'view_count': info.get('view_count', 0),
+                'description': info.get('description', '')[:500] if info.get('description') else ''
+            }
+            
+            return True, file_path, metadata
+            
+    except yt_dlp.utils.DownloadError as e:
+        error_msg = str(e)
+        if "Private video" in error_msg:
+            return False, "This video is private and cannot be accessed", {}
+        elif "Video unavailable" in error_msg:
+            return False, "This video is unavailable or has been removed", {}
+        elif "age" in error_msg.lower():
+            return False, "This video requires age verification", {}
+        else:
+            return False, f"Download failed: {error_msg[:200]}", {}
+    except Exception as e:
+        return False, f"Error downloading media: {str(e)[:200]}", {}
+
+
 # === Audio/Video Scanner Interface (Deepfake Detection) ===
 def render_audio_video_scanner_interface(region: str, username: str):
     """Audio/Video Scanner interface for deepfake and media manipulation detection"""
@@ -9747,13 +9827,32 @@ def render_audio_video_scanner_interface(region: str, username: str):
     Supports audio (MP3, WAV, FLAC, M4A) and video (MP4, AVI, MOV, MKV, WEBM) files.
     """)
     
-    uploaded_files = st.file_uploader(
-        "Upload Audio/Video Files",
-        accept_multiple_files=True,
-        type=['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv']
-    )
+    input_tab1, input_tab2 = st.tabs(["📁 Upload Files", "🔗 Scan URL"])
     
-    with st.expander("🔧 Detection Options"):
+    uploaded_files = None
+    media_url = None
+    
+    with input_tab1:
+        uploaded_files = st.file_uploader(
+            "Upload Audio/Video Files",
+            accept_multiple_files=True,
+            type=['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv', 'mpeg4']
+        )
+    
+    with input_tab2:
+        st.markdown("""
+        **Supported platforms:** YouTube, Vimeo, Twitter/X, Facebook, Instagram, TikTok, 
+        Dailymotion, SoundCloud, and 1000+ other sites.
+        """)
+        media_url = st.text_input(
+            "Enter Media URL",
+            placeholder="https://www.youtube.com/watch?v=... or any video/audio URL",
+            help="Paste a URL to a video or audio file. Maximum duration: 10 minutes."
+        )
+        if media_url:
+            st.info("💡 The media will be downloaded for analysis. Only public content is supported.")
+    
+    with st.expander("🔧 Detection Options", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
             detect_audio_deepfake = st.checkbox("Audio Deepfake Detection", value=True)
@@ -9777,24 +9876,38 @@ def render_audio_video_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        if not uploaded_files:
-            st.warning("Please upload at least one audio or video file.")
+        has_files = uploaded_files and len(uploaded_files) > 0
+        has_url = media_url and media_url.strip()
+        
+        if not has_files and not has_url:
+            st.warning("Please upload at least one audio/video file or enter a URL to scan.")
             return
         
-        execute_audio_video_scan(
-            region=region,
-            username=username,
-            uploaded_files=uploaded_files,
-            sensitivity=sensitivity,
-            options={
-                'detect_audio_deepfake': detect_audio_deepfake,
-                'detect_voice_cloning': detect_voice_cloning,
-                'detect_ai_speech': detect_ai_speech,
-                'detect_video_deepfake': detect_video_deepfake,
-                'detect_face_swap': detect_face_swap,
-                'detect_metadata_tampering': detect_metadata_tampering
-            }
-        )
+        scan_options = {
+            'detect_audio_deepfake': detect_audio_deepfake,
+            'detect_voice_cloning': detect_voice_cloning,
+            'detect_ai_speech': detect_ai_speech,
+            'detect_video_deepfake': detect_video_deepfake,
+            'detect_face_swap': detect_face_swap,
+            'detect_metadata_tampering': detect_metadata_tampering
+        }
+        
+        if has_url and not has_files:
+            execute_audio_video_url_scan(
+                region=region,
+                username=username,
+                media_url=media_url.strip(),
+                sensitivity=sensitivity,
+                options=scan_options
+            )
+        elif has_files:
+            execute_audio_video_scan(
+                region=region,
+                username=username,
+                uploaded_files=uploaded_files,
+                sensitivity=sensitivity,
+                options=scan_options
+            )
 
 
 def execute_audio_video_scan(region: str, username: str, uploaded_files, sensitivity: str, options: dict):
