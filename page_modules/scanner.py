@@ -9767,21 +9767,26 @@ def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
         'retries': 3,
     }
     
+    import shutil
+    
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             
             if info is None:
+                shutil.rmtree(temp_dir, ignore_errors=True)
                 return False, "Could not extract media information from URL", {}
             
             duration = info.get('duration', 0) or 0
             if duration > max_duration:
+                shutil.rmtree(temp_dir, ignore_errors=True)
                 return False, f"Media duration ({duration}s) exceeds maximum ({max_duration}s). Please use shorter clips.", {}
             
             ydl.download([url])
             
             downloaded_files = [f for f in os.listdir(temp_dir) if os.path.isfile(os.path.join(temp_dir, f))]
             if not downloaded_files:
+                shutil.rmtree(temp_dir, ignore_errors=True)
                 return False, "Download completed but no file found", {}
             
             file_path = os.path.join(temp_dir, downloaded_files[0])
@@ -9800,6 +9805,7 @@ def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
             return True, file_path, metadata
             
     except yt_dlp.utils.DownloadError as e:
+        shutil.rmtree(temp_dir, ignore_errors=True)
         error_msg = str(e)
         if "Private video" in error_msg:
             return False, "This video is private and cannot be accessed", {}
@@ -9810,6 +9816,7 @@ def download_media_from_url(url: str, max_duration: int = 600) -> tuple:
         else:
             return False, f"Download failed: {error_msg[:200]}", {}
     except Exception as e:
+        shutil.rmtree(temp_dir, ignore_errors=True)
         return False, f"Error downloading media: {str(e)[:200]}", {}
 
 
@@ -10106,3 +10113,230 @@ def execute_audio_video_scan(region: str, username: str, uploaded_files, sensiti
     
     st.success(f"✅ Audio/Video scan completed! Analyzed {len(all_results)} files in {duration_ms/1000:.1f}s")
 
+
+def execute_audio_video_url_scan(region: str, username: str, media_url: str, sensitivity: str, options: dict):
+    """Execute audio/video deepfake detection scan from URL"""
+    import time
+    import tempfile
+    import os
+    import shutil
+    from datetime import datetime
+    from utils.activity_tracker import track_scan_started, track_scan_completed, ScannerType
+    
+    session_id = st.session_state.get('session_id', str(uuid.uuid4()))
+    user_id = st.session_state.get('user_id', username)
+    
+    scan_start_time = datetime.now()
+    
+    try:
+        track_scan_started(
+            session_id=session_id,
+            user_id=user_id,
+            username=username,
+            scanner_type=ScannerType.AUDIO_VIDEO,
+            region=region,
+            details={
+                'source': 'url',
+                'url': media_url[:100],
+                'sensitivity': sensitivity,
+                'options': options
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Failed to track scan start: {e}")
+    
+    track_scanner_usage('audio_video', region, success=True, duration_ms=0)
+    
+    progress_bar = st.progress(0)
+    status = st.empty()
+    
+    status.text("📥 Downloading media from URL...")
+    progress_bar.progress(10)
+    
+    success, result, metadata = download_media_from_url(media_url)
+    
+    if not success:
+        progress_bar.empty()
+        status.empty()
+        st.error(f"❌ {result}")
+        return
+    
+    file_path = result
+    progress_bar.progress(30)
+    
+    if metadata:
+        st.info(f"📺 **{metadata.get('title', 'Unknown')}** from {metadata.get('platform', 'Unknown')} "
+               f"({metadata.get('duration', 0)}s) by {metadata.get('uploader', 'Unknown')}")
+    
+    try:
+        from services.audio_video_scanner import AudioVideoScanner
+        scanner = AudioVideoScanner(region=region, sensitivity=sensitivity)
+    except ImportError as e:
+        try:
+            shutil.rmtree(os.path.dirname(file_path))
+        except:
+            pass
+        st.error(f"Audio/Video Scanner not available: {e}")
+        return
+    
+    status.text("🔍 Analyzing media for deepfakes and manipulation...")
+    progress_bar.progress(50)
+    
+    try:
+        file_name = os.path.basename(file_path)
+        result = scanner.scan_file(file_path, file_name)
+        
+        if metadata:
+            result.metadata_analysis['url_source'] = metadata
+        
+        progress_bar.progress(90)
+        
+    except Exception as e:
+        logger.error(f"Failed to scan URL media: {e}")
+        st.error(f"⚠️ Failed to analyze media: {str(e)}")
+        try:
+            shutil.rmtree(os.path.dirname(file_path))
+        except:
+            pass
+        return
+    finally:
+        try:
+            shutil.rmtree(os.path.dirname(file_path))
+        except:
+            pass
+    
+    progress_bar.progress(100)
+    status.text("✅ Analysis complete!")
+    time.sleep(0.5)
+    status.empty()
+    progress_bar.empty()
+    
+    scan_end_time = datetime.now()
+    duration_ms = int((scan_end_time - scan_start_time).total_seconds() * 1000)
+    
+    st.markdown("---")
+    st.subheader("📊 Scan Results Summary")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Source", "URL")
+    with col2:
+        risk_text = result.risk_level.value.upper()
+        st.metric("Risk Level", risk_text)
+    with col3:
+        st.metric("Authenticity", f"{result.authenticity_score:.1f}%")
+    with col4:
+        st.metric("Issues Found", len(result.fraud_types_detected))
+    
+    if metadata:
+        st.markdown("---")
+        st.subheader("📺 Media Information")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**Title:** {metadata.get('title', 'Unknown')}")
+            st.write(f"**Platform:** {metadata.get('platform', 'Unknown')}")
+            st.write(f"**Uploader:** {metadata.get('uploader', 'Unknown')}")
+        with col2:
+            st.write(f"**Duration:** {metadata.get('duration', 0)} seconds")
+            st.write(f"**Upload Date:** {metadata.get('upload_date', 'Unknown')}")
+            if metadata.get('view_count'):
+                st.write(f"**Views:** {metadata.get('view_count'):,}")
+    
+    st.markdown("---")
+    st.subheader("📋 Detailed Results")
+    
+    risk_color = {
+        'critical': '🔴',
+        'high': '🟠',
+        'medium': '🟡',
+        'low': '🟢',
+        'none': '🔵'
+    }.get(result.risk_level.value, '⚪')
+    
+    with st.expander(f"{risk_color} {result.file_name} - {result.authenticity_score:.0f}% Authentic", expanded=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write(f"**Media Type:** {result.media_type.upper()}")
+            st.write(f"**Duration:** {result.duration_seconds:.1f} seconds")
+            st.write(f"**File Size:** {result.file_size / 1024 / 1024:.2f} MB")
+        with col2:
+            st.write(f"**Risk Level:** {result.risk_level.value.upper()}")
+            st.write(f"**Authentic:** {'✅ Yes' if result.is_authentic else '❌ No'}")
+            st.write(f"**Scan ID:** {result.scan_id}")
+        
+        if result.fraud_types_detected:
+            st.warning(f"⚠️ **Detected Issues:** {', '.join([ft.value.replace('_', ' ').title() for ft in result.fraud_types_detected])}")
+        
+        if result.findings:
+            st.markdown("**Findings:**")
+            for finding in result.findings:
+                severity_icon = {'high': '🔴', 'medium': '🟡', 'low': '🟢', 'info': '🔵', 'error': '⚫'}.get(finding.get('severity', 'info'), '⚪')
+                st.markdown(f"- {severity_icon} **{finding.get('title', 'Finding')}**: {finding.get('description', '')}")
+        
+        if result.recommendations:
+            st.markdown("**Recommendations:**")
+            for rec in result.recommendations:
+                st.markdown(f"- {rec}")
+        
+        if result.eu_ai_act_flags:
+            st.info(f"🇪🇺 **EU AI Act Flags:** {', '.join(result.eu_ai_act_flags)}")
+    
+    st.markdown("---")
+    st.subheader("📥 Download Report")
+    
+    html_report = scanner.generate_html_report(result)
+    safe_filename = result.file_name.replace(' ', '_').replace('.', '_')
+    st.download_button(
+        label=f"📄 Download Deepfake Analysis Report",
+        data=html_report,
+        file_name=f"deepfake_url_report_{safe_filename}_{result.scan_id}.html",
+        mime="text/html",
+        key=f"download_url_{result.scan_id}"
+    )
+    
+    combined_result = {
+        'scan_id': str(uuid.uuid4())[:8],
+        'scan_type': 'audio_video_url',
+        'timestamp': datetime.now().isoformat(),
+        'region': region,
+        'username': username,
+        'source_url': media_url,
+        'file_count': 1,
+        'files_scanned': 1,
+        'total_pii_found': 0 if result.is_authentic else 1,
+        'authenticity_score': result.authenticity_score,
+        'findings': result.findings,
+        'processing_time_ms': duration_ms,
+        'url_metadata': metadata
+    }
+    
+    try:
+        from services.results_aggregator import ResultsAggregator
+        aggregator = ResultsAggregator()
+        stored_id = aggregator.save_scan_result(username=username, result=combined_result)
+        if stored_id:
+            st.session_state['last_scan_id'] = stored_id
+            logger.info(f"Audio/Video URL scan saved: {stored_id}")
+    except Exception as e:
+        logger.warning(f"Failed to save scan results: {e}")
+    
+    try:
+        track_scan_completed(
+            session_id=session_id,
+            user_id=user_id,
+            username=username,
+            scanner_type=ScannerType.AUDIO_VIDEO,
+            region=region,
+            duration_ms=duration_ms,
+            details={
+                'source': 'url',
+                'url': media_url[:100],
+                'is_authentic': result.is_authentic,
+                'authenticity_score': result.authenticity_score,
+                'fraud_types': [ft.value for ft in result.fraud_types_detected]
+            }
+        )
+    except Exception as e:
+        logger.warning(f"Failed to track scan completion: {e}")
+    
+    st.success(f"✅ URL media scan completed in {duration_ms/1000:.1f}s")
