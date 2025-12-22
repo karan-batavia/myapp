@@ -10125,6 +10125,15 @@ def render_audio_video_scanner_interface(region: str, username: str):
             detect_video_deepfake = st.checkbox("Video Deepfake Detection", value=True)
             detect_face_swap = st.checkbox("Face Swap Detection", value=True)
             detect_metadata_tampering = st.checkbox("Metadata Tampering Detection", value=True)
+        
+        st.markdown("---")
+        enable_ai_analysis = st.checkbox(
+            "🤖 AI-Powered Analysis (GPT-4 Vision)", 
+            value=True,
+            help="Uses OpenAI GPT-4 Vision to analyze video frames for advanced deepfake detection. More accurate but may incur API costs."
+        )
+        if enable_ai_analysis:
+            st.caption("⚠️ Video frames will be sent to OpenAI for analysis. Do not use with confidential content.")
     
     sensitivity = st.select_slider(
         "Detection Sensitivity",
@@ -10152,7 +10161,8 @@ def render_audio_video_scanner_interface(region: str, username: str):
             'detect_ai_speech': detect_ai_speech,
             'detect_video_deepfake': detect_video_deepfake,
             'detect_face_swap': detect_face_swap,
-            'detect_metadata_tampering': detect_metadata_tampering
+            'detect_metadata_tampering': detect_metadata_tampering,
+            'enable_ai_analysis': enable_ai_analysis
         }
         
         if has_url and not has_files:
@@ -10209,7 +10219,8 @@ def execute_audio_video_scan(region: str, username: str, uploaded_files, sensiti
     
     try:
         from services.audio_video_scanner import AudioVideoScanner
-        scanner = AudioVideoScanner(region=region, sensitivity=sensitivity)
+        enable_ai = options.get('enable_ai_analysis', True)
+        scanner = AudioVideoScanner(region=region, sensitivity=sensitivity, enable_ai_analysis=enable_ai)
     except ImportError as e:
         st.error(f"Audio/Video Scanner not available: {e}")
         return

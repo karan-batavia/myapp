@@ -22,6 +22,7 @@ import io
 import hashlib
 import tempfile
 import json
+import base64
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
 from dataclasses import dataclass, field
@@ -29,6 +30,13 @@ from enum import Enum
 import uuid
 
 logger = logging.getLogger(__name__)
+
+OPENAI_AVAILABLE = False
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    logger.warning("OpenAI not available for AI-powered analysis")
 
 try:
     import cv2
@@ -145,9 +153,10 @@ class AudioVideoScanner:
     SUPPORTED_VIDEO = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv', 'flv', 'm4v']
     MAX_FILE_SIZE_MB = 500
     
-    def __init__(self, region: str = "Netherlands", sensitivity: str = "high"):
+    def __init__(self, region: str = "Netherlands", sensitivity: str = "high", enable_ai_analysis: bool = True):
         self.region = region
         self.sensitivity = sensitivity
+        self.enable_ai_analysis = enable_ai_analysis
         
         sensitivity_thresholds = {
             "low": 0.50,
@@ -157,7 +166,17 @@ class AudioVideoScanner:
         }
         self.detection_threshold = sensitivity_thresholds.get(sensitivity, 0.20)
         
-        logger.info(f"AudioVideoScanner initialized for region: {region}, sensitivity: {sensitivity}")
+        logger.info(f"AudioVideoScanner initialized for region: {region}, sensitivity: {sensitivity}, ai_analysis: {enable_ai_analysis}")
+    
+    def _is_ai_analysis_enabled(self) -> bool:
+        """Check if AI-powered analysis should be used (requires opt-in and API key)."""
+        if not self.enable_ai_analysis:
+            return False
+        if not OPENAI_AVAILABLE:
+            return False
+        if not os.environ.get('OPENAI_API_KEY'):
+            return False
+        return True
     
     def scan_file(self, file_path: str, file_name: str = None) -> MediaScanResult:
         """
@@ -440,6 +459,26 @@ class AudioVideoScanner:
                 if temporal_result['is_suspicious']:
                     fraud_types.append(MediaFraudType.FRAME_INSERTION)
                     fraud_score = max(fraud_score, temporal_result['score'])
+                
+                if self._is_ai_analysis_enabled():
+                    ai_result = self._ai_powered_frame_analysis(sample_frames)
+                    
+                    if ai_result.get('analysis_details'):
+                        details['ai_analysis'] = ai_result.get('analysis_details', {})
+                    
+                    if ai_result.get('is_suspicious'):
+                        if ai_result.get('detected_type') == 'face_swap':
+                            if MediaFraudType.FACE_SWAP not in fraud_types:
+                                fraud_types.append(MediaFraudType.FACE_SWAP)
+                        elif ai_result.get('detected_type') == 'ai_generated':
+                            if MediaFraudType.AI_GENERATED_VIDEO not in fraud_types:
+                                fraud_types.append(MediaFraudType.AI_GENERATED_VIDEO)
+                        else:
+                            if MediaFraudType.VIDEO_DEEPFAKE not in fraud_types:
+                                fraud_types.append(MediaFraudType.VIDEO_DEEPFAKE)
+                        fraud_score = max(fraud_score, ai_result.get('score', 0.5))
+                        if ai_result.get('anomalies'):
+                            frame_anomalies.extend(ai_result['anomalies'])
                     
         except Exception as e:
             logger.warning(f"Video analysis error: {e}")
@@ -478,6 +517,149 @@ class AudioVideoScanner:
             spectral_anomalies=[],
             recommendations=[]
         )
+    
+    def _ai_powered_frame_analysis(self, frames: List[Tuple[int, Any]]) -> Dict[str, Any]:
+        """
+        Use OpenAI Vision API to analyze video frames for deepfake indicators.
+        Analyzes selected frames for signs of AI manipulation, face swaps, and synthetic content.
+        """
+        if not OPENAI_AVAILABLE:
+            logger.debug("OpenAI not available for AI-powered analysis")
+            return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
+        
+        api_key = os.environ.get('OPENAI_API_KEY')
+        if not api_key:
+            logger.debug("OPENAI_API_KEY not configured")
+            return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
+        
+        if len(frames) == 0:
+            return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
+        
+        try:
+            client = OpenAI(api_key=api_key)
+            
+            frame_indices = [0, len(frames)//2, len(frames)-1] if len(frames) >= 3 else list(range(len(frames)))
+            selected_frames = [frames[i] for i in frame_indices if i < len(frames)]
+            
+            encoded_frames = []
+            for idx, frame in selected_frames[:3]:
+                if not CV_AVAILABLE:
+                    continue
+                    
+                small_frame = cv2.resize(frame, (512, 288))
+                _, buffer = cv2.imencode('.jpg', small_frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
+                base64_image = base64.b64encode(buffer).decode('utf-8')
+                encoded_frames.append({
+                    'frame_index': idx,
+                    'base64': base64_image
+                })
+            
+            if not encoded_frames:
+                return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
+            
+            messages = [
+                {
+                    "role": "system",
+                    "content": """You are an expert media forensics analyst specializing in detecting AI-generated and manipulated video content (deepfakes). 
+                    
+Analyze the provided video frames and look for these deepfake indicators:
+1. Face inconsistencies: unnatural skin texture, blurry face edges, asymmetry
+2. Lighting anomalies: mismatched lighting on face vs background
+3. Eye/blinking issues: unnatural eye movement, no reflections in eyes
+4. Hair/ear artifacts: blurry hairline, distorted ears
+5. Background inconsistencies: warping around face edges
+6. Overall synthetic appearance: too smooth, plastic-like skin
+
+Respond in JSON format with:
+{
+  "is_deepfake": true/false,
+  "confidence": 0.0-1.0,
+  "deepfake_type": "none" | "face_swap" | "ai_generated" | "lip_sync" | "unknown",
+  "indicators_found": ["list of specific indicators detected"],
+  "analysis_summary": "brief explanation"
+}"""
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Analyze these video frames for deepfake indicators:"}
+                    ] + [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/jpeg;base64,{ef['base64']}", "detail": "low"}
+                        } for ef in encoded_frames
+                    ]
+                }
+            ]
+            
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                max_tokens=500,
+                temperature=0.1
+            )
+            
+            response_text = response.choices[0].message.content.strip()
+            
+            if response_text.startswith('```'):
+                response_text = response_text.split('```')[1]
+                if response_text.startswith('json'):
+                    response_text = response_text[4:]
+            
+            try:
+                analysis = json.loads(response_text)
+            except json.JSONDecodeError:
+                import re
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    analysis = json.loads(json_match.group())
+                else:
+                    logger.warning(f"Could not parse AI response: {response_text[:200]}")
+                    return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
+            
+            is_deepfake = analysis.get('is_deepfake', False)
+            confidence = float(analysis.get('confidence', 0.0))
+            deepfake_type = analysis.get('deepfake_type', 'unknown')
+            indicators = analysis.get('indicators_found', [])
+            summary = analysis.get('analysis_summary', '')
+            
+            anomalies = []
+            if is_deepfake and indicators:
+                for indicator in indicators:
+                    anomalies.append({
+                        'type': 'ai_detected_deepfake_indicator',
+                        'description': indicator,
+                        'severity': 'high' if confidence > 0.7 else 'medium',
+                        'source': 'openai_vision'
+                    })
+            
+            detected_type = None
+            if deepfake_type == 'face_swap':
+                detected_type = 'face_swap'
+            elif deepfake_type == 'ai_generated':
+                detected_type = 'ai_generated'
+            elif deepfake_type != 'none':
+                detected_type = 'deepfake'
+            
+            return {
+                'is_suspicious': is_deepfake and confidence > 0.5,
+                'score': confidence if is_deepfake else 0.0,
+                'detected_type': detected_type,
+                'anomalies': anomalies,
+                'analysis_details': {
+                    'ai_powered': True,
+                    'model': 'gpt-4o',
+                    'frames_analyzed': len(encoded_frames),
+                    'deepfake_type': deepfake_type,
+                    'confidence': confidence,
+                    'summary': summary,
+                    'indicators': indicators
+                }
+            }
+            
+        except Exception as e:
+            logger.warning(f"AI-powered frame analysis error: {e}")
+            return {'is_suspicious': False, 'score': 0.0, 'anomalies': [], 'error': str(e)}
     
     def _spectral_analysis(self, samples: np.ndarray, sample_rate: int) -> Dict[str, Any]:
         """Perform spectral analysis for AI-generated audio detection."""
@@ -1081,6 +1263,49 @@ class AudioVideoScanner:
                     <div class="analysis-metric highlight">
                         <span class="metric-label">Manipulation Score</span>
                         <span class="metric-value" style="color: {fraud_score_color}">{video.fraud_score:.0%}</span>
+                    </div>
+                </div>
+            </div>'''
+            
+            ai_analysis = video.details.get('ai_analysis', {})
+            if ai_analysis.get('ai_powered'):
+                ai_confidence = ai_analysis.get('confidence', 0)
+                ai_summary = ai_analysis.get('summary', 'No summary available')
+                ai_type = ai_analysis.get('deepfake_type', 'none')
+                ai_indicators = ai_analysis.get('indicators', [])
+                
+                indicators_html = ''.join([f'<li>{ind}</li>' for ind in ai_indicators]) if ai_indicators else '<li>No specific indicators detected</li>'
+                
+                ai_color = '#dc3545' if ai_confidence > 0.7 else '#fd7e14' if ai_confidence > 0.3 else '#28a745'
+                
+                video_details_html += f'''
+            <div class="analysis-card ai-analysis" style="border-left: 4px solid #667eea; margin-top: 15px;">
+                <div class="analysis-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 10px 15px; border-radius: 8px 8px 0 0;">
+                    <span class="analysis-icon">🤖</span>
+                    <h4 style="margin: 0;">AI-Powered Deepfake Analysis</h4>
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 0 0 8px 8px;">
+                    <div class="analysis-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div class="analysis-metric" style="text-align: center; padding: 10px; background: white; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 12px; color: #666;">AI Confidence</span>
+                            <span class="metric-value" style="font-size: 24px; font-weight: bold; color: {ai_color};">{ai_confidence:.0%}</span>
+                        </div>
+                        <div class="analysis-metric" style="text-align: center; padding: 10px; background: white; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 12px; color: #666;">Detection Type</span>
+                            <span class="metric-value" style="font-size: 18px; font-weight: bold;">{ai_type.replace('_', ' ').title()}</span>
+                        </div>
+                        <div class="analysis-metric" style="text-align: center; padding: 10px; background: white; border-radius: 8px;">
+                            <span class="metric-label" style="display: block; font-size: 12px; color: #666;">Model Used</span>
+                            <span class="metric-value" style="font-size: 18px; font-weight: bold;">{ai_analysis.get('model', 'GPT-4')}</span>
+                        </div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                        <strong>AI Analysis Summary:</strong>
+                        <p style="margin-top: 5px; color: #555;">{ai_summary}</p>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px;">
+                        <strong>Indicators Analyzed:</strong>
+                        <ul style="margin-top: 5px; padding-left: 20px;">{indicators_html}</ul>
                     </div>
                 </div>
             </div>'''
