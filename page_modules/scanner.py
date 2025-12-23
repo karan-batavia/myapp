@@ -9783,6 +9783,13 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
     like_count = metadata.get('like_count', 0) or 0
     channel_followers = metadata.get('channel_follower_count', 0) or 0
     
+    engagement_rate = ((like_count / view_count) * 100) if view_count > 0 else 0
+    view_sub_ratio = (view_count / channel_followers) if channel_followers > 0 else 0
+    
+    channel_label = 'Established' if channel_followers > 100000 else 'Growing' if channel_followers > 10000 else 'Small'
+    engagement_label = 'Excellent' if engagement_rate > 3 else 'Good' if engagement_rate > 1 else 'Normal' if engagement_rate > 0.3 else 'Low'
+    ratio_label = 'Normal' if view_sub_ratio < 50 else 'High' if view_sub_ratio < 200 else 'Unusual'
+    
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9934,14 +9941,17 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
                 <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; text-align: center;">
                     <div style="font-size: 20px; font-weight: bold; color: #1565c0;">{channel_followers:,}</div>
                     <div style="font-size: 12px; color: #666;">Channel Followers</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 4px;">{channel_label}</div>
                 </div>
                 <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; font-weight: bold; color: #2e7d32;">{((like_count / view_count) * 100) if view_count > 0 else 0:.2f}%</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #2e7d32;">{engagement_rate:.2f}%</div>
                     <div style="font-size: 12px; color: #666;">Engagement Rate</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 4px;">{engagement_label}</div>
                 </div>
                 <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; font-weight: bold; color: #ef6c00;">{(view_count / channel_followers) if channel_followers > 0 else 0:.0f}:1</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #ef6c00;">{view_sub_ratio:.0f}:1</div>
                     <div style="font-size: 12px; color: #666;">View/Sub Ratio</div>
+                    <div style="font-size: 10px; color: #999; margin-top: 4px;">{ratio_label}</div>
                 </div>
             </div>
         </div>
@@ -10611,6 +10621,19 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
                 'severity': 'info'
             })
         
+        is_verified_channel = False
+        uploader = metadata.get('uploader', '').lower()
+        channel_id = metadata.get('channel_id', '').lower()
+        if any(x in uploader for x in ['vevo', 'official', 'records', 'music']) or \
+           any(x in channel_id for x in ['vevo', 'official']) or \
+           channel_followers > 500000:
+            is_verified_channel = True
+            findings.append({
+                'title': 'Verified/Official Channel Indicators',
+                'description': f'Channel appears to be official or verified based on name/size ({channel_followers:,} followers)',
+                'severity': 'info'
+            })
+        
         if thumbnail_path and os.path.exists(thumbnail_path):
             try:
                 from PIL import Image
@@ -10632,13 +10655,19 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
                         face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
                         faces = face_cascade.detectMultiScale(gray, 1.1, 4)
                         if len(faces) > 0:
-                            findings.append({
-                                'title': 'Face Detection',
-                                'description': f'Detected {len(faces)} face(s) in thumbnail - recommend full video analysis for deepfake detection',
-                                'severity': 'medium'
-                            })
-                            risk_score += 5
-                            recommendations.append('For comprehensive face swap/deepfake detection, upload the actual video file')
+                            if is_verified_channel and credibility_score >= 80:
+                                findings.append({
+                                    'title': 'Face Detection',
+                                    'description': f'Detected {len(faces)} face(s) in thumbnail. Channel is verified/official - lower deepfake risk.',
+                                    'severity': 'info'
+                                })
+                            else:
+                                findings.append({
+                                    'title': 'Face Detection',
+                                    'description': f'Detected {len(faces)} face(s) in thumbnail - recommend full video analysis for deepfake detection',
+                                    'severity': 'medium'
+                                })
+                                risk_score += 5
                 except Exception as e:
                     logger.debug(f"Face detection skipped: {e}")
             except Exception as e:
@@ -10659,9 +10688,10 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
                 'severity': 'info'
             })
         
-        recommendations.append('For definitive deepfake detection, download and upload the video file directly')
-        recommendations.append('Cross-reference uploader identity with official sources')
-        recommendations.append('Check video upload date vs claimed event date')
+        if not is_verified_channel:
+            recommendations.append('For definitive deepfake detection, download and upload the video file directly')
+            recommendations.append('Cross-reference uploader identity with official sources')
+        recommendations.append('Check video upload date vs claimed event date for time-sensitive claims')
         
         progress_bar.progress(90)
         
