@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Media Analysis Report - a313f08c</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f5f5f5;
+            color: #333;
+        }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { 
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); 
+            color: white; 
+            padding: 30px; 
+            text-align: center; 
+        }
+        .header h1 { margin: 0 0 10px 0; font-size: 24px; }
+        .header p { margin: 0; opacity: 0.9; }
+        .summary { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            padding: 20px 30px; 
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .summary-card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .summary-card .value { font-size: 24px; font-weight: bold; color: #17a2b8; }
+        .summary-card .label { font-size: 12px; color: #666; margin-top: 5px; }
+        .section { padding: 25px 30px; border-bottom: 1px solid #e9ecef; }
+        .section:last-child { border-bottom: none; }
+        .section h2 { 
+            margin: 0 0 15px 0; 
+            color: #1a237e; 
+            font-size: 18px;
+            border-bottom: 2px solid #e8eaf6;
+            padding-bottom: 10px;
+        }
+        .media-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-group { }
+        .info-item { margin: 8px 0; }
+        .info-item strong { color: #555; }
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .warning-box strong { color: #856404; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        li { margin: 5px 0; }
+        .footer { 
+            background: #f8f9fa; 
+            padding: 20px 30px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #666; 
+        }
+        .risk-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            background: #17a2b8;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .summary { grid-template-columns: repeat(2, 1fr); }
+            .media-info { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>URL Media Metadata Analysis Report</h1>
+            <p>DataGuardian Pro - Enterprise Deepfake Detection</p>
+            <div style="margin-top: 15px;">
+                <span class="risk-badge">Risk Level: NONE</span>
+            </div>
+        </div>
+        
+        <div class="summary">
+            <div class="summary-card">
+                <div class="value">Metadata</div>
+                <div class="label">Analysis Type</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" style="color: #17a2b8;">NONE</div>
+                <div class="label">Risk Level</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">95%</div>
+                <div class="label">Confidence Score</div>
+            </div>
+            <div class="summary-card">
+                <div class="value">1</div>
+                <div class="label">Flags Found</div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="warning-box">
+                <strong>Note:</strong> This analysis is based on metadata and thumbnail inspection only. 
+                For comprehensive deepfake detection of actual audio/video content, please upload the media file directly.
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Media Information</h2>
+            <div class="media-info">
+                <div class="info-group">
+                    <div class="info-item"><strong>Title:</strong> Leia e Veja o que ela Esta Dizendo para ele; Veja se você 🫵 Poderia Dizer Pará quem Você ama!</div>
+                    <div class="info-item"><strong>Platform:</strong> youtube</div>
+                    <div class="info-item"><strong>Uploader:</strong> #JN Nunes</div>
+                    <div class="info-item"><strong>Duration:</strong> 206 seconds</div>
+                    <div class="info-item"><strong>Upload Date:</strong> 20230627</div>
+                </div>
+                <div class="info-group">
+                    <div class="info-item"><strong>Views:</strong> 7,778,884</div>
+                    <div class="info-item"><strong>Likes:</strong> 23,853</div>
+                    <div class="info-item"><strong>Channel Followers:</strong> 11,800</div>
+                    <div class="info-item"><strong>Subtitles Available:</strong> No</div>
+                    <div class="info-item"><strong>Live/Was Live:</strong> No</div>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <div class="info-item"><strong>Source URL:</strong> <a href="https://www.youtube.com/watch?v=ov4JScDkknU&list=RDov4JScDkknU&start_radio=1" target="_blank" style="color: #1a237e;">https://www.youtube.com/watch?v=ov4JScDkknU&list=RDov4JScDkknU&start_radio=1</a></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Analysis Findings</h2>
+            
+        <div class="finding" style="border-left: 4px solid #17a2b8; padding: 12px; margin: 10px 0; background: #f8f9fa; border-radius: 4px;">
+            <strong style="color: #17a2b8;">[INFO]</strong> Thumbnail Analysis
+            <p style="margin: 5px 0 0 0; color: #555;">Thumbnail resolution: 1280x720</p>
+        </div>
+        
+        <div class="finding" style="border-left: 4px solid #ffc107; padding: 12px; margin: 10px 0; background: #f8f9fa; border-radius: 4px;">
+            <strong style="color: #ffc107;">[MEDIUM]</strong> Face Detection
+            <p style="margin: 5px 0 0 0; color: #555;">Detected 1 face(s) in thumbnail - recommend full video analysis for deepfake detection</p>
+        </div>
+        
+        <div class="finding" style="border-left: 4px solid #17a2b8; padding: 12px; margin: 10px 0; background: #f8f9fa; border-radius: 4px;">
+            <strong style="color: #17a2b8;">[INFO]</strong> Trusted Platform
+            <p style="margin: 5px 0 0 0; color: #555;">Content hosted on Youtube - has content policies against deceptive media</p>
+        </div>
+        
+        </div>
+        
+        <div class="section">
+            <h2>Recommendations</h2>
+            <ul>
+                <li>For comprehensive face swap/deepfake detection, upload the actual video file</li><li>For definitive deepfake detection, download and upload the video file directly</li><li>Cross-reference uploader identity with official sources</li><li>Check video upload date vs claimed event date</li>
+            </ul>
+        </div>
+        
+        
+        
+        <div class="section">
+            <h2>Scan Details</h2>
+            <div class="info-item"><strong>Scan ID:</strong> a313f08c</div>
+            <div class="info-item"><strong>Scan Date:</strong> 2025-12-23 19:45:41</div>
+            <div class="info-item"><strong>Processing Time:</strong> 8.4 seconds</div>
+            <div class="info-item"><strong>Region:</strong> Netherlands</div>
+        </div>
+        
+        <div class="footer">
+            <p>Generated by DataGuardian Pro - Enterprise Privacy Compliance Platform</p>
+            <p>This report analyzes publicly available metadata only. For comprehensive deepfake detection, upload media files directly.</p>
+            <p>© 2025 DataGuardian Pro. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
