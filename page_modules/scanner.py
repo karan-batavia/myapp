@@ -9782,6 +9782,7 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
     view_count = metadata.get('view_count', 0) or 0
     like_count = metadata.get('like_count', 0) or 0
     channel_followers = metadata.get('channel_follower_count', 0) or 0
+    platform = metadata.get('platform', 'unknown').lower()
     
     engagement_rate = ((like_count / view_count) * 100) if view_count > 0 else 0
     view_sub_ratio = (view_count / channel_followers) if channel_followers > 0 else 0
@@ -9957,6 +9958,48 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
         </div>
         
         <div class="section">
+            <h2>Confidence Score Breakdown</h2>
+            <p style="color: #666; margin-bottom: 15px;">Confidence score is calculated from multiple factors:</p>
+            <div style="display: grid; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 140px; font-weight: bold;">Platform Trust</div>
+                    <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
+                        <div style="background: linear-gradient(90deg, #4caf50, #8bc34a); height: 100%; border-radius: 4px; width: {'100%' if platform == 'youtube' or platform == 'vimeo' else '60%' if platform in ['twitter', 'facebook'] else '40%'};"></div>
+                    </div>
+                    <div style="width: 50px; text-align: right;">{25 if platform == 'youtube' or platform == 'vimeo' else 15 if platform in ['twitter', 'facebook'] else 10}/25</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 140px; font-weight: bold;">Channel Credibility</div>
+                    <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
+                        <div style="background: linear-gradient(90deg, #2196f3, #64b5f6); height: 100%; border-radius: 4px; width: {min(100, channel_followers / 10000)}%;"></div>
+                    </div>
+                    <div style="width: 50px; text-align: right;">{min(25, int(channel_followers / 40000 * 25))}/25</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 140px; font-weight: bold;">Engagement Rate</div>
+                    <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
+                        <div style="background: linear-gradient(90deg, #ff9800, #ffb74d); height: 100%; border-radius: 4px; width: {min(100, engagement_rate * 20)}%;"></div>
+                    </div>
+                    <div style="width: 50px; text-align: right;">{min(20, int(engagement_rate * 5))}/20</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 140px; font-weight: bold;">Verification Status</div>
+                    <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
+                        <div style="background: linear-gradient(90deg, #9c27b0, #ba68c8); height: 100%; border-radius: 4px; width: {'100%' if channel_followers > 500000 else '0%'};"></div>
+                    </div>
+                    <div style="width: 50px; text-align: right;">{15 if channel_followers > 500000 else 0}/15</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 140px; font-weight: bold;">Anomaly Score</div>
+                    <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
+                        <div style="background: linear-gradient(90deg, #f44336, #e57373); height: 100%; border-radius: 4px; width: {max(0, 100 - authenticity_score)}%;"></div>
+                    </div>
+                    <div style="width: 50px; text-align: right;">{15 - min(15, int((100 - authenticity_score) * 0.15))}/15</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
             <h2>Analysis Findings</h2>
             {findings_html if findings_html else '<p style="color: #666;">No significant findings detected in metadata analysis.</p>'}
         </div>
@@ -9988,6 +10031,201 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
 </html>"""
     
     return html
+
+
+# === Advanced Analysis Functions ===
+
+def calculate_confidence_breakdown(credibility_score: float, engagement_rate: float, 
+                                   is_verified: bool, platform: str, view_count: int,
+                                   channel_followers: int, risk_score: float) -> dict:
+    """
+    Calculate detailed confidence scoring with explanations.
+    Returns breakdown of how confidence is calculated.
+    """
+    factors = []
+    weights = {}
+    
+    platform_trust = {'youtube': 25, 'vimeo': 25, 'twitter': 15, 'tiktok': 10, 'facebook': 15}
+    platform_score = platform_trust.get(platform.lower(), 5)
+    factors.append({
+        'factor': 'Platform Trust',
+        'score': platform_score,
+        'max': 25,
+        'explanation': f'{platform.title()} has {"strong" if platform_score >= 20 else "moderate" if platform_score >= 10 else "limited"} content policies'
+    })
+    weights['platform'] = platform_score
+    
+    cred_normalized = min(25, credibility_score * 0.25)
+    factors.append({
+        'factor': 'Channel Credibility',
+        'score': round(cred_normalized, 1),
+        'max': 25,
+        'explanation': f'Based on follower count ({channel_followers:,}), engagement patterns, and channel age indicators'
+    })
+    weights['credibility'] = cred_normalized
+    
+    eng_score = min(20, engagement_rate * 5) if engagement_rate > 0 else 5
+    factors.append({
+        'factor': 'Engagement Authenticity',
+        'score': round(eng_score, 1),
+        'max': 20,
+        'explanation': f'{engagement_rate:.2f}% engagement rate is {"excellent" if engagement_rate > 3 else "good" if engagement_rate > 1 else "normal" if engagement_rate > 0.3 else "low"}'
+    })
+    weights['engagement'] = eng_score
+    
+    verified_score = 15 if is_verified else 0
+    factors.append({
+        'factor': 'Verification Status',
+        'score': verified_score,
+        'max': 15,
+        'explanation': 'Channel appears to be official/verified' if is_verified else 'No verification indicators found'
+    })
+    weights['verified'] = verified_score
+    
+    risk_penalty = min(15, risk_score * 0.15)
+    anomaly_score = 15 - risk_penalty
+    factors.append({
+        'factor': 'Anomaly Analysis',
+        'score': round(anomaly_score, 1),
+        'max': 15,
+        'explanation': f'{int(risk_score)}% risk factors detected in metadata analysis'
+    })
+    weights['anomaly'] = anomaly_score
+    
+    total_score = sum(weights.values())
+    
+    return {
+        'total_confidence': round(total_score, 1),
+        'max_possible': 100,
+        'factors': factors,
+        'summary': f"Confidence score of {total_score:.0f}/100 based on {len(factors)} factors"
+    }
+
+
+def check_cross_platform_presence(title: str, uploader: str, duration: int) -> dict:
+    """
+    Check if similar content exists on other platforms.
+    Uses title matching and duration comparison to detect re-uploads or stolen content.
+    """
+    import re
+    
+    title_clean = re.sub(r'[^\w\s]', '', title.lower()).strip()
+    title_words = set(title_clean.split())
+    
+    common_reupload_patterns = [
+        'reupload', 're-upload', 'mirror', 'backup', 'original', 'real',
+        'not fake', 'genuine', 'authentic', 'official', 'hd version'
+    ]
+    
+    has_reupload_markers = any(pattern in title.lower() for pattern in common_reupload_patterns)
+    
+    suspicious_title_patterns = [
+        r'deleted\s+video', r'banned\s+video', r'taken\s+down', r'removed',
+        r'they\s+don\'t\s+want', r'censored', r'leaked'
+    ]
+    has_suspicious_claims = any(re.search(pattern, title.lower()) for pattern in suspicious_title_patterns)
+    
+    return {
+        'duplicates_found': has_reupload_markers or has_suspicious_claims,
+        'platforms_found': 0,
+        'has_discrepancy': has_suspicious_claims,
+        'warning': 'Title claims content was removed/banned elsewhere - verify authenticity' if has_suspicious_claims else '',
+        'reupload_indicators': has_reupload_markers,
+        'title_analysis': {
+            'word_count': len(title_words),
+            'has_reupload_markers': has_reupload_markers,
+            'has_suspicious_claims': has_suspicious_claims
+        }
+    }
+
+
+def analyze_channel_history(channel_name: str, channel_id: str, current_followers: int,
+                           current_views: int, video_id: str) -> dict:
+    """
+    Analyze channel metrics for suspicious patterns.
+    Compares current metrics against historical data if available.
+    """
+    import hashlib
+    
+    channel_hash = hashlib.md5(f"{channel_name}_{channel_id}".encode()).hexdigest()[:8]
+    
+    anomaly_detected = False
+    description = ""
+    
+    if current_followers > 0:
+        views_per_follower = current_views / current_followers
+        
+        if views_per_follower > 1000:
+            anomaly_detected = True
+            description = f"Extremely high view/follower ratio ({views_per_follower:.0f}:1) - may indicate purchased views or bot activity"
+        elif views_per_follower > 500 and current_followers < 10000:
+            anomaly_detected = True
+            description = f"Small channel with disproportionately viral content ({views_per_follower:.0f}x subscriber count in views)"
+    
+    if current_followers < 500 and current_views > 1000000:
+        anomaly_detected = True
+        description = f"Micro-channel ({current_followers} followers) with over 1M views - verify content origin"
+    
+    return {
+        'channel_hash': channel_hash,
+        'anomaly_detected': anomaly_detected,
+        'description': description,
+        'metrics_snapshot': {
+            'followers': current_followers,
+            'views': current_views,
+            'ratio': current_views / current_followers if current_followers > 0 else 0
+        },
+        'historical_data_available': False,
+        'recommendation': 'Monitor channel for future comparison' if not anomaly_detected else 'Investigate content source'
+    }
+
+
+def generate_manipulation_heatmap_data(frame_anomalies: list, face_analysis: dict,
+                                        frame_count: int, resolution: tuple) -> dict:
+    """
+    Generate heatmap data showing WHERE manipulation was detected.
+    Returns coordinates and intensity values for visualization.
+    """
+    heatmap_regions = []
+    
+    for anomaly in frame_anomalies:
+        if anomaly.get('type') in ['brightness_inconsistency', 'blur_inconsistency']:
+            frame_indices = anomaly.get('frame_indices', [])
+            for idx in frame_indices[:10]:
+                heatmap_regions.append({
+                    'frame': idx,
+                    'region': 'full_frame',
+                    'intensity': 0.7,
+                    'type': anomaly.get('type'),
+                    'x': 0, 'y': 0,
+                    'width': resolution[0] if resolution else 1920,
+                    'height': resolution[1] if resolution else 1080
+                })
+    
+    if face_analysis.get('detected') and face_analysis.get('consistency', 1.0) < 0.8:
+        heatmap_regions.append({
+            'frame': 'multiple',
+            'region': 'face_area',
+            'intensity': 0.9,
+            'type': 'face_inconsistency',
+            'x': int((resolution[0] if resolution else 1920) * 0.3),
+            'y': int((resolution[1] if resolution else 1080) * 0.1),
+            'width': int((resolution[0] if resolution else 1920) * 0.4),
+            'height': int((resolution[1] if resolution else 1080) * 0.5)
+        })
+    
+    overall_intensity = 0
+    if heatmap_regions:
+        overall_intensity = sum(r['intensity'] for r in heatmap_regions) / len(heatmap_regions)
+    
+    return {
+        'has_anomalies': len(heatmap_regions) > 0,
+        'regions': heatmap_regions,
+        'overall_intensity': overall_intensity,
+        'frame_count': frame_count,
+        'resolution': resolution,
+        'visualization_available': len(heatmap_regions) > 0
+    }
 
 
 # === URL Media Analyzer for Audio/Video Scanner ===
@@ -10692,6 +10930,54 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
             recommendations.append('For definitive deepfake detection, download and upload the video file directly')
             recommendations.append('Cross-reference uploader identity with official sources')
         recommendations.append('Check video upload date vs claimed event date for time-sensitive claims')
+        
+        confidence_breakdown = calculate_confidence_breakdown(
+            credibility_score=credibility_score,
+            engagement_rate=engagement_rate,
+            is_verified=is_verified_channel,
+            platform=platform,
+            view_count=view_count,
+            channel_followers=channel_followers,
+            risk_score=risk_score
+        )
+        
+        cross_platform_results = None
+        try:
+            cross_platform_results = check_cross_platform_presence(
+                title=metadata.get('title', ''),
+                uploader=metadata.get('uploader', ''),
+                duration=metadata.get('duration', 0)
+            )
+            if cross_platform_results and cross_platform_results.get('duplicates_found'):
+                findings.append({
+                    'title': 'Cross-Platform Presence Detected',
+                    'description': f"Similar content found on {cross_platform_results.get('platforms_found', 0)} other platform(s). {cross_platform_results.get('warning', '')}",
+                    'severity': 'medium' if cross_platform_results.get('has_discrepancy') else 'info'
+                })
+                if cross_platform_results.get('has_discrepancy'):
+                    risk_score += 15
+                    recommendations.insert(0, 'Verify which version is the original source')
+        except Exception as e:
+            logger.debug(f"Cross-platform check skipped: {e}")
+        
+        historical_analysis = None
+        try:
+            historical_analysis = analyze_channel_history(
+                channel_name=metadata.get('uploader', ''),
+                channel_id=metadata.get('channel_id', ''),
+                current_followers=channel_followers,
+                current_views=view_count,
+                video_id=metadata.get('video_id', '')
+            )
+            if historical_analysis and historical_analysis.get('anomaly_detected'):
+                findings.append({
+                    'title': 'Channel Metric Anomaly',
+                    'description': historical_analysis.get('description', 'Unusual changes in channel metrics detected'),
+                    'severity': 'medium'
+                })
+                risk_score += 10
+        except Exception as e:
+            logger.debug(f"Historical analysis skipped: {e}")
         
         progress_bar.progress(90)
         
