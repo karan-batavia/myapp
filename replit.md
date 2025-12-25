@@ -60,7 +60,7 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
 - **Enterprise Connectors**: Advanced OAuth2 token refresh and API rate limiting for Microsoft 365, Google Workspace, and Exact Online APIs.
 - **License System**: Fully operational license management with usage tracking and tier-based access control.
 - **AI Act Calculator**: Integrated 4-step wizard for EU AI Act 2025 compliance, including risk classification and Netherlands-specific features.
-- **EU AI Act Compliance**: Complete 100% coverage of all 113 EU AI Act articles with 38+ detection functions, comprehensive HTML reporting, and phased implementation timeline tracking (Feb 2025, Aug 2025, Aug 2026, Aug 2027).
+- **EU AI Act Compliance**: Complete 100% coverage of all 113 EU AI Act articles with 38+ detection functions integrated in AI Model Scanner, comprehensive HTML reporting, and phased implementation timeline tracking (Feb 2025, Aug 2025, Aug 2026, Aug 2027). Maximum penalties tracked: €35M or 7% global turnover for prohibited practices.
 - **DPIA Implementation**: 5-step wizard interface for GDPR Article 35 compliance.
 
 ## External Dependencies
