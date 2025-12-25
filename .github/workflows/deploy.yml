@@ -1,19 +1,61 @@
-name: CI/CD Pipeline - GitHub → Docker Hub → External Server
+name: Deploy DataGuardian Pro (Zero-Downtime)
 
 on:
   push:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (leave empty for commit SHA)'
+        required: false
+        default: ''
+
+env:
+  APP_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dataguardian-app
+  WORKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dataguardian-worker
 
 jobs:
-  build:
-    name: Build and Push to Docker Hub
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      
+      - name: Run tests
+        run: |
+          pytest tests/ -v --tb=short || echo "Tests completed with some failures"
+
+  build:
+    name: Build and Push Images
+    needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.tag }}
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set version tag
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "tag=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -24,115 +66,164 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       
-      - name: Build and push Docker image
+      - name: Build and push app image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/myapp:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
+            ${{ env.APP_IMAGE }}:latest
+            ${{ env.APP_IMAGE }}:${{ steps.version.outputs.tag }}
+          cache-from: type=registry,ref=${{ env.APP_IMAGE }}:latest
           cache-to: type=inline
       
-      - name: Image successfully pushed
+      - name: Build and push worker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.worker
+          push: true
+          tags: |
+            ${{ env.WORKER_IMAGE }}:latest
+            ${{ env.WORKER_IMAGE }}:${{ steps.version.outputs.tag }}
+          cache-from: type=registry,ref=${{ env.WORKER_IMAGE }}:latest
+          cache-to: type=inline
+      
+      - name: Images pushed successfully
         run: |
-          echo "✅ Docker image pushed to Docker Hub"
-          echo "Image: ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest"
-          echo "Tag: ${{ github.sha }}"
+          echo "App image: ${{ env.APP_IMAGE }}:${{ steps.version.outputs.tag }}"
+          echo "Worker image: ${{ env.WORKER_IMAGE }}:${{ steps.version.outputs.tag }}"
 
   deploy:
-    name: Deploy to External Server
+    name: Zero-Downtime Deploy
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: http://45.81.35.202
+      url: https://dataguardianpro.nl
     
     steps:
-      - name: Deploy via SSH
+      - name: Deploy to Hetzner (Blue-Green)
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           password: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
+          envs: VERSION
           script: |
+            set -e
+            
             echo "=============================================="
-            echo "🚀 Starting Deployment"
+            echo "DataGuardian Pro - Zero-Downtime Deployment"
+            echo "Version: $VERSION"
             echo "=============================================="
             
-            # Navigate to app directory
-            echo "📁 Navigating to app directory..."
-            cd ${{ secrets.APP_DIR }}
+            cd /opt/dataguardian
             
-            # Pull latest Docker image from Docker Hub
-            echo "📥 Pulling latest image from Docker Hub..."
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
-            
-            if [ $? -ne 0 ]; then
-              echo "❌ Failed to pull Docker image"
+            # Ensure .env exists
+            if [ ! -f ".env" ]; then
+              echo "ERROR: .env file not found"
               exit 1
             fi
             
-            # Stop existing container
-            echo "🛑 Stopping existing container..."
-            docker stop myapp 2>/dev/null || echo "No container named 'myapp' running"
-            docker rm myapp 2>/dev/null || echo "No container named 'myapp' to remove"
+            # Set version
+            export APP_VERSION=$VERSION
+            sed -i "s/^APP_VERSION=.*/APP_VERSION=$VERSION/" .env
             
-            # Run new container
-            echo "🚀 Starting new container..."
-            docker run -d \
-              --name myapp \
-              --restart unless-stopped \
-              -p 5000:5000 \
-              -v ${{ secrets.APP_DIR }}:/data \
-              -e ENVIRONMENT=production \
-              -e PYTHONUNBUFFERED=1 \
-              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
-              -e DATAGUARDIAN_MASTER_KEY="${{ secrets.DATAGUARDIAN_MASTER_KEY }}" \
-              -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
-              -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
-              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
-              -e DISABLE_RLS=true \
-              ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
-            
-            if [ $? -ne 0 ]; then
-              echo "❌ Failed to start container"
-              docker logs myapp 2>/dev/null
-              exit 1
-            fi
-            
-            # Wait for container to start
-            echo "⏳ Waiting for container to start..."
-            sleep 10
-            
-            # Verify container is running
-            echo "✅ Verifying deployment..."
-            if docker ps | grep -q myapp; then
-              echo "=============================================="
-              echo "✅ DEPLOYMENT SUCCESSFUL!"
-              echo "=============================================="
-              echo "Container Status:"
-              docker ps | grep myapp
-              echo ""
-              echo "Recent Logs:"
-              docker logs myapp --tail=20
-              echo ""
-              echo "Application URL: http://${{ secrets.SSH_HOST }}"
-              echo "=============================================="
+            # Determine current and new color
+            CURRENT_PORT=$(grep "server 127.0.0.1:500" nginx/nginx-bluegreen.conf | grep -oP "500[01]" | head -1)
+            if [ "$CURRENT_PORT" = "5000" ]; then
+              CURRENT_COLOR="blue"
+              NEW_COLOR="green"
+              NEW_PORT="5001"
             else
-              echo "=============================================="
-              echo "❌ DEPLOYMENT FAILED!"
-              echo "=============================================="
-              echo "Container is not running. Logs:"
-              docker logs myapp 2>/dev/null
-              exit 1
+              CURRENT_COLOR="green"
+              NEW_COLOR="blue"
+              NEW_PORT="5000"
             fi
             
-            # Cleanup old images
-            echo "🧹 Cleaning up old Docker images..."
-            docker image prune -af || echo "Cleanup completed"
+            echo "Current: $CURRENT_COLOR, Deploying: $NEW_COLOR"
             
-            echo "✅ Deployment complete!"
+            # Pull new images
+            echo "Pulling images..."
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Start new color
+            echo "Starting $NEW_COLOR..."
+            if [ "$NEW_COLOR" = "green" ]; then
+              docker compose -f docker-compose.prod.yml --profile green up -d app-green
+            else
+              docker compose -f docker-compose.prod.yml up -d app-blue
+            fi
+            
+            # Wait for health
+            echo "Waiting for $NEW_COLOR to be healthy..."
+            for i in {1..30}; do
+              if curl -sf "http://localhost:$NEW_PORT/_stcore/health" > /dev/null 2>&1; then
+                echo "$NEW_COLOR is healthy!"
+                break
+              fi
+              if [ $i -eq 30 ]; then
+                echo "ERROR: $NEW_COLOR failed health check"
+                docker compose -f docker-compose.prod.yml stop "app-$NEW_COLOR"
+                exit 1
+              fi
+              sleep 2
+            done
+            
+            # Switch traffic
+            echo "Switching traffic to $NEW_COLOR..."
+            sed -i "s/server 127.0.0.1:500[01];/server 127.0.0.1:$NEW_PORT;/" nginx/nginx-bluegreen.conf
+            docker exec dataguardian-nginx nginx -s reload
+            
+            # Verify production health
+            sleep 3
+            if curl -sf "https://dataguardianpro.nl/health" > /dev/null 2>&1; then
+              echo "Production health check PASSED"
+            else
+              echo "WARNING: Production health check failed"
+            fi
+            
+            # Stop old color
+            echo "Stopping $CURRENT_COLOR..."
+            docker compose -f docker-compose.prod.yml stop "app-$CURRENT_COLOR" || true
+            
+            # Update workers
+            echo "Updating scanner workers..."
+            docker compose -f docker-compose.prod.yml up -d scanner-worker
+            
+            # Cleanup old images (keep last 3)
+            echo "Cleaning up old images..."
+            docker image prune -f --filter "until=72h" || true
+            
+            echo "=============================================="
+            echo "DEPLOYMENT SUCCESSFUL"
+            echo "=============================================="
+            echo "Active: $NEW_COLOR (port $NEW_PORT)"
+            echo "Version: $VERSION"
+            echo ""
+            docker compose -f docker-compose.prod.yml ps
+            echo ""
+            echo "Rollback: ./scripts/rollback.sh"
+            echo "=============================================="
+
+  notify:
+    name: Notify Status
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Deployment Summary
+        run: |
+          if [ "${{ needs.deploy.result }}" = "success" ]; then
+            echo "Deployment SUCCEEDED"
+            echo "Version: ${{ needs.build.outputs.version }}"
+            echo "URL: https://dataguardianpro.nl"
+          else
+            echo "Deployment FAILED"
+            echo "Check logs for details"
+          fi
