@@ -127,6 +127,7 @@ def show_pricing_page():
     
     show_pricing_cards(billing)
     show_scanner_availability()
+    show_download_pricing_report()
     show_competitive_comparison()
     show_features_comparison()
     show_contact_section()
@@ -595,6 +596,39 @@ def show_scanner_availability():
         cols[3].markdown("**10**")
         cols[4].markdown("**12**")
         cols[5].markdown("**12**")
+
+
+def show_download_pricing_report():
+    """Show download button for comprehensive pricing report"""
+    from utils.i18n import _
+    
+    st.markdown("---")
+    st.markdown("## 📥 Download Pricing Report")
+    st.markdown("Get a comprehensive HTML report with complete pricing details, scanner availability, and plan comparison.")
+    
+    try:
+        from services.pricing_report_generator import get_pricing_report_download_link
+        
+        b64, filename, html_content = get_pricing_report_download_link()
+        
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            st.download_button(
+                label="📄 Download Pricing Report (HTML)",
+                data=html_content,
+                file_name=filename,
+                mime="text/html",
+                use_container_width=True,
+                type="primary"
+            )
+        
+        with st.expander("👁️ Preview Report", expanded=False):
+            st.components.v1.html(html_content, height=600, scrolling=True)
+                
+    except Exception as e:
+        st.error(f"Error generating report: {str(e)}")
+    
+    st.markdown("---")
 
 
 def show_competitive_comparison():
