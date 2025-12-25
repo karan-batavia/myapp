@@ -15,10 +15,22 @@ from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
+class RedisCacheError(Exception):
+    """Raised when Redis is required but unavailable."""
+    pass
+
+
 class RedisCache:
-    """High-performance Redis cache manager"""
+    """High-performance Redis cache manager with optional strict mode."""
     
-    def __init__(self):
+    def __init__(self, strict_mode: bool = None):
+        """
+        Initialize Redis cache.
+        
+        Args:
+            strict_mode: If True, raise error if Redis unavailable.
+                        If None, auto-detect from environment.
+        """
         self.redis_client = None
         self._fallback_cache = {}
         self._fallback_expiry = {}
@@ -29,16 +41,22 @@ class RedisCache:
             'deletes': 0,
             'errors': 0
         }
-        # Optimized TTL values for different data types
         self.ttl_config = {
-            'scan_results': 7200,      # 2 hours for scan results
-            'compliance_scores': 3600,  # 1 hour for compliance scores
-            'user_sessions': 1800,      # 30 minutes for sessions
-            'dashboard_data': 300,      # 5 minutes for dashboard metrics
-            'large_datasets': 14400,    # 4 hours for large dataset queries
-            'default': 3600             # 1 hour default
+            'scan_results': 7200,
+            'compliance_scores': 3600,
+            'user_sessions': 1800,
+            'dashboard_data': 300,
+            'large_datasets': 14400,
+            'default': 3600
         }
-        self.default_ttl = self.ttl_config['default']  # Maintain backward compatibility
+        self.default_ttl = self.ttl_config['default']
+        
+        if strict_mode is None:
+            env = os.getenv('ENVIRONMENT', 'development').lower()
+            self.strict_mode = env in ('production', 'prod', 'staging')
+        else:
+            self.strict_mode = strict_mode
+        
         self.connect()
     
     def connect(self):
@@ -85,8 +103,13 @@ class RedisCache:
                 logger.debug(f"Waiting {wait_time}s before retry...")
                 time.sleep(wait_time)
         
-        logger.warning("All Redis connection attempts failed. Using in-memory fallback.")
-        self._init_fallback_cache()
+        if self.strict_mode:
+            error_msg = "All Redis connection attempts failed. Strict mode requires Redis."
+            logger.error(error_msg)
+            raise RedisCacheError(error_msg)
+        else:
+            logger.warning("All Redis connection attempts failed. Using in-memory fallback.")
+            self._init_fallback_cache()
     
     def _init_fallback_cache(self):
         """Initialize in-memory fallback cache"""

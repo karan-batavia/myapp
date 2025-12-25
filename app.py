@@ -59,6 +59,27 @@ import os
 import concurrent.futures
 from datetime import datetime
 
+# Startup validation - CRITICAL for production security
+# Validates all required modules are available before proceeding
+try:
+    from utils.startup_validator import validate_startup, StartupValidationError
+    STARTUP_VALIDATION_AVAILABLE = True
+except ImportError:
+    STARTUP_VALIDATION_AVAILABLE = False
+    logging.warning("Startup validator not available - running without validation")
+
+# Run startup validation (strict mode in production)
+if STARTUP_VALIDATION_AVAILABLE:
+    try:
+        env = os.environ.get('ENVIRONMENT', 'development').lower()
+        strict_mode = env in ('production', 'prod', 'staging')
+        validate_startup(strict_mode=strict_mode)
+        logging.info("Startup validation passed")
+    except StartupValidationError as e:
+        logging.critical(f"STARTUP VALIDATION FAILED: {e}")
+        st.error("Application startup failed due to missing critical components. Please contact support.")
+        st.stop()
+
 # Performance optimization imports - PROTECTED
 try:
     from utils.database_optimizer import get_optimized_db

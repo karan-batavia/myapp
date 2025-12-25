@@ -1,41 +1,100 @@
 """
 DataGuardian Pro API Middleware
 Authentication, rate limiting, and request processing
+Uses Redis-backed distributed rate limiting for multi-instance deployments.
 """
 
-from flask import request, g
+from flask import request, g, jsonify
 from functools import wraps
 import logging
 import time
 import os
 from datetime import datetime
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
-rate_limit_store = defaultdict(list)
 RATE_LIMIT_WINDOW = 60
 RATE_LIMIT_MAX_REQUESTS = 100
 
+try:
+    from utils.redis_rate_limiter import get_rate_limiter, get_tiered_rate_limiter
+    REDIS_RATE_LIMITER_AVAILABLE = True
+except ImportError:
+    logger.warning("Redis rate limiter not available, using local fallback")
+    REDIS_RATE_LIMITER_AVAILABLE = False
+    from collections import defaultdict
+    _local_rate_store = defaultdict(list)
+
 
 def rate_limit(max_requests=RATE_LIMIT_MAX_REQUESTS, window=RATE_LIMIT_WINDOW):
-    """Rate limiting decorator"""
+    """Rate limiting decorator using Redis for distributed limiting."""
     def decorator(f):
         @wraps(f)
         def decorated(*args, **kwargs):
-            client_ip = request.remote_addr
-            current_time = time.time()
+            client_ip = request.remote_addr or 'unknown'
             
-            rate_limit_store[client_ip] = [
-                t for t in rate_limit_store[client_ip] 
-                if current_time - t < window
-            ]
+            if REDIS_RATE_LIMITER_AVAILABLE:
+                limiter = get_rate_limiter(max_requests, window)
+                allowed, info = limiter.is_allowed(client_ip)
+                
+                if not allowed:
+                    logger.warning(f"Rate limit exceeded for {client_ip}")
+                    response = jsonify({
+                        'error': 'Rate limit exceeded. Try again later.',
+                        'retry_after': info.get('reset', 60) - int(time.time())
+                    })
+                    response.status_code = 429
+                    response.headers['X-RateLimit-Limit'] = str(info['limit'])
+                    response.headers['X-RateLimit-Remaining'] = '0'
+                    response.headers['X-RateLimit-Reset'] = str(info['reset'])
+                    return response
+                
+                g.rate_limit_info = info
+            else:
+                current_time = time.time()
+                _local_rate_store[client_ip] = [
+                    t for t in _local_rate_store[client_ip] 
+                    if current_time - t < window
+                ]
+                
+                if len(_local_rate_store[client_ip]) >= max_requests:
+                    logger.warning(f"Rate limit exceeded for {client_ip}")
+                    return {'error': 'Rate limit exceeded. Try again later.'}, 429
+                
+                _local_rate_store[client_ip].append(current_time)
             
-            if len(rate_limit_store[client_ip]) >= max_requests:
-                logger.warning(f"Rate limit exceeded for {client_ip}")
-                return {'error': 'Rate limit exceeded. Try again later.'}, 429
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
+
+def tiered_rate_limit(key_func=None):
+    """Rate limiting based on user tier (uses Redis)."""
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            client_ip = request.remote_addr or 'unknown'
+            user_tier = getattr(g, 'user_tier', 'trial')
             
-            rate_limit_store[client_ip].append(current_time)
+            if key_func:
+                identifier = key_func(request)
+            else:
+                identifier = client_ip
+            
+            if REDIS_RATE_LIMITER_AVAILABLE:
+                limiter = get_tiered_rate_limiter()
+                allowed, info = limiter.is_allowed(identifier, user_tier)
+                
+                if not allowed:
+                    logger.warning(f"Tiered rate limit exceeded for {identifier} (tier: {user_tier})")
+                    response = jsonify({
+                        'error': 'Rate limit exceeded. Upgrade your plan for higher limits.',
+                        'retry_after': info.get('reset', 60) - int(time.time()),
+                        'current_tier': user_tier
+                    })
+                    response.status_code = 429
+                    return response
+            
             return f(*args, **kwargs)
         return decorated
     return decorator

@@ -23,13 +23,24 @@ import hashlib
 import tempfile
 import json
 import base64
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Callable
 from datetime import datetime
 from dataclasses import dataclass, field
 from enum import Enum
 import uuid
 
 logger = logging.getLogger(__name__)
+
+try:
+    from utils.streaming_file_processor import (
+        StreamingFileProcessor, 
+        BoundedMediaAnalyzer,
+        get_streaming_processor
+    )
+    STREAMING_PROCESSOR_AVAILABLE = True
+except ImportError:
+    logger.warning("Streaming file processor not available, using direct file loading")
+    STREAMING_PROCESSOR_AVAILABLE = False
 
 OPENAI_AVAILABLE = False
 try:
@@ -152,11 +163,13 @@ class AudioVideoScanner:
     SUPPORTED_AUDIO = ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'wma']
     SUPPORTED_VIDEO = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv', 'flv', 'm4v']
     MAX_FILE_SIZE_MB = 500
+    MAX_MEMORY_MB = 100
     
-    def __init__(self, region: str = "Netherlands", sensitivity: str = "high", enable_ai_analysis: bool = True):
+    def __init__(self, region: str = "Netherlands", sensitivity: str = "high", enable_ai_analysis: bool = True, max_memory_mb: int = 100):
         self.region = region
         self.sensitivity = sensitivity
         self.enable_ai_analysis = enable_ai_analysis
+        self.max_memory_mb = max_memory_mb
         
         sensitivity_thresholds = {
             "low": 0.50,
@@ -165,6 +178,14 @@ class AudioVideoScanner:
             "maximum": 0.10
         }
         self.detection_threshold = sensitivity_thresholds.get(sensitivity, 0.20)
+        
+        if STREAMING_PROCESSOR_AVAILABLE:
+            self._streaming_processor = get_streaming_processor()
+            self._bounded_analyzer = BoundedMediaAnalyzer(max_memory_mb=max_memory_mb)
+            logger.info(f"AudioVideoScanner using bounded memory processing (max: {max_memory_mb}MB)")
+        else:
+            self._streaming_processor = None
+            self._bounded_analyzer = None
         
         logger.info(f"AudioVideoScanner initialized for region: {region}, sensitivity: {sensitivity}, ai_analysis: {enable_ai_analysis}")
     
@@ -199,7 +220,11 @@ class AudioVideoScanner:
         
         try:
             file_size = os.path.getsize(file_path)
-            file_hash = self._calculate_file_hash(file_path)
+            if self._streaming_processor and file_size > self.MAX_MEMORY_MB * 1024 * 1024:
+                file_hash = self._streaming_processor.calculate_hash_streaming(file_path)
+                logger.info(f"Using streaming hash for large file ({file_size / 1024 / 1024:.1f}MB)")
+            else:
+                file_hash = self._calculate_file_hash(file_path)
         except Exception as e:
             logger.error(f"Error reading file: {e}")
             return self._create_error_result(scan_id, file_name, str(e))
@@ -223,13 +248,28 @@ class AudioVideoScanner:
         video_analysis = None
         duration_seconds = 0.0
         
+        use_bounded_processing = (
+            self._bounded_analyzer is not None and 
+            file_size > self.MAX_MEMORY_MB * 1024 * 1024
+        )
+        
         if is_audio:
             media_type = "audio"
-            audio_analysis = self._analyze_audio(file_path)
+            if use_bounded_processing:
+                logger.info(f"Using bounded audio analysis for large file ({file_size / 1024 / 1024:.1f}MB)")
+                bounded_result = self._bounded_analyzer.analyze_audio_bounded(file_path)
+                audio_analysis = self._convert_bounded_audio_result(bounded_result)
+            else:
+                audio_analysis = self._analyze_audio(file_path)
             duration_seconds = audio_analysis.details.get('duration', 0)
         else:
             media_type = "video"
-            video_analysis = self._analyze_video(file_path)
+            if use_bounded_processing:
+                logger.info(f"Using bounded video analysis for large file ({file_size / 1024 / 1024:.1f}MB)")
+                bounded_result = self._bounded_analyzer.analyze_video_bounded(file_path)
+                video_analysis = self._convert_bounded_video_result(bounded_result)
+            else:
+                video_analysis = self._analyze_video(file_path)
             duration_seconds = video_analysis.details.get('duration', 0)
             audio_analysis = self._extract_and_analyze_audio(file_path)
         
@@ -1067,6 +1107,78 @@ Respond in JSON format with:
             MediaFraudType.SPEED_MANIPULATION: "Compare duration with expected timing."
         }
         return recommendations.get(fraud_type, "Review and verify through independent means.")
+    
+    def _convert_bounded_audio_result(self, bounded_result: Dict[str, Any]) -> AudioAnalysisResult:
+        """Convert bounded analyzer audio result to AudioAnalysisResult."""
+        fraud_types = []
+        fraud_score = 0.0
+        spectral_anomalies = []
+        
+        if bounded_result.get('anomalies'):
+            for anomaly in bounded_result['anomalies']:
+                spectral_anomalies.append(anomaly)
+                fraud_score = max(fraud_score, 0.3)
+        
+        if bounded_result.get('error'):
+            spectral_anomalies.append({'type': 'error', 'message': bounded_result['error']})
+        
+        details = {
+            'duration': bounded_result.get('duration_seconds', 0),
+            'sample_rate': 44100,
+            'channels': 2,
+            'bit_depth': 16,
+            'bounded_processing': True,
+            'samples_analyzed': bounded_result.get('samples_analyzed', 0)
+        }
+        
+        return AudioAnalysisResult(
+            is_suspicious=fraud_score > 0.2,
+            fraud_score=fraud_score,
+            fraud_types=fraud_types,
+            confidence=0.7,
+            details=details,
+            spectral_anomalies=spectral_anomalies,
+            recommendations=["Large file analyzed with bounded memory processing"]
+        )
+    
+    def _convert_bounded_video_result(self, bounded_result: Dict[str, Any]) -> VideoAnalysisResult:
+        """Convert bounded analyzer video result to VideoAnalysisResult."""
+        fraud_types = []
+        fraud_score = 0.0
+        frame_anomalies = []
+        
+        for issue in bounded_result.get('consistency_issues', []):
+            frame_anomalies.append(issue)
+            if issue.get('type') == 'large_frame_jump':
+                fraud_types.append(MediaFraudType.FRAME_INSERTION)
+                fraud_score = max(fraud_score, 0.4)
+        
+        if bounded_result.get('error'):
+            frame_anomalies.append({'type': 'error', 'message': bounded_result['error']})
+        
+        details = {
+            'duration': bounded_result.get('duration_seconds', 0),
+            'total_frames': bounded_result.get('total_frames', 0),
+            'fps': bounded_result.get('fps', 0),
+            'bounded_processing': True,
+            'frames_analyzed': bounded_result.get('frames_analyzed', 0)
+        }
+        
+        face_analysis = {
+            'faces_detected': len(bounded_result.get('face_detections', [])),
+            'bounded_mode': True
+        }
+        
+        return VideoAnalysisResult(
+            is_suspicious=fraud_score > 0.2,
+            fraud_score=fraud_score,
+            fraud_types=fraud_types,
+            confidence=0.7,
+            details=details,
+            frame_anomalies=frame_anomalies,
+            face_analysis=face_analysis,
+            recommendations=["Large file analyzed with bounded memory processing"]
+        )
     
     def _calculate_file_hash(self, file_path: str) -> str:
         """Calculate SHA256 hash of file."""
