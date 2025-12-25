@@ -46,6 +46,12 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
   - **Distributed Rate Limiting**: Redis-backed rate limiting for multi-instance deployments (`utils/redis_rate_limiter.py`)
   - **Bounded File Processing**: Streaming processor for large files (>100MB) to prevent OOM (`utils/streaming_file_processor.py`)
   - **Redis Strict Mode**: Cache layer raises error in production if Redis unavailable
+- **Performance Caching** (Added Dec 2025):
+  - **Dashboard Metrics**: `@st.cache_data` with 60s TTL for scan metrics (`page_modules/dashboard.py`)
+  - **Pricing Config**: `@lru_cache` for pricing tier data (`components/pricing_display.py`)
+  - **Session State Cache**: Cached license/tier/compliance lookups with 5-min TTL (`utils/session_cache.py`)
+  - **API Response Caching**: Redis-backed caching for `/api/v1/scans` (60s) and `/api/v1/compliance/status` (120s)
+  - **Database Indexes**: 30+ indexes on scans, audit_log, analytics_events tables
 - **Security**: Environmental variable-based configuration for credentials, rate limiting, and comprehensive exception handling.
 - **GDPR Compliance**: Achieves 100% GDPR coverage including Articles 25, 28, and 44-49, with specific Netherlands UAVG specialization.
 - **Visitor Tracking**: 100% GDPR-compliant, zero-trust visitor tracking with PII hashing, 90-day retention, and cookieless design, integrated with an admin-only analytics dashboard.
