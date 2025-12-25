@@ -755,6 +755,18 @@ class CodeScanner:
             except Exception as e:
                 logger.debug(f"Git history scan failed: {e}")
         
+        # Calculate compliance score based on findings
+        compliance_score = self._calculate_compliance_score(
+            self.scan_checkpoint_data['findings'],
+            self.scan_checkpoint_data['stats']['files_scanned']
+        )
+        
+        # Count findings by severity for metrics
+        critical_count = sum(1 for f in self.scan_checkpoint_data['findings'] 
+                            if f.get('risk_level', '').lower() == 'critical')
+        high_count = sum(1 for f in self.scan_checkpoint_data['findings'] 
+                        if f.get('risk_level', '').lower() == 'high')
+        
         # Create final result
         result = {
             'scan_id': scan_id,
@@ -769,7 +781,10 @@ class CodeScanner:
             'findings': self.scan_checkpoint_data['findings'],
             'git_history_findings': len(git_history_findings),
             'status': 'completed' if len(all_files) == len(self.scan_checkpoint_data['completed_files']) else 'partial',
-            'completion_percentage': int(100 * len(self.scan_checkpoint_data['completed_files']) / max(1, len(all_files)))
+            'completion_percentage': int(100 * len(self.scan_checkpoint_data['completed_files']) / max(1, len(all_files))),
+            'compliance_score': compliance_score,
+            'critical_count': critical_count,
+            'high_risk_count': high_count
         }
         
         # Clean up checkpoint file if scan completed successfully
@@ -2171,3 +2186,65 @@ class CodeScanner:
         }
         
         return article_refs.get(category, 'GDPR + UAVG')
+    
+    def _calculate_compliance_score(self, findings: List[Dict[str, Any]], files_scanned: int) -> float:
+        """
+        Calculate compliance score based on findings severity and count.
+        
+        Formula:
+        - Start at 100%
+        - Critical findings: -15 points each (max -45)
+        - High findings: -3 points each (max -30)
+        - Medium findings: -1 point each (max -15)
+        - Low findings: -0.2 points each (max -5)
+        - Bonus: +5 if no critical findings
+        
+        Args:
+            findings: List of finding dictionaries
+            files_scanned: Number of files scanned
+            
+        Returns:
+            Compliance score as percentage (0-100)
+        """
+        if not findings:
+            return 100.0
+        
+        score = 100.0
+        
+        critical_count = 0
+        high_count = 0
+        medium_count = 0
+        low_count = 0
+        
+        for finding in findings:
+            risk_level = finding.get('risk_level', finding.get('severity', 'Medium')).lower()
+            
+            if risk_level == 'critical':
+                critical_count += 1
+            elif risk_level == 'high':
+                high_count += 1
+            elif risk_level == 'medium':
+                medium_count += 1
+            else:
+                low_count += 1
+        
+        critical_penalty = min(45, critical_count * 15)
+        high_penalty = min(30, high_count * 3)
+        medium_penalty = min(15, medium_count * 1)
+        low_penalty = min(5, low_count * 0.2)
+        
+        score -= critical_penalty
+        score -= high_penalty
+        score -= medium_penalty
+        score -= low_penalty
+        
+        if critical_count == 0:
+            score += 5
+        
+        files_ratio = len(findings) / max(1, files_scanned)
+        if files_ratio > 0.5:
+            score -= min(10, (files_ratio - 0.5) * 20)
+        
+        score = max(0, min(100, score))
+        
+        return round(score, 1)

@@ -1,0 +1,96 @@
+# DataGuardian Pro - Scanner Workers Deployment
+# Use this to run additional scanner workers on your VM
+
+version: '3.8'
+
+services:
+  # Scanner Worker 1
+  scanner-worker-1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
+      - DATABASE_URL=${DATABASE_URL}
+      - WORKER_ID=worker-1
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+    networks:
+      - scanner-network
+
+  # Scanner Worker 2
+  scanner-worker-2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
+      - DATABASE_URL=${DATABASE_URL}
+      - WORKER_ID=worker-2
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+    networks:
+      - scanner-network
+
+  # Scanner Worker 3
+  scanner-worker-3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
+      - DATABASE_URL=${DATABASE_URL}
+      - WORKER_ID=worker-3
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1'
+    networks:
+      - scanner-network
+
+  # Scanner Worker 4 (for audio/video - needs more memory)
+  scanner-worker-av:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      - REDIS_URL=${REDIS_URL:-redis://host.docker.internal:6379/0}
+      - DATABASE_URL=${DATABASE_URL}
+      - WORKER_ID=worker-av
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2'
+    networks:
+      - scanner-network
+
+networks:
+  scanner-network:
+    driver: bridge
+
+# Usage:
+# 1. Copy this file to your VM
+# 2. Set environment variables:
+#    export REDIS_URL=redis://your-redis-host:6379/0
+#    export DATABASE_URL=postgresql://...
+#    export OPENAI_API_KEY=sk-...
+# 3. Start workers:
+#    docker-compose -f docker-compose.workers.yml up -d
+# 4. Scale up:
+#    docker-compose -f docker-compose.workers.yml up -d --scale scanner-worker-1=3
