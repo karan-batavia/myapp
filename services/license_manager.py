@@ -216,37 +216,37 @@ class LicenseManager:
                 UsageLimitType.SCANS_PER_MONTH: 200,
                 UsageLimitType.CONCURRENT_USERS: 5,
                 UsageLimitType.EXPORT_REPORTS: 50,
-                UsageLimitType.SCANNER_TYPES: 8
+                UsageLimitType.SCANNER_TYPES: 6  # code, document, database, image, website, ai_model
             },
-            LicenseType.PROFESSIONAL: {  # €99/month tier - NEW
+            LicenseType.PROFESSIONAL: {  # €99/month tier
                 UsageLimitType.SCANS_PER_MONTH: 350,
                 UsageLimitType.CONCURRENT_USERS: 10,
                 UsageLimitType.EXPORT_REPORTS: 100,
-                UsageLimitType.SCANNER_TYPES: 9
+                UsageLimitType.SCANNER_TYPES: 8  # +dpia, soc2
             },
             LicenseType.GROWTH: {  # €179/month tier
                 UsageLimitType.SCANS_PER_MONTH: 750,
                 UsageLimitType.CONCURRENT_USERS: 25,
                 UsageLimitType.EXPORT_REPORTS: 250,
-                UsageLimitType.SCANNER_TYPES: 10
+                UsageLimitType.SCANNER_TYPES: 10  # +enterprise, sustainability
             },
             LicenseType.SCALE: {  # €499/month tier
                 UsageLimitType.SCANS_PER_MONTH: 999999,  # Unlimited
                 UsageLimitType.CONCURRENT_USERS: 100,
                 UsageLimitType.EXPORT_REPORTS: 999999,  # Unlimited
-                UsageLimitType.SCANNER_TYPES: 10
+                UsageLimitType.SCANNER_TYPES: 12  # All scanners: +audio_video, advanced_ai
             },
-            LicenseType.ENTERPRISE: {  # €1,199/month tier
+            LicenseType.ENTERPRISE: {  # €1,399/month tier
                 UsageLimitType.SCANS_PER_MONTH: 999999,  # Unlimited
                 UsageLimitType.CONCURRENT_USERS: 999999,  # Unlimited
                 UsageLimitType.EXPORT_REPORTS: 999999,  # Unlimited
-                UsageLimitType.SCANNER_TYPES: 10
+                UsageLimitType.SCANNER_TYPES: 12  # All 12 scanners
             },
             LicenseType.GOVERNMENT: {  # €15,000 one-time
                 UsageLimitType.SCANS_PER_MONTH: 999999,  # Unlimited
                 UsageLimitType.CONCURRENT_USERS: 999999,  # Unlimited
                 UsageLimitType.EXPORT_REPORTS: 999999,  # Unlimited
-                UsageLimitType.SCANNER_TYPES: 10
+                UsageLimitType.SCANNER_TYPES: 12  # All 12 scanners
             },
             # Backward compatibility mappings
             LicenseType.BASIC: {  # Maps to startup
@@ -308,42 +308,47 @@ class LicenseManager:
             "compliance_dashboard", "multi_region", "api_access", "white_label"
         ]
         
+        # 12 Scanners ordered by tier availability
+        # Core (all tiers): code, document, database, image, website, ai_model
+        # Professional+: dpia, soc2
+        # Growth+: enterprise, sustainability
+        # Scale+: audio_video, advanced_ai
         all_scanners = [
-            "code", "document", "image", "database", "api", "enterprise", 
-            "ai_model", "website", "soc2", "dpia", "sustainability", "audio_video"
+            "code", "document", "database", "image", "website", "ai_model",
+            "dpia", "soc2", "enterprise", "sustainability", "audio_video", "advanced_ai"
         ]
         
         all_regions = ["Netherlands", "Germany", "France", "Belgium", "EU", "Global"]
         
-        # Configure features aligned with pricing tiers
+        # Configure features aligned with pricing tiers (12 scanners total)
         if license_type == LicenseType.TRIAL:
             allowed_features = all_features[:6]  # Limited trial features
-            allowed_scanners = all_scanners[:3]  # Basic scanners only
+            allowed_scanners = all_scanners[:3]  # 3 scanners: code, document, database
             allowed_regions = ["Netherlands"]
             max_concurrent = 1
         elif license_type == LicenseType.STARTUP:
             allowed_features = all_features[:10]  # Enhanced startup features with AI Act
-            allowed_scanners = all_scanners[:6]  # Core scanners + BSN detection
+            allowed_scanners = all_scanners[:6]  # 6 scanners: +image, website, ai_model
             allowed_regions = ["Netherlands", "Belgium"]
             max_concurrent = 5
         elif license_type == LicenseType.PROFESSIONAL:
             allowed_features = all_features[:12]  # Professional Plus features
-            allowed_scanners = all_scanners[:8]  # Advanced scanners + connectors
+            allowed_scanners = all_scanners[:8]  # 8 scanners: +dpia, soc2
             allowed_regions = ["Netherlands", "Germany", "Belgium", "France"]
             max_concurrent = 10
         elif license_type == LicenseType.GROWTH:
             allowed_features = all_features[:14]  # Growth Professional features
-            allowed_scanners = all_scanners[:9]  # Enterprise connectors included
+            allowed_scanners = all_scanners[:10]  # 10 scanners: +enterprise, sustainability
             allowed_regions = ["Netherlands", "Germany", "Belgium", "France", "EU"]
             max_concurrent = 25
         elif license_type == LicenseType.SCALE:
             allowed_features = all_features[:15]  # Scale Enterprise with API access
-            allowed_scanners = all_scanners  # All scanners
+            allowed_scanners = all_scanners  # All 12 scanners: +audio_video, advanced_ai
             allowed_regions = all_regions  # Global access
             max_concurrent = 100
         elif license_type == LicenseType.ENTERPRISE:
             allowed_features = all_features  # All features including white-label
-            allowed_scanners = all_scanners  # All scanners
+            allowed_scanners = all_scanners  # All 12 scanners
             allowed_regions = all_regions  # Global access
             max_concurrent = 999999  # Unlimited
         elif license_type == LicenseType.GOVERNMENT:
@@ -578,10 +583,10 @@ class LicenseManager:
         if not is_valid:
             return False
         
-        # All scanners available for valid active licenses
+        # All 12 scanners available for valid active licenses
         all_scanners = [
-            "code", "document", "image", "database", "api", "enterprise", 
-            "ai_model", "website", "soc2", "dpia", "sustainability", "audio_video"
+            "code", "document", "database", "image", "website", "ai_model",
+            "dpia", "soc2", "enterprise", "sustainability", "audio_video", "advanced_ai"
         ]
         return scanner_type in all_scanners
     

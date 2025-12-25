@@ -126,6 +126,7 @@ def show_pricing_page():
     billing = BillingCycle.ANNUAL if "Annual" in billing_cycle else BillingCycle.MONTHLY
     
     show_pricing_cards(billing)
+    show_scanner_availability()
     show_competitive_comparison()
     show_features_comparison()
     show_contact_section()
@@ -416,11 +417,26 @@ def show_pricing_cards(billing_cycle: BillingCycle):
             st.session_state['contact_sales'] = True
             st.rerun()
 
+def get_tier_scanner_count(tier: PricingTier) -> tuple:
+    """Get scanner count and list for a tier"""
+    scanner_mapping = {
+        PricingTier.STARTUP: (6, ["Code", "Document", "Database", "Image", "Website", "AI Model"]),
+        PricingTier.PROFESSIONAL: (8, ["Code", "Document", "Database", "Image", "Website", "AI Model", "DPIA", "SOC2/NIS2"]),
+        PricingTier.GROWTH: (10, ["All Professional +", "Enterprise Connectors", "Sustainability"]),
+        PricingTier.SCALE: (12, ["All 12 Scanners", "Audio/Video Deepfake", "Advanced AI"]),
+        PricingTier.SALESFORCE_PREMIUM: (12, ["All 12 Scanners", "Salesforce CRM", "Advanced AI"]),
+        PricingTier.SAP_ENTERPRISE: (12, ["All 12 Scanners", "SAP ERP", "Advanced AI"]),
+        PricingTier.ENTERPRISE: (12, ["All 12 Scanners", "Salesforce + SAP", "Banking PSD2"]),
+        PricingTier.GOVERNMENT: (12, ["All 12 Scanners", "On-Premises", "Custom Dev"]),
+    }
+    return scanner_mapping.get(tier, (6, ["Basic scanners"]))
+
+
 def get_tier_key_features(tier: PricingTier) -> List[str]:
     """Get user-friendly key features for a tier"""
     feature_mapping = {
         PricingTier.STARTUP: [
-            "Basic PII scanning",
+            "6 Core Scanners included",
             "GDPR compliance reports", 
             "Netherlands BSN detection",
             "Email support",
@@ -428,28 +444,28 @@ def get_tier_key_features(tier: PricingTier) -> List[str]:
             "20 data sources"
         ],
         PricingTier.PROFESSIONAL: [
+            "8 Scanners (+DPIA, SOC2)",
             "350 scans/month",
-            "35 data sources",
             "Advanced scanning",
             "Compliance automation",
             "Priority email & phone support",
             "Compliance certificates"
         ],
         PricingTier.GROWTH: [
+            "10 Scanners (+Enterprise)",
             "Enterprise data connectors",
             "Microsoft 365 integration",
             "Exact Online connector",
-            "Compliance certificates",
             "750 scans/month",
             "75 data sources"
         ],
         PricingTier.SCALE: [
-            "Unlimited scans & data sources",
+            "All 12 Scanners",
+            "Audio/Video Deepfake Detection",
             "Advanced AI scanning",
             "EU AI Act compliance",
-            "Custom integrations",
-            "DPIA automation",
-            "Dedicated support team 24/7"
+            "Unlimited scans",
+            "Dedicated support 24/7"
         ],
         PricingTier.SALESFORCE_PREMIUM: [
             "Salesforce CRM connector",
@@ -468,10 +484,10 @@ def get_tier_key_features(tier: PricingTier) -> List[str]:
             "Dedicated team 24/7"
         ],
         PricingTier.ENTERPRISE: [
+            "All 12 Scanners + Premium",
             "Salesforce + SAP connectors",
             "Dutch Banking PSD2 integration",
             "White-label deployment",
-            "API access & Custom development",
             "24/7 executive partnership",
             "Unlimited everything"
         ],
@@ -516,6 +532,70 @@ def get_tier_premium_features(tier: PricingTier) -> List[str]:
     }
     
     return premium_feature_mapping.get(tier, [])
+
+def show_scanner_availability():
+    """Show which scanners are available in each plan"""
+    from utils.i18n import _
+    
+    st.markdown("## 🔍 Scanner Availability by Plan")
+    st.markdown("**DataGuardian Pro includes 12 specialized compliance scanners**")
+    
+    # Scanner definitions with icons
+    scanners = [
+        ("Code Scanner", "Detects PII in source code & repositories"),
+        ("Document Scanner", "PDF, Word, Excel file scanning"),
+        ("Database Scanner", "PostgreSQL, MySQL, SQL Server"),
+        ("Image Scanner (OCR)", "Extracts text from images/screenshots"),
+        ("Website Scanner", "Crawls websites for privacy issues"),
+        ("AI Model Scanner", "EU AI Act compliance checks"),
+        ("DPIA Scanner", "Data Protection Impact Assessments"),
+        ("SOC2/NIS2 Scanner", "Security compliance auditing"),
+        ("Enterprise Connectors", "Microsoft 365, Exact Online, Google"),
+        ("Sustainability Scanner", "Cloud resource efficiency analysis"),
+        ("Audio/Video Deepfake", "AI-powered media authentication"),
+        ("Advanced AI Analysis", "GPT-4 powered deep analysis"),
+    ]
+    
+    # Tier availability
+    tier_scanners = {
+        "Startup": 6,
+        "Professional": 8,
+        "Growth": 10,
+        "Scale": 12,
+        "Enterprise": 12,
+    }
+    
+    with st.expander("📋 View Full Scanner Comparison", expanded=False):
+        cols = st.columns([2, 1, 1, 1, 1, 1])
+        cols[0].markdown("**Scanner**")
+        cols[1].markdown("**Startup**")
+        cols[2].markdown("**Professional**")
+        cols[3].markdown("**Growth**")
+        cols[4].markdown("**Scale**")
+        cols[5].markdown("**Enterprise**")
+        
+        for idx, (scanner_name, scanner_desc) in enumerate(scanners):
+            cols = st.columns([2, 1, 1, 1, 1, 1])
+            cols[0].markdown(f"**{scanner_name}**")
+            cols[0].caption(scanner_desc)
+            
+            # Check availability per tier
+            cols[1].markdown("✅" if idx < 6 else "❌")
+            cols[2].markdown("✅" if idx < 8 else "❌")
+            cols[3].markdown("✅" if idx < 10 else "❌")
+            cols[4].markdown("✅")  # Scale has all
+            cols[5].markdown("✅")  # Enterprise has all
+        
+        st.markdown("---")
+        st.markdown("**Total Scanners:**")
+        cols = st.columns([2, 1, 1, 1, 1, 1])
+        cols[0].markdown("")
+        cols[1].markdown("**6**")
+        cols[2].markdown("**8**")
+        cols[3].markdown("**10**")
+        cols[4].markdown("**12**")
+        cols[5].markdown("**12**")
+
 
 def show_competitive_comparison():
     """Show DataGuardian Pro's unique competitive advantages"""
