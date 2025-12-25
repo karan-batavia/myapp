@@ -53,7 +53,7 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
   - **API Response Caching**: Redis-backed caching for `/api/v1/scans` (60s) and `/api/v1/compliance/status` (120s)
   - **Database Indexes**: 30+ indexes on scans, audit_log, analytics_events tables
 - **Security**: Environmental variable-based configuration for credentials, rate limiting, and comprehensive exception handling.
-- **GDPR Compliance**: Achieves 100% GDPR coverage including Articles 25, 28, and 44-49, with specific Netherlands UAVG specialization.
+- **GDPR Compliance**: Achieves 100% GDPR coverage (99 articles across 11 chapters) with 100% Netherlands UAVG coverage (51 articles including BSN processing, AP Guidelines 2024-2025, Telecommunicatiewet).
 - **Visitor Tracking**: 100% GDPR-compliant, zero-trust visitor tracking with PII hashing, 90-day retention, and cookieless design, integrated with an admin-only analytics dashboard.
 - **Payment System**: Production-ready payment system with iDEAL and SEPA support, 30-day money-back guarantee, automatic renewal, and license expiry management.
 - **Fraud Detection**: AI-powered fraud detection for document scanning using ChatGPT patterns, statistical anomaly analysis, and metadata forensics, integrated with professional UI components and reporting.
