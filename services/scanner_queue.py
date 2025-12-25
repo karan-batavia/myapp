@@ -68,8 +68,8 @@ class ScannerQueue:
     PROGRESS_KEY = "dataguardian:scanner:progress"
     RESULTS_KEY = "dataguardian:scanner:results"
     
-    JOB_TIMEOUT_SECONDS = 600
-    MAX_CONCURRENT_JOBS = 3
+    JOB_TIMEOUT_SECONDS = 480
+    MAX_CONCURRENT_JOBS = 8
     RESULT_TTL_SECONDS = 3600
     
     def __init__(self):
