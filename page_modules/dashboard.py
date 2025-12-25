@@ -14,6 +14,65 @@ def get_organization_id():
     """Get organization ID for multi-tenant support"""
     return st.session_state.get('organization_id', 'default')
 
+
+@st.cache_data(ttl=60, show_spinner=False)
+def _get_cached_dashboard_metrics(username: str, org_id: str) -> dict:
+    """
+    Cache dashboard metrics for 60 seconds to avoid repeated database queries.
+    Invalidates automatically when new scans are completed.
+    """
+    from services.results_aggregator import ResultsAggregator
+    
+    aggregator = ResultsAggregator()
+    aggregator.use_file_storage = False
+    
+    recent_scans = aggregator.get_recent_scans(days=365, username=username)
+    
+    if len(recent_scans) == 0:
+        recent_scans = aggregator.get_recent_scans(days=30)
+    
+    total_scans = len(recent_scans)
+    total_pii = 0
+    high_risk_issues = 0
+    compliance_scores = []
+    
+    for scan in recent_scans:
+        result = scan.get('result', {})
+        if isinstance(result, dict):
+            scan_pii = scan.get('total_pii_found', 0)
+            scan_high_risk = scan.get('high_risk_count', 0)
+            
+            if scan_pii == 0:
+                findings = result.get('findings', [])
+                if isinstance(findings, list):
+                    scan_pii = len(findings)
+                    for finding in findings:
+                        if isinstance(finding, dict) and finding.get('severity', '').lower() in ['high', 'critical']:
+                            scan_high_risk += 1
+            
+            if scan_pii == 0:
+                scan_pii = result.get('total_pii_found', 0)
+            if scan_high_risk == 0:
+                scan_high_risk = result.get('high_risk_count', 0)
+            
+            total_pii += scan_pii
+            high_risk_issues += scan_high_risk
+            
+            comp_score = result.get('compliance_score', 0)
+            if comp_score > 0:
+                compliance_scores.append(comp_score)
+    
+    avg_compliance = sum(compliance_scores) / len(compliance_scores) if compliance_scores else 0
+    
+    return {
+        'total_scans': total_scans,
+        'total_pii': total_pii,
+        'high_risk_issues': high_risk_issues,
+        'avg_compliance': avg_compliance,
+        'recent_scans': recent_scans
+    }
+
+
 def render_dashboard():
     """Render the main dashboard with real-time data from scan results and activity tracker"""
     from services.results_aggregator import ResultsAggregator
@@ -37,56 +96,24 @@ def render_dashboard():
     try:
         username = st.session_state.get('username', 'anonymous')
         user_id = st.session_state.get('user_id', username)
+        org_id = get_organization_id()
         
-        aggregator = ResultsAggregator()
-        aggregator.use_file_storage = False
+        metrics = _get_cached_dashboard_metrics(username, org_id)
+        total_scans = metrics['total_scans']
+        total_pii = metrics['total_pii']
+        high_risk_issues = metrics['high_risk_issues']
+        recent_scans = metrics['recent_scans']
+        compliance_scores = [metrics['avg_compliance']] if metrics['avg_compliance'] > 0 else []
         
-        recent_scans = aggregator.get_recent_scans(days=365, username=username)
-        logger.info(f"Dashboard: Retrieved {len(recent_scans)} total scans for user {username}")
-        
-        if len(recent_scans) == 0:
-            logger.info(f"Dashboard: No scans found for user {username}, getting all recent scans")
-            recent_scans = aggregator.get_recent_scans(days=30)
-            if recent_scans:
-                logger.info(f"Dashboard: Found {len(recent_scans)} total scans from all users")
-        
-        total_scans = len(recent_scans)
-        total_pii = 0
-        high_risk_issues = 0
-        compliance_scores = []
+        logger.info(f"Dashboard: Retrieved {total_scans} total scans for user {username} (cached)")
         
         user_scan_key = f'last_known_scan_count_{username}'
         last_known_count = st.session_state.get(user_scan_key, 0)
         current_scan_count = total_scans
         if current_scan_count > last_known_count and last_known_count > 0:
+            _get_cached_dashboard_metrics.clear()
             st.info(f"✨ Dashboard updated with {current_scan_count - last_known_count} new scan(s)!")
         st.session_state[user_scan_key] = current_scan_count
-        
-        for scan in recent_scans:
-            result = scan.get('result', {})
-            if isinstance(result, dict):
-                scan_pii = scan.get('total_pii_found', 0)
-                scan_high_risk = scan.get('high_risk_count', 0)
-                
-                if scan_pii == 0:
-                    findings = result.get('findings', [])
-                    if isinstance(findings, list):
-                        scan_pii = len(findings)
-                        for finding in findings:
-                            if isinstance(finding, dict) and finding.get('severity', '').lower() in ['high', 'critical']:
-                                scan_high_risk += 1
-                
-                if scan_pii == 0:
-                    scan_pii = result.get('total_pii_found', 0)
-                if scan_high_risk == 0:
-                    scan_high_risk = result.get('high_risk_count', 0)
-                
-                total_pii += scan_pii
-                high_risk_issues += scan_high_risk
-                
-                comp_score = result.get('compliance_score', 0)
-                if comp_score > 0:
-                    compliance_scores.append(comp_score)
         
         tracker = get_activity_tracker()
         user_activities = tracker.get_user_activities(user_id, limit=10000)

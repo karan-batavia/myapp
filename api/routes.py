@@ -6,10 +6,28 @@ REST API endpoints for external integrations
 from flask import Blueprint, jsonify, request
 import logging
 import uuid
+import json
+import hashlib
 from datetime import datetime
 from functools import wraps
 
 logger = logging.getLogger(__name__)
+
+
+def _get_redis_cache():
+    """Get Redis cache instance with fallback."""
+    try:
+        from utils.redis_cache import RedisCache
+        return RedisCache(strict_mode=False)
+    except Exception as e:
+        logger.debug(f"Redis cache not available: {e}")
+        return None
+
+
+def _cache_key(prefix: str, *args) -> str:
+    """Generate cache key from prefix and arguments."""
+    key_data = f"{prefix}:{':'.join(str(a) for a in args)}"
+    return f"api:{hashlib.md5(key_data.encode()).hexdigest()[:16]}"
 
 api_blueprint = Blueprint('api', __name__, url_prefix='/api/v1')
 
@@ -38,13 +56,22 @@ def health_check():
 @api_blueprint.route('/scans', methods=['GET'])
 @require_api_key
 def list_scans():
-    """List recent scans"""
+    """List recent scans with Redis caching (60s TTL)"""
     try:
+        cache = _get_redis_cache()
+        cache_key = _cache_key('scans_list', '30d')
+        
+        if cache:
+            cached = cache.get(cache_key)
+            if cached:
+                logger.debug("Returning cached scans list")
+                return jsonify(cached)
+        
         from services.results_aggregator import ResultsAggregator
         aggregator = ResultsAggregator()
         scans = aggregator.get_recent_scans(days=30)
         
-        return jsonify({
+        result = {
             'scans': [
                 {
                     'id': scan.get('scan_id'),
@@ -57,7 +84,12 @@ def list_scans():
                 for scan in scans
             ],
             'count': len(scans)
-        })
+        }
+        
+        if cache:
+            cache.set(cache_key, result, ttl=60)
+        
+        return jsonify(result)
     except Exception as e:
         logger.error(f"Error listing scans: {e}")
         return jsonify({'error': str(e)}), 500
@@ -124,8 +156,17 @@ def create_scan():
 @api_blueprint.route('/compliance/status', methods=['GET'])
 @require_api_key
 def compliance_status():
-    """Get overall compliance status"""
+    """Get overall compliance status with Redis caching (120s TTL)"""
     try:
+        cache = _get_redis_cache()
+        cache_key = _cache_key('compliance_status', '30d')
+        
+        if cache:
+            cached = cache.get(cache_key)
+            if cached:
+                logger.debug("Returning cached compliance status")
+                return jsonify(cached)
+        
         from services.results_aggregator import ResultsAggregator
         aggregator = ResultsAggregator()
         scans = aggregator.get_recent_scans(days=30)
@@ -133,7 +174,7 @@ def compliance_status():
         scores = [scan.get('result', {}).get('compliance_score', 0) for scan in scans if scan.get('result', {}).get('compliance_score', 0) > 0]
         avg_score = sum(scores) / len(scores) if scores else 0
         
-        return jsonify({
+        result = {
             'compliance': {
                 'gdpr': {'status': 'compliant' if avg_score > 70 else 'needs_attention', 'score': avg_score},
                 'uavg': {'status': 'compliant', 'region': 'Netherlands'},
@@ -143,7 +184,12 @@ def compliance_status():
             },
             'overall_score': avg_score,
             'scans_analyzed': len(scans)
-        })
+        }
+        
+        if cache:
+            cache.set(cache_key, result, ttl=120)
+        
+        return jsonify(result)
     except Exception as e:
         logger.error(f"Error getting compliance status: {e}")
         return jsonify({'error': str(e)}), 500
