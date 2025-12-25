@@ -9950,7 +9950,7 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
                     <div style="font-size: 10px; color: #999; margin-top: 4px;">{engagement_label}</div>
                 </div>
                 <div style="background: #fff3e0; padding: 15px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 20px; font-weight: bold; color: #ef6c00;">{view_sub_ratio:.0f}:1</div>
+                    <div style="font-size: 20px; font-weight: bold; color: #ef6c00;">{view_sub_ratio:.1f}:1</div>
                     <div style="font-size: 12px; color: #666;">View/Sub Ratio</div>
                     <div style="font-size: 10px; color: #999; margin-top: 4px;">{ratio_label}</div>
                 </div>
@@ -9971,23 +9971,23 @@ def generate_url_scan_html_report(metadata: dict, findings: list, recommendation
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="width: 140px; font-weight: bold;">Channel Credibility</div>
                     <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
-                        <div style="background: linear-gradient(90deg, #2196f3, #64b5f6); height: 100%; border-radius: 4px; width: {min(100, channel_followers / 10000)}%;"></div>
+                        <div style="background: linear-gradient(90deg, #2196f3, #64b5f6); height: 100%; border-radius: 4px; width: {min(100, channel_followers / 1000)}%;"></div>
                     </div>
-                    <div style="width: 50px; text-align: right;">{min(25, int(channel_followers / 40000 * 25))}/25</div>
+                    <div style="width: 50px; text-align: right;">{min(25, max(5, int(channel_followers / 4000)))}/25</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="width: 140px; font-weight: bold;">Engagement Rate</div>
                     <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
-                        <div style="background: linear-gradient(90deg, #ff9800, #ffb74d); height: 100%; border-radius: 4px; width: {min(100, engagement_rate * 20)}%;"></div>
+                        <div style="background: linear-gradient(90deg, #ff9800, #ffb74d); height: 100%; border-radius: 4px; width: {min(100, int(engagement_rate * 20))}%;"></div>
                     </div>
                     <div style="width: 50px; text-align: right;">{min(20, int(engagement_rate * 5))}/20</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="width: 140px; font-weight: bold;">Verification Status</div>
                     <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 20px;">
-                        <div style="background: linear-gradient(90deg, #9c27b0, #ba68c8); height: 100%; border-radius: 4px; width: {'100%' if channel_followers > 500000 else '0%'};"></div>
+                        <div style="background: linear-gradient(90deg, #9c27b0, #ba68c8); height: 100%; border-radius: 4px; width: {'100%' if channel_followers > 100000 else str(min(100, int(channel_followers / 1000))) + '%'};"></div>
                     </div>
-                    <div style="width: 50px; text-align: right;">{15 if channel_followers > 500000 else 0}/15</div>
+                    <div style="width: 50px; text-align: right;">{15 if channel_followers > 100000 else min(15, int(channel_followers / 10000))}/15</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="width: 140px; font-weight: bold;">Anomaly Score</div>
