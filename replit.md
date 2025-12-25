@@ -39,7 +39,13 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
 - **GDPR Data Protection Layer**: Database-persisted consent management, automatic data retention enforcement (365 days scans, 90 days analytics), PII anonymization with SHA256 hashing, user data export (GDPR Art. 20), and user data deletion (GDPR Art. 17). Privacy & GDPR tab in Settings page.
 - **Risk Analysis Engine**: AI-powered Smart Risk Analyzer for severity assessment and region-specific GDPR rules (Netherlands, Germany, France, Belgium).
 - **Report Generation**: Multi-format (PDF, HTML) report generation with professional styling, certificate generation, and centralized results aggregation.
-- **Performance Optimization**: Redis caching layer, optimized database operations, async processing, and session isolation.
+- **Performance Optimization**: Redis caching layer with strict mode for production, optimized database operations, async processing, and session isolation.
+- **Scalability Infrastructure** (Added Dec 2025):
+  - **Startup Validator**: Hard-fails in production if critical modules (license, security) are missing (`utils/startup_validator.py`)
+  - **Scanner Job Queue**: Redis-backed async job queue for scanner execution with progress tracking (`services/scanner_queue.py`)
+  - **Distributed Rate Limiting**: Redis-backed rate limiting for multi-instance deployments (`utils/redis_rate_limiter.py`)
+  - **Bounded File Processing**: Streaming processor for large files (>100MB) to prevent OOM (`utils/streaming_file_processor.py`)
+  - **Redis Strict Mode**: Cache layer raises error in production if Redis unavailable
 - **Security**: Environmental variable-based configuration for credentials, rate limiting, and comprehensive exception handling.
 - **GDPR Compliance**: Achieves 100% GDPR coverage including Articles 25, 28, and 44-49, with specific Netherlands UAVG specialization.
 - **Visitor Tracking**: 100% GDPR-compliant, zero-trust visitor tracking with PII hashing, 90-day retention, and cookieless design, integrated with an admin-only analytics dashboard.
