@@ -90,6 +90,188 @@ def get_cached_pricing_config():
     return get_pricing_config()
 
 
+def inject_pricing_styles():
+    """Inject modern CSS styles for pricing page"""
+    st.markdown("""
+    <style>
+    .pricing-hero {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a4d 50%, #1e5f3a 100%);
+        padding: 40px 30px;
+        border-radius: 20px;
+        text-align: center;
+        margin-bottom: 30px;
+        color: white;
+    }
+    .pricing-hero h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+        color: white;
+    }
+    .pricing-hero p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+    .pricing-badge {
+        display: inline-block;
+        background: linear-gradient(90deg, #f59e0b, #ef4444);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    .pricing-card {
+        background: white;
+        border-radius: 16px;
+        padding: 25px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+        height: 100%;
+    }
+    .pricing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    .pricing-card.popular {
+        border: 3px solid #10b981;
+        background: linear-gradient(180deg, #f0fdf4 0%, white 30%);
+    }
+    .pricing-card.premium {
+        border: 3px solid #8b5cf6;
+        background: linear-gradient(180deg, #f5f3ff 0%, white 30%);
+    }
+    .pricing-card.enterprise {
+        border: 3px solid #f59e0b;
+        background: linear-gradient(180deg, #fffbeb 0%, white 30%);
+    }
+    .tier-name {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 5px;
+    }
+    .tier-target {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 15px;
+    }
+    .price-display {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(90deg, #1e3a5f, #2d5a4d);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .price-period {
+        font-size: 1rem;
+        color: #6b7280;
+    }
+    .savings-tag {
+        background: linear-gradient(90deg, #10b981, #059669);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-block;
+        margin-top: 8px;
+    }
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 20px 0;
+    }
+    .feature-list li {
+        padding: 8px 0;
+        font-size: 0.95rem;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .feature-icon {
+        color: #10b981;
+        font-weight: bold;
+    }
+    .scanner-badge {
+        background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+        color: white;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        display: inline-block;
+        margin: 10px 0;
+    }
+    .limit-info {
+        background: #f3f4f6;
+        padding: 12px;
+        border-radius: 10px;
+        margin: 15px 0;
+    }
+    .limit-info span {
+        display: block;
+        font-size: 0.9rem;
+        color: #4b5563;
+        margin: 4px 0;
+    }
+    .cta-button {
+        background: linear-gradient(90deg, #2d5a4d, #1e5f3a);
+        color: white !important;
+        padding: 12px 30px;
+        border-radius: 10px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+        display: block;
+        margin-top: 15px;
+        transition: all 0.3s ease;
+    }
+    .cta-button:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(45, 90, 77, 0.4);
+    }
+    .cta-button.popular {
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+    .comparison-header {
+        background: linear-gradient(135deg, #1e3a5f 0%, #2d5a4d 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 12px 12px 0 0;
+        text-align: center;
+    }
+    .trust-badges {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin: 30px 0;
+    }
+    .trust-badge {
+        background: white;
+        padding: 15px 25px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        text-align: center;
+    }
+    .guarantee-banner {
+        background: linear-gradient(90deg, #fef3c7, #fde68a);
+        border: 2px solid #f59e0b;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        margin: 20px 0;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
 def show_pricing_page():
     """Display the main pricing page with proper routing"""
     from utils.i18n import _
@@ -108,25 +290,70 @@ def show_pricing_page():
         show_checkout_confirmation()
         return
     
-    st.title(_('pricing.title', 'DataGuardian Pro Pricing'))
+    inject_pricing_styles()
+    
+    hero_title = _('pricing.title', 'DataGuardian Pro Pricing')
+    hero_subtitle = _('pricing.subtitle', 'Enterprise-grade privacy compliance at breakthrough prices')
+    hero_description = _('pricing.description', 'Netherlands-specialized GDPR + EU AI Act 2025 compliance')
+    
     st.markdown(f"""
-    **{_('pricing.subtitle', 'Enterprise-grade privacy compliance at breakthrough prices')}**  
-    {_('pricing.description', 'Netherlands-specialized compliance with transparent, competitive pricing')}
-    """)
+    <div class="pricing-hero">
+        <h1>{hero_title}</h1>
+        <p>{hero_subtitle}</p>
+        <p style="font-size: 1rem; margin-top: 10px;">{hero_description}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    badge_gdpr = _('pricing.badge_gdpr', 'GDPR Compliant')
+    badge_uavg = _('pricing.badge_uavg', 'Netherlands UAVG')
+    badge_ai_act = _('pricing.badge_ai_act', 'EU AI Act Ready')
+    badge_guarantee = _('pricing.badge_guarantee', '30-Day Guarantee')
+    
+    st.markdown(f"""
+    <div class="trust-badges">
+        <div class="trust-badge">
+            <div style="font-size: 1.5rem;">🔒</div>
+            <div style="font-weight: 600;">{badge_gdpr}</div>
+        </div>
+        <div class="trust-badge">
+            <div style="font-size: 1.5rem;">🇳🇱</div>
+            <div style="font-weight: 600;">{badge_uavg}</div>
+        </div>
+        <div class="trust-badge">
+            <div style="font-size: 1.5rem;">🤖</div>
+            <div style="font-weight: 600;">{badge_ai_act}</div>
+        </div>
+        <div class="trust-badge">
+            <div style="font-size: 1.5rem;">💰</div>
+            <div style="font-weight: 600;">{badge_guarantee}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
+        monthly_label = _('pricing.billing_monthly', 'Monthly')
+        annual_label = _('pricing.billing_annual', 'Annual (Save 2 months)')
+        billing_options = [monthly_label, annual_label]
         billing_cycle = st.radio(
             _('pricing.select_billing', 'Select billing:'),
-            [_('pricing.billing_monthly', 'Monthly'), _('pricing.billing_annual', 'Annual (Save 2 months)')],
+            billing_options,
             horizontal=True,
             key="billing_toggle"
         )
     
-    billing = BillingCycle.ANNUAL if "Annual" in billing_cycle else BillingCycle.MONTHLY
+    billing = BillingCycle.ANNUAL if billing_cycle == annual_label else BillingCycle.MONTHLY
     
-    show_pricing_cards(billing)
-    show_scanner_availability()
+    if billing == BillingCycle.ANNUAL:
+        annual_banner = _('pricing.annual_banner', 'Save 2 months with annual billing - includes 30-day money-back guarantee')
+        st.markdown(f"""
+        <div class="guarantee-banner">
+            <strong>{annual_banner}</strong>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    show_modern_pricing_cards(billing)
+    show_scanner_availability_modern()
     show_competitive_comparison()
     show_features_comparison()
     show_contact_section()
@@ -280,8 +507,285 @@ def show_payment_redirect():
             CheckoutStateManager.reset_checkout()
             st.rerun()
 
+def show_modern_pricing_cards(billing_cycle: BillingCycle):
+    """Display modern styled pricing cards with rich information"""
+    from utils.i18n import _
+    
+    config = get_cached_pricing_config()
+    license_integration = LicenseIntegration()
+    current_tier = license_integration.get_current_pricing_tier()
+    
+    st.markdown(f"## {_('pricing.choose_plan', 'Choose Your Plan')}")
+    
+    tiers = [PricingTier.STARTUP, PricingTier.PROFESSIONAL, PricingTier.GROWTH, PricingTier.SCALE]
+    cols = st.columns(len(tiers))
+    
+    tier_colors = {
+        PricingTier.STARTUP: ("#3b82f6", "#1d4ed8"),
+        PricingTier.PROFESSIONAL: ("#8b5cf6", "#6d28d9"),
+        PricingTier.GROWTH: ("#10b981", "#059669"),
+        PricingTier.SCALE: ("#f59e0b", "#d97706"),
+    }
+    
+    tier_icons = {
+        PricingTier.STARTUP: "🚀",
+        PricingTier.PROFESSIONAL: "💼",
+        PricingTier.GROWTH: "📈",
+        PricingTier.SCALE: "🏢",
+    }
+    
+    for i, tier in enumerate(tiers):
+        with cols[i]:
+            pricing = config.get_tier_pricing(tier, billing_cycle)
+            tier_data = config.pricing_data["tiers"][tier.value]
+            
+            is_current = (current_tier == tier) if current_tier else False
+            is_popular = tier_data.get("most_popular", False)
+            color1, color2 = tier_colors.get(tier, ("#2d5a4d", "#1e3a5f"))
+            icon = tier_icons.get(tier, "📦")
+            
+            scanner_count, _ = get_tier_scanner_count(tier)
+            unlimited_text = _('pricing.unlimited', 'Unlimited')
+            scans = tier_data.get('max_scans_monthly', unlimited_text)
+            if scans == 'unlimited' or scans == 'Unlimited':
+                scans = unlimited_text
+            sources = tier_data.get('max_data_sources', unlimited_text)
+            if sources == 'unlimited' or sources == 'Unlimited':
+                sources = unlimited_text
+            
+            card_class = "popular" if is_popular else ""
+            badge_html = ""
+            most_popular_text = _('pricing.most_popular', 'MOST POPULAR')
+            current_plan_text = _('pricing.current_plan', 'CURRENT PLAN')
+            if is_popular:
+                badge_html = f'<div class="pricing-badge">{most_popular_text}</div>'
+            elif is_current:
+                badge_html = f'<div class="pricing-badge" style="background: linear-gradient(90deg, #10b981, #059669);">{current_plan_text}</div>'
+            
+            price = pricing.get('price', 0)
+            period_text = _('pricing.year', 'year') if billing_cycle == BillingCycle.ANNUAL else _('pricing.month', 'month')
+            savings_html = ""
+            if billing_cycle == BillingCycle.ANNUAL and pricing.get('savings'):
+                save_text = _('pricing.save', 'Save')
+                savings_html = f'<div class="savings-tag">{save_text} €{pricing["savings"]:,}/{_("pricing.year", "year")}</div>'
+            
+            key_features = get_tier_key_features(tier)[:5]
+            features_html = "".join([
+                f'<li><span class="feature-icon">✓</span> {f}</li>' for f in key_features
+            ])
+            
+            employees_text = _('pricing.employees', 'employees')
+            scanners_included = _('pricing.scanners_included', 'Scanners Included')
+            scans_month = _('pricing.scans_month', 'scans/month')
+            data_sources = _('pricing.data_sources', 'data sources')
+            
+            st.markdown(f"""
+            <div class="pricing-card {card_class}">
+                {badge_html}
+                <div style="font-size: 2rem; margin-bottom: 5px;">{icon}</div>
+                <div class="tier-name">{pricing['name']}</div>
+                <div class="tier-target">{tier_data['target_employees']} {employees_text}</div>
+                <div class="tier-target" style="font-size: 0.8rem;">{tier_data['target_revenue']}</div>
+                
+                <div style="margin: 20px 0;">
+                    <span class="price-display" style="background: linear-gradient(90deg, {color1}, {color2}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">€{price:,}</span>
+                    <span class="price-period">/{period_text}</span>
+                    {savings_html}
+                </div>
+                
+                <div class="scanner-badge" style="background: linear-gradient(90deg, {color1}, {color2});">
+                    {scanner_count} {scanners_included}
+                </div>
+                
+                <div class="limit-info">
+                    <span>📊 <strong>{scans}</strong> {scans_month}</span>
+                    <span>🔌 <strong>{sources}</strong> {data_sources}</span>
+                </div>
+                
+                <ul class="feature-list">
+                    {features_html}
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            select_text = _('pricing.select', 'Select')
+            tier_display_names = {
+                PricingTier.STARTUP: _('pricing.tier_startup', 'Startup'),
+                PricingTier.PROFESSIONAL: _('pricing.tier_professional', 'Professional'),
+                PricingTier.GROWTH: _('pricing.tier_growth', 'Growth'),
+                PricingTier.SCALE: _('pricing.tier_scale', 'Scale'),
+            }
+            tier_display = tier_display_names.get(tier, tier.value.title())
+            button_text = current_plan_text if is_current else f"{select_text} {tier_display}"
+            button_disabled = is_current
+            button_type = "secondary" if is_current else ("primary" if is_popular else "secondary")
+            
+            if st.button(button_text, key=f"modern_{tier.value}", disabled=button_disabled, type=button_type, use_container_width=True):
+                handle_tier_selection(tier, billing_cycle)
+    
+    st.markdown("---")
+    premium_title = _('pricing.premium_title', 'Premium Enterprise Solutions')
+    premium_desc = _('pricing.premium_desc', 'For organizations using Salesforce CRM, SAP ERP, or requiring custom deployments')
+    st.markdown(f"""
+    <div style="text-align: center; margin: 30px 0;">
+        <h2 style="color: #1f2937;">{premium_title}</h2>
+        <p style="color: #6b7280;">{premium_desc}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    premium_tiers = [PricingTier.SALESFORCE_PREMIUM, PricingTier.SAP_ENTERPRISE, PricingTier.ENTERPRISE]
+    premium_cols = st.columns(3)
+    
+    premium_info = {
+        PricingTier.SALESFORCE_PREMIUM: ("🔥", _('pricing.tier_crm_premium', 'CRM Premium'), "#ec4899", "#db2777"),
+        PricingTier.SAP_ENTERPRISE: ("💼", _('pricing.tier_sap_enterprise', 'SAP Enterprise'), "#8b5cf6", "#6d28d9"),
+        PricingTier.ENTERPRISE: ("⭐", _('pricing.tier_ultimate', 'Ultimate'), "#f59e0b", "#d97706"),
+    }
+    
+    for i, tier in enumerate(premium_tiers):
+        with premium_cols[i]:
+            pricing = config.get_tier_pricing(tier, billing_cycle)
+            tier_data = config.pricing_data["tiers"][tier.value]
+            
+            is_current = (current_tier == tier) if current_tier else False
+            icon, label, color1, color2 = premium_info.get(tier, ("📦", _('pricing.tier_premium', 'Premium'), "#2d5a4d", "#1e3a5f"))
+            
+            price = pricing.get('price', 0)
+            period_text = _('pricing.year', 'year') if billing_cycle == BillingCycle.ANNUAL else _('pricing.month', 'month')
+            employees_text = _('pricing.employees', 'employees')
+            
+            premium_features = get_tier_premium_features(tier)[:4]
+            features_html = "".join([
+                f'<li><span class="feature-icon">✓</span> {f}</li>' for f in premium_features
+            ])
+            
+            savings_html = ""
+            if billing_cycle == BillingCycle.ANNUAL and pricing.get('savings'):
+                save_text = _('pricing.save', 'Save')
+                savings_html = f'<div class="savings-tag">{save_text} €{pricing["savings"]:,}/{_("pricing.year", "year")}</div>'
+            
+            all_scanners_text = _('pricing.all_scanners_premium', 'All 12 Scanners + Premium')
+            
+            st.markdown(f"""
+            <div class="pricing-card premium">
+                <div class="pricing-badge" style="background: linear-gradient(90deg, {color1}, {color2});">{label}</div>
+                <div style="font-size: 2rem; margin-bottom: 5px;">{icon}</div>
+                <div class="tier-name">{pricing['name']}</div>
+                <div class="tier-target">{tier_data['target_employees']} {employees_text}</div>
+                
+                <div style="margin: 20px 0;">
+                    <span class="price-display" style="background: linear-gradient(90deg, {color1}, {color2}); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">€{price:,}</span>
+                    <span class="price-period">/{period_text}</span>
+                    {savings_html}
+                </div>
+                
+                <div class="scanner-badge" style="background: linear-gradient(90deg, {color1}, {color2});">
+                    {all_scanners_text}
+                </div>
+                
+                <ul class="feature-list">
+                    {features_html}
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            current_plan_text = _('pricing.current_plan', 'CURRENT PLAN')
+            select_plan_text = _('pricing.select_plan', 'Select Plan')
+            button_text = current_plan_text if is_current else select_plan_text
+            button_disabled = is_current
+            
+            if st.button(button_text, key=f"premium_{tier.value}", disabled=button_disabled, type="primary", use_container_width=True):
+                handle_tier_selection(tier, billing_cycle)
+    
+    st.markdown("---")
+    gov_title = _('pricing.gov_title', 'Government & Enterprise License')
+    gov_pricing = _('pricing.gov_pricing', 'One-time license: €15,000 | Annual maintenance: €2,500/year')
+    gov_features = _('pricing.gov_features', 'On-premises deployment • Source code access • Unlimited everything • Custom development')
+    gov_button = _('pricing.gov_contact', 'Contact Sales for Government License')
+    
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a4d 100%); padding: 30px; border-radius: 16px; color: white; text-align: center;">
+        <h3>🏛️ {gov_title}</h3>
+        <p style="font-size: 1.1rem; margin: 15px 0;"><strong>{gov_pricing}</strong></p>
+        <p style="opacity: 0.9;">{gov_features}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button(f"📞 {gov_button}", key="contact_gov", type="secondary", use_container_width=True):
+        st.session_state['contact_sales'] = True
+        st.rerun()
+
+
+def show_scanner_availability_modern():
+    """Show modern scanner availability visualization"""
+    from utils.i18n import _
+    
+    scanner_title = _('pricing.scanner_title', '12 Specialized Compliance Scanners')
+    scanner_desc = _('pricing.scanner_desc', 'Every scanner designed for European privacy regulations with Netherlands-specific detection')
+    
+    st.markdown(f"""
+    <div style="text-align: center; margin: 40px 0 20px 0;">
+        <h2 style="color: #1f2937;">🔍 {scanner_title}</h2>
+        <p style="color: #6b7280; max-width: 600px; margin: 0 auto;">
+            {scanner_desc}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    scanners = [
+        ("💻", _('scanner.code', 'Code Scanner'), _('scanner.code_desc', 'Detects PII in source code & repositories'), "#3b82f6"),
+        ("📄", _('scanner.document', 'Document Scanner'), _('scanner.document_desc', 'PDF, Word, Excel file analysis'), "#10b981"),
+        ("🗄️", _('scanner.database', 'Database Scanner'), _('scanner.database_desc', 'PostgreSQL, MySQL, SQL Server'), "#8b5cf6"),
+        ("🖼️", _('scanner.image', 'Image Scanner'), _('scanner.image_desc', 'OCR-based text extraction'), "#f59e0b"),
+        ("🌐", _('scanner.website', 'Website Scanner'), _('scanner.website_desc', 'Privacy issue detection'), "#ec4899"),
+        ("🤖", _('scanner.ai_model', 'AI Model Scanner'), _('scanner.ai_model_desc', 'EU AI Act compliance'), "#6366f1"),
+        ("📋", _('scanner.dpia', 'DPIA Scanner'), _('scanner.dpia_desc', 'Impact assessments'), "#14b8a6"),
+        ("🔐", _('scanner.soc2', 'SOC2/NIS2 Scanner'), _('scanner.soc2_desc', 'Security compliance'), "#f97316"),
+        ("🔗", _('scanner.enterprise', 'Enterprise Connectors'), _('scanner.enterprise_desc', 'M365, Google, Exact Online'), "#8b5cf6"),
+        ("🌱", _('scanner.sustainability', 'Sustainability Scanner'), _('scanner.sustainability_desc', 'Cloud efficiency'), "#22c55e"),
+        ("🎬", _('scanner.deepfake', 'Deepfake Detection'), _('scanner.deepfake_desc', 'Audio/Video authentication'), "#ef4444"),
+        ("🧠", _('scanner.advanced_ai', 'Advanced AI'), _('scanner.advanced_ai_desc', 'GPT-4 powered analysis'), "#6366f1"),
+    ]
+    
+    from_text = _('pricing.from_tier', 'From')
+    tier_names = {
+        "Startup": _('pricing.tier_startup', 'Startup'),
+        "Professional": _('pricing.tier_professional', 'Professional'),
+        "Growth": _('pricing.tier_growth', 'Growth'),
+        "Scale": _('pricing.tier_scale', 'Scale'),
+        "Enterprise": _('pricing.tier_enterprise', 'Enterprise'),
+    }
+    tier_limits = {"Startup": 6, "Professional": 8, "Growth": 10, "Scale": 12, "Enterprise": 12}
+    
+    col1, col2, col3 = st.columns(3)
+    
+    for idx, (icon, name, desc, color) in enumerate(scanners):
+        col = [col1, col2, col3][idx % 3]
+        with col:
+            availability = []
+            for tier, limit in tier_limits.items():
+                if idx < limit:
+                    availability.append(tier)
+            
+            min_tier_key = availability[0] if availability else "Enterprise"
+            min_tier = tier_names.get(min_tier_key, min_tier_key)
+            
+            st.markdown(f"""
+            <div style="background: white; border-radius: 12px; padding: 15px; margin: 10px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid {color};">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">{icon}</span>
+                    <div>
+                        <div style="font-weight: 600; color: #1f2937;">{name}</div>
+                        <div style="font-size: 0.85rem; color: #6b7280;">{desc}</div>
+                        <div style="font-size: 0.75rem; color: {color}; margin-top: 4px;">{from_text} {min_tier}+</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+
 def show_pricing_cards(billing_cycle: BillingCycle):
-    """Display pricing cards for all tiers"""
+    """Display pricing cards for all tiers (legacy version)"""
     config = get_cached_pricing_config()
     license_integration = LicenseIntegration()
     current_tier = license_integration.get_current_pricing_tier()
