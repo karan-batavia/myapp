@@ -13,37 +13,120 @@ DataGuardian Pro's 12-scanner suite helps organizations achieve **100% EU compli
 - Configuration files (YAML, JSON, XML, .env)
 - Database scripts (SQL, migrations)
 - Infrastructure-as-code (Terraform, CloudFormation)
+- Test files and sample data
+- Comments and documentation strings
 
-### Problem It Solves
+### Problems It Solves
+
+#### Problem 1: Credential & Secret Exposure
 Developers accidentally commit sensitive data to code repositories:
-- API keys and tokens
-- Database passwords
-- Personal data in test files
-- Hardcoded credentials
-- BSN (Dutch citizen numbers) in comments
+- API keys and tokens (AWS, Azure, GCP, Stripe, etc.)
+- Database passwords and connection strings
+- Private keys and certificates
+- OAuth client secrets
 
 **Real Risk**: 15% of data breaches originate from exposed credentials in code.
+
+#### Problem 2: PII in Source Code
+Personal data ends up in code through testing and development:
+- Email addresses in test files
+- Phone numbers in sample data
+- Real customer data used for debugging
+- Names and addresses in comments
+- Credit card numbers in test scripts
+
+**Real Risk**: 67% of developers have used real customer data in test environments.
+
+#### Problem 3: GDPR Compliance Gaps
+Code often violates GDPR requirements without developers knowing:
+- Missing data processing documentation (Art. 30)
+- No consent mechanism implementation (Art. 7)
+- Lack of data minimization (Art. 5)
+- Missing encryption for personal data (Art. 32)
+- No right-to-erasure implementation (Art. 17)
+- Cross-border transfer without safeguards (Art. 44-49)
+- Automated decision-making without human oversight (Art. 22)
+
+**Real Risk**: €20M or 4% global turnover penalty for GDPR violations.
+
+#### Problem 4: Netherlands UAVG Violations
+Dutch-specific requirements that generic tools miss:
+- BSN (Burgerservicenummer) exposed in code - requires special protection
+- KvK (Chamber of Commerce) numbers
+- Dutch IBAN numbers
+- DigiD integration without proper security
+- AP (Autoriteit Persoonsgegevens) Guidelines 2024-2025 violations
+
+**Real Risk**: Dutch AP fines average €500,000-2,000,000 for UAVG violations.
+
+#### Problem 5: AI-Generated Code Risks
+AI coding assistants introduce new compliance risks:
+- Copilot/ChatGPT-generated code with embedded PII patterns
+- Backdoor vulnerabilities from AI suggestions
+- License violations from AI-sourced code
+- Security weaknesses in AI-generated functions
+
+**Real Risk**: 40% of AI-generated code contains security vulnerabilities.
+
+#### Problem 6: Code Fraud & Backdoors
+Malicious or suspicious code patterns:
+- Obfuscated code hiding malicious behavior
+- Backdoor functions for unauthorized access
+- Data exfiltration patterns
+- Suspicious code origins
+
+**Real Risk**: Supply chain attacks cost average €4.2M per incident.
 
 ### Customer Value
 | Benefit | Impact |
 |---------|--------|
 | Prevent credential exposure | Avoid €2-5M average breach cost |
+| Find PII in test data | Stop data leaks before production |
+| 100% GDPR validation | Know exactly which articles apply to your code |
+| 100% UAVG validation | Netherlands-specific compliance guaranteed |
+| AI code risk detection | Catch AI-generated vulnerabilities |
 | Automated compliance checking | Save 40+ hours/month manual review |
 | Pre-commit scanning | Stop issues before they reach production |
-| Full GDPR/UAVG article mapping | Know exactly which regulations apply |
+| Full article mapping | Link every finding to specific regulation |
 
 ### Why Pay For It
 - **100% GDPR coverage** (99 articles) - no other tool offers this
 - **100% UAVG coverage** (51 articles) - Netherlands-specific compliance
+- **BSN detection**: Automatic Dutch citizen number protection
+- **AI code scanning**: Detect ChatGPT/Copilot risks
 - **Cost savings**: €15,000-50,000/year vs. manual code audits
 - **ROI**: Prevents single breach that costs €2-5M average
 
 ### EU Compliance Value
 | Regulation | Coverage | Key Articles |
 |------------|----------|--------------|
-| GDPR | 100% | All 99 articles validated |
-| UAVG | 100% | Art. 46 (BSN), AP Guidelines 2024-2025 |
-| NIS2 | Partial | Art. 21 (Security measures) |
+| GDPR | 100% | All 99 articles across 11 chapters validated |
+| UAVG | 100% | All 51 articles including Art. 46 (BSN), AP Guidelines 2024-2025 |
+| EU AI Act | Partial | Art. 52 (Transparency), Art. 5 (Prohibited practices) |
+| NIS2 | Partial | Art. 21 (Security measures), Art. 32 (Risk management) |
+
+### GDPR Articles Detected (Examples)
+| Article | What Scanner Detects |
+|---------|---------------------|
+| Art. 5 | Data minimization violations, excessive data collection |
+| Art. 6 | Missing lawful basis documentation |
+| Art. 7 | Consent mechanism gaps |
+| Art. 9 | Special category data (health, biometrics) in code |
+| Art. 17 | Missing right-to-erasure implementation |
+| Art. 25 | Privacy by design violations |
+| Art. 30 | Missing processing records |
+| Art. 32 | Unencrypted personal data |
+| Art. 33-34 | Missing breach notification logic |
+| Art. 44-49 | Unsafe cross-border data transfers |
+
+### UAVG Articles Detected (Examples)
+| Article | What Scanner Detects |
+|---------|---------------------|
+| Art. 46 | BSN (citizen number) without proper authorization |
+| Art. 22 | Special category data processing violations |
+| Art. 29 | Photo ID handling violations |
+| Art. 30 | Biometric data misuse |
+| AP Guidelines | 2024-2025 Authority requirements |
 
 ---
 
