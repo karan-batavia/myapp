@@ -2351,26 +2351,307 @@ def render_google_workspace_connector(region: str, username: str):
             st.error(f"Google Workspace connector failed: {str(e)}")
 
 def render_dutch_banking_connector(region: str, username: str):
-    """Dutch banking connector interface (PSD2 APIs)"""
+    """Dutch banking connector interface (PSD2 APIs and Repository Scanner)"""
     from services.enterprise_connector_scanner import EnterpriseConnectorScanner
     
     st.subheader(_('scan.dutch_banking_integration', '🏦 Dutch Banking Integration'))
     st.write(_('scan.dutch_banking_integration_description', 'PSD2-compliant integration with major Dutch banks for transaction analysis.'))
     
-    # Bank selection
+    tab1, tab2 = st.tabs([
+        "🏦 PSD2 Transaction Scan",
+        "📁 Repository Scanner (PCI-DSS)"
+    ])
+    
+    with tab1:
+        render_psd2_banking_scanner(region, username)
+    
+    with tab2:
+        render_banking_repository_scanner(region, username)
+
+
+def render_psd2_banking_scanner(region: str, username: str):
+    """PSD2 banking transaction scanner"""
     bank = st.selectbox(
         _('scan.select_bank', 'Select Bank'),
         [_('scan.rabobank', 'Rabobank'), "ING Bank", "ABN AMRO", "Bunq", "Triodos Bank"],
-        help="Choose your primary banking provider"
+        help="Choose your primary banking provider",
+        key="psd2_bank_select"
     )
     
     st.info(_('scan.banking_security_notice', '🔒 **Security**: All banking authentication is handled directly by your bank. No banking credentials are stored in DataGuardian Pro.'))
     
-    # Demo mode for banking
     st.warning(_('scan.banking_demo_notice', '⚠️ Banking integration currently in demo mode pending PSD2 certification'))
     
-    if st.button("🚀 Demo Banking Scan"):
+    if st.button("🚀 Demo Banking Scan", key="psd2_demo_btn"):
         st.success("✅ Demo banking scan completed - PSD2 integration coming soon!")
+
+
+def render_banking_repository_scanner(region: str, username: str):
+    """Banking sector repository scanner for PCI-DSS, GDPR, UAVG compliance"""
+    from services.repository_scanner import RepositoryScanner, ScanResult
+    
+    st.markdown("### 🔐 Banking Code Repository Scanner")
+    st.write("Scan banking code repositories for PCI-DSS, GDPR, and UAVG compliance violations.")
+    
+    st.success("🏦 **Banking Sector Focus**: Detects hardcoded IBANs, BSNs (11-proef validated), PANs, secrets, and PCI-DSS secure coding violations.")
+    
+    bank_name = st.selectbox(
+        "Select Bank (for custom policy rules)",
+        ["Rabobank", "ING Bank", "ABN AMRO", "Bunq", "Triodos Bank", "De Nederlandsche Bank", "Other"],
+        help="Custom compliance policies per bank",
+        key="repo_bank_select"
+    )
+    
+    st.markdown("#### Source Type")
+    source_type = st.radio(
+        "Select source",
+        ["Repository URL", "Upload Files", "Demo Mode"],
+        index=0,
+        key="repo_source_type",
+        help="Scan from Git repository URL or upload code files"
+    )
+    
+    repo_url = None
+    branch = None
+    access_token = None
+    uploaded_files = None
+    
+    if source_type == "Repository URL":
+        repo_url = st.text_input(
+            "Repository URL",
+            placeholder="https://github.com/your-org/banking-app",
+            key="repo_url_input",
+            help="Enter Git repository URL (GitHub, GitLab, Bitbucket)"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            branch = st.text_input("Branch", placeholder="main", key="repo_branch", help="Leave empty for default branch")
+        with col2:
+            access_token = st.text_input("Access Token (private repos)", type="password", key="repo_token", help="Personal access token for private repositories")
+    
+    elif source_type == "Upload Files":
+        uploaded = st.file_uploader(
+            "Upload Code Files",
+            accept_multiple_files=True,
+            type=['py', 'js', 'ts', 'java', 'cs', 'go', 'rb', 'php', 'sql', 'yml', 'yaml', 'json', 'xml', 'tf', 'env', 'properties', 'conf'],
+            key="repo_file_upload",
+            help="Upload source code files for scanning"
+        )
+        if uploaded:
+            uploaded_files = []
+            for f in uploaded:
+                content = f.read().decode('utf-8', errors='ignore')
+                uploaded_files.append({'name': f.name, 'content': content})
+    
+    else:
+        st.info("📋 Demo mode will scan a sample banking project to demonstrate compliance detection capabilities.")
+    
+    st.markdown("#### Compliance Frameworks")
+    col1, col2 = st.columns(2)
+    with col1:
+        scan_pci = st.checkbox("💳 PCI-DSS v4.0", value=True, key="repo_pci", help="Payment Card Industry Data Security Standard")
+        scan_gdpr = st.checkbox("🇪🇺 GDPR", value=True, key="repo_gdpr", help="EU General Data Protection Regulation")
+    with col2:
+        scan_uavg = st.checkbox("🇳🇱 UAVG (Netherlands)", value=True, key="repo_uavg", help="Dutch Privacy Law with BSN protection")
+        scan_secrets = st.checkbox("🔑 Secrets Detection", value=True, key="repo_secrets", help="API keys, tokens, passwords, certificates")
+    
+    st.markdown("#### Detection Options")
+    col1, col2 = st.columns(2)
+    with col1:
+        detect_pii = st.checkbox("🔍 Hardcoded PII (IBAN, BSN, PAN)", value=True, key="repo_pii")
+        detect_logging = st.checkbox("📝 PII in Logging", value=True, key="repo_logging")
+    with col2:
+        detect_crypto = st.checkbox("🔐 Weak Encryption", value=True, key="repo_crypto")
+        validate_bsn = st.checkbox("✅ BSN 11-proef Validation", value=True, key="repo_bsn_validate")
+    
+    with st.expander("🔧 Advanced Settings"):
+        st.info("**Security Guarantees**: Read-only access, all detected values are masked, only hashes stored (no raw data)")
+        ci_gating = st.checkbox("Enable CI/CD gating recommendations", value=True, key="repo_ci")
+        evidence_export = st.checkbox("Generate audit-ready evidence export", value=True, key="repo_evidence")
+    
+    if st.button("🚀 Start Repository Scan", type="primary", key="repo_scan_btn"):
+        allowed, message = check_and_decrement_trial_scans()
+        if not allowed:
+            st.error(f"⚠️ {message}")
+            st.info("💡 Upgrade your plan to continue scanning.")
+            return
+        
+        if source_type == "Repository URL" and not repo_url:
+            st.error("Please enter a repository URL")
+            return
+        
+        if source_type == "Upload Files" and not uploaded_files:
+            st.error("Please upload at least one file")
+            return
+        
+        try:
+            scanner = RepositoryScanner(region=region, bank_name=bank_name)
+            
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+            
+            def progress_callback(message, percentage):
+                progress_bar.progress(max(0, min(100, percentage)))
+                status_text.text(message)
+            
+            scanner.progress_callback = progress_callback
+            
+            with st.spinner("Scanning repository for compliance violations..."):
+                if source_type == "Demo Mode":
+                    demo_files = [
+                        {
+                            'name': 'payment_service.py',
+                            'content': '''
+# Demo banking code with intentional violations
+import logging
+
+API_KEY = "sk_live_1234567890abcdefghijklmnop"
+DB_PASSWORD = "SuperSecret123!"
+
+def process_payment(iban, bsn, card_number):
+    # Hardcoded test IBAN
+    test_iban = "NL91ABNA0417164300"
+    
+    # Logging PII - violation!
+    logging.info(f"Processing payment for BSN: {bsn}")
+    logging.debug(f"Card number: {card_number}")
+    
+    # Store PAN - PCI-DSS violation
+    store_pan(card_number)
+    
+    # Weak encryption
+    import hashlib
+    hashed = hashlib.md5(bsn.encode()).hexdigest()
+    
+    return True
+
+def store_pan(pan):
+    # Direct storage without masking
+    db.save(pan)
+'''
+                        },
+                        {
+                            'name': 'config.yml',
+                            'content': '''
+database:
+  host: localhost
+  password: MyDbPassword123
+  
+api:
+  stripe_key: sk_live_abcdefghijklmnopqrstuvwxyz
+  aws_access_key: AKIAIOSFODNN7EXAMPLE
+'''
+                        }
+                    ]
+                    result = scanner.scan_repository(uploaded_files=demo_files)
+                elif source_type == "Upload Files":
+                    result = scanner.scan_repository(uploaded_files=uploaded_files)
+                else:
+                    result = scanner.scan_repository(
+                        repo_url=repo_url,
+                        branch=branch or "main",
+                        access_token=access_token
+                    )
+            
+            progress_bar.progress(100)
+            status_text.text("Scan completed!")
+            
+            try:
+                from services.results_aggregator import ResultsAggregator
+                aggregator = ResultsAggregator()
+                
+                complete_result = {
+                    'scan_type': 'repository_scanner',
+                    'scan_id': result.scan_id,
+                    'success': True,
+                    'total_pii_found': result.compliance_summary['pii_protection']['finding_count'],
+                    'high_risk_count': result.critical_count + result.high_count,
+                    'region': region,
+                    'files_scanned': result.files_scanned,
+                    'total_findings': result.total_findings,
+                    'risk_score': result.risk_score,
+                    'username': username,
+                    'user_id': st.session_state.get('user_id', username),
+                    'connector_type': 'Repository Scanner',
+                    'bank_name': bank_name,
+                    'compliance_summary': result.compliance_summary
+                }
+                
+                aggregator.save_scan_result(username=username, result=complete_result)
+                
+            except Exception as store_error:
+                logger.warning(f"Failed to store scan results: {store_error}")
+            
+            st.success(f"✅ Repository Scan Complete!")
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Files Scanned", result.files_scanned)
+            with col2:
+                st.metric("Total Findings", result.total_findings)
+            with col3:
+                risk_color = "inverse" if result.risk_score > 50 else "normal"
+                st.metric("Risk Score", f"{result.risk_score:.0f}/100")
+            with col4:
+                severity = "Critical" if result.critical_count > 0 else ("High" if result.high_count > 0 else "Low")
+                st.metric("Severity", severity)
+            
+            st.markdown("#### Compliance Status")
+            col1, col2, col3, col4, col5 = st.columns(5)
+            compliance = result.compliance_summary
+            
+            with col1:
+                pci_status = compliance['pci_dss']['status']
+                st.markdown(f"**PCI-DSS**: {'✅' if pci_status == 'compliant' else '❌'}")
+                st.caption(f"{compliance['pci_dss']['finding_count']} issues")
+            with col2:
+                gdpr_status = compliance['gdpr']['status']
+                st.markdown(f"**GDPR**: {'✅' if gdpr_status == 'compliant' else '❌'}")
+                st.caption(f"{compliance['gdpr']['finding_count']} issues")
+            with col3:
+                uavg_status = compliance['uavg']['status']
+                st.markdown(f"**UAVG**: {'✅' if uavg_status == 'compliant' else '❌'}")
+                st.caption(f"{compliance['uavg']['finding_count']} issues")
+            with col4:
+                secrets_status = compliance['secrets_management']['status']
+                st.markdown(f"**Secrets**: {'✅' if secrets_status == 'secure' else '⚠️'}")
+                st.caption(f"{compliance['secrets_management']['finding_count']} exposures")
+            with col5:
+                pii_status = compliance['pii_protection']['status']
+                st.markdown(f"**PII**: {'✅' if pii_status == 'protected' else '⚠️'}")
+                st.caption(f"{compliance['pii_protection']['finding_count']} issues")
+            
+            if result.findings:
+                with st.expander(f"📋 View All Findings ({len(result.findings)} total)", expanded=False):
+                    for category in ['hardcoded_pii', 'secrets_exposure', 'pii_logging', 'pci_dss_violation']:
+                        cat_findings = [f for f in result.findings if f.category.value == category]
+                        if cat_findings:
+                            cat_name = category.replace('_', ' ').title()
+                            st.markdown(f"**{cat_name}** ({len(cat_findings)})")
+                            for finding in cat_findings[:10]:
+                                severity_colors = {'critical': '🔴', 'high': '🟠', 'medium': '🟡', 'low': '🟢'}
+                                st.markdown(f"{severity_colors.get(finding.severity.value, '⚪')} **{finding.title}** - `{finding.file_path}:{finding.line_number}`")
+                                st.caption(f"Masked: {finding.masked_value} | {', '.join(finding.compliance_refs[:2])}")
+            
+            if result.recommendations:
+                with st.expander("💡 Recommendations", expanded=True):
+                    for rec in result.recommendations:
+                        st.markdown(f"• {rec}")
+            
+            html_report = scanner.generate_html_report(result)
+            
+            st.download_button(
+                label="📥 Download HTML Report",
+                data=html_report,
+                file_name=f"repository_scan_{result.scan_id[:8]}_{datetime.now().strftime('%Y%m%d')}.html",
+                mime="text/html",
+                key="repo_download_btn"
+            )
+            
+        except Exception as e:
+            st.error(f"Repository scan failed: {str(e)}")
+            logger.error(f"Repository scanner error: {e}")
 
 def render_salesforce_connector(region: str, username: str):
     """Salesforce Code Repository Scanner interface"""
