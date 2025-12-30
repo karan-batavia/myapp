@@ -2506,7 +2506,7 @@ def render_banking_repository_scanner(region: str, username: str):
 # Demo banking code with intentional violations
 import logging
 
-API_KEY = "sk_live_1234567890abcdefghijklmnop"
+API_KEY = "sk_test_EXAMPLE_KEY_FOR_DEMO_ONLY"
 DB_PASSWORD = "SuperSecret123!"
 
 def process_payment(iban, bsn, card_number):
@@ -2539,8 +2539,8 @@ database:
   password: MyDbPassword123
   
 api:
-  stripe_key: sk_live_abcdefghijklmnopqrstuvwxyz
-  aws_access_key: AKIAIOSFODNN7EXAMPLE
+  stripe_key: sk_test_EXAMPLE_DEMO_KEY_ONLY
+  aws_access_key: AKIA_EXAMPLE_DEMO_ONLY
 '''
                         }
                     ]
