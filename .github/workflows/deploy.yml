@@ -13,7 +13,6 @@ on:
 
 env:
   APP_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dataguardian-app
-  WORKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dataguardian-worker
 
 jobs:
   build:
@@ -56,22 +55,9 @@ jobs:
           cache-from: type=registry,ref=${{ env.APP_IMAGE }}:latest
           cache-to: type=inline
       
-      - name: Build and push worker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile.worker
-          push: true
-          tags: |
-            ${{ env.WORKER_IMAGE }}:latest
-            ${{ env.WORKER_IMAGE }}:${{ steps.version.outputs.tag }}
-          cache-from: type=registry,ref=${{ env.WORKER_IMAGE }}:latest
-          cache-to: type=inline
-      
-      - name: Images pushed successfully
+      - name: Image pushed successfully
         run: |
           echo "App image: ${{ env.APP_IMAGE }}:${{ steps.version.outputs.tag }}"
-          echo "Worker image: ${{ env.WORKER_IMAGE }}:${{ steps.version.outputs.tag }}"
 
   deploy:
     name: Deploy to External Server
@@ -169,10 +155,6 @@ jobs:
             # Stop old color
             echo "Stopping $CURRENT_COLOR..."
             docker compose -f docker-compose.prod.yml stop "app-$CURRENT_COLOR" || true
-            
-            # Update workers
-            echo "Updating scanner workers..."
-            docker compose -f docker-compose.prod.yml up -d scanner-worker
             
             # Cleanup old images (keep last 3)
             echo "Cleaning up old images..."
