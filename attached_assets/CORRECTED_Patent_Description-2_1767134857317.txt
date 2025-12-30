@@ -1,0 +1,94 @@
+1
+
+      TITEL VAN DE UITVINDING
+      
+      Geautomatiseerd systeem voor de beoordeling van de naleving van AI-modellen 
+      voor het regelgevingskader van de EU AI Act 2025
+      
+    5 TECHNISCH GEBIED
+      
+      Deze uitvinding betreft een computersysteem voor geautomatiseerde
+      compliance verificatie van kunstmatige intelligentie (AI) modellen,
+      specifiek gericht op de EU AI Act 2025 regelgeving. Het systeem analyseert
+   10 machine learning modellen voor meerdere frameworks (PyTorch, TensorFlow,
+      ONNX, scikit-learn), detecteert discriminatoire bias patronen met
+      mathematische fairness algoritmen, en verifieert compliance conform EU AI
+      Act Artikelen 5, 19-24, en 51-55, met specialisatie voor Nederlandse UAVG
+      en BSN (Burgerservicenummer) privacy wetgeving.
+   15
+      ACHTERGROND VAN DE UITVINDING
+      
+      Stand van de Techniek
+      
+   20 De EU AI Act (Verordening 2024/1689) treedt in werking op 2 februari 2025
+      en introduceert een uitgebreid regelgevend kader voor kunstmatige
+      intelligentie systemen binnen de Europese Unie. De verordening classificeert
+      AI systemen in vier risico categorieën:
+      
+   25 1. Verboden praktijken (Artikel 5): Sociale scoring, manipulatie,
+      subliminal technieken, biometrische identificatie in publieke ruimtes.
+      
+      2. Hoog-risico systemen (Artikelen 19-24): Biometrische identificatie,
+      kritische infrastructuur, onderwijs, werkgelegenheid, essentiële
+   30 diensten, rechtshandhaving. 
+      
+      3. Beperkt risico systemen (Artikel 50): Transparantie verplichtingen voor
+      chatbots en gegenereerde content.
+      
+   35 4. General Purpose AI (GPAI) modellen (Artikelen 51-55): Foundation models
+      met >1 miljard parameters of significante compute capaciteit.
+
+                                   2
+
+   40 Probleem met Bestaande Oplossingen
+      
+      Huidige compliance assessment methoden zijn voornamelijk handmatig,
+      tijdrovend, en kostbaar. Bestaande software vereist vaak extensieve
+      handmatige invoer en ontbeert geautomatiseerde technische analyse van 
+   45 modelarchitecturen of Nederlandse specialisatie voor UAVG en BSN detectie.
+      
+      Voor Nederlandse organisaties bestaat een additionele compliance last onder
+      de Uitvoeringswet Algemene Verordening Gegevensbescherming (UAVG), waarbij
+      Burgerservicenummers (BSN) als bijzondere persoonsgegevens worden
+   50 beschouwd. Handmatige detectie in AI training data is foutgevoelig voor
+      modellen met miljarden parameters.
+      
+      SAMENVATTING VAN DE UITVINDING
+      
+   55 Deze uitvinding biedt een geautomatiseerd systeem dat multi-framework 
+      analyse combineert met bias detectie via vier fairness algoritmen: 
+      demographic parity, equalized odds, calibration score, en individual 
+      fairness. Het systeem biedt specifieke BSN checksum validatie middels 
+      de officiële Nederlandse 11-proef.
+   60
+      HOOFDKENMERKEN VAN DE UITVINDING
+      
+      A. MULTI-FRAMEWORK ANALYSEMODULE
+      De module analyseert PyTorch (.pt, .pth), TensorFlow (.h5, .pb), ONNX, 
+   65 en Scikit-learn (.pkl, .joblib) bestanden. Het extraheert automatisch
+      architectuur, parameter counts en model complexity metrics via 
+      introspectie en graph analyse.
+      
+      B. BIAS DETECTIE-ENGINE
+   70 De engine implementeert mathematische algoritmen zoals Demographic Parity: 
+      P(Y=1|A=0) ≈ P(Y=1|A=1). Het verifieert of groepsverschillen binnen de 
+      0.80 threshold vallen. Equalized Odds verifieert dat de True Positive Rate 
+      en False Positive Rate gelijk zijn over beschermde groepen.
+
+                                   3
+
+   75 C. EU AI ACT COMPLIANCE BEOORDELAAR
+      De beoordelaar voert controles uit op Artikel 5 (Verboden Praktijken) en
+      Artikelen 19-24 (Hoog-Risico). Het berekent automatisch de potentiële 
+      boetes tot EUR 35 miljoen gebaseerd op de globale jaaromzet.
+      
+   80 D. NEDERLANDSE SPECIALISATIE MODULE
+      Deze module voert BSN detectie uit via een 9-cijferig regex patroon gevolgd 
+      door de officiële 11-proef checksum: 
+      (d0*9 + d1*8 + d2*7 + d3*6 + d4*5 + d5*4 + d6*3 + d7*2 - d8*1) mod 11 == 0.
+      Tevens worden UAVG compliance multipliers toegepast op risico-scores.
+   85
+      E. REAL-TIME MONITORING EN RAPPORTAGE
+      Het systeem biedt continue oversight met anomalie detectie en genereert 
+      interactieve HTML dashboards en PDF rapportages inclusief remediation 
+      roadmaps en digitale compliance certificaten met AP authority stamp.

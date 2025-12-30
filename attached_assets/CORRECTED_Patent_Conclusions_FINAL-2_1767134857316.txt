@@ -1,0 +1,85 @@
+4
+
+      CONCLUSIES
+      
+    5 1. Een computersysteem voor geautomatiseerde AI-model risicoanalyse,
+      omvattende:
+      a) een multi-framework analysemodule die machine learning modellen
+      analyseert voor PyTorch, TensorFlow, ONNX, en scikit-learn frameworks;
+      b) een bias detectie-engine die discriminatoire patronen identificeert met
+   10 behulp van demographic parity, equalized odds, calibration score, en
+      individual fairness algoritmen;
+      c) een EU AI Act compliance beoordelaar die modellen classificeert conform
+      Artikelen 5, 19-24, en 51-55;
+      waarbij het systeem automatisch compliance rapporten genereert met penalty
+   15 berekeningen tot EUR 35 miljoen.
+
+      2. Het systeem volgens conclusie 1, waarbij de bias detectie-engine de
+      volgende mathematische formules implementeert:
+      a) Demographic Parity: P(Y=1|A=0) ≈ P(Y=1|A=1) met een drempelwaarde van
+   20 0.80;
+      b) Equalized Odds: TPR_A=0 ≈ TPR_A=1 EN FPR_A=0 ≈ FPR_A=1;
+      c) Calibration Score: P(Y=1|Score=s,A=0) ≈ P(Y=1|Score=s,A=1);
+      d) Individual Fairness: d(f(x1),f(x2)) ≤ L*d(x1,x2).
+
+   25 3. Het systeem volgens conclusie 1, waarbij de EU AI Act compliance 
+      beoordelaar omvat:
+      a) een Artikel 5 scanner die verboden praktijken detecteert met penalty van
+      EUR 35 miljoen of 7% van globale omzet;
+      b) een Artikelen 19-24 validator voor hoog-risico systemen met penalty van
+   30 EUR 15 miljoen of 3% van globale omzet;
+      c) een Artikelen 51-55 checker voor General Purpose AI modellen met compute
+      threshold monitoring.
+
+                                   5
+
+   35 4. Een Nederlandse specialisatie module volgens conclusie 1, omvattende:
+      a) een BSN (Burgerservicenummer) detectie algoritme met 9-cijferige patroon
+      herkenning en checksum validatie;
+      b) een UAVG compliance validator met Nederlandse Autoriteit 
+      Persoonsgegevens (AP) integratie;
+   40 c) een regionale penalty calculator met Nederlandse compliance multipliers.
+
+      5. Het systeem volgens conclusie 4, waarbij het BSN detectie algoritme:
+      a) 9-cijferige patronen identificeert in model training data;
+      b) officiële checksum validatie uitvoert conform Nederlandse specificaties
+   45 volgens de formule: checksum = (digit_0 × 9) + (digit_1 × 8) + (digit_2 × 7) 
+      + (digit_3 × 6) + (digit_4 × 5) + (digit_5 × 4) + (digit_6 × 3) + 
+      (digit_7 × 2) - (digit_8 × 1), waarbij BSN geldig is als checksum mod 11 == 0;
+      c) privacy risico assessment genereert conform GDPR Artikel 9;
+   50 d) automatische anonimisering aanbevelingen verstrekt.
+
+      6. Het systeem volgens conclusie 1, waarbij de multi-framework 
+      analysemodule:
+      a) PyTorch modellen analyseert via torch.load() en model.parameters();
+   55 b) TensorFlow modellen verwerkt met tf.keras.models.load_model() en 
+      model.count_params();
+      c) ONNX modellen onderzoekt met onnx.load() en 
+      onnxruntime.InferenceSession();
+      d) scikit-learn modellen deserialiseert met joblib.load() validatie.
+
+                                   6
+
+   60 7. Het systeem volgens conclusie 2, waarbij de bias detectie-engine:
+      a) demografische pariteit berekent met threshold van 80%;
+      b) gelijkwaardige kansen evalueert voor True Positive Rate en False Positive
+      Rate tussen beschermde groepen;
+   65 c) calibratie scores meet voor voorspellingsbetrouwbaarheid;
+      d) individuele eerlijkheid toetst via Lipschitz continuïteit met factor L=1.0.
+
+      8. Het systeem volgens conclusie 3, waarbij de EU AI Act compliance 
+      beoordelaar:
+   70 a) verboden praktijken detecteert inclusief sociale scoring en manipulatie;
+      b) hoog-risico systemen valideert voor technische documentatie;
+      c) General Purpose AI modellen beoordeelt op parameter count >1 miljard.
+
+      9. Een methode voor geautomatiseerde AI model compliance verificatie, 
+   75 omvattende de stappen:
+      a) model framework detectie en architectuur analyse;
+      b) bias assessment uitvoering met vier fairness algorithms;
+      c) EU AI Act compliance evaluatie;
+   80 d) Nederlandse privacy controle inclusief BSN 11-proef validatie;
+      e) real-time monitoring en alert generatie.
+
+      10. Een computer-leesbaar medium dat instructies bevat die, wanneer 
+      uitgevoerd door een processor, het systeem volgens conclusie 1 implementeren.
