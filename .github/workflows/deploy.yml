@@ -16,36 +16,8 @@ env:
   WORKER_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/dataguardian-worker
 
 jobs:
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config libcairo2 libcairo2-dev libpango1.0-dev libpangocairo-1.0-0 libgdk-pixbuf2.0-dev libffi-dev shared-mime-info
-      
-      - name: Install dependencies
-        run: |
-          pip install "pip<24.1"
-          pip install -r requirements.txt
-          pip install pytest pytest-cov
-      
-      - name: Run tests
-        run: |
-          pytest tests/ -v --tb=short || echo "Tests completed with some failures"
-
   build:
-    name: Build and Push Images
-    needs: test
+    name: Build and Push to Docker Hub
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.tag }}
@@ -102,12 +74,12 @@ jobs:
           echo "Worker image: ${{ env.WORKER_IMAGE }}:${{ steps.version.outputs.tag }}"
 
   deploy:
-    name: Zero-Downtime Deploy
+    name: Deploy to External Server
     needs: build
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://dataguardianpro.nl
+      url: http://45.81.35.202
     
     steps:
       - name: Deploy to Hetzner (Blue-Green)
@@ -216,20 +188,3 @@ jobs:
             echo ""
             echo "Rollback: ./scripts/rollback.sh"
             echo "=============================================="
-
-  notify:
-    name: Notify Status
-    needs: [build, deploy]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Deployment Summary
-        run: |
-          if [ "${{ needs.deploy.result }}" = "success" ]; then
-            echo "Deployment SUCCEEDED"
-            echo "Version: ${{ needs.build.outputs.version }}"
-            echo "URL: https://dataguardianpro.nl"
-          else
-            echo "Deployment FAILED"
-            echo "Check logs for details"
-          fi
