@@ -631,15 +631,53 @@ class RepositoryScanner:
     def _sanitize_branch_name(self, branch: str) -> str:
         """Sanitize branch name to prevent injection."""
         if not branch:
-            return "main"
+            return ""
         safe_branch = re.sub(r'[^a-zA-Z0-9_\-/.]', '', branch)
         return safe_branch[:100]
+    
+    def _detect_default_branch(self, repo_url: str, access_token: str = None) -> str:
+        """
+        Detect the default branch of a repository using git ls-remote.
+        
+        Args:
+            repo_url: Repository URL
+            access_token: Optional access token for private repos
+        
+        Returns:
+            Default branch name (e.g., 'main' or 'master')
+        """
+        try:
+            if access_token and 'github.com' in repo_url:
+                auth_url = repo_url.replace('https://', f'https://{access_token}@')
+            elif access_token and 'gitlab.com' in repo_url:
+                auth_url = repo_url.replace('https://', f'https://oauth2:{access_token}@')
+            else:
+                auth_url = repo_url
+            
+            result = subprocess.run(
+                ['git', 'ls-remote', '--symref', auth_url, 'HEAD'],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                shell=False
+            )
+            
+            if result.returncode == 0 and result.stdout:
+                for line in result.stdout.split('\n'):
+                    if 'ref: refs/heads/' in line:
+                        branch = line.split('refs/heads/')[-1].split()[0]
+                        logger.info(f"Detected default branch: {branch}")
+                        return branch
+        except Exception as e:
+            logger.warning(f"Failed to detect default branch: {e}")
+        
+        return "main"
     
     def _scan_git_repo(self, repo_url: str, branch: str, access_token: str = None):
         """Clone and scan a git repository (read-only)."""
         self._validate_repo_url(repo_url)
         
-        safe_branch = self._sanitize_branch_name(branch)
+        safe_branch = self._sanitize_branch_name(branch) if branch else ""
         
         temp_dir = tempfile.mkdtemp(prefix="repo_scan_")
         
@@ -652,15 +690,61 @@ class RepositoryScanner:
                 auth_url = repo_url
             
             if self.progress_callback:
+                self.progress_callback("Detecting default branch...", 8)
+            
+            if not safe_branch:
+                safe_branch = self._detect_default_branch(repo_url, access_token)
+            
+            branches_to_try = [safe_branch]
+            if safe_branch == "main":
+                branches_to_try.append("master")
+            elif safe_branch == "master":
+                branches_to_try.append("main")
+            else:
+                branches_to_try.extend(["main", "master"])
+            
+            if self.progress_callback:
                 self.progress_callback("Cloning repository (read-only)...", 10)
             
-            subprocess.run(
-                ['git', 'clone', '--depth', '1', '--branch', safe_branch, auth_url, temp_dir],
-                check=True,
-                capture_output=True,
-                timeout=120,
-                shell=False
-            )
+            clone_success = False
+            last_error = None
+            
+            for attempt_branch in branches_to_try:
+                try:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    temp_dir = tempfile.mkdtemp(prefix="repo_scan_")
+                    
+                    subprocess.run(
+                        ['git', 'clone', '--depth', '1', '--branch', attempt_branch, auth_url, temp_dir],
+                        check=True,
+                        capture_output=True,
+                        timeout=120,
+                        shell=False
+                    )
+                    clone_success = True
+                    logger.info(f"Successfully cloned with branch: {attempt_branch}")
+                    break
+                except subprocess.CalledProcessError as e:
+                    last_error = e
+                    logger.warning(f"Clone failed with branch '{attempt_branch}': {e}")
+                    continue
+            
+            if not clone_success:
+                try:
+                    shutil.rmtree(temp_dir, ignore_errors=True)
+                    temp_dir = tempfile.mkdtemp(prefix="repo_scan_")
+                    
+                    subprocess.run(
+                        ['git', 'clone', '--depth', '1', auth_url, temp_dir],
+                        check=True,
+                        capture_output=True,
+                        timeout=120,
+                        shell=False
+                    )
+                    clone_success = True
+                    logger.info("Successfully cloned without specifying branch")
+                except subprocess.CalledProcessError as e:
+                    raise RuntimeError(f"Failed to clone repository after trying multiple branches: {last_error or e}")
             
             all_files = []
             for root, dirs, files in os.walk(temp_dir):
