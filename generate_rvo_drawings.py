@@ -1,311 +1,359 @@
 """
 Generate professional patent drawings for RVO submission
-Creates PDF with proper diagrams (not ASCII art)
-All 11 Figures
+Creates PDF with proper diagrams following RVO requirements:
+- A4 paper size
+- Margins: Left 2.5cm, Top/Right/Bottom 2.0cm
+- Black and white only (no colors)
+- Clear line art
+- Reference numbers for parts
 """
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
-import numpy as np
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-from reportlab.lib.units import cm
-from io import BytesIO
+from matplotlib.patches import FancyBboxPatch
 import os
 
-def create_figure_1():
-    """System Architecture Overview"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+# A4 size in inches (210mm x 297mm)
+A4_WIDTH_INCHES = 8.27
+A4_HEIGHT_INCHES = 11.69
+
+# Margins in inches (converted from cm)
+MARGIN_LEFT = 2.5 / 2.54  # 2.5cm
+MARGIN_RIGHT = 2.0 / 2.54  # 2.0cm
+MARGIN_TOP = 2.0 / 2.54  # 2.0cm
+MARGIN_BOTTOM = 2.0 / 2.54  # 2.0cm
+
+def setup_a4_figure():
+    """Create A4 sized figure with proper margins"""
+    fig = plt.figure(figsize=(A4_WIDTH_INCHES, A4_HEIGHT_INCHES))
+    
+    # Calculate usable area
+    left = MARGIN_LEFT / A4_WIDTH_INCHES
+    bottom = MARGIN_BOTTOM / A4_HEIGHT_INCHES
+    width = 1 - (MARGIN_LEFT + MARGIN_RIGHT) / A4_WIDTH_INCHES
+    height = 1 - (MARGIN_TOP + MARGIN_BOTTOM) / A4_HEIGHT_INCHES
+    
+    ax = fig.add_axes([left, bottom, width, height])
     ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
+    ax.set_ylim(0, 12)
     ax.axis('off')
     
-    box1 = FancyBboxPatch((0.5, 1.5), 2.5, 3, boxstyle="round,pad=0.05", 
-                           facecolor='white', edgecolor='black', linewidth=2)
+    return fig, ax
+
+def create_figure_1():
+    """FIGUUR 1: Systeemarchitectuuroverzicht"""
+    fig, ax = setup_a4_figure()
+    
+    # Title at top
+    ax.text(5.0, 11.5, 'FIGUUR 1', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Systeemarchitectuuroverzicht', ha='center', va='center', fontsize=11)
+    
+    # Box 100: AI-MODEL INVOER
+    box1 = FancyBboxPatch((0.5, 6), 2.5, 3, boxstyle="square,pad=0",
+                           facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(box1)
-    ax.text(1.75, 4.2, 'AI-MODEL\nINVOER', ha='center', va='center', fontsize=10, fontweight='bold')
-    ax.text(1.75, 3.0, '• PyTorch\n• TensorFlow\n• ONNX\n• scikit-learn', ha='center', va='center', fontsize=8)
+    ax.text(1.75, 8.7, 'AI-MODEL', ha='center', va='center', fontsize=9, fontweight='bold')
+    ax.text(1.75, 8.3, 'INVOER', ha='center', va='center', fontsize=9, fontweight='bold')
+    ax.text(1.75, 7.4, '- PyTorch\n- TensorFlow\n- ONNX\n- scikit-learn', ha='center', va='center', fontsize=8)
+    ax.text(0.3, 9.2, '100', ha='center', va='center', fontsize=10, fontweight='bold')
     
-    box2 = FancyBboxPatch((3.75, 1.5), 2.5, 3, boxstyle="round,pad=0.05",
-                           facecolor='white', edgecolor='black', linewidth=2)
+    # Box 200: ANALYSE-ENGINE
+    box2 = FancyBboxPatch((3.75, 6), 2.5, 3, boxstyle="square,pad=0",
+                           facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(box2)
-    ax.text(5.0, 4.2, 'ANALYSE-\nENGINE', ha='center', va='center', fontsize=10, fontweight='bold')
-    ax.text(5.0, 2.8, '• Framework Analyse\n• Bias Detectie\n• EU AI Act Check\n• NL Compliance', ha='center', va='center', fontsize=8)
+    ax.text(5.0, 8.7, 'ANALYSE-', ha='center', va='center', fontsize=9, fontweight='bold')
+    ax.text(5.0, 8.3, 'ENGINE', ha='center', va='center', fontsize=9, fontweight='bold')
+    ax.text(5.0, 7.2, '- Framework Analyse\n- Bias Detectie\n- EU AI Act Check\n- NL Compliance', ha='center', va='center', fontsize=8)
+    ax.text(3.55, 9.2, '200', ha='center', va='center', fontsize=10, fontweight='bold')
     
-    box3 = FancyBboxPatch((7.0, 1.5), 2.5, 3, boxstyle="round,pad=0.05",
-                           facecolor='white', edgecolor='black', linewidth=2)
+    # Box 300: COMPLIANCE UITVOER
+    box3 = FancyBboxPatch((7.0, 6), 2.5, 3, boxstyle="square,pad=0",
+                           facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(box3)
-    ax.text(8.25, 4.2, 'COMPLIANCE\nUITVOER', ha='center', va='center', fontsize=10, fontweight='bold')
-    ax.text(8.25, 2.8, '• Risicoscore\n• Rapport\n• Aanbevelingen', ha='center', va='center', fontsize=8)
+    ax.text(8.25, 8.7, 'COMPLIANCE', ha='center', va='center', fontsize=9, fontweight='bold')
+    ax.text(8.25, 8.3, 'UITVOER', ha='center', va='center', fontsize=9, fontweight='bold')
+    ax.text(8.25, 7.4, '- Risicoscore\n- Rapport\n- Aanbevelingen', ha='center', va='center', fontsize=8)
+    ax.text(6.8, 9.2, '300', ha='center', va='center', fontsize=10, fontweight='bold')
     
-    ax.annotate('', xy=(3.65, 3), xytext=(3.1, 3),
-                arrowprops=dict(arrowstyle='->', lw=2))
-    ax.annotate('', xy=(6.9, 3), xytext=(6.35, 3),
-                arrowprops=dict(arrowstyle='->', lw=2))
+    # Arrows
+    ax.annotate('', xy=(3.65, 7.5), xytext=(3.1, 7.5),
+                arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
+    ax.annotate('', xy=(6.9, 7.5), xytext=(6.35, 7.5),
+                arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
     
-    ax.text(5.0, 5.5, 'FIGUUR 1: Systeemarchitectuuroverzicht', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_2():
-    """Multi-framework Analysis Module"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 2: Multi-framework Analysemodule"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 2.5), 9, 2.5, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 2', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Multi-framework Analysemodule', ha='center', va='center', fontsize=11)
+    
+    # Outer box 210
+    outer_box = FancyBboxPatch((0.5, 6), 9, 3, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.7, 'FRAMEWORK ANALYSEMODULE', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(5.0, 8.7, 'FRAMEWORK ANALYSEMODULE', ha='center', va='center', fontsize=10, fontweight='bold')
+    ax.text(0.3, 9.2, '210', ha='center', va='center', fontsize=10, fontweight='bold')
     
+    # Inner boxes with reference numbers
     frameworks = [
-        ('PyTorch\n.pt, .pth', 1.3),
-        ('TensorFlow\n.h5, .pb', 3.4),
-        ('ONNX\n.onnx', 5.5),
-        ('scikit-learn\n.pkl, .joblib', 7.6)
+        ('PyTorch\n.pt, .pth', 1.0, '211'),
+        ('TensorFlow\n.h5, .pb', 3.2, '212'),
+        ('ONNX\n.onnx', 5.4, '213'),
+        ('scikit-learn\n.pkl, .joblib', 7.4, '214')
     ]
     
-    for name, x in frameworks:
-        box = FancyBboxPatch((x, 2.8), 1.8, 1.2, boxstyle="round,pad=0.03",
-                              facecolor='lightgray', edgecolor='black', linewidth=1)
+    for name, x, ref in frameworks:
+        box = FancyBboxPatch((x, 6.3), 1.8, 1.2, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1)
         ax.add_patch(box)
-        ax.text(x + 0.9, 3.4, name, ha='center', va='center', fontsize=8)
+        ax.text(x + 0.9, 6.9, name, ha='center', va='center', fontsize=7)
+        ax.text(x - 0.15, 7.6, ref, ha='center', va='center', fontsize=8, fontweight='bold')
     
-    ax.annotate('', xy=(5.0, 1.8), xytext=(5.0, 2.4),
-                arrowprops=dict(arrowstyle='->', lw=2))
+    # Arrow down
+    ax.annotate('', xy=(5.0, 4.8), xytext=(5.0, 5.9),
+                arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
     
-    result_box = FancyBboxPatch((3.5, 0.8), 3, 1, boxstyle="round,pad=0.05",
-                                 facecolor='white', edgecolor='black', linewidth=2)
+    # Result box 220
+    result_box = FancyBboxPatch((3.5, 3.8), 3, 1, boxstyle="square,pad=0",
+                                 facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(result_box)
-    ax.text(5.0, 1.3, 'Parameter Analyse\nComplexiteit Score', ha='center', va='center', fontsize=9)
+    ax.text(5.0, 4.3, 'Parameter Analyse\nComplexiteit Score', ha='center', va='center', fontsize=9)
+    ax.text(3.3, 4.9, '220', ha='center', va='center', fontsize=10, fontweight='bold')
     
-    ax.text(5.0, 5.5, 'FIGUUR 2: Multi-framework Analysemodule', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_3():
-    """Bias Detection Engine"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 3: Bias-detectie-engine"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 1), 9, 4, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 3', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Bias-detectie-engine', ha='center', va='center', fontsize=11)
+    
+    # Outer box 230
+    outer_box = FancyBboxPatch((0.5, 5), 9, 4.5, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.7, 'BIAS-DETECTIE-ENGINE', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(5.0, 9.2, 'BIAS-DETECTIE-ENGINE', ha='center', va='center', fontsize=10, fontweight='bold')
+    ax.text(0.3, 9.7, '230', ha='center', va='center', fontsize=10, fontweight='bold')
     
     formulas = [
-        'Demographic Parity:     P(Y=1|A=0) ≈ P(Y=1|A=1)',
-        'Equalized Odds:         TPR₀ ≈ TPR₁  en  FPR₀ ≈ FPR₁',
-        'Calibration Score:      P(Y=1|Score=s,A=0) ≈ P(Y=1|Score=s,A=1)',
-        'Individual Fairness:    d(f(x₁),f(x₂)) ≤ L·d(x₁,x₂)'
+        ('231', 'Demographic Parity:     P(Y=1|A=0) = P(Y=1|A=1)'),
+        ('232', 'Equalized Odds:         TPR(A=0) = TPR(A=1)'),
+        ('233', 'Calibration Score:      P(Y=1|Score=s,A=0) = P(Y=1|Score=s,A=1)'),
+        ('234', 'Individual Fairness:    d(f(x1),f(x2)) <= L*d(x1,x2)')
     ]
     
-    y_pos = 4.0
-    for formula in formulas:
-        ax.text(1.0, y_pos, formula, ha='left', va='center', fontsize=9, family='monospace')
-        y_pos -= 0.7
+    y_pos = 8.5
+    for ref, formula in formulas:
+        ax.text(0.8, y_pos, ref, ha='left', va='center', fontsize=8, fontweight='bold')
+        ax.text(1.5, y_pos, formula, ha='left', va='center', fontsize=9, family='monospace')
+        y_pos -= 0.8
     
-    ax.text(5.0, 5.5, 'FIGUUR 3: Bias-detectie-engine', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_4():
-    """EU AI Act Compliance Assessor"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 4: EU AI Act Compliancebeoordelaar"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 1.5), 9, 3, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 4', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'EU AI Act Compliancebeoordelaar', ha='center', va='center', fontsize=11)
+    
+    # Outer box 240
+    outer_box = FancyBboxPatch((0.5, 5.5), 9, 3.5, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.2, 'EU AI ACT COMPLIANCEBEOORDELAAR', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(5.0, 8.7, 'EU AI ACT COMPLIANCEBEOORDELAAR', ha='center', va='center', fontsize=10, fontweight='bold')
+    ax.text(0.3, 9.2, '240', ha='center', va='center', fontsize=10, fontweight='bold')
     
     articles = [
-        ('Artikel 5\nVerboden\nPraktijken', 1.5),
-        ('Artikelen 19-24\nHoog-risico\nSystemen', 4.25),
-        ('Art. 51-55\nGPAI\nModellen', 7.0)
+        ('Artikel 5\nVerboden\nPraktijken', 1.2, '241'),
+        ('Artikelen 19-24\nHoog-risico\nSystemen', 4.0, '242'),
+        ('Art. 51-55\nGPAI\nModellen', 6.8, '243')
     ]
     
-    for name, x in articles:
-        box = FancyBboxPatch((x, 1.8), 2.2, 1.8, boxstyle="round,pad=0.03",
-                              facecolor='lightgray', edgecolor='black', linewidth=1)
+    for name, x, ref in articles:
+        box = FancyBboxPatch((x, 5.8), 2.2, 2, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1)
         ax.add_patch(box)
-        ax.text(x + 1.1, 2.7, name, ha='center', va='center', fontsize=9)
+        ax.text(x + 1.1, 6.8, name, ha='center', va='center', fontsize=8)
+        ax.text(x - 0.15, 7.9, ref, ha='center', va='center', fontsize=8, fontweight='bold')
     
-    ax.text(5.0, 5.5, 'FIGUUR 4: EU AI Act Compliancebeoordelaar', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_5():
-    """Netherlands Specialization Module"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 5: Nederlandse Specialisatiemodule"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 1.5), 9, 3, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 5', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Nederlandse Specialisatiemodule', ha='center', va='center', fontsize=11)
+    
+    # Outer box 250
+    outer_box = FancyBboxPatch((0.5, 5.5), 9, 3.5, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.2, 'NEDERLANDSE SPECIALISATIEMODULE', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(5.0, 8.7, 'NEDERLANDSE SPECIALISATIEMODULE', ha='center', va='center', fontsize=10, fontweight='bold')
+    ax.text(0.3, 9.2, '250', ha='center', va='center', fontsize=10, fontweight='bold')
     
     modules = [
-        ('BSN-Detectie\nmet 11-proef', 1.5),
-        ('UAVG-Compliance\nVerificatie', 4.25),
-        ('Regionale\nBoetes', 7.0)
+        ('BSN-Detectie\nmet 11-proef', 1.2, '251'),
+        ('UAVG-Compliance\nVerificatie', 4.0, '252'),
+        ('Regionale\nBoetes', 6.8, '253')
     ]
     
-    for name, x in modules:
-        box = FancyBboxPatch((x, 1.8), 2.2, 1.8, boxstyle="round,pad=0.03",
-                              facecolor='lightgray', edgecolor='black', linewidth=1)
+    for name, x, ref in modules:
+        box = FancyBboxPatch((x, 5.8), 2.2, 2, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1)
         ax.add_patch(box)
-        ax.text(x + 1.1, 2.7, name, ha='center', va='center', fontsize=9)
+        ax.text(x + 1.1, 6.8, name, ha='center', va='center', fontsize=9)
+        ax.text(x - 0.15, 7.9, ref, ha='center', va='center', fontsize=8, fontweight='bold')
     
-    ax.text(5.0, 5.5, 'FIGUUR 5: Nederlandse Specialisatiemodule', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_6():
-    """BSN Checksum Validation"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 6: BSN Checksumvalidatie"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 1), 9, 4, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 6', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'BSN Checksumvalidatie (Nederlandse 11-proef)', ha='center', va='center', fontsize=11)
+    
+    # Outer box 260
+    outer_box = FancyBboxPatch((0.5, 5), 9, 4.5, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.7, 'BSN CHECKSUMVALIDATIE (NEDERLANDSE 11-PROEF)', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(0.3, 9.7, '260', ha='center', va='center', fontsize=10, fontweight='bold')
     
-    ax.text(5.0, 3.5, 'Formule:', ha='center', va='center', fontsize=10, fontweight='bold')
-    ax.text(5.0, 2.7, 'checksum = (d₀×9) + (d₁×8) + (d₂×7) + (d₃×6) + (d₄×5) +', ha='center', va='center', fontsize=9, family='monospace')
-    ax.text(5.0, 2.2, '           (d₅×4) + (d₆×3) + (d₇×2) - (d₈×1)', ha='center', va='center', fontsize=9, family='monospace')
-    ax.text(5.0, 1.5, 'Geldigheid: BSN is geldig indien checksum mod 11 = 0', ha='center', va='center', fontsize=10, style='italic')
+    ax.text(5.0, 8.8, 'Formule:', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(5.0, 7.8, 'checksum = (d0 x 9) + (d1 x 8) + (d2 x 7) + (d3 x 6) + (d4 x 5) +', ha='center', va='center', fontsize=9, family='monospace')
+    ax.text(5.0, 7.2, '           (d5 x 4) + (d6 x 3) + (d7 x 2) - (d8 x 1)', ha='center', va='center', fontsize=9, family='monospace')
+    ax.text(5.0, 6.0, 'Geldigheid: BSN is geldig indien checksum mod 11 = 0', ha='center', va='center', fontsize=10, style='italic')
     
-    ax.text(5.0, 5.5, 'FIGUUR 6: BSN Checksumvalidatie', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_7():
-    """System Flow Diagram"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 7: Systeemflowdiagram"""
+    fig, ax = setup_a4_figure()
     
+    ax.text(5.0, 11.5, 'FIGUUR 7', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Systeemflowdiagram', ha='center', va='center', fontsize=11)
+    
+    # Top row boxes
     steps_top = [
-        ('Model\nAnalyse', 0.5),
-        ('Bias\nDetectie', 3.25),
-        ('EU AI Act\nBeoordeling', 6.0)
+        ('Model\nAnalyse', 0.5, '270'),
+        ('Bias\nDetectie', 3.5, '271'),
+        ('EU AI Act\nBeoordeling', 6.5, '272')
     ]
     
+    for name, x, ref in steps_top:
+        box = FancyBboxPatch((x, 7.5), 2.5, 1.5, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1.5)
+        ax.add_patch(box)
+        ax.text(x + 1.25, 8.25, name, ha='center', va='center', fontsize=9)
+        ax.text(x - 0.15, 9.1, ref, ha='center', va='center', fontsize=8, fontweight='bold')
+    
+    # Bottom row boxes
     steps_bottom = [
-        ('Rapport\nGeneratie', 3.25),
-        ('NL Privacy\nControle', 6.0)
+        ('Rapport\nGeneratie', 3.5, '274'),
+        ('NL Privacy\nControle', 6.5, '273')
     ]
     
-    for name, x in steps_top:
-        box = FancyBboxPatch((x, 3.5), 2.2, 1.2, boxstyle="round,pad=0.03",
-                              facecolor='white', edgecolor='black', linewidth=2)
+    for name, x, ref in steps_bottom:
+        box = FancyBboxPatch((x, 5), 2.5, 1.5, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1.5)
         ax.add_patch(box)
-        ax.text(x + 1.1, 4.1, name, ha='center', va='center', fontsize=9)
+        ax.text(x + 1.25, 5.75, name, ha='center', va='center', fontsize=9)
+        ax.text(x - 0.15, 6.6, ref, ha='center', va='center', fontsize=8, fontweight='bold')
     
-    for name, x in steps_bottom:
-        box = FancyBboxPatch((x, 1.5), 2.2, 1.2, boxstyle="round,pad=0.03",
-                              facecolor='white', edgecolor='black', linewidth=2)
-        ax.add_patch(box)
-        ax.text(x + 1.1, 2.1, name, ha='center', va='center', fontsize=9)
+    # Arrows
+    ax.annotate('', xy=(3.4, 8.25), xytext=(3.1, 8.25), arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
+    ax.annotate('', xy=(6.4, 8.25), xytext=(6.1, 8.25), arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
+    ax.annotate('', xy=(7.75, 7.4), xytext=(7.75, 6.6), arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
+    ax.annotate('', xy=(6.0, 5.75), xytext=(6.4, 5.75), arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
     
-    ax.annotate('', xy=(3.15, 4.1), xytext=(2.8, 4.1), arrowprops=dict(arrowstyle='->', lw=1.5))
-    ax.annotate('', xy=(5.9, 4.1), xytext=(5.55, 4.1), arrowprops=dict(arrowstyle='->', lw=1.5))
-    ax.annotate('', xy=(7.1, 3.4), xytext=(7.1, 2.8), arrowprops=dict(arrowstyle='->', lw=1.5))
-    ax.annotate('', xy=(5.45, 2.1), xytext=(5.9, 2.1), arrowprops=dict(arrowstyle='->', lw=1.5))
-    
-    ax.text(5.0, 5.5, 'FIGUUR 7: Systeemflowdiagram', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_8():
-    """Processing Pipeline"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 5)
-    ax.axis('off')
+    """FIGUUR 8: Verwerkingspipeline"""
+    fig, ax = setup_a4_figure()
+    
+    ax.text(5.0, 11.5, 'FIGUUR 8', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Verwerkingspipeline', ha='center', va='center', fontsize=11)
     
     steps = [
-        ('Upload', 0.3),
-        ('Architectuur', 1.8),
-        ('Bias', 3.5),
-        ('EU AI Act', 5.0),
-        ('NL Check', 6.7),
-        ('Rapport', 8.2)
+        ('Upload', 0.2, '280'),
+        ('Architectuur', 1.8, '281'),
+        ('Bias', 3.6, '282'),
+        ('EU AI Act', 5.0, '283'),
+        ('NL Check', 6.6, '284'),
+        ('Rapport', 8.2, '285')
     ]
     
-    for name, x in steps:
-        box = FancyBboxPatch((x, 2), 1.4, 1, boxstyle="round,pad=0.03",
-                              facecolor='white', edgecolor='black', linewidth=2)
+    for name, x, ref in steps:
+        box = FancyBboxPatch((x, 7), 1.4, 1.2, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1.5)
         ax.add_patch(box)
-        ax.text(x + 0.7, 2.5, name, ha='center', va='center', fontsize=8)
+        ax.text(x + 0.7, 7.6, name, ha='center', va='center', fontsize=8)
+        ax.text(x - 0.1, 8.3, ref, ha='center', va='center', fontsize=7, fontweight='bold')
     
-    for i in range(len(steps) - 1):
-        x1 = steps[i][1] + 1.4
-        x2 = steps[i+1][1]
-        ax.annotate('', xy=(x2, 2.5), xytext=(x1, 2.5), arrowprops=dict(arrowstyle='->', lw=1.5))
+    # Arrows between boxes
+    arrow_positions = [1.6, 3.4, 4.8, 6.4, 8.0]
+    for x in arrow_positions:
+        ax.annotate('', xy=(x + 0.2, 7.6), xytext=(x, 7.6), arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
     
-    ax.text(5.0, 4.2, 'FIGUUR 8: Verwerkingspipeline', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_9():
-    """Deployment Architecture"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 9: Deploymentarchitectuur"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 1.5), 9, 3, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 9', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Deploymentarchitectuur', ha='center', va='center', fontsize=11)
+    
+    # Outer box 290
+    outer_box = FancyBboxPatch((0.5, 5.5), 9, 3.5, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.2, 'CONTAINERINFRASTRUCTUUR', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(5.0, 8.7, 'CONTAINERINFRASTRUCTUUR', ha='center', va='center', fontsize=10, fontweight='bold')
+    ax.text(0.3, 9.2, '290', ha='center', va='center', fontsize=10, fontweight='bold')
     
     containers = [
-        ('Frontend\nStreamlit', 1.0),
-        ('Database\nPostgreSQL', 3.25),
-        ('Caching\nRedis', 5.5),
-        ('AI-Analyse\nComponenten', 7.5)
+        ('Frontend\nStreamlit', 0.8, '291'),
+        ('Database\nPostgreSQL', 3.0, '292'),
+        ('Caching\nRedis', 5.2, '293'),
+        ('AI-Analyse\nComponenten', 7.3, '294')
     ]
     
-    for name, x in containers:
-        box = FancyBboxPatch((x, 1.8), 1.8, 1.6, boxstyle="round,pad=0.03",
-                              facecolor='lightgray', edgecolor='black', linewidth=1)
+    for name, x, ref in containers:
+        box = FancyBboxPatch((x, 5.8), 2.0, 2, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1)
         ax.add_patch(box)
-        ax.text(x + 0.9, 2.6, name, ha='center', va='center', fontsize=8)
+        ax.text(x + 1.0, 6.8, name, ha='center', va='center', fontsize=8)
+        ax.text(x - 0.15, 7.9, ref, ha='center', va='center', fontsize=8, fontweight='bold')
     
-    ax.text(5.0, 5.5, 'FIGUUR 9: Deploymentarchitectuur', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def create_figure_10():
-    """Comparison Matrix"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 10: Vergelijkingsmatrix"""
+    fig, ax = setup_a4_figure()
     
+    ax.text(5.0, 11.5, 'FIGUUR 10', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Vergelijkingsmatrix', ha='center', va='center', fontsize=11)
+    
+    # Table headers
     headers = ['Functie', 'Systeem', 'Handmatig', 'Concurrent']
+    col_widths = [3.0, 1.8, 1.8, 1.8]
+    x_positions = [0.8, 3.9, 5.8, 7.7]
+    
+    # Draw header row
+    for i, (header, x, w) in enumerate(zip(headers, x_positions, col_widths)):
+        box = FancyBboxPatch((x, 8.5), w, 0.7, boxstyle="square,pad=0",
+                              facecolor='white', edgecolor='black', linewidth=1)
+        ax.add_patch(box)
+        ax.text(x + w/2, 8.85, header, ha='center', va='center', fontsize=9, fontweight='bold')
+    
+    # Table rows
     rows = [
         ['Multi-framework', 'Ja', 'Nee', 'Deels'],
         ['Bias-detectie', 'Ja', 'Beperkt', 'Beperkt'],
@@ -313,55 +361,44 @@ def create_figure_10():
         ['Nederlandse module', 'Ja', 'Nee', 'Nee']
     ]
     
-    col_widths = [2.5, 1.5, 1.5, 1.5]
-    x_positions = [1.0, 3.7, 5.4, 7.1]
-    
-    for i, (header, x) in enumerate(zip(headers, x_positions)):
-        box = FancyBboxPatch((x, 4.0), col_widths[i], 0.6, boxstyle="square,pad=0",
-                              facecolor='lightgray', edgecolor='black', linewidth=1)
-        ax.add_patch(box)
-        ax.text(x + col_widths[i]/2, 4.3, header, ha='center', va='center', fontsize=9, fontweight='bold')
-    
     for row_idx, row in enumerate(rows):
-        y = 3.2 - row_idx * 0.7
-        for col_idx, (cell, x) in enumerate(zip(row, x_positions)):
-            box = FancyBboxPatch((x, y), col_widths[col_idx], 0.6, boxstyle="square,pad=0",
+        y = 7.7 - row_idx * 0.7
+        for col_idx, (cell, x, w) in enumerate(zip(row, x_positions, col_widths)):
+            box = FancyBboxPatch((x, y), w, 0.7, boxstyle="square,pad=0",
                                   facecolor='white', edgecolor='black', linewidth=1)
             ax.add_patch(box)
-            ax.text(x + col_widths[col_idx]/2, y + 0.3, cell, ha='center', va='center', fontsize=8)
+            ax.text(x + w/2, y + 0.35, cell, ha='center', va='center', fontsize=8)
     
-    ax.text(5.0, 5.3, 'FIGUUR 10: Vergelijkingsmatrix', ha='center', va='center', fontsize=12, fontweight='bold')
+    ax.text(0.5, 9.4, '300', ha='center', va='center', fontsize=10, fontweight='bold')
     
-    plt.tight_layout()
     return fig
 
 def create_figure_11():
-    """Value Proposition"""
-    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
-    ax.set_xlim(0, 10)
-    ax.set_ylim(0, 6)
-    ax.axis('off')
+    """FIGUUR 11: Waardepropositie"""
+    fig, ax = setup_a4_figure()
     
-    outer_box = FancyBboxPatch((0.5, 1.5), 9, 3.5, boxstyle="round,pad=0.05",
-                                facecolor='white', edgecolor='black', linewidth=2)
+    ax.text(5.0, 11.5, 'FIGUUR 11', ha='center', va='center', fontsize=14, fontweight='bold')
+    ax.text(5.0, 11.0, 'Waardepropositie', ha='center', va='center', fontsize=11)
+    
+    # Outer box 310
+    outer_box = FancyBboxPatch((0.5, 5), 9, 4.5, boxstyle="square,pad=0",
+                                facecolor='white', edgecolor='black', linewidth=1.5)
     ax.add_patch(outer_box)
-    ax.text(5.0, 4.7, 'WAARDEPROPOSITIE', ha='center', va='center', fontsize=11, fontweight='bold')
+    ax.text(0.3, 9.7, '310', ha='center', va='center', fontsize=10, fontweight='bold')
     
     propositions = [
-        'Kostenbesparing:    90% reductie vs handmatige audit',
-        'Risicoreductie:     Proactieve compliance',
-        'Snelheid:           <60 seconden per model',
-        'EU AI Act:          100% artikeldekking'
+        ('311', 'Kostenbesparing:    90% reductie vs handmatige audit'),
+        ('312', 'Risicoreductie:     Proactieve compliance'),
+        ('313', 'Snelheid:           <60 seconden per model'),
+        ('314', 'EU AI Act:          100% artikeldekking')
     ]
     
-    y_pos = 4.0
-    for prop in propositions:
+    y_pos = 8.8
+    for ref, prop in propositions:
+        ax.text(0.8, y_pos, ref, ha='left', va='center', fontsize=8, fontweight='bold')
         ax.text(1.5, y_pos, prop, ha='left', va='center', fontsize=10, family='monospace')
-        y_pos -= 0.6
+        y_pos -= 0.9
     
-    ax.text(5.0, 5.5, 'FIGUUR 11: Waardepropositie', ha='center', va='center', fontsize=12, fontweight='bold')
-    
-    plt.tight_layout()
     return fig
 
 def save_all_figures():
@@ -385,7 +422,7 @@ def save_all_figures():
     for create_func, filename in figures:
         fig = create_func()
         filepath = os.path.join(output_dir, filename)
-        fig.savefig(filepath, format='pdf', bbox_inches='tight', dpi=300)
+        fig.savefig(filepath, format='pdf', dpi=300)
         plt.close(fig)
         print(f"Created: {filepath}")
     
@@ -401,10 +438,23 @@ def save_all_figures():
     merger.close()
     print(f"\nCombined PDF: {combined_path}")
     
+    print("\n=== RVO Requirements Checklist ===")
+    print("[X] A4 Paper Size")
+    print("[X] Margins: Left 2.5cm, Top/Right/Bottom 2.0cm")
+    print("[X] Black and white only (no colors)")
+    print("[X] Clear line art (not ASCII text)")
+    print("[X] Reference numbers for parts (100, 200, 300...)")
+    print("[X] Figure titles at top")
+    
     return combined_path
 
 if __name__ == "__main__":
     print("Generating RVO Patent Drawings (11 Figures)...")
+    print("Following RVO requirements:")
+    print("- A4 paper size")
+    print("- Margins: Left 2.5cm, Top/Right/Bottom 2.0cm")
+    print("- Black and white only")
+    print("- Reference numbers for components")
     print("=" * 50)
     save_all_figures()
     print("=" * 50)
