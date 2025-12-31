@@ -2358,15 +2358,15 @@ def render_dutch_banking_connector(region: str, username: str):
     st.write(_('scan.dutch_banking_integration_description', 'PSD2-compliant integration with major Dutch banks for transaction analysis.'))
     
     tab1, tab2 = st.tabs([
-        "🏦 PSD2 Transaction Scan",
-        "📁 Repository Scanner (PCI-DSS)"
+        "📁 Repository Scanner (PCI-DSS)",
+        "🏦 PSD2 Transaction Scan"
     ])
     
     with tab1:
-        render_psd2_banking_scanner(region, username)
+        render_banking_repository_scanner(region, username)
     
     with tab2:
-        render_banking_repository_scanner(region, username)
+        render_psd2_banking_scanner(region, username)
 
 
 def render_psd2_banking_scanner(region: str, username: str):
