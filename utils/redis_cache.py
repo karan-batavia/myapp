@@ -52,8 +52,9 @@ class RedisCache:
         self.default_ttl = self.ttl_config['default']
         
         if strict_mode is None:
-            env = os.getenv('ENVIRONMENT', 'development').lower()
-            self.strict_mode = env in ('production', 'prod', 'staging')
+            # Redis is optional - use fallback cache if unavailable
+            # Set REDIS_STRICT=true to require Redis
+            self.strict_mode = os.getenv('REDIS_STRICT', 'false').lower() == 'true'
         else:
             self.strict_mode = strict_mode
         

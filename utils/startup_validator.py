@@ -73,8 +73,9 @@ class StartupValidator:
             errors.extend(required_errors)
         
         redis_ok, redis_error = self._validate_redis_connection()
-        if not redis_ok and self.strict_mode:
-            errors.append(redis_error)
+        # Redis is optional - don't fail on missing Redis
+        if not redis_ok:
+            logger.warning(f"Redis not available: {redis_error}. Using in-memory fallback.")
         
         db_ok, db_error = self._validate_database_connection()
         if not db_ok and self.strict_mode:
