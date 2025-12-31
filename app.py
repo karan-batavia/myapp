@@ -35,7 +35,7 @@ if 'page_configured' not in st.session_state:
         page_title="DataGuardian Pro",
         page_icon="🛡️",
         layout="wide",
-        initial_sidebar_state="collapsed"
+        initial_sidebar_state="expanded"
     )
     st.session_state['page_configured'] = True
 
@@ -761,35 +761,22 @@ def main():
             
             # Check authentication status with JWT validation
             if not is_authenticated():
-                # Hide ENTIRE sidebar for unauthenticated users - clean landing page
+                # Hide sidebar page navigation for unauthenticated users
                 st.markdown("""
                 <style>
-                    /* Hide entire sidebar for unauthenticated users */
-                    section[data-testid="stSidebar"] {
-                        display: none !important;
-                        visibility: hidden !important;
-                        width: 0 !important;
-                        min-width: 0 !important;
-                    }
-                    /* Also hide the sidebar toggle button */
-                    button[data-testid="stSidebarCollapseButton"],
-                    button[data-testid="collapsedControl"] {
-                        display: none !important;
-                    }
                     /* Hide multi-page navigation in sidebar before login */
                     [data-testid="stSidebarNav"] {
                         display: none !important;
                     }
+                    section[data-testid="stSidebar"] > div:first-child > div:first-child > div[data-testid="stSidebarNav"] {
+                        display: none !important;
+                    }
+                    /* Also hide via attribute selectors for newer Streamlit versions */
                     nav[aria-label="Main menu"] {
                         display: none !important;
                     }
                     ul[data-testid="stSidebarNavItems"] {
                         display: none !important;
-                    }
-                    /* Expand main content to full width */
-                    .stMainBlockContainer {
-                        max-width: 100% !important;
-                        padding-left: 2rem !important;
                     }
                 </style>
                 """, unsafe_allow_html=True)
