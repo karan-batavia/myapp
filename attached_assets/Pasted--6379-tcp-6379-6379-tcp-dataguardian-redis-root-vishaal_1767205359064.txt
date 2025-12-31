@@ -1,0 +1,103 @@
+->6379/tcp, [::]:6379->6379/tcp   dataguardian-redis
+root@vishaalnoord7:~# docker logs --tail 100 myapp
+WARNING:utils.secure_auth_enhanced:Authentication failed: invalid password for vishaal314
+ERROR:services.visitor_tracker:Failed to store visitor event in database: SSL connection has been closed unexpectedly
+
+INFO:services.visitor_tracker:📊 Visitor event tracked: login_failure for session 8f674c5d...
+INFO:services.auth_tracker:❌ Login failure tracked
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/secure_users.json', wd=1, mask=IN_MODIFY, cookie=0, name='secure_users.json'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/secure_users.json', wd=1, mask=IN_CLOSE_WRITE, cookie=0, name='secure_users.json'>
+2025-12-31 18:15:51.048 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/business_professiona_05ddcbe6.jpg', wd=41, mask=IN_OPEN, cookie=0, name='business_professiona_05ddcbe6.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/business_professiona_05ddcbe6.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='business_professiona_05ddcbe6.jpg'>
+2025-12-31 18:15:51.065 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/business_team_collab_a15119a2.jpg', wd=41, mask=IN_OPEN, cookie=0, name='business_team_collab_a15119a2.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/business_team_collab_a15119a2.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='business_team_collab_a15119a2.jpg'>
+2025-12-31 18:15:51.078 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/developer_laptop_cod_d6588fe5.jpg', wd=41, mask=IN_OPEN, cookie=0, name='developer_laptop_cod_d6588fe5.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/developer_laptop_cod_d6588fe5.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='developer_laptop_cod_d6588fe5.jpg'>
+2025-12-31 18:15:51.091 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/business_contract_pa_279b28d9.jpg', wd=41, mask=IN_OPEN, cookie=0, name='business_contract_pa_279b28d9.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/business_contract_pa_279b28d9.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='business_contract_pa_279b28d9.jpg'>
+2025-12-31 18:15:51.109 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/digital_photo_scanni_dc2f2d4c.jpg', wd=41, mask=IN_OPEN, cookie=0, name='digital_photo_scanni_dc2f2d4c.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/digital_photo_scanni_dc2f2d4c.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='digital_photo_scanni_dc2f2d4c.jpg'>
+2025-12-31 18:15:51.122 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/data_analytics_dashb_e12b4d3e.jpg', wd=41, mask=IN_OPEN, cookie=0, name='data_analytics_dashb_e12b4d3e.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/data_analytics_dashb_e12b4d3e.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='data_analytics_dashb_e12b4d3e.jpg'>
+2025-12-31 18:15:51.136 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/website_analytics_la_d044208f.jpg', wd=41, mask=IN_OPEN, cookie=0, name='website_analytics_la_d044208f.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/website_analytics_la_d044208f.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='website_analytics_la_d044208f.jpg'>
+2025-12-31 18:15:51.149 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/ai_compliance_regula_cf997669.jpg', wd=41, mask=IN_OPEN, cookie=0, name='ai_compliance_regula_cf997669.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/ai_compliance_regula_cf997669.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='ai_compliance_regula_cf997669.jpg'>
+2025-12-31 18:15:51.163 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/risk_assessment_chec_72e940c1.jpg', wd=41, mask=IN_OPEN, cookie=0, name='risk_assessment_chec_72e940c1.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/risk_assessment_chec_72e940c1.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='risk_assessment_chec_72e940c1.jpg'>
+2025-12-31 18:15:51.170 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/cloud_computing_secu_9f083e1f.jpg', wd=41, mask=IN_OPEN, cookie=0, name='cloud_computing_secu_9f083e1f.jpg'>
+2025-12-31 18:15:51.178 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/cloud_computing_secu_9f083e1f.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='cloud_computing_secu_9f083e1f.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/api_software_develop_35f2fc42.jpg', wd=41, mask=IN_OPEN, cookie=0, name='api_software_develop_35f2fc42.jpg'>
+2025-12-31 18:15:51.185 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/api_software_develop_35f2fc42.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='api_software_develop_35f2fc42.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/sustainable_business_35700aa4.jpg', wd=41, mask=IN_OPEN, cookie=0, name='sustainable_business_35700aa4.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/sustainable_business_35700aa4.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='sustainable_business_35700aa4.jpg'>
+2025-12-31 18:15:51.192 Please replace `use_container_width` with `width`.
+
+`use_container_width` will be removed after 2025-12-31.
+
+For `use_container_width=True`, use `width='stretch'`. For `use_container_width=False`, use `width='content'`.
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/video_production_stu_aa808aec.jpg', wd=41, mask=IN_OPEN, cookie=0, name='video_production_stu_aa808aec.jpg'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/attached_assets/stock_images/video_production_stu_aa808aec.jpg', wd=41, mask=IN_CLOSE_NOWRITE, cookie=0, name='video_production_stu_aa808aec.jpg'>
+2025-12-31 18:15:51,208 - scanner.code_profiler - INFO - Performance Monitor [main_app_initialization]: 8.193s, Memory: 1.3MB
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/logs/dataguardian_scanner.log', wd=2, mask=IN_MODIFY, cookie=0, name='dataguardian_scanner.log'>
+root@vishaalnoord7:~#
