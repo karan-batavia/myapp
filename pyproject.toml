@@ -59,6 +59,7 @@ pymssql = "^2.3.9"
 langdetect = "^1.0.9"
 olefile = "^0.47"
 yt-dlp = "^2025.12.8"
+matplotlib = "^3.10.8"
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.4.0"
