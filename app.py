@@ -1704,8 +1704,7 @@ def render_authenticated_interface():
             f"⚙️ {_('sidebar.settings', 'Settings')}",
             f"🔒 {_('sidebar.privacy_rights', 'Privacy Rights')}",
             "💰 Pricing & Plans",
-            "🚀 Upgrade License",
-            "💳 iDEAL Payment Test"
+            "🚀 Upgrade License"
         ]
         if user_role == "admin":
             nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard"])
@@ -1905,8 +1904,6 @@ def render_authenticated_interface():
         render_performance_dashboard_safe()
     elif current_nav_key == 'predictive_analytics':
         render_predictive_analytics()
-    elif selected_nav and "💳 iDEAL Payment Test" in selected_nav:
-        render_ideal_payment_test()
     elif selected_nav and "💰 Pricing & Plans" in selected_nav:
         render_pricing_page()
     elif selected_nav and "🚀 Upgrade License" in selected_nav:
