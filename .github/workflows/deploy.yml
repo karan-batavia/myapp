@@ -67,6 +67,27 @@ jobs:
             echo "📁 Navigating to app directory..."
             cd ${{ secrets.APP_DIR }}
             
+            # Create Docker network if not exists
+            echo "🔗 Setting up Docker network..."
+            docker network create dataguardian-net 2>/dev/null || echo "Network already exists"
+            
+            # Start Redis container if not running
+            echo "📦 Ensuring Redis is running..."
+            if ! docker ps | grep -q redis-cache; then
+              echo "Starting Redis container..."
+              docker stop redis-cache 2>/dev/null || true
+              docker rm redis-cache 2>/dev/null || true
+              docker run -d \
+                --name redis-cache \
+                --network dataguardian-net \
+                --restart unless-stopped \
+                -v redis-data:/data \
+                redis:7-alpine redis-server --appendonly yes
+              echo "✅ Redis container started"
+            else
+              echo "✅ Redis already running"
+            fi
+            
             # Pull latest Docker image from Docker Hub
             echo "📥 Pulling latest image from Docker Hub..."
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
@@ -81,15 +102,17 @@ jobs:
             docker stop myapp 2>/dev/null || echo "No container named 'myapp' running"
             docker rm myapp 2>/dev/null || echo "No container named 'myapp' to remove"
             
-            # Run new container
+            # Run new container with Redis connection
             echo "🚀 Starting new container..."
             docker run -d \
               --name myapp \
+              --network dataguardian-net \
               --restart unless-stopped \
               -p 5000:5000 \
               -v ${{ secrets.APP_DIR }}:/data \
               -e ENVIRONMENT=production \
               -e PYTHONUNBUFFERED=1 \
+              -e REDIS_URL="redis://redis-cache:6379/0" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e DATAGUARDIAN_MASTER_KEY="${{ secrets.DATAGUARDIAN_MASTER_KEY }}" \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
