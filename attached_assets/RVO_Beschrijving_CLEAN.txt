@@ -1,0 +1,101 @@
+  5   BESCHRIJVING
+
+      AI Model Scanner – Geautomatiseerd systeem voor AI-compliancebeoordeling
+
+      TITEL VAN DE UITVINDING
+ 10   
+      Geautomatiseerd systeem voor de beoordeling van de naleving van
+      kunstmatige-intelligentiemodellen binnen een Europees regelgevingskader
+
+
+ 15   TECHNISCH GEBIED
+
+      De uitvinding betreft een computersysteem voor de geautomatiseerde
+      beoordeling van de naleving van regelgeving door
+      kunstmatige-intelligentie-modellen. In het bijzonder heeft de uitvinding
+ 20   betrekking op de technische analyse van machine-learning-modellen ter
+      ondersteuning van naleving van het Europese regelgevingskader inzake
+      kunstmatige intelligentie (EU AI Act).
+
+      Het systeem is geschikt voor analyse van modellen ontwikkeld binnen
+ 25   meerdere machine-learning-frameworks, waaronder PyTorch, TensorFlow,
+      ONNX en scikit-learn, en omvat mechanismen voor het detecteren van
+      bias-gerelateerde risico's en het ondersteunen van compliance-evaluaties.
+      De uitvinding voorziet tevens in een specialisatie voor Nederlandse
+      privacywetgeving, waaronder de Uitvoeringswet Algemene Verordening
+ 30   Gegevensbescherming (UAVG) en de verwerking van
+      Burgerservicenummers (BSN).
+
+
+      ACHTERGROND VAN DE UITVINDING
+ 35   
+      Stand van de techniek
+
+      De Europese Unie heeft met Verordening (EU) 2024/1689 een wettelijk kader
+      vastgesteld voor de regulering van kunstmatige-intelligentiesystemen,
+ 40   bekend als de EU AI Act. Deze verordening introduceert een
+      risicogebaseerde classificatie van AI-systemen en stelt technische en
+      organisatorische verplichtingen vast afhankelijk van het risiconiveau
+      van het systeem.
+
+ 45   De EU AI Act onderscheidt onder meer:
+
+      - verboden AI-praktijken, zoals sociale scoring, manipulatieve
+        technieken en bepaalde vormen van biometrische identificatie;
+ 50   
+      - hoog-risico AI-systemen, waaronder systemen gebruikt in kritische
+        infrastructuur, onderwijs, werkgelegenheid en rechtshandhaving;
+
+      - systemen met beperkte risico's waarvoor transparantieverplichtingen
+ 55      gelden;
+
+      - AI-modellen voor algemeen gebruik (General Purpose AI), waarvoor
+        aanvullende verplichtingen van toepassing kunnen zijn.
+
+ 60   Bestaande oplossingen voor compliance-beoordeling van AI-systemen zijn
+      veelal gebaseerd op handmatige audits, documentanalyse en
+      zelfrapportage. Deze methoden zijn tijdsintensief, foutgevoelig en
+      beperkt schaalbaar, met name bij complexe modellen of modellen met een
+      groot aantal parameters.
+ 65   
+      Daarnaast bestaan er voor Nederlandse organisaties aanvullende
+      vereisten op grond van nationale wetgeving, waaronder de UAVG, waarbij
+      het gebruik en de verwerking van Burgerservicenummers als bijzonder
+      gevoelig worden aangemerkt. Het handmatig detecteren van dergelijke
+ 70   gegevens binnen trainingsdata of modelartefacten vormt een technisch
+      uitdagende taak.
+
+
+      SAMENVATTING VAN DE UITVINDING
+ 75   
+      Doel van de uitvinding
+
+      Het doel van de uitvinding is het verschaffen van een geautomatiseerd,
+      technisch systeem dat ondersteuning biedt bij de beoordeling van de
+ 80   naleving van regelgeving door AI-modellen, waarbij menselijke tussenkomst
+      wordt beperkt en reproduceerbare analyse wordt bevorderd.
+
+ 85   Daartoe verschaft de uitvinding een computersysteem dat is ingericht
+      voor:
+
+      1. het automatisch analyseren van AI-modellen afkomstig uit meerdere
+         machine-learning-frameworks zonder voorafgaande handmatige
+ 90      configuratie;
+
+      2. het uitvoeren van bias-analyses met behulp van meerdere
+         fairness-algoritmen, waaronder demografische pariteit,
+         gelijkwaardige kansen, calibratiescores en individuele eerlijkheid;
+ 95   
+      3. het ondersteunen van compliance-evaluaties met betrekking tot
+         relevante bepalingen uit de EU AI Act;
+
+      4. het uitvoeren van aanvullende controles gericht op Nederlandse
+100      privacywetgeving, waaronder detectie en validatie van
+         Burgerservicenummers op basis van de officiële 11-proef;
+
+      5. het faciliteren van continue monitoring en het genereren van
+         meldingen bij vastgestelde afwijkingen of risico-indicatoren.
+105   
+      Het systeem is zodanig ontworpen dat het kan worden geïntegreerd in
+      bestaande ontwikkel- en deploy-omgevingen voor machine-learning-modellen
+      en kan worden toegepast in zowel ontwikkel- als operationele contexten.
