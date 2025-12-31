@@ -10818,68 +10818,63 @@ def analyze_media_from_url(url: str) -> tuple:
 def render_audio_video_scanner_interface(region: str, username: str):
     """Audio/Video Scanner interface for deepfake and media manipulation detection"""
     from utils.activity_tracker import ScannerType
+    from utils.i18n import get_text as _
     
     session_id = st.session_state.get('session_id', str(uuid.uuid4()))
     user_id = st.session_state.get('user_id', username)
     
-    st.subheader("🎬 Audio/Video Scanner Configuration")
-    st.markdown("""
-    Detect deepfakes, voice cloning, AI-generated content, and media manipulation.
-    Supports audio (MP3, WAV, FLAC, M4A) and video (MP4, AVI, MOV, MKV, WEBM) files.
-    """)
+    st.subheader(f"🎬 {_('audio_video_scanner.title', 'Audio/Video Scanner Configuration')}")
+    st.markdown(_('audio_video_scanner.description', 'Detect deepfakes, voice cloning, AI-generated content, and media manipulation. Supports audio (MP3, WAV, FLAC, M4A) and video (MP4, AVI, MOV, MKV, WEBM) files.'))
     
-    input_tab1, input_tab2 = st.tabs(["📁 Upload Files", "🔗 Scan URL"])
+    input_tab1, input_tab2 = st.tabs([f"📁 {_('audio_video_scanner.upload_files', 'Upload Files')}", f"🔗 {_('audio_video_scanner.scan_url', 'Scan URL')}"])
     
     uploaded_files = None
     media_url = None
     
     with input_tab1:
         uploaded_files = st.file_uploader(
-            "Upload Audio/Video Files",
+            _('audio_video_scanner.upload_audio_video', 'Upload Audio/Video Files'),
             accept_multiple_files=True,
             type=['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac', 'mp4', 'avi', 'mov', 'mkv', 'webm', 'wmv', 'mpeg4']
         )
     
     with input_tab2:
-        st.markdown("""
-        **Supported platforms:** YouTube, Vimeo, Twitter/X, Facebook, Instagram, TikTok, 
-        Dailymotion, SoundCloud, and 1000+ other sites.
-        """)
+        st.markdown(f"**{_('audio_video_scanner.supported_platforms', 'Supported platforms')}:** {_('audio_video_scanner.supported_platforms_desc', 'YouTube, Vimeo, Twitter/X, Facebook, Instagram, TikTok, Dailymotion, SoundCloud, and 1000+ other sites.')}")
         media_url = st.text_input(
-            "Enter Media URL",
-            placeholder="https://www.youtube.com/watch?v=... or any video/audio URL",
-            help="Paste a URL to a video or audio file. Maximum duration: 10 minutes."
+            _('audio_video_scanner.enter_url', 'Enter Media URL'),
+            placeholder=_('audio_video_scanner.url_placeholder', 'https://www.youtube.com/watch?v=... or any video/audio URL'),
+            help=_('audio_video_scanner.url_help', 'Paste a URL to a video or audio file. Maximum duration: 10 minutes.')
         )
         if media_url:
-            st.info("💡 The media will be downloaded for analysis. Only public content is supported.")
+            st.info(f"💡 {_('audio_video_scanner.url_info', 'The media will be downloaded for analysis. Only public content is supported.')}")
     
-    with st.expander("🔧 Detection Options", expanded=True):
+    with st.expander(f"🔧 {_('audio_video_scanner.detection_options', 'Detection Options')}", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
-            detect_audio_deepfake = st.checkbox("Audio Deepfake Detection", value=True)
-            detect_voice_cloning = st.checkbox("Voice Cloning Detection", value=True)
-            detect_ai_speech = st.checkbox("AI-Generated Speech Detection", value=True)
+            detect_audio_deepfake = st.checkbox(_('audio_video_scanner.audio_deepfake', 'Audio Deepfake Detection'), value=True)
+            detect_voice_cloning = st.checkbox(_('audio_video_scanner.voice_cloning', 'Voice Cloning Detection'), value=True)
+            detect_ai_speech = st.checkbox(_('audio_video_scanner.ai_speech', 'AI-Generated Speech Detection'), value=True)
         with col2:
-            detect_video_deepfake = st.checkbox("Video Deepfake Detection", value=True)
-            detect_face_swap = st.checkbox("Face Swap Detection", value=True)
-            detect_metadata_tampering = st.checkbox("Metadata Tampering Detection", value=True)
+            detect_video_deepfake = st.checkbox(_('audio_video_scanner.video_deepfake', 'Video Deepfake Detection'), value=True)
+            detect_face_swap = st.checkbox(_('audio_video_scanner.face_swap', 'Face Swap Detection'), value=True)
+            detect_metadata_tampering = st.checkbox(_('audio_video_scanner.metadata_tampering', 'Metadata Tampering Detection'), value=True)
         
         st.markdown("---")
         enable_ai_analysis = st.checkbox(
-            "🤖 AI-Powered Analysis (GPT-4 Vision)", 
+            f"🤖 {_('audio_video_scanner.ai_analysis', 'AI-Powered Analysis (GPT-4 Vision)')}", 
             value=True,
-            help="Uses OpenAI GPT-4 Vision to analyze video frames for advanced deepfake detection. More accurate but may incur API costs."
+            help=_('audio_video_scanner.ai_analysis_help', 'Uses OpenAI GPT-4 Vision to analyze video frames for advanced deepfake detection. More accurate but may incur API costs.')
         )
         if enable_ai_analysis:
-            st.caption("⚠️ Video frames will be sent to OpenAI for analysis. Do not use with confidential content.")
+            st.caption(f"⚠️ {_('audio_video_scanner.ai_analysis_warning', 'Video frames will be sent to OpenAI for analysis. Do not use with confidential content.')}")
     
     sensitivity = st.select_slider(
-        "Detection Sensitivity",
-        options=["low", "medium", "high", "maximum"],
-        value="high"
+        _('audio_video_scanner.sensitivity', 'Detection Sensitivity'),
+        options=[_('audio_video_scanner.sensitivity_low', 'low'), _('audio_video_scanner.sensitivity_medium', 'medium'), _('audio_video_scanner.sensitivity_high', 'high'), _('audio_video_scanner.sensitivity_maximum', 'maximum')],
+        value=_('audio_video_scanner.sensitivity_high', 'high')
     )
     
-    if st.button("🚀 Start Deepfake Detection Scan", type="primary", use_container_width=True):
+    if st.button(f"🚀 {_('audio_video_scanner.start_scan', 'Start Deepfake Detection Scan')}", type="primary", use_container_width=True):
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
             st.error(f"⚠️ {message}")
@@ -10890,7 +10885,7 @@ def render_audio_video_scanner_interface(region: str, username: str):
         has_url = media_url and media_url.strip()
         
         if not has_files and not has_url:
-            st.warning("Please upload at least one audio/video file or enter a URL to scan.")
+            st.warning(_('audio_video_scanner.upload_warning', 'Please upload at least one audio/video file or enter a URL to scan.'))
             return
         
         scan_options = {
