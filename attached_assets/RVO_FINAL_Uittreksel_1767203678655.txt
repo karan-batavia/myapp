@@ -1,0 +1,30 @@
+UITTREKSEL
+
+Automated Artificial Intelligence Model Compliance Assessment System
+for EU AI Act 2025
+
+Een geautomatiseerd computersysteem voor risicoanalyse en
+complianceverificatie van kunstmatige-intelligentiemodellen conform de
+EU AI Act 2025. Het systeem analyseert AI-modellen die zijn ontwikkeld
+met verschillende frameworks, waaronder PyTorch, TensorFlow, ONNX en
+scikit-learn, en voert geautomatiseerde technische en juridische
+controles uit.
+
+De uitvinding omvat een bias-detectiemechanisme dat discriminatoire
+patronen identificeert met behulp van fairness-algoritmen, waaronder
+demographic parity, equalized odds, calibration score en individual
+fairness. Daarnaast classificeert het systeem AI-toepassingen automatisch
+volgens de risicocategorieën van de EU AI Act, waaronder verboden
+praktijken, hoog-risico systemen en general purpose AI-modellen.
+
+Het systeem biedt een Nederlandse specialisatie door detectie van
+Burgerservicenummers (BSN) met patroonherkenning en checksumvalidatie
+volgens de Nederlandse 11-proef, evenals verificatie van naleving van de
+Uitvoeringswet Algemene Verordening Gegevensbescherming (UAVG).
+
+Verder voorziet het systeem in real-time compliancebewaking,
+waarschuwingen bij overtredingen en rapportage ter ondersteuning van
+herstelmaatregelen. De uitvinding is toepasbaar in uiteenlopende sectoren
+waarin AI-systemen worden ingezet en draagt bij aan consistente en
+efficiente naleving van Europese en Nederlandse regelgeving.
+
