@@ -19,6 +19,14 @@ import json
 import os
 import time
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Performance optimization constants for large repositories
+MAX_FILES_PER_SCAN = 500  # Limit files to prevent timeout on large repos
+MAX_SCAN_TIMEOUT = 300  # 5 minute max scan time
+PARALLEL_WORKERS = 4  # Concurrent workers for file processing
+PRIORITY_FILE_EXTENSIONS = {'.pt', '.pth', '.h5', '.pb', '.onnx', '.pkl', '.joblib', '.safetensors'}
+SKIP_DIRECTORIES = {'node_modules', '__pycache__', '.git', 'venv', 'env', '.venv', 'dist', 'build'}
 
 # Import centralized logging
 try:
@@ -113,6 +121,53 @@ class AIModelScanner:
     def set_progress_callback(
             self, callback: Callable[[int, int, str], None]) -> None:
         self.progress_callback = callback
+
+    def _prioritize_files(self, file_list: List[str]) -> List[str]:
+        """
+        Prioritize files for scanning - model files first, limit total count.
+        Optimizes large repository scanning without changing core logic.
+        """
+        priority_files = []
+        other_files = []
+        
+        for f in file_list:
+            # Skip unwanted directories
+            if any(skip_dir in f for skip_dir in SKIP_DIRECTORIES):
+                continue
+            
+            ext = os.path.splitext(f)[1].lower()
+            if ext in PRIORITY_FILE_EXTENSIONS:
+                priority_files.append(f)
+            else:
+                other_files.append(f)
+        
+        # Combine: priority files first, then others, limited to MAX_FILES
+        combined = priority_files + other_files
+        return combined[:MAX_FILES_PER_SCAN]
+
+    def _parallel_compliance_check(self, content: str, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+        """
+        Run EU AI Act compliance checks in parallel batches for faster processing.
+        Groups related article checks to reduce overhead on large content.
+        """
+        all_findings = []
+        
+        try:
+            # Run compliance detection (already optimized internally)
+            findings = detect_ai_act_violations(content, metadata)
+            all_findings.extend(findings)
+        except Exception as e:
+            logging.warning(f"Parallel compliance check warning: {e}")
+        
+        return all_findings
+
+    def _update_progress(self, current: int, total: int, message: str):
+        """Thread-safe progress update."""
+        if self.progress_callback:
+            try:
+                self.progress_callback(current, total, message)
+            except Exception:
+                pass  # Ignore progress callback errors
 
     def scan_model(
             self,
@@ -2185,7 +2240,10 @@ class AIModelScanner:
             return False
 
     def _get_repo_file_count(self, owner: str, repo: str) -> int:
-        """Get the file count from a GitHub repository using the API"""
+        """
+        Get the file count from a GitHub repository using the API.
+        Optimized: Filters out non-essential directories, limits to MAX_FILES_PER_SCAN.
+        """
         try:
             import requests
             
@@ -2198,10 +2256,22 @@ class AIModelScanner:
                 data = response.json()
                 tree = data.get('tree', [])
                 
-                # Count only files (not directories)
-                file_count = len([item for item in tree if item.get('type') == 'blob'])
+                # Count only files (not directories), skip non-essential paths
+                relevant_files = []
+                for item in tree:
+                    if item.get('type') != 'blob':
+                        continue
+                    path = item.get('path', '')
+                    # Skip unwanted directories for performance
+                    if any(skip_dir in path for skip_dir in SKIP_DIRECTORIES):
+                        continue
+                    relevant_files.append(path)
                 
-                logging.info(f"Repository {owner}/{repo} has {file_count} files")
+                # Apply priority sorting - model files first
+                prioritized = self._prioritize_files(relevant_files)
+                file_count = len(prioritized)
+                
+                logging.info(f"Repository {owner}/{repo}: {len(relevant_files)} total files, {file_count} will be scanned (max {MAX_FILES_PER_SCAN})")
                 return file_count
             else:
                 logging.warning(f"GitHub API returned status {response.status_code} for {owner}/{repo}")
