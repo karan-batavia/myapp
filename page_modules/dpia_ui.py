@@ -702,7 +702,7 @@ def display_enhanced_dpia_results(scan_results):
     # Metrics
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("Risk Score", f"{scan_results['risk_score']}/10")
+        st.metric("Risk Score", f"{min(10, scan_results['risk_score'])}/10")
     with col2:
         st.metric("Risk Factors", len(scan_results['risk_factors']))
     with col3:
@@ -1116,7 +1116,7 @@ def generate_enhanced_dpia_report(scan_results):
         <div class="metrics">
             <div class="metric">
                 <h3>Risk Score</h3>
-                <div class="value">{scan_results['risk_score']}/10</div>
+                <div class="value">{min(10, scan_results['risk_score'])}/10</div>
             </div>
             <div class="metric">
                 <h3>Risk Level</h3>
