@@ -757,6 +757,321 @@ def display_enhanced_dpia_results(scan_results):
     # Success message
     st.success("✅ Enhanced DPIA assessment completed successfully!")
 
+
+def _generate_dpo_signoff_section(scan_results):
+    """Generate DPO Sign-off Section for DPIA report"""
+    return """
+        <div style="background: #e3f2fd; padding: 25px; border-radius: 8px; margin: 25px 0; border: 2px solid #1976d2;">
+            <h2 style="color: #1565c0; margin-top: 0;">🔏 DPO Sign-off Section</h2>
+            <p style="color: #555; margin-bottom: 20px;">
+                As required by GDPR Article 35(2), the Data Protection Officer must be consulted on this DPIA.
+            </p>
+            
+            <table style="width: 100%; border-collapse: collapse; background: white;">
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #ddd; width: 30%;"><strong>DPO Name:</strong></td>
+                    <td style="padding: 15px; border: 1px solid #ddd; border-bottom: 2px dotted #999;">_______________________________</td>
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #ddd;"><strong>Review Date:</strong></td>
+                    <td style="padding: 15px; border: 1px solid #ddd; border-bottom: 2px dotted #999;">_______________________________</td>
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #ddd;"><strong>DPO Recommendation:</strong></td>
+                    <td style="padding: 15px; border: 1px solid #ddd;">
+                        <label style="margin-right: 20px;">☐ Proceed with processing</label>
+                        <label style="margin-right: 20px;">☐ Proceed with conditions</label>
+                        <label>☐ Further review needed</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #ddd;"><strong>DPO Comments:</strong></td>
+                    <td style="padding: 15px; border: 1px solid #ddd; height: 60px; border-bottom: 2px dotted #999;"></td>
+                </tr>
+                <tr>
+                    <td style="padding: 15px; border: 1px solid #ddd;"><strong>DPO Signature:</strong></td>
+                    <td style="padding: 15px; border: 1px solid #ddd; border-bottom: 2px dotted #999;">_______________________________</td>
+                </tr>
+            </table>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>Legal Reference: GDPR Article 35(2), Article 39(1)(c) - DPO tasks include providing advice on DPIA</em>
+            </p>
+        </div>
+    """
+
+
+def _generate_ap_consultation_section(scan_results):
+    """Generate Autoriteit Persoonsgegevens (Dutch DPA) Consultation Trigger Section"""
+    risk_level = scan_results.get('risk_level', '').lower()
+    risk_score = scan_results.get('risk_score', 0)
+    
+    # Determine if AP consultation is required (high residual risk)
+    ap_required = 'high' in risk_level or risk_score >= 7
+    
+    if ap_required:
+        status_color = "#dc3545"
+        status_bg = "#f8d7da"
+        status_icon = "⚠️"
+        status_text = "REQUIRED"
+        message = """
+            <p><strong>Residual risk remains HIGH after mitigation measures.</strong></p>
+            <p>→ Autoriteit Persoonsgegevens (AP) consultation is <strong>REQUIRED</strong></p>
+            <p>→ <strong>Deadline:</strong> Before processing starts</p>
+            <p>→ <strong>Contact:</strong> <a href="https://autoriteitpersoonsgegevens.nl">autoriteitpersoonsgegevens.nl</a></p>
+        """
+    else:
+        status_color = "#28a745"
+        status_bg = "#d4edda"
+        status_icon = "✅"
+        status_text = "NOT REQUIRED"
+        message = """
+            <p>Residual risk is acceptable after mitigation measures.</p>
+            <p>→ AP consultation is <strong>NOT REQUIRED</strong> at this time</p>
+            <p>→ Re-assess if processing activities change significantly</p>
+        """
+    
+    return f"""
+        <div style="background: {status_bg}; padding: 25px; border-radius: 8px; margin: 25px 0; border-left: 5px solid {status_color};">
+            <h2 style="color: {status_color}; margin-top: 0;">{status_icon} AP Consultation Trigger</h2>
+            <div style="background: white; padding: 15px; border-radius: 6px; margin: 15px 0;">
+                <p style="font-size: 18px; font-weight: bold; color: {status_color};">
+                    Status: {status_text}
+                </p>
+                {message}
+            </div>
+            <p style="font-size: 11px; color: #666;">
+                <em>Legal Reference: GDPR Article 36 - Prior consultation with supervisory authority when residual risk is high</em>
+            </p>
+        </div>
+    """
+
+
+def _generate_netherlands_specific_section(scan_results):
+    """Generate Netherlands-specific compliance section (UAVG, AP Guidelines, BSN)"""
+    region = scan_results.get('region', 'Netherlands')
+    
+    # Detect if BSN processing is involved
+    has_bsn = any('bsn' in str(f).lower() or 'burgerservicenummer' in str(f).lower() 
+                  for f in scan_results.get('findings', []))
+    
+    bsn_section = ""
+    if has_bsn:
+        bsn_section = """
+            <div style="background: #fff3cd; padding: 15px; border-radius: 6px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                <h4 style="margin: 0 0 10px 0; color: #856404;">🆔 BSN Processing Detected</h4>
+                <p>Burgerservicenummer (BSN) processing requires additional safeguards under UAVG.</p>
+                <ul style="margin: 10px 0;">
+                    <li>UAVG Article 46: BSN may only be used when legally required</li>
+                    <li>Ensure legal basis is documented</li>
+                    <li>Implement additional security measures</li>
+                    <li>Limit access to authorized personnel only</li>
+                </ul>
+            </div>
+        """
+    
+    return f"""
+        <div style="background: #fff8e1; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #ffb300;">
+            <h2 style="color: #ff6f00; margin-top: 0;">🇳🇱 Netherlands-Specific Compliance</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div style="background: white; padding: 15px; border-radius: 6px;">
+                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📜 UAVG References</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                        <li>UAVG Art. 1-10: General provisions</li>
+                        <li>UAVG Art. 22-31: Special categories</li>
+                        <li>UAVG Art. 41-51: Enforcement & AP powers</li>
+                        <li>UAVG Art. 46: BSN processing rules</li>
+                    </ul>
+                </div>
+                
+                <div style="background: white; padding: 15px; border-radius: 6px;">
+                    <h4 style="margin: 0 0 10px 0; color: #e65100;">📋 AP Guidelines 2024-2025</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                        <li>DPIA threshold criteria for NL</li>
+                        <li>Healthcare data processing guidance</li>
+                        <li>Employee monitoring requirements</li>
+                        <li>Camera surveillance rules</li>
+                    </ul>
+                </div>
+            </div>
+            
+            {bsn_section}
+            
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #e65100;">🏛️ Sector-Specific Requirements</h4>
+                <table style="width: 100%; font-size: 12px; border-collapse: collapse;">
+                    <tr style="background: #f5f5f5;">
+                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Sector</th>
+                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd;">Additional Requirements</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Healthcare</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Wbp, NEN 7510, Medical confidentiality</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Financial</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Wwft, DNB guidelines, PSD2</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Government</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">BIO, Baseline Informatiebeveiliging</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Telecom</td>
+                        <td style="padding: 8px; border: 1px solid #ddd;">Telecommunicatiewet, ACM rules</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>References: Uitvoeringswet AVG (UAVG), Autoriteit Persoonsgegevens Guidelines 2024-2025</em>
+            </p>
+        </div>
+    """
+
+
+def _generate_implementation_timeline(scan_results):
+    """Generate visual implementation timeline (Gantt-style) for recommendations"""
+    recommendations = scan_results.get('recommendations', [])
+    
+    if not recommendations:
+        return ""
+    
+    # Generate timeline bars
+    timeline_items = []
+    colors = {
+        'Critical': '#dc3545',
+        'High': '#fd7e14', 
+        'Medium': '#ffc107',
+        'Low': '#28a745'
+    }
+    
+    for i, rec in enumerate(recommendations):
+        priority = rec.get('priority', 'Medium')
+        color = colors.get(priority, '#6c757d')
+        title = rec.get('title', f'Recommendation {i+1}')[:40]
+        timeline = rec.get('timeline', '1-2 weeks')
+        
+        # Calculate bar width based on timeline
+        if 'day' in timeline.lower():
+            width = 15
+        elif '1' in timeline and 'week' in timeline.lower():
+            width = 25
+        elif '2' in timeline and 'week' in timeline.lower():
+            width = 40
+        elif '3' in timeline and 'week' in timeline.lower():
+            width = 55
+        elif '4' in timeline and 'week' in timeline.lower():
+            width = 70
+        elif 'month' in timeline.lower():
+            width = 85
+        else:
+            width = 30
+        
+        timeline_items.append(f"""
+            <div style="display: flex; align-items: center; margin: 8px 0;">
+                <div style="width: 200px; font-size: 12px; padding-right: 10px; text-align: right;">{title}</div>
+                <div style="flex: 1; background: #e9ecef; border-radius: 4px; height: 24px; position: relative;">
+                    <div style="width: {width}%; background: {color}; height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 8px;">
+                        <span style="color: white; font-size: 11px; font-weight: bold;">{timeline}</span>
+                    </div>
+                </div>
+                <div style="width: 80px; padding-left: 10px;">
+                    <span style="background: {color}; color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px;">{priority}</span>
+                </div>
+            </div>
+        """)
+    
+    return f"""
+        <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #dee2e6;">
+            <h2 style="color: #495057; margin-top: 0;">📅 Implementation Timeline</h2>
+            <p style="color: #666; margin-bottom: 20px;">Visual timeline for implementing recommendations by priority</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 6px;">
+                <div style="display: flex; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                    <div style="width: 200px; font-weight: bold; text-align: right; padding-right: 10px;">Task</div>
+                    <div style="flex: 1; display: flex; justify-content: space-between; font-size: 11px; color: #666;">
+                        <span>Week 1</span>
+                        <span>Week 2</span>
+                        <span>Week 3</span>
+                        <span>Week 4</span>
+                        <span>Month 2+</span>
+                    </div>
+                    <div style="width: 80px; text-align: center; font-weight: bold;">Priority</div>
+                </div>
+                {''.join(timeline_items)}
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-top: 15px; font-size: 11px;">
+                <span><span style="display: inline-block; width: 12px; height: 12px; background: #dc3545; border-radius: 2px;"></span> Critical</span>
+                <span><span style="display: inline-block; width: 12px; height: 12px; background: #fd7e14; border-radius: 2px;"></span> High</span>
+                <span><span style="display: inline-block; width: 12px; height: 12px; background: #ffc107; border-radius: 2px;"></span> Medium</span>
+                <span><span style="display: inline-block; width: 12px; height: 12px; background: #28a745; border-radius: 2px;"></span> Low</span>
+            </div>
+        </div>
+    """
+
+
+def _generate_stakeholder_signoff_section(scan_results):
+    """Generate Stakeholder Sign-off Table for DPIA report"""
+    return """
+        <div style="background: #e8f5e9; padding: 25px; border-radius: 8px; margin: 25px 0; border: 2px solid #4caf50;">
+            <h2 style="color: #2e7d32; margin-top: 0;">✍️ Stakeholder Sign-off</h2>
+            <p style="color: #555; margin-bottom: 20px;">
+                All relevant stakeholders must review and approve this DPIA before processing begins.
+            </p>
+            
+            <table style="width: 100%; border-collapse: collapse; background: white;">
+                <thead>
+                    <tr style="background: #4caf50; color: white;">
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Role</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Name</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Date</th>
+                        <th style="padding: 12px; text-align: left; border: 1px solid #ddd;">Signature</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Data Controller</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Data Protection Officer (DPO)</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>IT Security Officer</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Legal / Compliance</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Business Owner</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                        <td style="padding: 12px; border: 1px solid #ddd; border-bottom: 2px dotted #999;"></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>All parties confirm they have reviewed the DPIA and approve the processing activities described herein.</em>
+            </p>
+        </div>
+    """
+
+
 def generate_enhanced_dpia_report(scan_results):
     """Generate professional HTML report for DPIA assessment"""
     html_template = f"""
@@ -846,12 +1161,24 @@ def generate_enhanced_dpia_report(scan_results):
         </div>
         ''' for finding in scan_results['findings'])}
         
+        {_generate_ap_consultation_section(scan_results)}
+        
+        {_generate_netherlands_specific_section(scan_results)}
+        
+        {_generate_implementation_timeline(scan_results)}
+        
+        {_generate_stakeholder_signoff_section(scan_results)}
+        
+        {_generate_dpo_signoff_section(scan_results)}
+        
         <div class="next-steps">
             <h2>Next Steps</h2>
             <ol>
                 <li>Review and address all high-priority recommendations</li>
                 <li>Implement necessary safeguards and controls</li>
                 <li>Document compliance measures</li>
+                <li>Obtain required stakeholder sign-offs</li>
+                <li>Consult Autoriteit Persoonsgegevens if residual risk remains high</li>
                 <li>Schedule regular review (recommended: 12 months)</li>
                 <li>Monitor for changes in processing activities</li>
             </ol>
@@ -859,8 +1186,9 @@ def generate_enhanced_dpia_report(scan_results):
         
         <div class="footer">
             <p><strong>Generated by DataGuardian Pro</strong></p>
-            <p>Netherlands GDPR Compliance • Report ID: {scan_results['scan_id']}</p>
+            <p>Netherlands GDPR & UAVG Compliance • Report ID: {scan_results['scan_id']}</p>
             <p>This report is generated based on the information provided and should be reviewed by qualified legal counsel.</p>
+            <p><em>References: GDPR Art. 35, UAVG Art. 1-51, AP Guidelines 2024-2025</em></p>
         </div>
     </body>
     </html>
