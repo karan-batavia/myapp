@@ -1072,6 +1072,499 @@ def _generate_stakeholder_signoff_section(scan_results):
     """
 
 
+def _generate_data_flow_diagram(scan_results):
+    """Generate visual Data Flow Diagram section"""
+    project_name = scan_results.get('project_name', 'Data Processing System')
+    data_controller = scan_results.get('data_controller', 'Organization')
+    
+    # Determine data types being processed
+    data_types = []
+    if scan_results.get('personal_data', True):
+        data_types.append('Personal Data')
+    if scan_results.get('sensitive_data'):
+        data_types.append('Sensitive Data')
+    if scan_results.get('biometric_data'):
+        data_types.append('Biometric Data')
+    if scan_results.get('health_data'):
+        data_types.append('Health Data')
+    if scan_results.get('bsn_data'):
+        data_types.append('BSN Data')
+    
+    data_types_html = ''.join(f'<li>{dt}</li>' for dt in data_types) if data_types else '<li>Personal Data</li>'
+    
+    return f"""
+        <div style="background: #e8eaf6; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #5c6bc0;">
+            <h2 style="color: #3949ab; margin-top: 0;">🔄 Data Flow Diagram</h2>
+            <p style="color: #555; margin-bottom: 20px;">Visual representation of data flow through the processing system</p>
+            
+            <div style="background: white; padding: 25px; border-radius: 8px; text-align: center;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <!-- Data Subjects -->
+                    <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; min-width: 140px; border: 2px solid #1976d2;">
+                        <div style="font-size: 32px;">👥</div>
+                        <div style="font-weight: bold; color: #1565c0;">Data Subjects</div>
+                        <div style="font-size: 11px; color: #666;">Individuals</div>
+                    </div>
+                    
+                    <!-- Arrow 1 -->
+                    <div style="font-size: 24px; color: #5c6bc0;">→</div>
+                    
+                    <!-- Collection Point -->
+                    <div style="background: #fff3e0; padding: 20px; border-radius: 8px; min-width: 140px; border: 2px solid #ff9800;">
+                        <div style="font-size: 32px;">📥</div>
+                        <div style="font-weight: bold; color: #e65100;">Collection</div>
+                        <div style="font-size: 11px; color: #666;">Forms/APIs</div>
+                    </div>
+                    
+                    <!-- Arrow 2 -->
+                    <div style="font-size: 24px; color: #5c6bc0;">→</div>
+                    
+                    <!-- Processing -->
+                    <div style="background: #f3e5f5; padding: 20px; border-radius: 8px; min-width: 140px; border: 2px solid #9c27b0;">
+                        <div style="font-size: 32px;">⚙️</div>
+                        <div style="font-weight: bold; color: #7b1fa2;">Processing</div>
+                        <div style="font-size: 11px; color: #666;">{project_name[:15]}...</div>
+                    </div>
+                    
+                    <!-- Arrow 3 -->
+                    <div style="font-size: 24px; color: #5c6bc0;">→</div>
+                    
+                    <!-- Storage -->
+                    <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; min-width: 140px; border: 2px solid #4caf50;">
+                        <div style="font-size: 32px;">💾</div>
+                        <div style="font-weight: bold; color: #2e7d32;">Storage</div>
+                        <div style="font-size: 11px; color: #666;">EU Servers</div>
+                    </div>
+                </div>
+                
+                <!-- Data Controller -->
+                <div style="margin-top: 30px; padding: 15px; background: #fafafa; border-radius: 6px; border: 1px dashed #999;">
+                    <strong>Data Controller:</strong> {data_controller}
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div style="background: white; padding: 15px; border-radius: 6px;">
+                    <h4 style="margin: 0 0 10px 0; color: #3949ab;">📊 Data Types Processed</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                        {data_types_html}
+                    </ul>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px;">
+                    <h4 style="margin: 0 0 10px 0; color: #3949ab;">🔐 Data Recipients</h4>
+                    <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                        <li>Internal staff (authorized)</li>
+                        <li>IT administrators</li>
+                        <li>Third-party processors (if any)</li>
+                        <li>Regulatory authorities (if required)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    """
+
+
+def _generate_processing_description(scan_results):
+    """Generate detailed Processing Description section (what/why/how)"""
+    purpose = scan_results.get('processing_purpose', 'Data processing for business operations')
+    project_name = scan_results.get('project_name', 'Data Processing Project')
+    
+    return f"""
+        <div style="background: #fce4ec; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #ec407a;">
+            <h2 style="color: #c2185b; margin-top: 0;">📝 Processing Description</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #e91e63;">
+                    <h4 style="margin: 0 0 15px 0; color: #880e4f;">WHAT</h4>
+                    <p style="font-size: 13px; margin: 0;">
+                        <strong>Nature of Processing:</strong><br/>
+                        {purpose[:200]}{'...' if len(purpose) > 200 else ''}
+                    </p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #9c27b0;">
+                    <h4 style="margin: 0 0 15px 0; color: #4a148c;">WHY</h4>
+                    <p style="font-size: 13px; margin: 0;">
+                        <strong>Purpose & Necessity:</strong><br/>
+                        Processing is necessary to achieve the stated business objectives and fulfill legal obligations.
+                    </p>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #673ab7;">
+                    <h4 style="margin: 0 0 15px 0; color: #311b92;">HOW</h4>
+                    <p style="font-size: 13px; margin: 0;">
+                        <strong>Processing Methods:</strong><br/>
+                        Collection, storage, analysis, and secure retention following GDPR principles.
+                    </p>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                <h4 style="margin: 0 0 15px 0; color: #c2185b;">📋 Scope and Context</h4>
+                <table style="width: 100%; font-size: 13px; border-collapse: collapse;">
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; width: 30%; background: #fafafa;"><strong>Project/System</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">{project_name}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #fafafa;"><strong>Data Subjects</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Employees, customers, or as specified in the assessment</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #fafafa;"><strong>Geographic Scope</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Netherlands / EU (GDPR jurisdiction)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; border: 1px solid #ddd; background: #fafafa;"><strong>Duration</strong></td>
+                        <td style="padding: 10px; border: 1px solid #ddd;">Ongoing processing with defined retention periods</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    """
+
+
+def _generate_legal_basis_section(scan_results):
+    """Generate Legal Basis mapping to GDPR Article 6"""
+    purpose = scan_results.get('processing_purpose', '').lower()
+    
+    # Determine likely legal basis based on purpose
+    legal_bases = [
+        {
+            'article': '6(1)(a) - Consent',
+            'description': 'Data subject has given consent for one or more specific purposes',
+            'applicable': 'consent' in purpose or 'marketing' in purpose,
+            'requirements': 'Freely given, specific, informed, unambiguous; easily withdrawable'
+        },
+        {
+            'article': '6(1)(b) - Contract',
+            'description': 'Processing necessary for performance of a contract',
+            'applicable': 'contract' in purpose or 'service' in purpose or 'order' in purpose,
+            'requirements': 'Contract must exist or be about to be entered into'
+        },
+        {
+            'article': '6(1)(c) - Legal Obligation',
+            'description': 'Processing necessary for compliance with legal obligation',
+            'applicable': 'legal' in purpose or 'tax' in purpose or 'compliance' in purpose,
+            'requirements': 'Must identify specific legal obligation under EU or Member State law'
+        },
+        {
+            'article': '6(1)(d) - Vital Interests',
+            'description': 'Processing necessary to protect vital interests',
+            'applicable': 'emergency' in purpose or 'health' in purpose or 'safety' in purpose,
+            'requirements': 'Life-threatening situation; no other legal basis available'
+        },
+        {
+            'article': '6(1)(e) - Public Task',
+            'description': 'Processing necessary for public interest or official authority',
+            'applicable': 'public' in purpose or 'government' in purpose,
+            'requirements': 'Task carried out in public interest or exercise of official authority'
+        },
+        {
+            'article': '6(1)(f) - Legitimate Interests',
+            'description': 'Processing necessary for legitimate interests of controller',
+            'applicable': True,  # Default fallback
+            'requirements': 'Balance test required; not applicable for public authorities'
+        }
+    ]
+    
+    basis_rows = []
+    for basis in legal_bases:
+        status = '✅' if basis['applicable'] else '⬜'
+        bg_color = '#d4edda' if basis['applicable'] else 'white'
+        basis_rows.append(f"""
+            <tr style="background: {bg_color};">
+                <td style="padding: 12px; border: 1px solid #ddd;">{status}</td>
+                <td style="padding: 12px; border: 1px solid #ddd;"><strong>{basis['article']}</strong></td>
+                <td style="padding: 12px; border: 1px solid #ddd;">{basis['description']}</td>
+                <td style="padding: 12px; border: 1px solid #ddd; font-size: 12px;">{basis['requirements']}</td>
+            </tr>
+        """)
+    
+    return f"""
+        <div style="background: #e0f2f1; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #26a69a;">
+            <h2 style="color: #00796b; margin-top: 0;">⚖️ Legal Basis (GDPR Article 6)</h2>
+            <p style="color: #555; margin-bottom: 20px;">
+                Every processing activity must have a valid legal basis under GDPR Article 6.
+                Select and document the applicable basis below.
+            </p>
+            
+            <table style="width: 100%; border-collapse: collapse; background: white; font-size: 13px;">
+                <thead>
+                    <tr style="background: #00897b; color: white;">
+                        <th style="padding: 12px; text-align: center; width: 40px;">Select</th>
+                        <th style="padding: 12px; text-align: left;">Legal Basis</th>
+                        <th style="padding: 12px; text-align: left;">Description</th>
+                        <th style="padding: 12px; text-align: left;">Requirements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {''.join(basis_rows)}
+                </tbody>
+            </table>
+            
+            <div style="background: #fff8e1; padding: 15px; border-radius: 6px; margin-top: 20px; border-left: 4px solid #ffc107;">
+                <strong>⚠️ Special Categories (Article 9):</strong> If processing sensitive data, an additional legal basis 
+                from Article 9(2) is required in addition to Article 6.
+            </div>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>Legal Reference: GDPR Article 6 - Lawfulness of processing</em>
+            </p>
+        </div>
+    """
+
+
+def _generate_residual_risk_section(scan_results):
+    """Generate Residual Risk section showing risk AFTER mitigation"""
+    risk_score = min(10, scan_results.get('risk_score', 5))
+    
+    # Calculate residual risk based on safeguards
+    safeguards_count = sum([
+        scan_results.get('encryption', False),
+        scan_results.get('access_controls', False),
+        scan_results.get('data_minimization', False),
+        scan_results.get('retention_policy', False),
+        scan_results.get('consent_mechanisms', False),
+        scan_results.get('breach_procedures', False)
+    ])
+    
+    # Residual risk = original risk - mitigation effect
+    mitigation_effect = min(safeguards_count * 0.8, risk_score * 0.6)  # Max 60% reduction
+    residual_score = max(1, round(risk_score - mitigation_effect, 1))
+    
+    # Determine residual risk level
+    if residual_score >= 7:
+        residual_level = 'High'
+        residual_color = '#dc3545'
+        residual_bg = '#f8d7da'
+        action_required = 'AP consultation may be required before processing'
+    elif residual_score >= 4:
+        residual_level = 'Medium'
+        residual_color = '#fd7e14'
+        residual_bg = '#fff3cd'
+        action_required = 'Proceed with additional monitoring and review'
+    else:
+        residual_level = 'Low'
+        residual_color = '#28a745'
+        residual_bg = '#d4edda'
+        action_required = 'Proceed with standard controls'
+    
+    reduction_pct = round(((risk_score - residual_score) / risk_score) * 100) if risk_score > 0 else 0
+    
+    return f"""
+        <div style="background: {residual_bg}; padding: 25px; border-radius: 8px; margin: 25px 0; border: 2px solid {residual_color};">
+            <h2 style="color: {residual_color}; margin-top: 0;">📉 Residual Risk Assessment</h2>
+            <p style="color: #555; margin-bottom: 20px;">
+                Risk level AFTER applying mitigation measures and safeguards
+            </p>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0;">
+                <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">INITIAL RISK</div>
+                    <div style="font-size: 36px; font-weight: bold; color: #dc3545;">{risk_score}/10</div>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">RISK REDUCTION</div>
+                    <div style="font-size: 36px; font-weight: bold; color: #28a745;">-{reduction_pct}%</div>
+                    <div style="font-size: 11px; color: #666;">{safeguards_count} safeguards applied</div>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 8px; text-align: center; border: 3px solid {residual_color};">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">RESIDUAL RISK</div>
+                    <div style="font-size: 36px; font-weight: bold; color: {residual_color};">{residual_score}/10</div>
+                    <div style="font-size: 14px; font-weight: bold; color: {residual_color};">{residual_level}</div>
+                </div>
+            </div>
+            
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 15px;">
+                <strong>Required Action:</strong> {action_required}
+            </div>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>Residual risk is calculated after applying documented safeguards. If residual risk remains high, 
+                consult Autoriteit Persoonsgegevens (GDPR Article 36).</em>
+            </p>
+        </div>
+    """
+
+
+def _generate_data_subject_rights_section(scan_results):
+    """Generate Data Subject Rights section - how rights will be honored"""
+    return """
+        <div style="background: #e1f5fe; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #03a9f4;">
+            <h2 style="color: #0277bd; margin-top: 0;">👤 Data Subject Rights</h2>
+            <p style="color: #555; margin-bottom: 20px;">
+                How data subject rights under GDPR Chapter III will be honored
+            </p>
+            
+            <table style="width: 100%; border-collapse: collapse; background: white; font-size: 13px;">
+                <thead>
+                    <tr style="background: #0288d1; color: white;">
+                        <th style="padding: 12px; text-align: left;">Right</th>
+                        <th style="padding: 12px; text-align: left;">GDPR Article</th>
+                        <th style="padding: 12px; text-align: left;">How Fulfilled</th>
+                        <th style="padding: 12px; text-align: center;">Response Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Right of Access</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 15</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Data export functionality / manual request process</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">30 days</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Right to Rectification</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 16</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">User profile editing / support request</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">30 days</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Right to Erasure</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 17</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Account deletion / data removal process</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">30 days</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Right to Restrict Processing</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 18</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Processing suspension mechanism</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">30 days</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Right to Data Portability</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 20</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Machine-readable export (JSON/CSV)</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">30 days</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Right to Object</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 21</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Opt-out mechanisms / objection handling</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">Immediately</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Automated Decision-Making</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Article 22</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">Human review option / explanation provided</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">30 days</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 20px;">
+                <h4 style="margin: 0 0 10px 0; color: #0277bd;">📧 Contact for Rights Requests</h4>
+                <p style="margin: 0; font-size: 13px;">
+                    Data subjects can exercise their rights by contacting: <br/>
+                    <strong>Email:</strong> privacy@[organization].nl | 
+                    <strong>Response deadline:</strong> Within 30 days (extendable by 60 days for complex requests)
+                </p>
+            </div>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>Legal Reference: GDPR Chapter III - Rights of the Data Subject (Articles 12-23)</em>
+            </p>
+        </div>
+    """
+
+
+def _generate_review_schedule_section(scan_results):
+    """Generate Review Schedule section with specific dates"""
+    from datetime import timedelta
+    
+    today = datetime.now()
+    review_dates = {
+        'initial': today.strftime('%B %d, %Y'),
+        'quarterly_1': (today + timedelta(days=90)).strftime('%B %d, %Y'),
+        'quarterly_2': (today + timedelta(days=180)).strftime('%B %d, %Y'),
+        'quarterly_3': (today + timedelta(days=270)).strftime('%B %d, %Y'),
+        'annual': (today + timedelta(days=365)).strftime('%B %d, %Y'),
+    }
+    
+    risk_level = scan_results.get('risk_level', 'Medium').split(' - ')[0].lower()
+    review_frequency = 'Quarterly' if 'high' in risk_level else 'Bi-annually' if 'medium' in risk_level else 'Annually'
+    
+    return f"""
+        <div style="background: #fff3e0; padding: 25px; border-radius: 8px; margin: 25px 0; border: 1px solid #ff9800;">
+            <h2 style="color: #e65100; margin-top: 0;">📆 Review Schedule</h2>
+            <p style="color: #555; margin-bottom: 20px;">
+                DPIA must be reviewed regularly and when significant changes occur (GDPR Article 35(11))
+            </p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div>
+                        <strong style="color: #e65100;">Recommended Review Frequency:</strong>
+                        <span style="background: #ff9800; color: white; padding: 4px 12px; border-radius: 15px; margin-left: 10px;">{review_frequency}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #666;">Based on risk level: {risk_level.title()}</div>
+                </div>
+            </div>
+            
+            <table style="width: 100%; border-collapse: collapse; background: white; font-size: 13px;">
+                <thead>
+                    <tr style="background: #f57c00; color: white;">
+                        <th style="padding: 12px; text-align: left;">Review Type</th>
+                        <th style="padding: 12px; text-align: left;">Scheduled Date</th>
+                        <th style="padding: 12px; text-align: center;">Status</th>
+                        <th style="padding: 12px; text-align: left;">Reviewer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="background: #d4edda;">
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Initial Assessment</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{review_dates['initial']}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">✅ Complete</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">_________________</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Q1 Review</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{review_dates['quarterly_1']}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">⬜ Pending</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">_________________</td>
+                    </tr>
+                    <tr style="background: #fafafa;">
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Q2 Review</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{review_dates['quarterly_2']}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">⬜ Pending</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">_________________</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Q3 Review</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{review_dates['quarterly_3']}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">⬜ Pending</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">_________________</td>
+                    </tr>
+                    <tr style="background: #fff3cd;">
+                        <td style="padding: 12px; border: 1px solid #ddd;"><strong>Annual Review</strong></td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{review_dates['annual']}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">⬜ Pending</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">_________________</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div style="background: white; padding: 15px; border-radius: 6px; margin-top: 20px;">
+                <h4 style="margin: 0 0 10px 0; color: #e65100;">⚠️ Trigger Events Requiring Immediate Review</h4>
+                <ul style="margin: 0; padding-left: 20px; font-size: 13px;">
+                    <li>Significant changes to processing operations</li>
+                    <li>New data types or categories collected</li>
+                    <li>Changes in technology or systems</li>
+                    <li>Data breach or security incident</li>
+                    <li>Regulatory guidance updates</li>
+                    <li>Complaints from data subjects</li>
+                </ul>
+            </div>
+            
+            <p style="font-size: 11px; color: #666; margin-top: 15px;">
+                <em>Legal Reference: GDPR Article 35(11) - Review obligation when risks change</em>
+            </p>
+        </div>
+    """
+
+
 def generate_enhanced_dpia_report(scan_results):
     """Generate professional HTML report for DPIA assessment"""
     html_template = f"""
@@ -1151,6 +1644,12 @@ def generate_enhanced_dpia_report(scan_results):
         </div>
         ''' for rec in scan_results['recommendations'])}
         
+        {_generate_data_flow_diagram(scan_results)}
+        
+        {_generate_processing_description(scan_results)}
+        
+        {_generate_legal_basis_section(scan_results)}
+        
         <h2>Detailed Findings</h2>
         {''.join(f'''
         <div class="finding">
@@ -1161,6 +1660,10 @@ def generate_enhanced_dpia_report(scan_results):
         </div>
         ''' for finding in scan_results['findings'])}
         
+        {_generate_residual_risk_section(scan_results)}
+        
+        {_generate_data_subject_rights_section(scan_results)}
+        
         {_generate_ap_consultation_section(scan_results)}
         
         {_generate_netherlands_specific_section(scan_results)}
@@ -1170,6 +1673,8 @@ def generate_enhanced_dpia_report(scan_results):
         {_generate_stakeholder_signoff_section(scan_results)}
         
         {_generate_dpo_signoff_section(scan_results)}
+        
+        {_generate_review_schedule_section(scan_results)}
         
         <div class="next-steps">
             <h2>Next Steps</h2>
