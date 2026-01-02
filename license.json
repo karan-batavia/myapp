@@ -20,21 +20,21 @@
       "limit_value": 10,
       "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T14:35:32.076726"
+      "last_reset": "2026-01-01T23:17:23.098336"
     },
     {
       "limit_type": "export_reports",
       "limit_value": 100,
-      "current_usage": 78,
+      "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T14:35:32.076728"
+      "last_reset": "2026-01-01T23:17:23.101071"
     },
     {
       "limit_type": "scanner_types",
       "limit_value": 9,
       "current_usage": 0,
       "reset_period": "monthly",
-      "last_reset": "2025-12-06T14:35:32.076729"
+      "last_reset": "2026-01-01T23:17:23.102352"
     }
   ],
   "allowed_features": [
