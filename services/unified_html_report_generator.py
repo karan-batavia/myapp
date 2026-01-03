@@ -176,8 +176,10 @@ class UnifiedHTMLReportGenerator:
         return metrics
     
     def _calculate_compliance_score(self, scan_result: Dict[str, Any]) -> int:
-        """Calculate compliance score based on findings."""
+        """Calculate compliance score based on findings using weighted percentage approach."""
         findings = scan_result.get('findings', [])
+        files_scanned = scan_result.get('files_scanned', 1) or 1
+        
         if not findings:
             return 100
         
@@ -191,16 +193,26 @@ class UnifiedHTMLReportGenerator:
         unclassified = len(findings) - (critical + high + medium + low)
         medium += unclassified
         
-        # Calculate penalty - more aggressive penalties
-        # Critical: 40 points, High: 25 points, Medium: 15 points, Low: 10 points
-        penalty = (critical * 40) + (high * 25) + (medium * 15) + (low * 10)
+        # Calculate weighted finding score (normalized by files scanned)
+        # This prevents large codebases from automatically getting 0%
+        weighted_findings = (critical * 4.0) + (high * 2.5) + (medium * 1.5) + (low * 0.5)
+        findings_per_file = weighted_findings / max(files_scanned, 1)
         
-        # Base penalty: any finding means not 100% compliant
-        base_penalty = min(len(findings) * 5, 20)  # Up to 20 points for having findings
+        # Calculate score based on findings density (per file)
+        # 0 findings/file = 100%, 10+ weighted findings/file = minimum score
+        if findings_per_file <= 0:
+            score = 100
+        elif findings_per_file >= 10:
+            score = 15  # Minimum score for very dense findings
+        else:
+            # Linear interpolation: 0 -> 100%, 10 -> 15%
+            score = 100 - (findings_per_file * 8.5)
         
-        score = max(0, 100 - penalty - base_penalty)
+        # Additional penalty for critical issues (max 30 points)
+        critical_penalty = min(critical * 5, 30)
+        score = max(10, score - critical_penalty)
         
-        return score
+        return int(score)
     
     def _get_unified_css(self) -> str:
         """Get unified CSS styles for all report types."""
