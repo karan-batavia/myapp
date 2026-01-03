@@ -1936,12 +1936,47 @@ def run_code_analysis_scan():
     # Common options for both sources
     st.subheader("Analysis Options")
     
-    # File type filtering
+    # File type filtering - comprehensive list of all 40+ supported extensions
+    file_type_options = [
+        "All (40+ file types)",
+        "── Programming Languages ──",
+        "Python (.py, .pyw, .pyx)",
+        "JavaScript (.js, .jsx, .mjs)",
+        "TypeScript (.ts, .tsx)",
+        "Java (.java, .jsp)",
+        "PHP (.php, .phtml)",
+        "Ruby (.rb, .erb)",
+        "C# (.cs, .cshtml)",
+        "Go (.go)",
+        "Rust (.rs)",
+        "C/C++ (.c, .cpp, .h)",
+        "Kotlin (.kt, .kts)",
+        "Swift (.swift)",
+        "── Web & Markup ──",
+        "HTML (.html, .htm, .xhtml)",
+        "CSS (.css, .scss, .sass)",
+        "XML (.xml)",
+        "── Data & Config ──",
+        "JSON (.json)",
+        "YAML (.yaml, .yml)",
+        "Environment (.env)",
+        "Config (.ini, .conf, .properties)",
+        "── Infrastructure ──",
+        "Terraform (.tf, .tfvars)",
+        "── Scripts & Database ──",
+        "SQL (.sql)",
+        "Shell/Bash (.sh, .bash)",
+        "PowerShell (.ps1, .psm1)",
+        "── Documentation ──",
+        "Markdown (.md)",
+        "Text (.txt)"
+    ]
+    
     file_types = st.multiselect(
         "File Types to Analyze",
-        ["Python (.py)", "JavaScript (.js)", "TypeScript (.ts)", "Java (.java)", "C/C++ (.c/.cpp)", "C# (.cs)", "Go (.go)", "Ruby (.rb)", "All"],
-        default=["Python (.py)", "JavaScript (.js)"] if source_type == "GitHub Repository" else ["All"],
-        help="Select which file types to include in the analysis.",
+        file_type_options,
+        default=["All (40+ file types)"],
+        help="Select specific file types or 'All' to scan all 40+ supported extensions including HTML, XML, JSON, YAML, SQL, and more.",
         key="code_analysis_file_types"
     )
     
