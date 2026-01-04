@@ -27,17 +27,18 @@ class ScanLimitManager:
     def __init__(self):
         self.daily_limits = {
             'trial': {
-                'daily_scans': 3,  # Total 3 scans for trial period
-                'scan_types': ['code', 'document', 'website'],
+                'daily_scans': 1,  # 1 free scan per email address
+                'scan_types': ['code', 'document', 'website', 'ai_model'],
                 'features': ['basic_reports'],
                 'price': 0,
                 'is_lifetime_limit': True  # Trial has lifetime limit, not daily
             },
             'free': {
-                'daily_scans': 3,
+                'daily_scans': 1,  # 1 free scan per email address
                 'scan_types': ['code', 'document'],
                 'features': ['basic_reports'],
-                'price': 0
+                'price': 0,
+                'is_lifetime_limit': True
             },
             'premium': {
                 'daily_scans': 20,
