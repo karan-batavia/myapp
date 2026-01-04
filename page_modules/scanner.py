@@ -3600,8 +3600,8 @@ def render_code_scanner_interface(region: str, username: str):
     selected_file_types = st.multiselect(
         "File Types to Scan",
         file_type_options,
-        default=["Python (.py, .pyw, .pyx)", "JavaScript (.js, .jsx, .mjs)", "TypeScript (.ts, .tsx)"],
-        help="Select specific file types or 'All' to scan all 40+ supported extensions. Default: Python, JavaScript, TypeScript for faster scans.",
+        default=[],
+        help="Select specific file types or 'All' to scan all 40+ supported extensions.",
         key="code_scanner_file_types"
     )
     
