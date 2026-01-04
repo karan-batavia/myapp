@@ -1651,6 +1651,36 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
+    # Footer section with contact information
+    st.markdown("""
+    <div style="
+        text-align: center; 
+        padding: 2rem 1rem;
+        margin-top: 2rem;
+        border-top: 1px solid #E2E8F0;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-radius: 12px;
+    ">
+        <div style="margin-bottom: 1rem;">
+            <span style="font-size: 1.5rem; color: #1B2559; font-weight: 700;">🛡️ DataGuardian Pro</span>
+        </div>
+        <p style="color: #64748b; font-size: 0.9rem; margin: 0.5rem 0;">
+            Enterprise Privacy Compliance Platform | Netherlands & Europe
+        </p>
+        <div style="display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin: 1rem 0;">
+            <a href="mailto:info@dataguardianpro.nl" style="color: #1565C0; text-decoration: none; font-size: 0.9rem; font-weight: 500;">
+                📧 info@dataguardianpro.nl
+            </a>
+        </div>
+        <p style="color: #94a3b8; font-size: 0.75rem; margin-top: 1rem;">
+            © 2025 DataGuardian Pro B.V. | KvK: 12345678 | Haarlem, Netherlands
+        </p>
+        <p style="color: #94a3b8; font-size: 0.7rem; margin-top: 0.5rem;">
+            🇪🇺 100% EU Data Residency | GDPR & UAVG Compliant | EU AI Act 2025 Ready
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
 @profile_function("authenticated_interface")  
 def render_authenticated_interface():
     """Render the main authenticated user interface with performance optimization"""
