@@ -1,9 +1,0 @@
-PATENT ABSTRACT - AI Model Scanner System
-
-An automated system for AI model risk assessment and EU AI Act 2025 compliance verification. The invention provides multi-framework analysis (PyTorch, TensorFlow, ONNX, scikit-learn) with mathematical bias detection using demographic parity, equalized odds, calibration scoring, and individual fairness algorithms. The system performs automated EU AI Act risk classification for prohibited practices (Article 5), high-risk systems (Articles 19-24), and general purpose AI models (Articles 51-55). Netherlands specialization includes BSN detection with checksum validation and UAVG compliance assessment. Real-time monitoring provides continuous compliance verification with penalty calculations up to €35M and remediation recommendations. Performance specifications include <30 second analysis for standard models, 95%+ bias detection accuracy, and <3% false positive rates.
-
-Keywords: AI compliance, EU AI Act, bias detection, Netherlands UAVG, BSN validation, automated risk assessment, machine learning governance
-
-Patent Classification: G06N 20/00 (Machine Learning), G06F 21/62 (Data Privacy Protection)
-
-Commercial Application: DataGuardian Pro enterprise compliance platform targeting €25K MRR with 83-90% cost savings versus existing solutions.
