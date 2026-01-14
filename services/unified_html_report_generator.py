@@ -166,14 +166,35 @@ class UnifiedHTMLReportGenerator:
                 scan_result.get('low_risk_count') or
                 len([f for f in findings if str(f.get('severity', '')).lower() == 'low' or str(f.get('risk_level', '')).lower() == 'low'])
             ),
-            'compliance_score': (
-                summary.get('overall_compliance_score') or 
-                scan_result.get('compliance_score') or 
-                self._calculate_compliance_score(scan_result)
-            )
+            'compliance_score': self._get_compliance_score(scan_result, summary, findings)
         }
         
         return metrics
+    
+    def _get_compliance_score(self, scan_result: Dict[str, Any], summary: Dict[str, Any], findings: list) -> int:
+        """Get compliance score, recalculating if there are findings but score is 100%."""
+        # Get existing score
+        existing_score = (
+            summary.get('overall_compliance_score') or 
+            scan_result.get('compliance_score')
+        )
+        
+        # If no existing score, calculate
+        if existing_score is None:
+            return self._calculate_compliance_score(scan_result)
+        
+        # If score is 100% but there are HIGH/CRITICAL findings, recalculate
+        if existing_score >= 100 and findings:
+            # Check for high/critical findings
+            has_high_or_critical = any(
+                str(f.get('severity', '')).lower() in ['high', 'critical'] or
+                str(f.get('risk_level', '')).lower() in ['high', 'critical']
+                for f in findings
+            )
+            if has_high_or_critical:
+                return self._calculate_compliance_score(scan_result)
+        
+        return int(existing_score)
     
     def _calculate_compliance_score(self, scan_result: Dict[str, Any]) -> int:
         """Calculate compliance score based on findings using weighted percentage approach."""
