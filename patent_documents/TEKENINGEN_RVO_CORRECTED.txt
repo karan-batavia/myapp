@@ -1,9 +1,4 @@
-                                        Bladzijde 12
-
-
                                       FIGUUR 1
-
-                    SYSTEEMARCHITECTUUR OVERZICHT
 
 
      +-----------------------------------------------------------------------+
@@ -24,8 +19,6 @@
 
 
                                       FIGUUR 2
-
-                    CHIP-AGNOSTISCHE PLUGIN-ARCHITECTUUR
 
 
      +-----------------------------------------------------------------------+
@@ -51,12 +44,9 @@
      +-----------------------------------------------------------------------+
 
 
-                                        Bladzijde 13
 
 
                                       FIGUUR 3
-
-                    GEUNIFICEERDE HALFGELEIDER DIGITALE TWEELING
 
 
      +-----------------------------------------------------------------------+
@@ -90,8 +80,6 @@
 
                                       FIGUUR 4
 
-                    MULTI-DOMEIN ANALYSE-ENGINE
-
 
      +-----------------------------------------------------------------------+
      |                     MULTI-DOMEIN ANALYSE-ENGINE                       |
@@ -121,12 +109,9 @@
      +-----------------------------------------------------------------------+
 
 
-                                        Bladzijde 14
 
 
                                       FIGUUR 5
-
-                    OTA RISICOPREDICTIE MODULE
 
 
      +-----------------------------------------------------------------------+
@@ -172,69 +157,46 @@
      +-----------------------------------------------------------------------+
 
 
-                                        Bladzijde 15
 
 
                                       FIGUUR 6
 
-                    MATHEMATISCHE FORMULES
+
+     +-----------------------------------------------------------------------+
+     |                     MATHEMATISCHE FORMULES                            |
+     +-----------------------------------------------------------------------+
+     | Nr  | Naam                        | Formule                           |
+     +-----+-----------------------------+-----------------------------------+
+     | 1   | Risicoscore Berekening      | R = w_H*H + w_A*A + w_T*T +       |
+     |     |                             |     w_S*S + w_P*P + w_E*E         |
+     +-----+-----------------------------+-----------------------------------+
+     | 2   | Gewichtsvoorwaarde          | som(w_H,w_A,w_T,w_S,w_P,w_E) = 1.0|
+     +-----+-----------------------------+-----------------------------------+
+     | 3   | ML Gewichtsleren            | w_opt = argmin_w[L(uit,voorsp(w))]|
+     +-----+-----------------------------+-----------------------------------+
+     | 4   | Single Point Fault Metric   | SPFM = 1 - (lambda_SPF/lambda_tot)|
+     +-----+-----------------------------+-----------------------------------+
+     | 5   | Latent Fault Metric         | LFM = 1 - (lambda_LF/lambda_tot)  |
+     +-----+-----------------------------+-----------------------------------+
+     | 6   | PMHF                        | PMHF = som(lambda_i*(1-DC_i)*t_i) |
+     +-----+-----------------------------+-----------------------------------+
+     | 7   | Poisson Opbrengstmodel      | Y = exp(-D * A)                   |
+     +-----+-----------------------------+-----------------------------------+
+     | 8   | Negatief Binomiaal Model    | Y = (1 + D*A/alpha)^(-alpha)      |
+     +-----+-----------------------------+-----------------------------------+
+     | 9   | GMM Clustering              | P(x) = som_k[pi_k*N(x|mu_k,Sig_k)]|
+     +-----+-----------------------------+-----------------------------------+
+     | 10  | Toestandsevolutie           | S(t+1) = f(S(t),telemetrie(t),    |
+     |     |                             |          simulatie(t))            |
+     +-----+-----------------------------+-----------------------------------+
+     | 11  | Bidirectionele Update       | delta = alpha*(waargenomen-voorsp)|
+     |     |                             | tweeling_toestand += delta        |
+     +-----------------------------------------------------------------------+
 
 
-     OTA Risicoscore Algoritme:
-
-     Formule 1 - Risicoscore Berekening:
-     R = w_H * H + w_A * A + w_T * T + w_S * S + w_P * P + w_E * E
-
-     Waarbij gewichten optellen tot 1.0:
-     som(w_H, w_A, w_T, w_S, w_P, w_E) = 1.0
-
-     Formule 2 - ML Gewichtsleren:
-     w_optimaal = argmin_w [ L(uitkomsten, voorspellingen(w)) ]
-     Onder voorwaarde: som(w) = 1.0, w_i >= 0
-
-
-     Veiligheidsmetrieken (ISO 26262):
-
-     Formule 3 - Single Point Fault Metric:
-     SPFM = 1 - (lambda_SPF / lambda_totaal)
-
-     Formule 4 - Latent Fault Metric:
-     LFM = 1 - (lambda_LF / lambda_totaal)
-
-     Formule 5 - PMHF (Probabilistic Metric for Hardware Failures):
-     PMHF = som(lambda_i * (1 - DC_i) * blootstellingstijd_i)
-
-
-     Opbrengstvoorspellingsmodellen:
-
-     Formule 6 - Poisson Opbrengstmodel:
-     Y = exp(-D * A)
-     Waarbij D = defectdichtheid, A = die-oppervlak
-
-     Formule 7 - Negatief Binomiaal Model:
-     Y = (1 + D*A/alpha)^(-alpha)
-     Waarbij alpha = clusteringsparameter
-
-     Formule 8 - GMM Clustering:
-     P(x) = som_k [ pi_k * N(x | mu_k, Sigma_k) ]
-
-
-     Digitale Tweeling Synchronisatie:
-
-     Formule 9 - Toestandsevolutie:
-     S(t+1) = f(S(t), telemetrie(t), simulatie(t))
-
-     Formule 10 - Bidirectionele Update:
-     delta_tweeling = alpha * (waargenomen - voorspeld)
-     tweeling_toestand += delta_tweeling
-
-
-                                        Bladzijde 16
 
 
                                       FIGUUR 7
-
-                    CI/CD PIJPLIJN INTEGRATIE
 
 
      PRE-SILICIUM        POST-SILICIUM       PRODUCTIE        VELD
@@ -266,9 +228,27 @@
 
                                       FIGUUR 8
 
-                    SYSTEEMSTROOM DIAGRAM
 
-
-     INVOER -> Plugin-Architectuur -> LLM-Interpretatie -> Workflow-Generatie
-     -> Digitale Tweeling Update -> Multi-Domein Analyse -> Cross-Correlatie
-     -> OTA Risicobeoordeling -> CI/CD Poort Evaluatie -> Compliance Rapport
+     +-----------------------------------------------------------------------+
+     |                     SYSTEEMSTROOM                                     |
+     +-----------------------------------------------------------------------+
+     | Stap | Component                  | Beschrijving                      |
+     +------+----------------------------+-----------------------------------+
+     | 1    | Plugin-Architectuur        | Invoer van apparaat metadata      |
+     +------+----------------------------+-----------------------------------+
+     | 2    | LLM-Interpretatie          | Semantische verwerking metadata   |
+     +------+----------------------------+-----------------------------------+
+     | 3    | Workflow-Generatie         | Automatische testsequentie creatie|
+     +------+----------------------------+-----------------------------------+
+     | 4    | Digitale Tweeling Update   | Samenvoegen EDA/productie/veld    |
+     +------+----------------------------+-----------------------------------+
+     | 5    | Multi-Domein Analyse       | Veiligheid/opbrengst/prestatie    |
+     +------+----------------------------+-----------------------------------+
+     | 6    | Cross-Correlatie           | Domeinoverschrijdende analyse     |
+     +------+----------------------------+-----------------------------------+
+     | 7    | OTA Risicobeoordeling      | Gekwantificeerde risicoscore      |
+     +------+----------------------------+-----------------------------------+
+     | 8    | CI/CD Poort Evaluatie      | Kwaliteitspoort beslissing        |
+     +------+----------------------------+-----------------------------------+
+     | 9    | Compliance Rapport         | Certificering en audittrail       |
+     +-----------------------------------------------------------------------+
