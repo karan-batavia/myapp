@@ -150,21 +150,21 @@ class UnifiedHTMLReportGenerator:
                 scan_result.get('text_extracted') or 0
             ),
             'total_findings': len(findings),
-            'critical_count': len([f for f in findings if f.get('severity') == 'Critical' or f.get('risk_level') == 'Critical']),
+            'critical_count': len([f for f in findings if str(f.get('severity', '')).lower() == 'critical' or str(f.get('risk_level', '')).lower() == 'critical']),
             'high_risk_count': (
                 summary.get('high_risk_count') or 
                 scan_result.get('high_risk_count') or
-                len([f for f in findings if f.get('severity') == 'High' or f.get('risk_level') == 'High'])
+                len([f for f in findings if str(f.get('severity', '')).lower() == 'high' or str(f.get('risk_level', '')).lower() == 'high'])
             ),
             'medium_risk_count': (
                 summary.get('medium_risk_count') or 
                 scan_result.get('medium_risk_count') or
-                len([f for f in findings if f.get('severity') == 'Medium' or f.get('risk_level') == 'Medium'])
+                len([f for f in findings if str(f.get('severity', '')).lower() == 'medium' or str(f.get('risk_level', '')).lower() == 'medium'])
             ),
             'low_risk_count': (
                 summary.get('low_risk_count') or 
                 scan_result.get('low_risk_count') or
-                len([f for f in findings if f.get('severity') == 'Low' or f.get('risk_level') == 'Low'])
+                len([f for f in findings if str(f.get('severity', '')).lower() == 'low' or str(f.get('risk_level', '')).lower() == 'low'])
             ),
             'compliance_score': (
                 summary.get('overall_compliance_score') or 
@@ -183,11 +183,11 @@ class UnifiedHTMLReportGenerator:
         if not findings:
             return 100
         
-        # Count severity levels - also check risk_level as fallback
-        critical = len([f for f in findings if f.get('severity') == 'Critical' or f.get('risk_level') == 'Critical'])
-        high = len([f for f in findings if f.get('severity') == 'High' or f.get('risk_level') == 'High'])
-        medium = len([f for f in findings if f.get('severity') == 'Medium' or f.get('risk_level') == 'Medium'])
-        low = len([f for f in findings if f.get('severity') == 'Low' or f.get('risk_level') == 'Low'])
+        # Count severity levels - also check risk_level as fallback (case-insensitive)
+        critical = len([f for f in findings if str(f.get('severity', '')).lower() == 'critical' or str(f.get('risk_level', '')).lower() == 'critical'])
+        high = len([f for f in findings if str(f.get('severity', '')).lower() == 'high' or str(f.get('risk_level', '')).lower() == 'high'])
+        medium = len([f for f in findings if str(f.get('severity', '')).lower() == 'medium' or str(f.get('risk_level', '')).lower() == 'medium'])
+        low = len([f for f in findings if str(f.get('severity', '')).lower() == 'low' or str(f.get('risk_level', '')).lower() == 'low'])
         
         # Count unclassified findings as Medium
         unclassified = len(findings) - (critical + high + medium + low)
