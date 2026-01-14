@@ -1,0 +1,416 @@
+================================================================================
+HETZNER SERVER SETUP GUIDE - DataGuardian Pro
+================================================================================
+Server: 45.81.35.202 / dataguardianpro.nl
+Target: Production deployment with HTTPS, firewall, and security
+
+
+================================================================================
+STEP 1: INITIAL SERVER ACCESS
+================================================================================
+
+1. SSH into your server:
+   ssh root@45.81.35.202
+
+2. Update the system:
+   apt update && apt upgrade -y
+
+3. Set timezone to Amsterdam:
+   timedatectl set-timezone Europe/Amsterdam
+
+
+================================================================================
+STEP 2: CREATE NON-ROOT USER (Security Best Practice)
+================================================================================
+
+1. Create a new user:
+   adduser dataguardian
+
+2. Add to sudo group:
+   usermod -aG sudo dataguardian
+
+3. Switch to new user:
+   su - dataguardian
+
+
+================================================================================
+STEP 3: INSTALL REQUIRED SOFTWARE
+================================================================================
+
+1. Install Python 3.11:
+   sudo apt install python3.11 python3.11-venv python3-pip -y
+
+2. Install Redis:
+   sudo apt install redis-server -y
+
+3. Install PostgreSQL:
+   sudo apt install postgresql postgresql-contrib -y
+
+4. Install Nginx:
+   sudo apt install nginx -y
+
+5. Install Certbot (for SSL):
+   sudo apt install certbot python3-certbot-nginx -y
+
+6. Install system dependencies:
+   sudo apt install tesseract-ocr tesseract-ocr-nld libmagic1 -y
+
+
+================================================================================
+STEP 4: CONFIGURE FIREWALL (UFW)
+================================================================================
+
+1. Check UFW status:
+   sudo ufw status
+
+2. Set default policies:
+   sudo ufw default deny incoming
+   sudo ufw default allow outgoing
+
+3. Allow SSH (important - do this first!):
+   sudo ufw allow 22/tcp
+
+4. Allow HTTP and HTTPS:
+   sudo ufw allow 80/tcp
+   sudo ufw allow 443/tcp
+
+5. Allow Stripe webhook IPs only (optional, more secure):
+   # Stripe webhook IPs - check stripe.com/docs for current list
+   sudo ufw allow from 3.18.12.63 to any port 5001
+   sudo ufw allow from 3.130.192.231 to any port 5001
+   sudo ufw allow from 13.235.14.237 to any port 5001
+   sudo ufw allow from 13.235.122.149 to any port 5001
+   sudo ufw allow from 18.211.135.69 to any port 5001
+   sudo ufw allow from 35.154.171.200 to any port 5001
+   sudo ufw allow from 52.15.183.38 to any port 5001
+   sudo ufw allow from 54.88.130.119 to any port 5001
+   sudo ufw allow from 54.88.130.237 to any port 5001
+   sudo ufw allow from 54.187.174.169 to any port 5001
+   sudo ufw allow from 54.187.205.235 to any port 5001
+   sudo ufw allow from 54.187.216.72 to any port 5001
+
+6. Enable firewall:
+   sudo ufw enable
+
+7. Verify rules:
+   sudo ufw status verbose
+
+
+================================================================================
+STEP 5: CONFIGURE POSTGRESQL
+================================================================================
+
+1. Switch to postgres user:
+   sudo -u postgres psql
+
+2. Create database and user:
+   CREATE USER dataguardian WITH PASSWORD 'your_secure_password_here';
+   CREATE DATABASE dataguardian_prod OWNER dataguardian;
+   GRANT ALL PRIVILEGES ON DATABASE dataguardian_prod TO dataguardian;
+   \q
+
+3. Configure PostgreSQL to only listen locally:
+   sudo nano /etc/postgresql/16/main/postgresql.conf
+   
+   Find and set:
+   listen_addresses = 'localhost'
+
+4. Restart PostgreSQL:
+   sudo systemctl restart postgresql
+
+
+================================================================================
+STEP 6: CONFIGURE REDIS
+================================================================================
+
+1. Edit Redis config:
+   sudo nano /etc/redis/redis.conf
+
+2. Set these options:
+   bind 127.0.0.1
+   requirepass your_redis_password_here
+   maxmemory 256mb
+   maxmemory-policy allkeys-lru
+
+3. Restart Redis:
+   sudo systemctl restart redis-server
+
+
+================================================================================
+STEP 7: DEPLOY APPLICATION
+================================================================================
+
+1. Create app directory:
+   sudo mkdir -p /var/www/dataguardian
+   sudo chown dataguardian:dataguardian /var/www/dataguardian
+
+2. Clone or upload your code:
+   cd /var/www/dataguardian
+   # Upload your files via SFTP or git clone
+
+3. Create virtual environment:
+   python3.11 -m venv venv
+   source venv/bin/activate
+
+4. Install dependencies:
+   pip install -r requirements.txt
+
+5. Create environment file:
+   nano .env
+   
+   Add:
+   DATABASE_URL=postgresql://dataguardian:your_password@localhost/dataguardian_prod
+   REDIS_URL=redis://:your_redis_password@localhost:6379
+   JWT_SECRET=your_jwt_secret_here
+   DATAGUARDIAN_MASTER_KEY=your_master_key_here
+   OPENAI_API_KEY=your_openai_key_here
+   STRIPE_SECRET_KEY=your_stripe_live_key_here
+   STRIPE_WEBHOOK_SECRET=your_webhook_secret_here
+
+
+================================================================================
+STEP 8: CONFIGURE NGINX REVERSE PROXY
+================================================================================
+
+1. Create Nginx config:
+   sudo nano /etc/nginx/sites-available/dataguardian
+
+2. Add this configuration:
+
+server {
+    listen 80;
+    server_name dataguardianpro.nl www.dataguardianpro.nl;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+        proxy_buffering off;
+    }
+
+    location /webhook/stripe {
+        proxy_pass http://127.0.0.1:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+3. Enable the site:
+   sudo ln -s /etc/nginx/sites-available/dataguardian /etc/nginx/sites-enabled/
+   sudo rm /etc/nginx/sites-enabled/default
+
+4. Test config:
+   sudo nginx -t
+
+5. Restart Nginx:
+   sudo systemctl restart nginx
+
+
+================================================================================
+STEP 9: INSTALL SSL CERTIFICATE (HTTPS)
+================================================================================
+
+1. Get SSL certificate from Let's Encrypt:
+   sudo certbot --nginx -d dataguardianpro.nl -d www.dataguardianpro.nl
+
+2. Follow the prompts:
+   - Enter your email
+   - Agree to terms
+   - Choose to redirect HTTP to HTTPS (recommended)
+
+3. Test auto-renewal:
+   sudo certbot renew --dry-run
+
+
+================================================================================
+STEP 10: CREATE SYSTEMD SERVICES
+================================================================================
+
+1. Create Streamlit service:
+   sudo nano /etc/systemd/system/dataguardian.service
+
+   Add:
+   [Unit]
+   Description=DataGuardian Pro Streamlit App
+   After=network.target postgresql.service redis.service
+
+   [Service]
+   Type=simple
+   User=dataguardian
+   WorkingDirectory=/var/www/dataguardian
+   Environment="PATH=/var/www/dataguardian/venv/bin"
+   EnvironmentFile=/var/www/dataguardian/.env
+   ExecStart=/var/www/dataguardian/venv/bin/streamlit run app.py --server.port 5000 --server.address 127.0.0.1 --server.headless true
+   Restart=always
+   RestartSec=10
+
+   [Install]
+   WantedBy=multi-user.target
+
+2. Create Webhook service:
+   sudo nano /etc/systemd/system/dataguardian-webhook.service
+
+   Add:
+   [Unit]
+   Description=DataGuardian Pro Webhook Server
+   After=network.target
+
+   [Service]
+   Type=simple
+   User=dataguardian
+   WorkingDirectory=/var/www/dataguardian
+   Environment="PATH=/var/www/dataguardian/venv/bin"
+   EnvironmentFile=/var/www/dataguardian/.env
+   ExecStart=/var/www/dataguardian/venv/bin/python services/webhook_server.py
+   Restart=always
+   RestartSec=10
+
+   [Install]
+   WantedBy=multi-user.target
+
+3. Enable and start services:
+   sudo systemctl daemon-reload
+   sudo systemctl enable dataguardian dataguardian-webhook
+   sudo systemctl start dataguardian dataguardian-webhook
+
+4. Check status:
+   sudo systemctl status dataguardian
+   sudo systemctl status dataguardian-webhook
+
+
+================================================================================
+STEP 11: CONFIGURE DNS
+================================================================================
+
+In your domain registrar (for dataguardianpro.nl):
+
+1. Create A record:
+   Type: A
+   Name: @ (or blank)
+   Value: 45.81.35.202
+   TTL: 300
+
+2. Create www record:
+   Type: A
+   Name: www
+   Value: 45.81.35.202
+   TTL: 300
+
+3. Wait for DNS propagation (5-30 minutes)
+
+
+================================================================================
+STEP 12: FINAL SECURITY HARDENING
+================================================================================
+
+1. Disable root SSH login:
+   sudo nano /etc/ssh/sshd_config
+   
+   Set:
+   PermitRootLogin no
+   PasswordAuthentication no  (only if you have SSH keys set up!)
+
+   sudo systemctl restart sshd
+
+2. Install fail2ban (blocks brute force):
+   sudo apt install fail2ban -y
+   sudo systemctl enable fail2ban
+   sudo systemctl start fail2ban
+
+3. Set up automatic security updates:
+   sudo apt install unattended-upgrades -y
+   sudo dpkg-reconfigure -plow unattended-upgrades
+
+
+================================================================================
+STEP 13: BACKUP CONFIGURATION
+================================================================================
+
+1. Create backup script:
+   sudo nano /home/dataguardian/backup.sh
+
+   Add:
+   #!/bin/bash
+   DATE=$(date +%Y%m%d)
+   BACKUP_DIR=/home/dataguardian/backups
+   mkdir -p $BACKUP_DIR
+   
+   # Database backup
+   pg_dump dataguardian_prod > $BACKUP_DIR/db_$DATE.sql
+   
+   # Compress
+   gzip $BACKUP_DIR/db_$DATE.sql
+   
+   # Keep only last 7 days
+   find $BACKUP_DIR -name "*.gz" -mtime +7 -delete
+
+2. Make executable and schedule:
+   chmod +x /home/dataguardian/backup.sh
+   crontab -e
+   
+   Add:
+   0 3 * * * /home/dataguardian/backup.sh
+
+
+================================================================================
+VERIFICATION CHECKLIST
+================================================================================
+
+[ ] Server accessible via SSH
+[ ] Firewall enabled with correct rules
+[ ] PostgreSQL running and secured
+[ ] Redis running and secured
+[ ] Application running on port 5000
+[ ] Webhook server running on port 5001
+[ ] Nginx proxying correctly
+[ ] SSL certificate installed (HTTPS working)
+[ ] DNS pointing to server
+[ ] Services auto-start on reboot
+[ ] Backups configured
+[ ] fail2ban protecting SSH
+
+Test URLs:
+- https://dataguardianpro.nl (main app)
+- https://dataguardianpro.nl/webhook/stripe (webhook endpoint)
+
+
+================================================================================
+USEFUL COMMANDS
+================================================================================
+
+View app logs:
+  sudo journalctl -u dataguardian -f
+
+View webhook logs:
+  sudo journalctl -u dataguardian-webhook -f
+
+Restart app:
+  sudo systemctl restart dataguardian
+
+Check Nginx errors:
+  sudo tail -f /var/log/nginx/error.log
+
+Check firewall:
+  sudo ufw status verbose
+
+Check SSL expiry:
+  sudo certbot certificates
+
+
+================================================================================
+SUPPORT
+================================================================================
+
+Hetzner Support: https://www.hetzner.com/support
+Let's Encrypt: https://letsencrypt.org/docs/
+Nginx Docs: https://nginx.org/en/docs/
+
+================================================================================
