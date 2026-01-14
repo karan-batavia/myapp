@@ -1,0 +1,210 @@
+================================================================================
+STRIPE DASHBOARD SETUP GUIDE - DataGuardian Pro
+================================================================================
+
+STEP 1: LOG INTO STRIPE
+--------------------------------------------------------------------------------
+1. Go to https://dashboard.stripe.com
+2. Sign in with your account
+3. Make sure you're in TEST MODE first (toggle in top-right corner)
+
+
+STEP 2: GO TO PRODUCT CATALOG
+--------------------------------------------------------------------------------
+1. In the left sidebar, click "More"
+2. Click "Product catalog"
+3. You'll see the products page
+
+
+STEP 3: CREATE PRODUCT - STARTER TIER
+--------------------------------------------------------------------------------
+1. Click the blue "Add product" button
+
+2. Fill in Product Details:
+   - Name: DataGuardian Pro - Starter
+   - Description: Essential GDPR & privacy scanning for small businesses. 
+                  Includes Code Scanner, Document Scanner, and Website Scanner.
+
+3. Add Monthly Price:
+   - Click "Add a price"
+   - Price: 500
+   - Currency: EUR
+   - Billing period: Monthly
+   - Click "Add price"
+
+4. Add Yearly Price (optional - 2 months free):
+   - Click "Add another price"
+   - Price: 5000
+   - Currency: EUR
+   - Billing period: Yearly
+   - Click "Add price"
+
+5. Click "Save product"
+
+
+STEP 4: CREATE PRODUCT - PROFESSIONAL TIER
+--------------------------------------------------------------------------------
+1. Click "Add product" again
+
+2. Fill in Product Details:
+   - Name: DataGuardian Pro - Professional
+   - Description: Advanced compliance with AI-powered risk analysis. 
+                  Includes all Starter features plus Database Scanner, 
+                  Image Scanner (OCR), and DPIA Assessment.
+
+3. Add Monthly Price:
+   - Price: 1000
+   - Currency: EUR
+   - Billing period: Monthly
+
+4. Add Yearly Price:
+   - Price: 10000
+   - Currency: EUR
+   - Billing period: Yearly
+
+5. Click "Save product"
+
+
+STEP 5: CREATE PRODUCT - ENTERPRISE TIER
+--------------------------------------------------------------------------------
+1. Click "Add product" again
+
+2. Fill in Product Details:
+   - Name: DataGuardian Pro - Enterprise
+   - Description: Complete privacy compliance suite with all 12 scanners. 
+                  Includes Deepfake Detection, EU AI Act Calculator, 
+                  Repository Scanner, and dedicated support.
+
+3. Add Monthly Price:
+   - Price: 2000
+   - Currency: EUR
+   - Billing period: Monthly
+
+4. Add Yearly Price:
+   - Price: 20000
+   - Currency: EUR
+   - Billing period: Yearly
+
+5. Click "Save product"
+
+
+STEP 6: ENABLE IDEAL PAYMENT METHOD (FOR NETHERLANDS)
+--------------------------------------------------------------------------------
+1. Click "Settings" in the bottom-left corner
+2. Click "Payment methods" under "Payments"
+3. Find "iDEAL" in the list
+4. Click "Turn on" next to iDEAL
+5. Also enable "SEPA Direct Debit" for recurring subscriptions
+6. Click "Save"
+
+
+STEP 7: ENABLE BANCONTACT (FOR BELGIUM - OPTIONAL)
+--------------------------------------------------------------------------------
+1. Still in Payment methods
+2. Find "Bancontact" 
+3. Click "Turn on"
+4. Click "Save"
+
+
+STEP 8: COPY YOUR PRICE IDS
+--------------------------------------------------------------------------------
+1. Go back to "Product catalog"
+2. Click on "DataGuardian Pro - Starter"
+3. In the Pricing section, you'll see your prices listed
+4. Each price has an ID that looks like: price_1ABC123DEF456...
+5. Copy these IDs - you'll need them for your app
+
+Write down all your Price IDs:
+
+STARTER:
+  - Monthly Price ID: price_________________
+  - Yearly Price ID:  price_________________
+
+PROFESSIONAL:
+  - Monthly Price ID: price_________________
+  - Yearly Price ID:  price_________________
+
+ENTERPRISE:
+  - Monthly Price ID: price_________________
+  - Yearly Price ID:  price_________________
+
+
+STEP 9: TEST YOUR SETUP
+--------------------------------------------------------------------------------
+1. Make sure "Test mode" is ON (toggle in top-right)
+2. Go to "Payment links" in the sidebar
+3. Click "New payment link"
+4. Select one of your products
+5. Click "Create link"
+6. Open the link in a new tab
+7. Use test card: 4242 4242 4242 4242
+8. Any future expiry date (e.g., 12/28)
+9. Any CVC (e.g., 123)
+10. Complete the test payment
+
+
+STEP 10: SWITCH TO LIVE MODE
+--------------------------------------------------------------------------------
+ONLY do this when ready for real payments!
+
+1. Toggle "Test mode" OFF (top-right corner)
+2. Go to "Product catalog"
+3. Click on each product
+4. Click "Copy to live mode" button
+5. Repeat for all 3 products
+6. Get your LIVE API keys from Settings > Developers > API keys
+7. Update your app with live keys
+
+
+STEP 11: UPDATE YOUR APP
+--------------------------------------------------------------------------------
+Add the Price IDs to your app configuration.
+
+In your Stripe settings or environment variables, add:
+
+STRIPE_PRICE_STARTER_MONTHLY=price_xxx
+STRIPE_PRICE_STARTER_YEARLY=price_xxx
+STRIPE_PRICE_PROFESSIONAL_MONTHLY=price_xxx
+STRIPE_PRICE_PROFESSIONAL_YEARLY=price_xxx
+STRIPE_PRICE_ENTERPRISE_MONTHLY=price_xxx
+STRIPE_PRICE_ENTERPRISE_YEARLY=price_xxx
+
+
+================================================================================
+IMPORTANT NOTES
+================================================================================
+
+1. TEST FIRST: Always test in test mode before going live
+
+2. PRICE IDS CANNOT BE CHANGED: Once created, price amounts cannot be edited.
+   To change a price, create a new one and archive the old one.
+
+3. DUTCH COMPLIANCE: With iDEAL enabled, Dutch customers can pay directly
+   from their bank account - most popular payment method in Netherlands.
+
+4. SEPA FOR SUBSCRIPTIONS: SEPA Direct Debit allows automatic monthly
+   charges for subscriptions - required for recurring payments in EU.
+
+5. WEBHOOK SETUP: Your webhook server is already running on port 5001.
+   Add this webhook URL in Stripe: Settings > Webhooks > Add endpoint
+   URL: https://your-domain.com/webhook/stripe
+   Events to listen for:
+   - checkout.session.completed
+   - customer.subscription.created
+   - customer.subscription.updated
+   - customer.subscription.deleted
+   - invoice.paid
+   - invoice.payment_failed
+
+
+================================================================================
+SUPPORT
+================================================================================
+
+Stripe Documentation: https://docs.stripe.com
+iDEAL Setup: https://stripe.com/docs/payments/ideal
+SEPA Setup: https://stripe.com/docs/payments/sepa-debit
+
+For questions about DataGuardian Pro integration, contact support.
+
+================================================================================
