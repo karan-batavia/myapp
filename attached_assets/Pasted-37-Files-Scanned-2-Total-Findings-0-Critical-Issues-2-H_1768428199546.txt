@@ -1,0 +1,69 @@
+37
+Files Scanned
+2
+Total Findings
+0
+Critical Issues
+2
+High Risk Issues
+Compliance Score: 98%
+🎯 Compliance Score Analysis
+100.0%
+📊 Current Compliance Score
+🟢 Excellent
+🚨 Risk Level
+Technology: 81.2%
+🏢 Industry Benchmark
+📊 Compliance Score Analysis
+📊 Current Status: Your compliance score of 100.0% indicates excellent compliance posture.
+🏢 Industry Comparison: Above average compared to industry benchmarks.
+📈 Recommendations: Continue current practices.
+💡 Pro Tip: Advanced AI-powered compliance forecasting is available with full system dependencies installed.
+
+🔍 Detailed Findings
+Security Control Finding
+high
+Description: Hard-coded credentials or secrets
+Context: Hard-coded credentials or secrets
+Location: CLASSIFICATION.md:579
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: high - Review within 7 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements (SOC2 & NIS2)
+🔒 SOC2 TSC Criteria:
+CC6.1
+CC6.6
+CC6.7
+🇪🇺 NIS2 Articles:
+NIS2-21.2g
+NIS2-21.2h
+NIS2-21.2i
+💡 Actionable Recommendations
+Review and Remediate high
+Description: Address: Hard-coded credentials or secrets
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
+Security Control Finding
+high
+Description: Hard-coded credentials or secrets
+Context: Hard-coded credentials or secrets
+Location: Disaster_Recovery_Plan.md:585
+Data Classification: System Configuration
+Business Impact: Potential security or compliance impact requiring investigation
+Priority: high - Review within 7 days
+Estimated Effort: 1-4 hours - Investigation and remediation
+⚖️ Compliance Requirements (SOC2 & NIS2)
+🔒 SOC2 TSC Criteria:
+CC6.1
+CC6.6
+CC6.7
+🇪🇺 NIS2 Articles:
+NIS2-21.2g
+NIS2-21.2h
+NIS2-21.2i
+💡 Actionable Recommendations
+Review and Remediate high
+Description: Address: Hard-coded credentials or secrets
+Implementation: Investigate the finding and implement appropriate remediation
+Effort: 1-4 hours | Verification: Confirm remediation complete
