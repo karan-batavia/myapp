@@ -108,6 +108,21 @@ def show_license_expiry_banner():
         logger.debug(f"License expiry banner unavailable: {e}")
 
 
+def hide_sidebar_navigation():
+    """Hide the default Streamlit page navigation in sidebar"""
+    hide_nav_css = """
+    <style>
+        [data-testid="stSidebarNav"] {
+            display: none !important;
+        }
+        section[data-testid="stSidebar"] > div:first-child {
+            padding-top: 0 !important;
+        }
+    </style>
+    """
+    st.markdown(hide_nav_css, unsafe_allow_html=True)
+
+
 def require_authentication():
     """
     Require authentication for a page.
@@ -118,6 +133,7 @@ def require_authentication():
     init_i18n()
     
     if not check_authentication():
+        hide_sidebar_navigation()
         st.warning("Please log in to access this page.")
         st.info("Use the main application at the home page to authenticate.")
         

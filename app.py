@@ -707,6 +707,17 @@ def _(key, default=None):
 def main():
     """Main application entry point"""
     
+    # FIRST: Hide sidebar navigation immediately to prevent flash
+    # This must be the very first thing rendered to avoid showing menu before auth
+    if not st.session_state.get('authenticated', False):
+        st.markdown("""
+        <style>
+            [data-testid="stSidebarNav"] { display: none !important; }
+            nav[aria-label="Main menu"] { display: none !important; }
+            ul[data-testid="stSidebarNavItems"] { display: none !important; }
+        </style>
+        """, unsafe_allow_html=True)
+    
     with monitor_performance("main_app_initialization"):
         try:
             # Check if we need to trigger a rerun for language change
