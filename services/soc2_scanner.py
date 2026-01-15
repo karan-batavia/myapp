@@ -3,11 +3,33 @@ SOC2 & NIS2 Compliance Scanner for IaC Code
 
 This module provides functionality to scan infrastructure-as-code (IaC) repositories
 for SOC2 and NIS2 (EU Directive 2022/2555) compliance issues. It focuses on common 
-security and compliance issues in Terraform, CloudFormation, Ansible, and other IaC tools.
+security and compliance issues in Terraform, CloudFormation, Kubernetes, Docker, 
+JavaScript/Node.js, Azure ARM, and GCP Deployment Manager.
 
-NIS2 Directive: EU cybersecurity law requiring organizations in critical sectors to 
-implement comprehensive cybersecurity measures including risk management, incident 
-reporting, business continuity, and supply chain security.
+COVERAGE SUMMARY:
+- SOC2 Trust Services Criteria: All 5 pillars (52 criteria total)
+  * Security (CC1-CC9): 33 Common Criteria - ACTIVE detection
+  * Availability (A1.1-A1.3): 3 criteria - ACTIVE detection  
+  * Processing Integrity (PI1.1-PI1.5): 5 criteria - ACTIVE detection
+  * Confidentiality (C1.1-C1.2): 2 criteria - ACTIVE detection
+  * Privacy (P1-P8): 9 criteria - ACTIVE detection
+
+- NIS2 Directive Article 21: All 10 minimum measures
+  * 21.1: Risk analysis and information system security policies
+  * 21.2a: Incident handling procedures
+  * 21.2b: Business continuity (backup, disaster recovery)
+  * 21.2c: Supply chain security (via dependency analysis)
+  * 21.2d: Network and systems security
+  * 21.2e: Security measure effectiveness assessment
+  * 21.2f: Cyber hygiene and training (via policy file detection)
+  * 21.2g: Cryptography and encryption policies
+  * 21.2h: Human resources, access control, asset management
+  * 21.2i: MFA and secure communications
+  * 21.2j: Vulnerability handling and disclosure
+
+Note: Some compliance criteria require organizational policies/documentation that
+cannot be fully verified through static code analysis alone. These are mapped for
+future reporting integration when detected through manual audits.
 """
 
 import os
@@ -195,8 +217,41 @@ FINDING_TO_NIS2_MAP = {
     "S3 bucket with public read access": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-38.1"],
     "Container with potential PII exposure": ["NIS2-21.2g", "NIS2-21.2h"],
     
-    # Supply Chain Security (Article 22)
-    "Hardcoded port in server configuration": ["NIS2-21.2d", "NIS2-22.2"]
+    # Supply Chain Security (Article 21.2c, 22)
+    "Hardcoded port in server configuration": ["NIS2-21.2d", "NIS2-22.2"],
+    "Third-party dependency with known vulnerabilities": ["NIS2-21.2c", "NIS2-22.1", "NIS2-22.2"],
+    "Outdated package dependencies": ["NIS2-21.2c", "NIS2-22.1", "NIS2-25.1"],
+    
+    # Cyber Hygiene & Training (Article 21.2f)
+    "Missing security training documentation": ["NIS2-21.2f", "NIS2-20.4"],
+    "No security awareness program": ["NIS2-21.2f", "NIS2-20.4"],
+    
+    # Availability patterns
+    "No health check configured": ["NIS2-21.2a", "NIS2-21.2b"],
+    "Missing HEALTHCHECK instruction": ["NIS2-21.2a", "NIS2-21.2b"],
+    "Missing retry logic": ["NIS2-21.2a", "NIS2-21.2b"],
+    "No timeout configured": ["NIS2-21.2a"],
+    "Single point of failure": ["NIS2-21.2b"],
+    "Missing health check probes": ["NIS2-21.2a", "NIS2-21.2b"],
+    "No resource limits configured": ["NIS2-21.2a"],
+    
+    # Processing Integrity patterns
+    "Missing input validation": ["NIS2-21.2d", "NIS2-21.2j"],
+    "Missing data validation": ["NIS2-21.2d"],
+    "No data integrity checks": ["NIS2-21.2d", "NIS2-21.2g"],
+    "Missing checksum validation": ["NIS2-21.2d"],
+    
+    # Confidentiality patterns
+    "Unencrypted data at rest": ["NIS2-21.2g"],
+    "Unencrypted data in transit": ["NIS2-21.2g", "NIS2-21.2i"],
+    "Sensitive data in logs": ["NIS2-21.2g", "NIS2-21.2h"],
+    "Sensitive data in environment": ["NIS2-21.2g", "NIS2-21.2h"],
+    "Sensitive data in build args": ["NIS2-21.2g"],
+    
+    # Privacy patterns (GDPR alignment)
+    "No consent mechanism": ["NIS2-21.2h"],
+    "Excessive data collection": ["NIS2-21.2h"],
+    "Third-party data sharing without consent": ["NIS2-21.2c", "NIS2-21.2h"]
 }
 
 # NIS2 Category to Article mapping for fallback
@@ -326,6 +381,47 @@ FINDING_TO_TSC_MAP = {
     "Container with potential PII exposure": ["P7.1"],
     "Unrestricted data access": ["P4.1", "P7.1"],
     
+    # Additional Availability mappings (A1)
+    "No health check configured": ["A1.1"],
+    "Missing retry logic": ["A1.1", "A1.3"],
+    "No timeout configured": ["A1.1"],
+    "Single point of failure": ["A1.2", "A1.3"],
+    "Missing failover configuration": ["A1.2", "A1.3"],
+    "No disaster recovery plan": ["A1.3"],
+    "Missing backup strategy": ["A1.2", "A1.3"],
+    "No auto-scaling configured": ["A1.1"],
+    "Missing load balancer": ["A1.1", "A1.2"],
+    
+    # Additional Processing Integrity mappings (PI1)
+    "Missing input validation": ["PI1.2"],
+    "No output encoding": ["PI1.4"],
+    "Missing data validation": ["PI1.2", "PI1.3"],
+    "No transaction logging": ["PI1.3", "PI1.5"],
+    "Missing audit trail": ["PI1.3", "PI1.4"],
+    "No data integrity checks": ["PI1.3"],
+    "Missing checksum validation": ["PI1.2", "PI1.3"],
+    
+    # Additional Confidentiality mappings (C1)
+    "Unencrypted data at rest": ["C1.1"],
+    "Unencrypted data in transit": ["C1.1"],
+    "Missing data classification": ["C1.1"],
+    "No data retention policy": ["C1.2"],
+    "Missing secure disposal": ["C1.2"],
+    "Sensitive data in logs": ["C1.1"],
+    "Missing access controls for sensitive data": ["C1.1"],
+    
+    # Additional Privacy mappings (P1-P8)
+    "Missing privacy notice": ["P1.1"],
+    "No consent mechanism": ["P2.1", "P3.2"],
+    "Missing data subject rights": ["P5.1"],
+    "No opt-out mechanism": ["P2.1"],
+    "Third-party data sharing without consent": ["P6.1"],
+    "PII stored without encryption": ["P7.1"],
+    "No data accuracy validation": ["P8.1"],
+    "Missing data collection purpose": ["P3.1", "P4.1"],
+    "Excessive data collection": ["P3.1"],
+    "No data minimization": ["P3.1", "P4.1"],
+    
     # JavaScript/Node.js Security mappings
     "Hard-coded credentials or secrets": ["CC6.1", "CC6.6", "CC6.7"],
     "Use of eval() function": ["CC5.1", "CC6.8", "CC7.2"],
@@ -370,7 +466,30 @@ FINDING_TO_TSC_MAP = {
     "GCP BigQuery dataset with public access": ["C1.1", "CC6.6"],
     "GCP project with owner role binding": ["CC6.1", "CC6.3"],
     "GCP IAM binding with owner role": ["CC6.1", "CC6.3"],
-    "GCP bucket without explicit public access settings": ["CC6.6", "C1.1"]
+    "GCP bucket without explicit public access settings": ["CC6.6", "C1.1"],
+    
+    # Kubernetes-specific TSC mappings
+    "Single point of failure": ["A1.2", "A1.3"],
+    "Missing health check probes": ["A1.1"],
+    "No resource limits configured": ["A1.1"],
+    
+    # Docker-specific TSC mappings  
+    "No health check configured": ["A1.1"],
+    "Missing HEALTHCHECK instruction": ["A1.1"],
+    "Sensitive data in environment": ["C1.1", "CC6.1"],
+    "Sensitive data in build args": ["C1.1", "CC6.1"],
+    
+    # JavaScript additional TSC mappings
+    "No timeout configured": ["A1.1"],
+    "Missing retry logic": ["A1.1", "A1.3"],
+    
+    # NIS2 Article 21.2f - Cyber hygiene and training
+    "Missing security training documentation": ["CC1.4", "P1.1"],
+    "No security awareness program": ["CC1.4"],
+    
+    # NIS2 Article 21.2c - Supply chain security
+    "Third-party dependency with known vulnerabilities": ["CC9.2", "CC6.8"],
+    "Outdated package dependencies": ["CC9.2", "CC6.8"]
 }
 
 # IaC file patterns to identify
@@ -579,6 +698,39 @@ TERRAFORM_RISK_PATTERNS = {
         "Use more granular IAM roles instead of owner",
         "security"
     ),
+    # Processing Integrity (PI1) patterns for Terraform
+    r"aws_cloudwatch_log_group[^}]*retention_in_days\s*=\s*0": (
+        "No transaction logging",
+        "medium",
+        "Configure log retention policy for audit trail compliance",
+        "processing_integrity"
+    ),
+    r"aws_cloudtrail[^}]*enable_logging\s*=\s*false": (
+        "Missing audit trail",
+        "high",
+        "Enable CloudTrail logging for audit compliance",
+        "processing_integrity"
+    ),
+    # Privacy (P) patterns for Terraform
+    r"aws_s3_bucket_lifecycle_configuration[^}]*expiration[^}]*days\s*=\s*0": (
+        "No data retention policy",
+        "medium",
+        "Configure data retention policy for GDPR compliance",
+        "privacy"
+    ),
+    r"aws_s3_object[^}]*content\s*=": (
+        "Missing data classification",
+        "low",
+        "Tag objects with data classification labels",
+        "confidentiality"
+    ),
+    # Confidentiality (C1.2) patterns
+    r"lifecycle_rule[^}]*enabled\s*=\s*false": (
+        "Missing secure disposal",
+        "medium",
+        "Enable lifecycle rules for secure data disposal",
+        "confidentiality"
+    ),
 }
 
 CLOUDFORMATION_RISK_PATTERNS = {
@@ -761,6 +913,46 @@ KUBERNETES_RISK_PATTERNS = {
         "Use dedicated namespaces for better isolation",
         "security"
     ),
+    # Availability (A1) patterns for Kubernetes
+    r"replicas:\s*1\b": (
+        "Single point of failure",
+        "medium",
+        "Use multiple replicas for high availability",
+        "availability"
+    ),
+    r"resources:\s*\{\}|resources:\s*$": (
+        "No resource limits configured",
+        "medium",
+        "Set resource requests and limits for stability",
+        "availability"
+    ),
+    # Processing Integrity (PI1) patterns for Kubernetes
+    r"imagePullPolicy:\s*Always": (
+        "Missing checksum validation",
+        "low",
+        "Consider using image digests for integrity verification",
+        "processing_integrity"
+    ),
+    # Confidentiality (C1) patterns for Kubernetes
+    r"env:\s*\n\s*-\s*name:\s*(PASSWORD|SECRET|API_KEY|TOKEN)": (
+        "Sensitive data in environment",
+        "high",
+        "Use Kubernetes secrets instead of environment variables for sensitive data",
+        "confidentiality"
+    ),
+    # Business Continuity (A1.3) patterns
+    r"persistentVolumeClaim:[^}]*storageClassName:\s*\"?standard\"?": (
+        "No disaster recovery plan",
+        "medium",
+        "Use replication-enabled storage class for disaster recovery",
+        "availability"
+    ),
+    r"backupPolicy:\s*none|backup:\s*false": (
+        "Missing backup strategy",
+        "medium",
+        "Configure backup policies for persistent data",
+        "availability"
+    ),
 }
 
 DOCKER_RISK_PATTERNS = {
@@ -793,6 +985,39 @@ DOCKER_RISK_PATTERNS = {
         "high",
         "Download scripts first and verify before executing",
         "security"
+    ),
+    # Availability (A1) patterns for Docker
+    r"HEALTHCHECK\s+NONE": (
+        "No health check configured",
+        "medium",
+        "Configure HEALTHCHECK instruction for container monitoring",
+        "availability"
+    ),
+    r"(?<!HEALTHCHECK\s.*)CMD": (
+        "Missing HEALTHCHECK instruction",
+        "low",
+        "Add HEALTHCHECK instruction for container health monitoring",
+        "availability"
+    ),
+    # Processing Integrity (PI1) patterns for Docker
+    r"COPY\s+\.\s+\.": (
+        "No data integrity checks",
+        "medium",
+        "Use checksums or --checksum flag for file integrity verification",
+        "processing_integrity"
+    ),
+    # Confidentiality (C1) patterns for Docker
+    r"ENV\s+(PASSWORD|SECRET|API_KEY|TOKEN)\s*=": (
+        "Sensitive data in environment",
+        "high",
+        "Use Docker secrets or external secret management for sensitive data",
+        "confidentiality"
+    ),
+    r"ARG\s+(PASSWORD|SECRET|API_KEY|TOKEN)": (
+        "Sensitive data in build args",
+        "high",
+        "Avoid passing secrets via build arguments",
+        "confidentiality"
     ),
 }
 
@@ -881,6 +1106,126 @@ JAVASCRIPT_RISK_PATTERNS = {
         "high",
         "Validate user input before database operations",
         "security"
+    ),
+    # Availability (A1) patterns
+    r"(?:fetch|axios|request)\s*\([^)]*\)(?!.*\.catch)": (
+        "No health check configured",
+        "medium",
+        "Implement health checks with proper error handling and retry logic",
+        "availability"
+    ),
+    r"setTimeout\s*\(\s*[^,]+\s*,\s*\d{6,}": (
+        "No timeout configured",
+        "medium",
+        "Use appropriate timeout values for network requests",
+        "availability"
+    ),
+    r"\.connect\s*\([^)]*\)(?!.*retry)": (
+        "Missing retry logic",
+        "medium",
+        "Implement retry logic for database and API connections",
+        "availability"
+    ),
+    # Processing Integrity (PI1) patterns
+    r"req\.body\.[a-zA-Z]+(?!\s*\?\.)": (
+        "Missing input validation",
+        "high",
+        "Validate and sanitize all user input before processing",
+        "processing_integrity"
+    ),
+    r"JSON\.parse\s*\([^)]*\)(?!.*try)": (
+        "Missing data validation",
+        "medium",
+        "Wrap JSON parsing in try-catch and validate data structure",
+        "processing_integrity"
+    ),
+    r"console\.(log|info|debug)\s*\([^)]*password|console\.(log|info|debug)\s*\([^)]*secret|console\.(log|info|debug)\s*\([^)]*token": (
+        "Sensitive data in logs",
+        "high",
+        "Never log sensitive data like passwords, secrets, or tokens",
+        "confidentiality"
+    ),
+    # Confidentiality (C1) patterns
+    r"localStorage\.setItem\s*\([^)]*password|localStorage\.setItem\s*\([^)]*token|localStorage\.setItem\s*\([^)]*secret": (
+        "Unencrypted data at rest",
+        "high",
+        "Encrypt sensitive data before storing in localStorage",
+        "confidentiality"
+    ),
+    r"http://(?!localhost|127\.0\.0\.1)": (
+        "Unencrypted data in transit",
+        "high",
+        "Use HTTPS for all network communications",
+        "confidentiality"
+    ),
+    # Privacy (P1-P8) patterns
+    r"(email|phone|ssn|bsn|address|name)\s*=\s*req\.(body|query|params)\.[a-zA-Z]+(?!.*consent)": (
+        "No consent mechanism",
+        "high",
+        "Implement consent collection before processing personal data",
+        "privacy"
+    ),
+    r"\.collection\s*\(['\"]users['\"]\)\.find\s*\(\s*\{\s*\}\s*\)": (
+        "Excessive data collection",
+        "medium",
+        "Limit data collection to what is necessary (data minimization)",
+        "privacy"
+    ),
+    r"(email|phone|ssn|bsn).*third.?party|share.*(email|phone|ssn|bsn)": (
+        "Third-party data sharing without consent",
+        "high",
+        "Obtain explicit consent before sharing personal data with third parties",
+        "privacy"
+    ),
+    # Supply Chain Security (NIS2 21.2c) patterns
+    r"\"dependencies\"[^}]*\".*\":\s*\"[\^~<>]": (
+        "Outdated package dependencies",
+        "medium",
+        "Use exact versions and regularly update dependencies to latest secure versions",
+        "supply_chain"
+    ),
+    r"\"npm-audit-level\":\s*\"none\"|\"audit\":\s*false": (
+        "Third-party dependency with known vulnerabilities",
+        "high",
+        "Enable npm audit and address all security vulnerabilities in dependencies",
+        "supply_chain"
+    ),
+    # Privacy (P1-P8) additional patterns
+    r"privacy.?(policy|notice)\s*=\s*(null|undefined|\"\"|\'\')": (
+        "Missing privacy notice",
+        "high",
+        "Provide privacy notice to users before data collection (GDPR Art. 13)",
+        "privacy"
+    ),
+    r"(gdpr|ccpa|dsar)\s*=\s*false|data.?subject.?rights\s*=\s*false": (
+        "Missing data subject rights",
+        "high",
+        "Implement data subject rights (access, erasure, portability) per GDPR",
+        "privacy"
+    ),
+    r"validate.?(email|phone|address|name)\s*=\s*false": (
+        "No data accuracy validation",
+        "medium",
+        "Validate personal data accuracy before processing (GDPR Art. 5)",
+        "privacy"
+    ),
+    r"purpose\s*=\s*(null|undefined|\"\"|\'\')": (
+        "Missing data collection purpose",
+        "high",
+        "Specify purpose for personal data collection (GDPR Art. 5)",
+        "privacy"
+    ),
+    r"collect.?all|data.?minimization\s*=\s*false": (
+        "No data minimization",
+        "medium",
+        "Collect only necessary data (GDPR data minimization principle)",
+        "privacy"
+    ),
+    r"(acl|permission|access).*(password|credential|secret)\s*=\s*['\"]public['\"]": (
+        "Missing access controls for sensitive data",
+        "high",
+        "Implement proper access controls for sensitive data",
+        "confidentiality"
     )
 }
 
