@@ -176,16 +176,17 @@ class UnifiedHTMLReportGenerator:
         
         The scanner is the authoritative source for compliance scores. 
         Only calculate here if no score was provided by the scanner.
+        Minimum score is 10% to remain actionable (never show 0%).
         """
         # Get existing score from scanner (authoritative source)
-        # Use explicit None checks to preserve valid 0 scores
         existing_score = summary.get('overall_compliance_score')
         if existing_score is None:
             existing_score = scan_result.get('compliance_score')
         
-        # If scanner provided a score (including 0), use it directly
+        # If scanner provided a score, use it (but enforce minimum 10%)
         if existing_score is not None:
-            return int(round(existing_score))
+            score = int(round(existing_score))
+            return max(10, score) if score < 10 and len(findings) > 0 else max(0, min(100, score))
         
         # Only calculate if no score was provided
         return self._calculate_compliance_score(scan_result)
