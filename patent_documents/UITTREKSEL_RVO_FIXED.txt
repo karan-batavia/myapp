@@ -1,0 +1,21 @@
+UITTREKSEL
+
+Geunificeerd AI-Gedreven Halfgeleider Validatie Systeem
+
+Een geunificeerd systeem voor AI-gedreven halfgeleider validatie dat
+digitale tweeling technologie, multi-domein analyse, voorspellende
+OTA-risicobeoordeling en CI/CD-pijplijn orkestratie integreert. Het
+systeem omvat chip-agnostische plugin-architectuur met LLM-interpretatie
+voor automatische workflow-generatie, geunificeerde halfgeleider digitale
+tweelingen die EDA-simulatie, productie en veldtelemetrie samenvoegen,
+cross-domein correlatie-analyse voor veiligheid, opbrengst en prestatie,
+gekwantificeerde OTA firmware update risicoscoring, en end-to-end CI/CD-
+pijplijn integratie van pre-silicium tot veldimplementatie.
+
+De risicoscore wordt berekend als:
+R = w_H*H + w_A*A + w_T*T + w_S*S + w_P*P + w_E*E
+
+waarbij gewichten via machine learning worden geleerd uit historische
+update-uitkomsten.
+
+(Figuur 1)
