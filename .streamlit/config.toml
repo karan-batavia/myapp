@@ -30,3 +30,4 @@ magicEnabled = true
 [client]
 showErrorDetails = true
 toolbarMode = "minimal"
+showSidebarNavigation = false

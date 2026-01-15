@@ -35,7 +35,7 @@ if 'page_configured' not in st.session_state:
         page_title="DataGuardian Pro",
         page_icon="🛡️",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"
     )
     st.session_state['page_configured'] = True
 
