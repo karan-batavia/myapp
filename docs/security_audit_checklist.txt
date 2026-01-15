@@ -1,0 +1,333 @@
+================================================================================
+SECURITY AUDIT CHECKLIST - DataGuardian Pro
+================================================================================
+Website: dataguardianpro.nl
+Date: January 2026
+
+
+================================================================================
+SECTION 1: ONLINE SECURITY SCANNERS (Run These First)
+================================================================================
+
+Use these FREE tools to scan your live website:
+
+1. SUCURI SITECHECK (Quick malware scan)
+   URL: https://sitecheck.sucuri.net
+   Enter: dataguardianpro.nl
+   Time: 30 seconds
+   
+2. QUALYS SSL LABS (SSL/TLS grade)
+   URL: https://www.ssllabs.com/ssltest/
+   Enter: dataguardianpro.nl
+   Time: 2-3 minutes
+   Target: A+ grade
+   
+3. SECURITY HEADERS (HTTP headers check)
+   URL: https://securityheaders.com
+   Enter: https://dataguardianpro.nl
+   Time: 10 seconds
+   Target: A grade
+
+4. MOZILLA OBSERVATORY (Web security)
+   URL: https://observatory.mozilla.org
+   Enter: dataguardianpro.nl
+   Time: 1 minute
+   Target: A+ grade
+
+5. PENTEST-TOOLS (Vulnerability scan)
+   URL: https://pentest-tools.com/website-vulnerability-scanning/website-scanner
+   Enter: dataguardianpro.nl
+   Time: 5-10 minutes
+   Free: Light scan (basic vulnerabilities)
+
+
+================================================================================
+SECTION 2: CODE SECURITY AUDIT RESULTS
+================================================================================
+
+Based on analysis of your codebase:
+
+GOOD (Security measures in place):
+
+[OK] Password Hashing
+    - bcrypt used for password hashing
+    - Found in: services/auth.py, utils/secure_auth_enhanced.py
+    - SHA256 used for PII anonymization (GDPR compliant)
+
+[OK] Rate Limiting
+    - Redis-backed rate limiter implemented
+    - Found in: utils/redis_rate_limiter.py, api/middleware.py
+    - Bot protection: services/bot_protection.py
+
+[OK] Security Headers
+    - nginx.conf contains security headers
+    - X-Frame-Options, CSP, X-XSS-Protection configured
+
+[OK] Database Parameterized Queries
+    - Using psycopg2 with parameterized queries
+    - No raw SQL string concatenation found
+
+[OK] Authentication
+    - JWT tokens for session management
+    - Role-based access control (7 roles)
+    - Auth hardening: services/auth_hardening.py
+
+
+NEEDS ATTENTION:
+
+[!] Subprocess Usage
+    Files using subprocess/os.system:
+    - services/code_scanner.py
+    - services/repository_scanner.py
+    - services/blob_scanner.py
+    
+    RISK: Command injection if user input not sanitized
+    ACTION: Review these files for proper input sanitization
+
+[!] Hardcoded Strings Found
+    Some files contain 'password=' or 'api_key=' patterns
+    RISK: Most are in test files or documentation
+    ACTION: Verify no real credentials are hardcoded
+    
+[!] Eval/Exec Usage
+    Found in test files and some scanners
+    RISK: Remote code execution if user input passed
+    ACTION: Review services/code_scanner.py for safe usage
+
+
+================================================================================
+SECTION 3: COMMON VULNERABILITIES CHECKLIST
+================================================================================
+
+Check these manually:
+
+[ ] SQL INJECTION
+    - All database queries use parameterized statements
+    - No string concatenation in SQL
+    
+[ ] CROSS-SITE SCRIPTING (XSS)
+    - All user input is escaped before display
+    - Streamlit handles most XSS automatically
+    - Check any st.markdown(unsafe_allow_html=True) usage
+
+[ ] CROSS-SITE REQUEST FORGERY (CSRF)
+    - Streamlit doesn't support traditional CSRF tokens
+    - Webhook endpoints should verify signatures (Stripe)
+
+[ ] AUTHENTICATION
+    - Passwords hashed with bcrypt
+    - Session timeout configured
+    - Failed login attempts tracked
+
+[ ] AUTHORIZATION
+    - Role-based access control enforced
+    - Admin pages protected
+    - License tier validation
+
+[ ] FILE UPLOAD
+    - File type validation
+    - File size limits
+    - Malware scanning recommended
+
+[ ] SENSITIVE DATA EXPOSURE
+    - API keys in environment variables (not code)
+    - HTTPS enforced
+    - Database credentials secured
+
+
+================================================================================
+SECTION 4: INFRASTRUCTURE SECURITY
+================================================================================
+
+CHECK YOUR SERVER (45.81.35.202):
+
+[ ] FIREWALL
+    Run: sudo ufw status
+    Should show:
+    - 22/tcp ALLOW (SSH)
+    - 80/tcp ALLOW (HTTP)
+    - 443/tcp ALLOW (HTTPS)
+    - Everything else DENIED
+
+[ ] SSH SECURITY
+    Run: sudo cat /etc/ssh/sshd_config | grep -E "PermitRootLogin|PasswordAuthentication"
+    Should be:
+    - PermitRootLogin no
+    - PasswordAuthentication no (use SSH keys)
+
+[ ] FAIL2BAN
+    Run: sudo systemctl status fail2ban
+    Should be: active (running)
+
+[ ] SSL CERTIFICATE
+    Run: sudo certbot certificates
+    Check: Expiry date (auto-renew should be enabled)
+
+[ ] OPEN PORTS
+    Run: sudo netstat -tlnp
+    Should ONLY show:
+    - 0.0.0.0:22 (SSH)
+    - 0.0.0.0:80 (Nginx)
+    - 0.0.0.0:443 (Nginx)
+    - 127.0.0.1:5000 (Streamlit - local only)
+    - 127.0.0.1:5432 (PostgreSQL - local only)
+    - 127.0.0.1:6379 (Redis - local only)
+
+[ ] UPDATES
+    Run: sudo apt update && sudo apt list --upgradable
+    Keep system packages updated
+
+
+================================================================================
+SECTION 5: GDPR/PRIVACY SECURITY
+================================================================================
+
+Your app handles sensitive data. Verify:
+
+[ ] DATA ENCRYPTION
+    - Database encrypted at rest (Hetzner provides this)
+    - All traffic over HTTPS
+    - Sensitive fields hashed (BSN, etc.)
+
+[ ] DATA RETENTION
+    - Scan data deleted after 365 days (configured)
+    - Analytics data deleted after 90 days
+    - User can request data deletion (GDPR Art. 17)
+
+[ ] AUDIT LOGGING
+    - All data access logged
+    - Login attempts tracked
+    - Admin actions recorded
+
+[ ] CONSENT MANAGEMENT
+    - Cookie consent (if applicable)
+    - Data processing consent
+    - Clear privacy policy
+
+
+================================================================================
+SECTION 6: STRIPE PAYMENT SECURITY
+================================================================================
+
+[ ] WEBHOOK SIGNATURE VERIFICATION
+    File: services/webhook_handler.py
+    Verify: stripe.Webhook.construct_event() is used
+    
+[ ] NO CARD DATA STORED
+    All payment handled by Stripe
+    Only subscription IDs stored locally
+
+[ ] HTTPS ONLY
+    Webhook endpoint only accepts HTTPS
+
+[ ] IDEMPOTENCY
+    Webhook events processed once
+
+
+================================================================================
+SECTION 7: RECOMMENDED IMMEDIATE ACTIONS
+================================================================================
+
+CRITICAL (Do Now):
+
+1. Run SSL Labs test
+   Get A+ grade or fix issues
+
+2. Run Security Headers test
+   Add missing headers in nginx
+
+3. Enable fail2ban
+   Protects against brute force attacks
+
+4. Review subprocess usage
+   Ensure no user input in shell commands
+
+5. Verify no hardcoded secrets
+   Check all files for real API keys
+
+
+IMPORTANT (This Week):
+
+1. Set up regular security scans
+   Use Blacksight (free) for weekly scans
+
+2. Enable auto-updates
+   sudo apt install unattended-upgrades
+
+3. Configure log monitoring
+   Track failed login attempts
+
+4. Test backup restore
+   Verify you can restore from backups
+
+
+RECOMMENDED (This Month):
+
+1. Professional penetration test
+   Cost: €250-500 one-time
+   Providers: Pentest-Tools, Intruder
+
+2. Security monitoring
+   Consider: Wazuh, OSSEC (free SIEM)
+
+3. DDoS protection
+   Consider: Cloudflare (free tier)
+
+
+================================================================================
+SECTION 8: QUICK COMMAND REFERENCE
+================================================================================
+
+Check firewall:
+  sudo ufw status verbose
+
+Check open ports:
+  sudo ss -tlnp
+
+Check SSH login attempts:
+  sudo journalctl -u sshd | grep "Failed"
+
+Check Nginx errors:
+  sudo tail -100 /var/log/nginx/error.log
+
+Check SSL certificate:
+  echo | openssl s_client -connect dataguardianpro.nl:443 2>/dev/null | openssl x509 -noout -dates
+
+Test from outside (run from different computer):
+  nmap -sV dataguardianpro.nl
+
+Check for exposed files:
+  curl -I https://dataguardianpro.nl/.env
+  curl -I https://dataguardianpro.nl/.git/config
+  (Both should return 404 or 403)
+
+
+================================================================================
+SUMMARY - YOUR SECURITY STATUS
+================================================================================
+
+STRENGTHS:
++ Password hashing with bcrypt
++ Rate limiting implemented
++ Security headers configured
++ Parameterized database queries
++ Role-based access control
++ GDPR data protection measures
++ Stripe webhook signature verification
+
+AREAS TO VERIFY:
+? Subprocess command sanitization
+? No hardcoded credentials in production
+? Firewall properly configured on server
+? SSL certificate A+ grade
+? fail2ban active
+
+RUN THE ONLINE SCANNERS FIRST:
+1. https://sitecheck.sucuri.net
+2. https://www.ssllabs.com/ssltest/
+3. https://securityheaders.com
+4. https://observatory.mozilla.org
+
+After running these scanners, you'll know exactly what needs fixing.
+
+================================================================================
