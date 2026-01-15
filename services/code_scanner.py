@@ -773,10 +773,15 @@ class CodeScanner:
             except Exception as e:
                 logger.debug(f"Git history scan failed: {e}")
         
-        # Comprehensive GDPR 99-article validation for 100% coverage
-        gdpr_compliance_result = self._perform_comprehensive_gdpr_validation(
-            directory_path, filtered_files
-        )
+        # Comprehensive GDPR 99-article validation for 100% coverage (skip in fast_mode)
+        gdpr_compliance_result = {}
+        if not getattr(self, 'fast_mode', False):
+            gdpr_compliance_result = self._perform_comprehensive_gdpr_validation(
+                directory_path, filtered_files
+            )
+        else:
+            logger.info("Skipping comprehensive GDPR validation in fast_mode")
+            gdpr_compliance_result = {'coverage_version': 'fast_mode', 'total_articles_validated': 0}
         
         # Calculate compliance score based on findings
         compliance_score = self._calculate_compliance_score(
@@ -2405,27 +2410,22 @@ class CodeScanner:
     
     def _calculate_compliance_score(self, findings: List[Dict[str, Any]], files_scanned: int) -> float:
         """
-        Calculate compliance score based on findings severity and count.
+        Calculate compliance score based on findings severity and density per file.
         
-        Formula:
-        - Start at 100%
-        - Critical findings: -15 points each (max -45)
-        - High findings: -3 points each (max -30)
-        - Medium findings: -1 point each (max -15)
-        - Low findings: -0.2 points each (max -5)
-        - Bonus: +5 if no critical findings
+        Uses a weighted approach normalized by files scanned to give actionable scores:
+        - Scores range from 10% (critical issues) to 100% (no findings)
+        - Never returns 0% to remain actionable for users
+        - Normalized by codebase size so larger codebases aren't penalized unfairly
         
         Args:
             findings: List of finding dictionaries
             files_scanned: Number of files scanned
             
         Returns:
-            Compliance score as percentage (0-100)
+            Compliance score as percentage (10-100)
         """
         if not findings:
             return 100.0
-        
-        score = 100.0
         
         critical_count = 0
         high_count = 0
@@ -2444,23 +2444,28 @@ class CodeScanner:
             else:
                 low_count += 1
         
-        critical_penalty = min(45, critical_count * 15)
-        high_penalty = min(30, high_count * 3)
-        medium_penalty = min(15, medium_count * 1)
-        low_penalty = min(5, low_count * 0.2)
+        # Calculate weighted findings normalized by files scanned
+        # This prevents large codebases from getting unfairly low scores
+        weighted_findings = (critical_count * 4.0) + (high_count * 2.5) + (medium_count * 1.5) + (low_count * 0.5)
+        findings_per_file = weighted_findings / max(files_scanned, 1)
         
+        # Calculate base score from density (0-10 findings/file = 100%-15%)
+        if findings_per_file <= 0:
+            score = 100.0
+        elif findings_per_file >= 10:
+            score = 15.0
+        else:
+            score = 100.0 - (findings_per_file * 8.5)
+        
+        # Additional penalty for critical issues (max 25 points)
+        critical_penalty = min(25, critical_count * 5)
         score -= critical_penalty
-        score -= high_penalty
-        score -= medium_penalty
-        score -= low_penalty
         
+        # Bonus if no critical findings
         if critical_count == 0:
             score += 5
         
-        files_ratio = len(findings) / max(1, files_scanned)
-        if files_ratio > 0.5:
-            score -= min(10, (files_ratio - 0.5) * 20)
+        # Ensure minimum score of 10% (never 0% to remain actionable)
+        score = max(10, min(100, score))
         
-        score = max(0, min(100, score))
-        
-        return round(score, 1)
+        return int(round(score))

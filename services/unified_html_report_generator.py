@@ -172,66 +172,77 @@ class UnifiedHTMLReportGenerator:
         return metrics
     
     def _get_compliance_score(self, scan_result: Dict[str, Any], summary: Dict[str, Any], findings: list) -> int:
-        """Get compliance score, recalculating if there are findings but score is 100%."""
-        # Get existing score
-        existing_score = (
-            summary.get('overall_compliance_score') or 
-            scan_result.get('compliance_score')
-        )
+        """Get compliance score from scan result, or calculate if not provided.
         
-        # If no existing score, calculate
+        The scanner is the authoritative source for compliance scores. 
+        Only calculate here if no score was provided by the scanner.
+        """
+        # Get existing score from scanner (authoritative source)
+        # Use explicit None checks to preserve valid 0 scores
+        existing_score = summary.get('overall_compliance_score')
         if existing_score is None:
-            return self._calculate_compliance_score(scan_result)
+            existing_score = scan_result.get('compliance_score')
         
-        # If score is 100% but there are HIGH/CRITICAL findings, recalculate
-        if existing_score >= 100 and findings:
-            # Check for high/critical findings
-            has_high_or_critical = any(
-                str(f.get('severity', '')).lower() in ['high', 'critical'] or
-                str(f.get('risk_level', '')).lower() in ['high', 'critical']
-                for f in findings
-            )
-            if has_high_or_critical:
-                return self._calculate_compliance_score(scan_result)
+        # If scanner provided a score (including 0), use it directly
+        if existing_score is not None:
+            return int(round(existing_score))
         
-        return int(existing_score)
+        # Only calculate if no score was provided
+        return self._calculate_compliance_score(scan_result)
     
     def _calculate_compliance_score(self, scan_result: Dict[str, Any]) -> int:
-        """Calculate compliance score based on findings using weighted percentage approach."""
+        """Calculate compliance score based on findings using density-based approach.
+        
+        Uses the same algorithm as code_scanner.py for consistency:
+        - Score based on weighted findings per file (density)
+        - Minimum score is 10% (never 0%) to remain actionable
+        - Critical findings have additional penalty
+        """
         findings = scan_result.get('findings', [])
         files_scanned = scan_result.get('files_scanned', 1) or 1
         
         if not findings:
             return 100
         
-        # Count severity levels - also check risk_level as fallback (case-insensitive)
-        critical = len([f for f in findings if str(f.get('severity', '')).lower() == 'critical' or str(f.get('risk_level', '')).lower() == 'critical'])
-        high = len([f for f in findings if str(f.get('severity', '')).lower() == 'high' or str(f.get('risk_level', '')).lower() == 'high'])
-        medium = len([f for f in findings if str(f.get('severity', '')).lower() == 'medium' or str(f.get('risk_level', '')).lower() == 'medium'])
-        low = len([f for f in findings if str(f.get('severity', '')).lower() == 'low' or str(f.get('risk_level', '')).lower() == 'low'])
+        # Count severity levels (check both severity and risk_level)
+        critical = 0
+        high = 0
+        medium = 0
+        low = 0
         
-        # Count unclassified findings as Medium
-        unclassified = len(findings) - (critical + high + medium + low)
-        medium += unclassified
+        for f in findings:
+            severity = str(f.get('severity', f.get('risk_level', 'medium'))).lower()
+            if severity == 'critical':
+                critical += 1
+            elif severity == 'high':
+                high += 1
+            elif severity == 'medium':
+                medium += 1
+            else:
+                low += 1
         
-        # Calculate weighted finding score (normalized by files scanned)
-        # This prevents large codebases from automatically getting 0%
+        # Calculate weighted findings normalized by files scanned
         weighted_findings = (critical * 4.0) + (high * 2.5) + (medium * 1.5) + (low * 0.5)
         findings_per_file = weighted_findings / max(files_scanned, 1)
         
-        # Calculate score based on findings density (per file)
-        # 0 findings/file = 100%, 10+ weighted findings/file = minimum score
+        # Calculate base score from density (0-10 findings/file = 100%-15%)
         if findings_per_file <= 0:
-            score = 100
+            score = 100.0
         elif findings_per_file >= 10:
-            score = 15  # Minimum score for very dense findings
+            score = 15.0
         else:
-            # Linear interpolation: 0 -> 100%, 10 -> 15%
-            score = 100 - (findings_per_file * 8.5)
+            score = 100.0 - (findings_per_file * 8.5)
         
-        # Additional penalty for critical issues (max 30 points)
-        critical_penalty = min(critical * 5, 30)
-        score = max(10, score - critical_penalty)
+        # Additional penalty for critical issues (max 25 points)
+        critical_penalty = min(25, critical * 5)
+        score -= critical_penalty
+        
+        # Bonus if no critical findings
+        if critical == 0:
+            score += 5
+        
+        # Minimum score is 10% (never 0%) to remain actionable
+        score = max(10, min(100, score))
         
         return int(score)
     
