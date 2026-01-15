@@ -201,15 +201,20 @@ class UnifiedHTMLReportGenerator:
         return self._calculate_compliance_score(scan_result)
     
     def _calculate_compliance_score(self, scan_result: Dict[str, Any]) -> int:
-        """Calculate compliance score based on findings using density-based approach.
+        """Calculate compliance score based on findings using hybrid approach.
         
-        Uses the same algorithm as code_scanner.py for consistency:
-        - Score based on weighted findings per file (density)
-        - Minimum score is 10% (never 0%) to remain actionable
-        - Critical findings have additional penalty
+        For compliance scans (SOC2, NIS2, GDPR), individual high-risk findings 
+        significantly impact compliance posture regardless of file count.
+        
+        Scoring approach:
+        - Base score: 100
+        - Critical findings: -15 points each (max -60)
+        - High findings: -10 points each (max -40)
+        - Medium findings: -5 points each (max -25)
+        - Low findings: -2 points each (max -10)
+        - Minimum score: 10% (never 0%) to remain actionable
         """
         findings = scan_result.get('findings', [])
-        files_scanned = scan_result.get('files_scanned', 1) or 1
         
         if not findings:
             return 100
@@ -231,25 +236,16 @@ class UnifiedHTMLReportGenerator:
             else:
                 low += 1
         
-        # Calculate weighted findings normalized by files scanned
-        weighted_findings = (critical * 4.0) + (high * 2.5) + (medium * 1.5) + (low * 0.5)
-        findings_per_file = weighted_findings / max(files_scanned, 1)
+        # Direct penalty approach - compliance findings are significant
+        score = 100.0
         
-        # Calculate base score from density (0-10 findings/file = 100%-15%)
-        if findings_per_file <= 0:
-            score = 100.0
-        elif findings_per_file >= 10:
-            score = 15.0
-        else:
-            score = 100.0 - (findings_per_file * 8.5)
+        # Apply capped penalties per severity level
+        critical_penalty = min(60, critical * 15)
+        high_penalty = min(40, high * 10)
+        medium_penalty = min(25, medium * 5)
+        low_penalty = min(10, low * 2)
         
-        # Additional penalty for critical issues (max 25 points)
-        critical_penalty = min(25, critical * 5)
-        score -= critical_penalty
-        
-        # Bonus if no critical findings
-        if critical == 0:
-            score += 5
+        score -= (critical_penalty + high_penalty + medium_penalty + low_penalty)
         
         # Minimum score is 10% (never 0%) to remain actionable
         score = max(10, min(100, score))
