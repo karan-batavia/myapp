@@ -1,0 +1,226 @@
+================================================================================
+SECURITY FIXES GUIDE - DataGuardian Pro
+================================================================================
+
+This guide fixes all issues found by the security scanner.
+
+
+================================================================================
+ISSUE 1: NO WEB APPLICATION FIREWALL (WAF)
+================================================================================
+
+OPTIONS (Choose One):
+
+---------------------------------------------------------------------------
+OPTION A: CLOUDFLARE (Recommended - Free)
+---------------------------------------------------------------------------
+
+Best for: DDoS protection, WAF, CDN, free SSL
+
+Steps:
+1. Create account at https://cloudflare.com
+2. Add your site: dataguardianpro.nl
+3. Cloudflare scans your DNS records
+4. Update nameservers at your domain registrar:
+   - From: Current nameservers
+   - To: Cloudflare nameservers (provided during setup)
+5. Wait 24-48 hours for DNS propagation
+6. Enable these settings in Cloudflare dashboard:
+   - Security > WAF > Enable
+   - Security > Bot Fight Mode > ON
+   - Security > DDoS > ON (automatic)
+   - SSL/TLS > Full (strict)
+   - Speed > Auto Minify > ON
+
+FREE tier includes:
+- Unlimited DDoS protection
+- Basic WAF rules
+- CDN (faster loading)
+- Free SSL certificate
+- Bot protection
+
+---------------------------------------------------------------------------
+OPTION B: HETZNER FIREWALL (Free - Already available)
+---------------------------------------------------------------------------
+
+You already have a Hetzner server. Use their cloud firewall:
+
+1. Log into Hetzner Cloud Console
+2. Go to Firewalls
+3. Create new firewall
+4. Rules:
+   - Allow TCP 22 (SSH) from your IP only
+   - Allow TCP 80 (HTTP) from anywhere
+   - Allow TCP 443 (HTTPS) from anywhere
+   - Deny all other inbound
+5. Apply to your server
+
+Note: This is network-level, not application-level WAF.
+
+---------------------------------------------------------------------------
+OPTION C: NGINX MOD_SECURITY (Free - Advanced)
+---------------------------------------------------------------------------
+
+Install ModSecurity on your server:
+
+sudo apt install libnginx-mod-security
+sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf
+sudo nano /etc/modsecurity/modsecurity.conf
+# Change: SecRuleEngine On
+
+Download OWASP Core Rule Set:
+cd /etc/modsecurity
+sudo git clone https://github.com/coreruleset/coreruleset.git
+sudo cp coreruleset/crs-setup.conf.example crs-setup.conf
+
+Restart nginx:
+sudo systemctl restart nginx
+
+---------------------------------------------------------------------------
+OPTION D: PAID WAF SERVICES
+---------------------------------------------------------------------------
+
+If budget allows (€20-200/month):
+- Sucuri WAF: https://sucuri.net (~€200/year)
+- Imperva: https://www.imperva.com (~€50/month)
+- AWS WAF: https://aws.amazon.com/waf (~€5/month + usage)
+
+RECOMMENDATION: Start with Cloudflare (free) - it's sufficient for most attacks.
+
+
+================================================================================
+ISSUE 2-6: MISSING SECURITY HEADERS
+================================================================================
+
+All fixed in nginx.conf.secure file. Copy to your server:
+
+---------------------------------------------------------------------------
+STEP 1: Upload the new config
+---------------------------------------------------------------------------
+
+Option A - Copy/paste:
+1. SSH into your server: ssh root@45.81.35.202
+2. Edit nginx config: sudo nano /etc/nginx/nginx.conf
+3. Replace contents with nginx.conf.secure
+4. Save and exit (Ctrl+X, Y, Enter)
+
+Option B - SCP upload:
+scp nginx.conf.secure root@45.81.35.202:/etc/nginx/nginx.conf
+
+---------------------------------------------------------------------------
+STEP 2: Test the config
+---------------------------------------------------------------------------
+
+sudo nginx -t
+
+Should show:
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+
+---------------------------------------------------------------------------
+STEP 3: Reload nginx
+---------------------------------------------------------------------------
+
+sudo systemctl reload nginx
+
+---------------------------------------------------------------------------
+STEP 4: Verify headers
+---------------------------------------------------------------------------
+
+curl -I https://dataguardianpro.nl
+
+Should show all these headers:
+- X-Frame-Options: DENY
+- X-Content-Type-Options: nosniff
+- Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+- X-XSS-Protection: 1; mode=block
+- Content-Security-Policy: default-src 'self'; ...
+- Referrer-Policy: strict-origin-when-cross-origin
+- Permissions-Policy: accelerometer=(), ...
+
+---------------------------------------------------------------------------
+STEP 5: Re-run security scanner
+---------------------------------------------------------------------------
+
+Go back to: https://securityheaders.com
+Enter: https://dataguardianpro.nl
+Expected result: A or A+ grade
+
+
+================================================================================
+WHAT EACH FIX DOES
+================================================================================
+
+1. server_tokens off;
+   FIXES: "Default server banners displayed"
+   Hides nginx version from responses
+
+2. X-Frame-Options: DENY
+   FIXES: "Missing ClickJacking Protection"
+   Prevents your site from being embedded in iframes
+
+3. X-Content-Type-Options: nosniff
+   FIXES: "Missing Content Type sniffing protection"
+   Prevents browsers from MIME-type sniffing
+
+4. Strict-Transport-Security (HSTS)
+   FIXES: "Missing Strict-Transport-Security"
+   Forces browsers to always use HTTPS
+
+5. Content-Security-Policy (CSP)
+   FIXES: "Missing Content-Security-Policy directive"
+   Controls which resources can load (prevents XSS)
+   
+   Our policy allows:
+   - Scripts: self + inline (needed for Streamlit) + Stripe
+   - Styles: self + inline (needed for Streamlit)
+   - Images: self + data URLs + any HTTPS
+   - Connections: self + WebSocket + Stripe API
+   - Frames: only Stripe (for payment)
+   - No embedding allowed (frame-ancestors: none)
+
+
+================================================================================
+QUICK COMMANDS FOR YOUR SERVER
+================================================================================
+
+# SSH into server
+ssh root@45.81.35.202
+
+# Backup current config
+sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
+
+# Edit nginx config
+sudo nano /etc/nginx/nginx.conf
+
+# Test config
+sudo nginx -t
+
+# Reload nginx (no downtime)
+sudo systemctl reload nginx
+
+# Check headers
+curl -I https://dataguardianpro.nl
+
+# View nginx logs
+sudo tail -f /var/log/nginx/error.log
+
+
+================================================================================
+SUMMARY CHECKLIST
+================================================================================
+
+[ ] Choose WAF option (recommend Cloudflare free)
+[ ] Upload nginx.conf.secure to server
+[ ] Test nginx config: sudo nginx -t
+[ ] Reload nginx: sudo systemctl reload nginx
+[ ] Verify headers with curl -I
+[ ] Re-run securityheaders.com scan
+[ ] Re-run SSL Labs scan
+
+Expected results after fixes:
+- Security Headers: A+ grade
+- SSL Labs: A+ grade
+- No more "missing header" warnings
+
+================================================================================
