@@ -1578,6 +1578,10 @@ class UnifiedHTMLReportGenerator:
             # Get current user from scan result
             username = scan_result.get('username', 'unknown')
             current_score = scan_result.get('compliance_score', 70)
+            # Enforce minimum 10% for actionability (consistent with executive summary)
+            findings = scan_result.get('findings', [])
+            if current_score < 10 and len(findings) > 0:
+                current_score = 10
             scan_timestamp = scan_result.get('timestamp', datetime.now().isoformat())
             
             # Safe import of predictive engine with dependencies
