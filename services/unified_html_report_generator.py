@@ -177,11 +177,20 @@ class UnifiedHTMLReportGenerator:
         The scanner is the authoritative source for compliance scores. 
         Only calculate here if no score was provided by the scanner.
         Minimum score is 10% to remain actionable (never show 0%).
+        If scanner reports 100% but there are high/critical findings, recalculate.
         """
         # Get existing score from scanner (authoritative source)
         existing_score = summary.get('overall_compliance_score')
         if existing_score is None:
             existing_score = scan_result.get('compliance_score')
+        
+        # Check if there are high-risk or critical findings
+        high_risk_findings = [f for f in findings if str(f.get('severity', f.get('risk_level', ''))).lower() in ('critical', 'high')]
+        
+        # If scanner reports 100% but there are high/critical findings, recalculate
+        # This catches cases where scanners don't properly penalize for findings
+        if existing_score is not None and existing_score >= 100 and len(high_risk_findings) > 0:
+            return self._calculate_compliance_score(scan_result)
         
         # If scanner provided a score, use it (but enforce minimum 10%)
         if existing_score is not None:
@@ -1578,10 +1587,18 @@ class UnifiedHTMLReportGenerator:
             # Get current user from scan result
             username = scan_result.get('username', 'unknown')
             current_score = scan_result.get('compliance_score', 70)
-            # Enforce minimum 10% for actionability (consistent with executive summary)
             findings = scan_result.get('findings', [])
-            if current_score < 10 and len(findings) > 0:
+            
+            # Check for high-risk/critical findings
+            high_risk_findings = [f for f in findings if str(f.get('severity', f.get('risk_level', ''))).lower() in ('critical', 'high')]
+            
+            # If score is 100 but there are high/critical findings, recalculate
+            if current_score >= 100 and len(high_risk_findings) > 0:
+                current_score = self._calculate_compliance_score(scan_result)
+            # Enforce minimum 10% for actionability (consistent with executive summary)
+            elif current_score < 10 and len(findings) > 0:
                 current_score = 10
+                
             scan_timestamp = scan_result.get('timestamp', datetime.now().isoformat())
             
             # Safe import of predictive engine with dependencies
