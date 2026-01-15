@@ -1,0 +1,297 @@
+================================================================================
+CAPACITY & SCALING GUIDE - DataGuardian Pro
+================================================================================
+
+This guide explains how many customers your platform can support and how
+to scale as your business grows.
+
+
+================================================================================
+CURRENT CAPACITY (Single Server Setup)
+================================================================================
+
+Your current setup (Hetzner server 45.81.35.202):
+
+COMPONENT               LIMIT                   BOTTLENECK
+---------------------------------------------------------------------------
+Streamlit App           ~20-30 concurrent       Single process, CPU-bound
+                        active users            
+PostgreSQL              ~100 connections        Connection pool (default 20)
+Redis                   ~20 connections         max_connections=20
+Scanner Workers         8 concurrent scans      MAX_CONCURRENT_JOBS=8
+Memory                  Depends on server       Large scans use ~500MB each
+File Uploads            100MB max               Configured in nginx
+
+ESTIMATED CAPACITY (Current Single Server):
+- Active concurrent users: 20-30
+- Daily active customers: 50-100
+- Monthly scans: ~5,000-10,000
+- Suitable for: €5K-10K MRR
+
+
+================================================================================
+SCALING TIERS
+================================================================================
+
+---------------------------------------------------------------------------
+TIER 1: STARTER (10-50 Customers) - Current Setup
+---------------------------------------------------------------------------
+
+Infrastructure:
+- 1x Hetzner Cloud Server (CX31: 4 vCPU, 8GB RAM) - €15/month
+- 1x PostgreSQL (built-in or Neon)
+- 1x Redis (built-in)
+- 1x Streamlit instance
+
+Capacity:
+- 20-30 concurrent active users
+- 8 simultaneous scans
+- ~3,000 scans/month
+
+Cost: ~€50-100/month total
+
+No changes needed for this tier.
+
+
+---------------------------------------------------------------------------
+TIER 2: GROWTH (50-200 Customers) - €25K MRR Target
+---------------------------------------------------------------------------
+
+Infrastructure Upgrade:
+- 1x Hetzner Cloud Server (CX41: 8 vCPU, 16GB RAM) - €35/month
+- 1x Managed PostgreSQL (Neon Pro or Hetzner) - €20/month
+- 1x Redis (Upstash or self-hosted) - €10/month
+- 2x Streamlit instances behind load balancer
+
+Changes Required:
+
+1. UPGRADE SERVER:
+   - Hetzner Cloud Console → Resize to CX41
+   - Or add second server for redundancy
+
+2. ADD LOAD BALANCER:
+   - Hetzner Load Balancer - €6/month
+   - Or use nginx as reverse proxy to multiple Streamlit ports:
+   
+   upstream dataguardian {
+       server 127.0.0.1:5000;
+       server 127.0.0.1:5001;
+   }
+
+3. INCREASE WORKER POOL:
+   Edit services/scanner_queue.py:
+   MAX_CONCURRENT_JOBS = 16  # Was 8
+
+4. INCREASE DATABASE CONNECTIONS:
+   Edit services/database_service.py:
+   - Add connection pooling (PgBouncer or psycopg2.pool)
+   - Increase max_connections to 50
+
+5. INCREASE REDIS CONNECTIONS:
+   Edit utils/redis_cache.py:
+   max_connections=50  # Was 20
+
+Capacity:
+- 50-80 concurrent active users
+- 16 simultaneous scans
+- ~10,000 scans/month
+
+Cost: ~€100-200/month total
+
+
+---------------------------------------------------------------------------
+TIER 3: SCALE (200-500 Customers) - €50K+ MRR
+---------------------------------------------------------------------------
+
+Infrastructure:
+- 2-4x App Servers (CX41 each)
+- 1x Hetzner Load Balancer
+- 1x Managed PostgreSQL (dedicated, 4GB+ RAM)
+- 1x Redis Cluster (Upstash Pro or Redis Enterprise)
+- Separate worker servers for scanning
+
+Architecture:
+┌──────────────────────┐
+│   Load Balancer      │
+│   (Hetzner/Cloudflare)│
+└──────────┬───────────┘
+           │
+    ┌──────┴──────┐
+    │             │
+┌───▼───┐   ┌───▼───┐
+│ App 1 │   │ App 2 │   (Streamlit instances)
+└───┬───┘   └───┬───┘
+    │           │
+    └─────┬─────┘
+          │
+    ┌─────▼─────┐
+    │  Redis    │  (Job Queue)
+    └─────┬─────┘
+          │
+    ┌─────┴─────┐
+    │           │
+┌───▼───┐   ┌───▼───┐
+│Worker1│   │Worker2│   (Scanner Workers)
+└───┬───┘   └───┬───┘
+    │           │
+    └─────┬─────┘
+          │
+    ┌─────▼─────┐
+    │ PostgreSQL│  (Managed DB)
+    └───────────┘
+
+Changes Required:
+
+1. CONTAINERIZE APPLICATION:
+   Use Docker Compose for easy scaling:
+   
+   docker-compose up --scale app=4 --scale worker=4
+
+2. SEPARATE WORKERS:
+   Move scanner execution to dedicated worker servers
+   using the existing scanner_queue.py Redis-backed queue
+
+3. DATABASE READ REPLICAS:
+   Add PostgreSQL read replica for analytics queries
+
+4. CDN FOR STATIC ASSETS:
+   Use Cloudflare to cache static files
+
+Capacity:
+- 150-250 concurrent active users
+- 32+ simultaneous scans
+- ~30,000 scans/month
+
+Cost: ~€300-500/month
+
+
+---------------------------------------------------------------------------
+TIER 4: ENTERPRISE (500-2000+ Customers) - €100K+ MRR
+---------------------------------------------------------------------------
+
+Infrastructure:
+- Kubernetes cluster (Hetzner Cloud or AWS EKS)
+- Auto-scaling app pods (2-10 replicas)
+- Auto-scaling worker pods (4-20 replicas)
+- Managed PostgreSQL with read replicas
+- Redis Cluster (3+ nodes)
+- Object storage for large files (S3/Hetzner Object Storage)
+- CDN (Cloudflare Pro)
+
+Changes Required:
+
+1. KUBERNETES DEPLOYMENT:
+   - Helm charts for DataGuardian Pro
+   - Horizontal Pod Autoscaler (HPA)
+   - Pod Disruption Budgets
+
+2. DATABASE SHARDING:
+   - Partition scans table by organization_id
+   - Archive old data to cold storage
+
+3. ASYNC PROCESSING:
+   - All scans via job queue
+   - Webhook notifications on completion
+   - Background report generation
+
+4. MULTI-REGION:
+   - EU-West (Netherlands) - Primary
+   - EU-Central (Germany) - Failover
+   - GDPR data residency compliance
+
+Capacity:
+- 500+ concurrent active users
+- 100+ simultaneous scans
+- 100,000+ scans/month
+
+Cost: ~€1,000-3,000/month
+
+
+================================================================================
+QUICK SCALING ACTIONS (Do Now)
+================================================================================
+
+These changes can be made immediately without infrastructure changes:
+
+1. INCREASE SCANNER CAPACITY:
+   File: services/scanner_queue.py
+   Change: MAX_CONCURRENT_JOBS = 16  (from 8)
+
+2. INCREASE REDIS CONNECTIONS:
+   File: utils/redis_cache.py
+   Change: max_connections=50  (from 20)
+
+3. ENABLE CACHING:
+   Already implemented - verify Redis is running
+
+4. OPTIMIZE DATABASE:
+   Run: CREATE INDEX IF NOT EXISTS idx_scans_user ON scans(user_id);
+        CREATE INDEX IF NOT EXISTS idx_scans_org ON scans(organization_id);
+        CREATE INDEX IF NOT EXISTS idx_scans_date ON scans(created_at);
+
+
+================================================================================
+MONITORING & ALERTS
+================================================================================
+
+Set up monitoring to know when to scale:
+
+1. SERVER METRICS (Hetzner Cloud Console):
+   - CPU > 70% sustained → Add more workers
+   - Memory > 80% → Upgrade server or add instance
+   - Disk > 80% → Clean old data or expand storage
+
+2. APPLICATION METRICS:
+   - Response time > 3 seconds → Add app instances
+   - Queue length > 50 → Add workers
+   - Failed scans > 5% → Investigate errors
+
+3. DATABASE METRICS:
+   - Connections > 80% of max → Increase pool
+   - Query time > 1 second → Add indexes
+   - Storage > 80% → Archive old data
+
+Recommended Tools:
+- Uptime Robot (free) - Uptime monitoring
+- Netdata (free) - Server metrics
+- Sentry (free tier) - Error tracking
+
+
+================================================================================
+COST COMPARISON BY TIER
+================================================================================
+
+TIER          CUSTOMERS    MRR TARGET    INFRA COST    MARGIN
+---------------------------------------------------------------------------
+Starter       10-50        €5-15K        €50-100       95%+
+Growth        50-200       €15-50K       €100-200      99%+
+Scale         200-500      €50-100K      €300-500      99%+
+Enterprise    500-2000     €100K+        €1,000-3,000  97%+
+
+Your target of €25K MRR with ~50 customers at €500/month average
+requires TIER 2 (Growth) infrastructure - approximately €150/month.
+
+
+================================================================================
+SUMMARY
+================================================================================
+
+CURRENT CAPACITY:
+- 20-30 concurrent users
+- 50-100 daily customers
+- Sufficient for initial launch and first €10K MRR
+
+TO REACH €25K MRR:
+1. Upgrade to CX41 server (€35/month)
+2. Increase MAX_CONCURRENT_JOBS to 16
+3. Add connection pooling
+4. Consider load balancer if needed
+
+SCALING IS EASY:
+- Containerized architecture ready
+- Redis-backed job queue supports distributed workers
+- Database can be migrated to managed service anytime
+
+No major architecture changes needed until 500+ customers!
+
+================================================================================
