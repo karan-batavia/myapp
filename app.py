@@ -1287,10 +1287,11 @@ def render_landing_page():
         """, unsafe_allow_html=True)
         
         # AI Act deepfake detection banner
-        st.markdown("""
+        synthetic_banner_text = _('landing.synthetic_media_banner', 'Detect deepfakes, AI-generated content & manipulated media with EU AI Act 2025 compliance verification')
+        st.markdown(f"""
         <div style="margin-top:1rem;padding:0.8rem 1rem;background:linear-gradient(135deg,#6A1B9A08,#E91E6308);border-radius:8px;border-left:3px solid #6A1B9A;">
             <span style="font-size:0.85rem;color:#1B2559;">
-                <strong>🛡️ Synthetic Media Protection:</strong> Detect deepfakes, AI-generated content & manipulated media with EU AI Act 2025 compliance verification
+                <strong>🛡️ Synthetic Media Protection:</strong> {synthetic_banner_text}
             </span>
         </div>
         """, unsafe_allow_html=True)

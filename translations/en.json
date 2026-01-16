@@ -4,6 +4,9 @@
     "subtitle": "Enterprise Privacy Compliance Platform",
     "tagline": "Be Audit-Ready in Minutes, Not Months. Full GDPR & EU AI Act Protection."
   },
+  "landing": {
+    "synthetic_media_banner": "Detect deepfakes, AI-generated content & manipulated media with EU AI Act 2025 compliance verification"
+  },
   "sidebar": {
     "navigation": "Navigation",
     "sign_in": "Sign In",
