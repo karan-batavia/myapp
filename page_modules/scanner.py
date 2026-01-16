@@ -6472,13 +6472,13 @@ def render_enterprise_connector_interface(region: str, username: str):
     
     # Manually load Dutch translations if the language is nl
     if current_lang == 'nl':
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         nl_file = os.path.join(base_dir, 'translations', 'nl.json')
         try:
             with open(nl_file, 'r', encoding='utf-8') as f:
                 _translations['nl'] = json.load(f)
         except Exception as e:
-            st.write(f"DEBUG: Error loading Dutch translations: {e}")
+            pass  # Silent fail - translations will fall back to English
     
     # Explicitly set the language and reinitialize
     set_language(current_lang)
