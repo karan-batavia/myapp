@@ -1,0 +1,439 @@
+================================================================================
+DATAGUARDIAN PRO - COMPLETE STRIPE PRICING SETUP GUIDE
+================================================================================
+Last Updated: January 2026
+Target: €25K MRR | Netherlands & EU Market
+================================================================================
+
+
+PART 1: STRIPE DASHBOARD CONFIGURATION
+================================================================================
+
+STEP 1: LOG INTO STRIPE
+--------------------------------------------------------------------------------
+1. Go to https://dashboard.stripe.com
+2. Sign in with your account
+3. IMPORTANT: Start in TEST MODE (toggle in top-right corner shows "Test mode")
+
+
+STEP 2: CREATE YOUR 3 PRODUCTS
+--------------------------------------------------------------------------------
+
+PRODUCT 1: STARTER TIER
+------------------------
+1. Click "Product catalog" in left sidebar (or More → Product catalog)
+2. Click blue "Add product" button
+
+Fill in:
+   Name:        DataGuardian Pro - Starter
+   Description: Essential GDPR & privacy scanning for small businesses.
+                Includes Code Scanner, Document Scanner, and Website Scanner.
+                Perfect for freelancers and small teams up to 5 users.
+
+Add Monthly Price:
+   - Click "Add a price"
+   - Amount: 500
+   - Currency: EUR
+   - Billing period: Monthly (Recurring)
+   - Click "Add price"
+
+Add Yearly Price (2 months free):
+   - Click "Add another price"
+   - Amount: 5000
+   - Currency: EUR
+   - Billing period: Yearly (Recurring)
+   - Click "Add price"
+
+3. Click "Save product"
+
+
+PRODUCT 2: PROFESSIONAL TIER
+----------------------------
+1. Click "Add product" again
+
+Fill in:
+   Name:        DataGuardian Pro - Professional
+   Description: Advanced compliance with AI-powered risk analysis.
+                Includes all Starter features plus Database Scanner,
+                Image Scanner (OCR), DPIA Assessment, and Smart Risk Analyzer.
+                For growing businesses up to 25 users.
+
+Add Monthly Price:
+   - Amount: 1000
+   - Currency: EUR
+   - Billing period: Monthly
+
+Add Yearly Price:
+   - Amount: 10000
+   - Currency: EUR
+   - Billing period: Yearly
+
+2. Click "Save product"
+
+
+PRODUCT 3: ENTERPRISE TIER
+--------------------------
+1. Click "Add product" again
+
+Fill in:
+   Name:        DataGuardian Pro - Enterprise
+   Description: Complete privacy compliance suite with all 12 scanners.
+                Includes Deepfake Detection, EU AI Act 2025 Calculator,
+                Repository Scanner (PCI-DSS), SOC2/NIS2 Compliance,
+                Enterprise Connectors (Microsoft 365, Exact Online, Google),
+                and dedicated priority support. Unlimited users.
+
+Add Monthly Price:
+   - Amount: 2000
+   - Currency: EUR
+   - Billing period: Monthly
+
+Add Yearly Price:
+   - Amount: 20000
+   - Currency: EUR
+   - Billing period: Yearly
+
+2. Click "Save product"
+
+
+STEP 3: COPY YOUR PRICE IDS
+--------------------------------------------------------------------------------
+After creating all products, you need to copy the Price IDs:
+
+1. Go to "Product catalog"
+2. Click on "DataGuardian Pro - Starter"
+3. Scroll to "Pricing" section
+4. Each price shows an ID like: price_1ABC123DEF456GHI789...
+5. Click the copy icon next to each Price ID
+
+RECORD YOUR PRICE IDS HERE:
+---------------------------
+
+STARTER:
+  Monthly Price ID: price_________________________________
+  Yearly Price ID:  price_________________________________
+
+PROFESSIONAL:
+  Monthly Price ID: price_________________________________
+  Yearly Price ID:  price_________________________________
+
+ENTERPRISE:
+  Monthly Price ID: price_________________________________
+  Yearly Price ID:  price_________________________________
+
+
+PART 2: ENABLE PAYMENT METHODS FOR NETHERLANDS
+================================================================================
+
+STEP 4: ENABLE iDEAL (REQUIRED FOR NETHERLANDS)
+--------------------------------------------------------------------------------
+iDEAL is the #1 payment method in Netherlands - 60% of online payments!
+
+1. Click "Settings" (gear icon, bottom-left)
+2. Under "Payments", click "Payment methods"
+3. Find "iDEAL" in the list
+4. Click "Turn on" next to iDEAL
+5. Click "Save"
+
+
+STEP 5: ENABLE SEPA DIRECT DEBIT (REQUIRED FOR SUBSCRIPTIONS)
+--------------------------------------------------------------------------------
+SEPA allows automatic monthly charges for EU subscriptions.
+
+1. Still in Payment methods
+2. Find "SEPA Direct Debit"
+3. Click "Turn on"
+4. You may need to provide additional business information
+5. Click "Save"
+
+
+STEP 6: ENABLE BANCONTACT (OPTIONAL - FOR BELGIUM)
+--------------------------------------------------------------------------------
+1. Find "Bancontact" in Payment methods
+2. Click "Turn on"
+3. Click "Save"
+
+
+STEP 7: ENABLE CREDIT/DEBIT CARDS
+--------------------------------------------------------------------------------
+Cards should be enabled by default. Verify:
+- Visa
+- Mastercard
+- American Express (optional)
+
+
+PART 3: CONFIGURE WEBHOOKS
+================================================================================
+
+STEP 8: SET UP WEBHOOK ENDPOINT
+--------------------------------------------------------------------------------
+Webhooks allow Stripe to notify your app about payments.
+
+1. Go to "Developers" in left sidebar
+2. Click "Webhooks"
+3. Click "Add endpoint"
+
+Configure endpoint:
+   Endpoint URL: https://dataguardianpro.nl/webhook/stripe
+   
+   (If using Replit: https://your-repl-name.replit.app/webhook/stripe)
+
+4. Click "Select events" and choose:
+   
+   REQUIRED EVENTS:
+   ✓ checkout.session.completed
+   ✓ customer.subscription.created
+   ✓ customer.subscription.updated
+   ✓ customer.subscription.deleted
+   ✓ invoice.paid
+   ✓ invoice.payment_failed
+   ✓ payment_intent.succeeded
+   ✓ payment_intent.payment_failed
+
+5. Click "Add endpoint"
+
+
+STEP 9: COPY WEBHOOK SIGNING SECRET
+--------------------------------------------------------------------------------
+1. Click on your newly created webhook endpoint
+2. Find "Signing secret" section
+3. Click "Reveal" to see the secret
+4. Copy it (starts with "whsec_...")
+
+RECORD YOUR WEBHOOK SECRET:
+---------------------------
+Webhook Signing Secret: whsec_________________________________
+
+
+PART 4: GET YOUR API KEYS
+================================================================================
+
+STEP 10: COPY API KEYS
+--------------------------------------------------------------------------------
+1. Go to "Developers" → "API keys"
+2. Copy both keys:
+
+TEST MODE KEYS (for testing):
+   Publishable key: pk_test_________________________________
+   Secret key:      sk_test_________________________________
+
+LIVE MODE KEYS (for real payments - get these later):
+   Publishable key: pk_live_________________________________
+   Secret key:      sk_live_________________________________
+
+
+PART 5: UPDATE YOUR APP CONFIGURATION
+================================================================================
+
+STEP 11: ADD SECRETS TO YOUR APP
+--------------------------------------------------------------------------------
+Add these environment variables/secrets to your app:
+
+REQUIRED SECRETS:
+-----------------
+STRIPE_SECRET_KEY=sk_test_xxxxxxxxxxxxxxxxxxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxxxxxxxxxxxxxxxxxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxxxxxxxxxxxxxxxxxxx
+
+PRICE IDS:
+----------
+STRIPE_PRICE_STARTER_MONTHLY=price_xxxxxxxxxxxxxxxxxxxx
+STRIPE_PRICE_STARTER_YEARLY=price_xxxxxxxxxxxxxxxxxxxx
+STRIPE_PRICE_PROFESSIONAL_MONTHLY=price_xxxxxxxxxxxxxxxxxxxx
+STRIPE_PRICE_PROFESSIONAL_YEARLY=price_xxxxxxxxxxxxxxxxxxxx
+STRIPE_PRICE_ENTERPRISE_MONTHLY=price_xxxxxxxxxxxxxxxxxxxx
+STRIPE_PRICE_ENTERPRISE_YEARLY=price_xxxxxxxxxxxxxxxxxxxx
+
+
+PART 6: TEST YOUR SETUP
+================================================================================
+
+STEP 12: TEST IN TEST MODE
+--------------------------------------------------------------------------------
+1. Make sure "Test mode" is ON in Stripe dashboard
+2. In your app, go to Pricing page
+3. Select a plan and click Subscribe
+4. Use these test card numbers:
+
+   SUCCESSFUL PAYMENT:
+   Card Number: 4242 4242 4242 4242
+   Expiry:      12/28 (any future date)
+   CVC:         123 (any 3 digits)
+
+   DECLINED PAYMENT (to test error handling):
+   Card Number: 4000 0000 0000 0002
+
+   iDEAL TEST (Netherlands):
+   Select iDEAL → Choose any test bank → Authorize
+
+5. Complete a test payment
+6. Check your webhook logs: Developers → Webhooks → Select endpoint → Recent events
+
+
+STEP 13: VERIFY WEBHOOK DELIVERY
+--------------------------------------------------------------------------------
+1. In Stripe: Developers → Webhooks → Your endpoint
+2. Click on a recent event
+3. Check "Response" - should show 200 OK
+4. If failed, check error message and fix
+
+
+PART 7: GO LIVE (WHEN READY)
+================================================================================
+
+STEP 14: SWITCH TO LIVE MODE
+--------------------------------------------------------------------------------
+ONLY DO THIS WHEN READY FOR REAL PAYMENTS!
+
+1. Toggle "Test mode" OFF (top-right corner)
+2. Go to "Product catalog"
+3. Your products should already be there (or copy from test)
+4. Go to "Developers" → "API keys"
+5. Copy your LIVE keys
+6. Update your app with live keys:
+   - STRIPE_SECRET_KEY=sk_live_xxxxxxxxxxxxxxxxxxxx
+   - STRIPE_PUBLISHABLE_KEY=pk_live_xxxxxxxxxxxxxxxxxxxx
+
+
+STEP 15: ADD LIVE WEBHOOK
+--------------------------------------------------------------------------------
+1. Go to Developers → Webhooks (in LIVE mode)
+2. Add the same endpoint URL
+3. Select the same events
+4. Copy the NEW signing secret
+5. Update STRIPE_WEBHOOK_SECRET in your app
+
+
+PART 8: PRICING SUMMARY
+================================================================================
+
+TIER COMPARISON:
+--------------------------------------------------------------------------------
+
+| Feature                    | Starter | Professional | Enterprise |
+|----------------------------|---------|--------------|------------|
+| Monthly Price              | €500    | €1,000       | €2,000     |
+| Yearly Price (2 mo free)   | €5,000  | €10,000      | €20,000    |
+|----------------------------|---------|--------------|------------|
+| Code Scanner               | ✓       | ✓            | ✓          |
+| Document Scanner           | ✓       | ✓            | ✓          |
+| Website Scanner            | ✓       | ✓            | ✓          |
+| Database Scanner           | -       | ✓            | ✓          |
+| Image Scanner (OCR)        | -       | ✓            | ✓          |
+| DPIA Assessment            | -       | ✓            | ✓          |
+| Smart Risk Analyzer        | -       | ✓            | ✓          |
+| Deepfake Detection         | -       | -            | ✓          |
+| EU AI Act Calculator       | -       | -            | ✓          |
+| Repository Scanner         | -       | -            | ✓          |
+| SOC2/NIS2 Compliance       | -       | -            | ✓          |
+| Enterprise Connectors      | -       | -            | ✓          |
+| API Access                 | -       | ✓            | ✓          |
+| Priority Support           | -       | -            | ✓          |
+| Users Included             | 5       | 25           | Unlimited  |
+|----------------------------|---------|--------------|------------|
+| TARGET CUSTOMERS           | SMB     | Mid-Market   | Enterprise |
+
+
+MRR TARGET CALCULATION:
+--------------------------------------------------------------------------------
+Target: €25,000 MRR
+
+Option A (Starter focused):
+  50 × Starter (€500)     = €25,000
+
+Option B (Balanced mix):
+  20 × Starter (€500)     = €10,000
+  10 × Professional       = €10,000
+   3 × Enterprise         =  €6,000
+  Total                   = €26,000
+
+Option C (Enterprise focused):
+  10 × Starter            =  €5,000
+   5 × Professional       =  €5,000
+   8 × Enterprise         = €16,000
+  Total                   = €26,000
+
+
+PART 9: TROUBLESHOOTING
+================================================================================
+
+COMMON ISSUES:
+--------------------------------------------------------------------------------
+
+1. WEBHOOK NOT RECEIVING EVENTS
+   - Check endpoint URL is correct and publicly accessible
+   - Verify SSL certificate is valid (must be HTTPS)
+   - Check webhook signing secret matches
+
+2. PAYMENT FAILS WITH "INVALID API KEY"
+   - Verify you're using the correct key (test vs live)
+   - Check key is properly set in environment variables
+   - Keys should not have quotes or extra spaces
+
+3. iDEAL NOT SHOWING
+   - Ensure iDEAL is enabled in Payment methods
+   - iDEAL only shows for EUR currency
+   - Customer's billing country should be Netherlands
+
+4. SUBSCRIPTION NOT ACTIVATING
+   - Check webhook is receiving events
+   - Verify checkout.session.completed event is processed
+   - Check your app's subscription handling logic
+
+
+PART 10: COMPLIANCE NOTES
+================================================================================
+
+GDPR COMPLIANCE FOR PAYMENTS:
+--------------------------------------------------------------------------------
+- Stripe is GDPR compliant and acts as a data processor
+- Customer payment data is stored securely by Stripe
+- You should have a privacy policy mentioning Stripe
+- Money-back guarantee: 30 days (as stated on pricing page)
+
+DUTCH CONSUMER LAW:
+--------------------------------------------------------------------------------
+- Right to cancel subscription at any time
+- Clear pricing displayed including BTW (VAT)
+- Refund policy must be clearly stated
+
+VAT/BTW CONSIDERATIONS:
+--------------------------------------------------------------------------------
+- B2B sales: Reverse charge may apply for EU customers
+- B2C sales: Dutch BTW rate (21%) applies
+- Consider using Stripe Tax for automatic tax calculation
+
+
+================================================================================
+QUICK REFERENCE CHECKLIST
+================================================================================
+
+□ Created 3 products in Stripe (Starter, Professional, Enterprise)
+□ Added monthly and yearly prices to each product
+□ Copied all 6 Price IDs
+□ Enabled iDEAL payment method
+□ Enabled SEPA Direct Debit
+□ Created webhook endpoint
+□ Copied webhook signing secret
+□ Added all secrets to app environment
+□ Tested payment in test mode
+□ Verified webhook receiving events
+□ (Later) Switched to live mode
+□ (Later) Updated with live API keys
+
+================================================================================
+SUPPORT RESOURCES
+================================================================================
+
+Stripe Documentation:     https://docs.stripe.com
+iDEAL Setup Guide:        https://stripe.com/docs/payments/ideal
+SEPA Setup Guide:         https://stripe.com/docs/payments/sepa-debit
+Webhooks Guide:           https://stripe.com/docs/webhooks
+Testing Guide:            https://stripe.com/docs/testing
+
+Stripe Support:           https://support.stripe.com
+DataGuardian Pro Support: support@dataguardianpro.nl
+
+================================================================================
+END OF GUIDE
+================================================================================
