@@ -1285,6 +1285,15 @@ def render_landing_page():
             <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1565C0;white-space:nowrap;">🇪🇺 Dutch Data Sovereignty</span>
         </div>
         """, unsafe_allow_html=True)
+        
+        # AI Act deepfake detection banner
+        st.markdown("""
+        <div style="margin-top:1rem;padding:0.8rem 1rem;background:linear-gradient(135deg,#6A1B9A08,#E91E6308);border-radius:8px;border-left:3px solid #6A1B9A;">
+            <span style="font-size:0.85rem;color:#1B2559;">
+                <strong>🛡️ Synthetic Media Protection:</strong> Detect deepfakes, AI-generated content & manipulated media with EU AI Act 2025 compliance verification
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
     
     with hero_col2:
         # Professional image with stats overlay
