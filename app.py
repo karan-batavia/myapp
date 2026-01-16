@@ -1280,9 +1280,9 @@ def render_landing_page():
         # Quick stats pills
         st.markdown("""
         <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
-            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1B2559;white-space:nowrap;">⚡ Scan in &lt;60s</span>
-            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#4CAF50;white-space:nowrap;">🎯 99.7% Accuracy</span>
-            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1565C0;white-space:nowrap;">🔒 EU Hosted</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1B2559;white-space:nowrap;">⚡ Save Hours Per Audit</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#4CAF50;white-space:nowrap;">🎯 Never Miss a Violation</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1565C0;white-space:nowrap;">🇪🇺 Dutch Data Sovereignty</span>
         </div>
         """, unsafe_allow_html=True)
     
