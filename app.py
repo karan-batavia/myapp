@@ -1403,7 +1403,7 @@ def render_landing_page():
                 _('landing.scanner.code_f1', 'Prevent credential leaks'),
                 _('landing.scanner.code_f2', 'Dutch BSN auto-detection'),
                 _('landing.scanner.code_f3', 'GDPR violation alerts'),
-                _('landing.scanner.code_f4', 'CI/CD integration ready')
+                _('landing.scanner.code_f4', 'Scan entire Git repositories')
             ],
             "color": "#4CAF50",
             "image": "attached_assets/stock_images/developer_laptop_cod_d6588fe5.jpg"
