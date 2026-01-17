@@ -194,12 +194,24 @@ NGINXEOF
             sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf
             
             # Also update sites-available config for HTTPS
-            if [ -f /etc/nginx/sites-available/dataguardianpro.nl ]; then
+            SITE_CONF="/etc/nginx/sites-available/dataguardianpro.nl"
+            if [ -f "$SITE_CONF" ]; then
               echo "🔧 Adding webhook to HTTPS site config..."
-              # Check if webhook location already exists
-              if ! grep -q "location /webhook/" /etc/nginx/sites-available/dataguardianpro.nl; then
-                # Add webhook location before the main location / block
-                sudo sed -i '/location \/ {/i\    location /webhook/ {\n        proxy_pass http://127.0.0.1:5001;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header Stripe-Signature $http_stripe_signature;\n        proxy_buffering off;\n    }\n' /etc/nginx/sites-available/dataguardianpro.nl
+              if ! grep -q "location /webhook/" "$SITE_CONF"; then
+                # Create webhook block file
+                cat > /tmp/webhook_block.txt << 'WEBHOOKBLOCK'
+    location /webhook/ {
+        proxy_pass http://127.0.0.1:5001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Stripe-Signature $http_stripe_signature;
+        proxy_buffering off;
+    }
+
+WEBHOOKBLOCK
+                # Insert before "location / {"
+                sudo awk '/location \/ \{/ && !done {system("cat /tmp/webhook_block.txt"); done=1} {print}' "$SITE_CONF" > /tmp/site_conf_new
+                sudo cp /tmp/site_conf_new "$SITE_CONF"
                 echo "✅ Webhook added to HTTPS config"
               else
                 echo "✅ Webhook already in HTTPS config"
