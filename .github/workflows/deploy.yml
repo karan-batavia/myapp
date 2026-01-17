@@ -193,29 +193,11 @@ http {
 NGINXEOF
             sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf
             
-            # Also update sites-available config for HTTPS
-            SITE_CONF="/etc/nginx/sites-available/dataguardianpro.nl"
-            if [ -f "$SITE_CONF" ]; then
-              echo "🔧 Adding webhook to HTTPS site config..."
-              if ! grep -q "location /webhook/" "$SITE_CONF"; then
-                # Create webhook block file
-                cat > /tmp/webhook_block.txt << 'WEBHOOKBLOCK'
-    location /webhook/ {
-        proxy_pass http://127.0.0.1:5001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header Stripe-Signature $http_stripe_signature;
-        proxy_buffering off;
-    }
-
-WEBHOOKBLOCK
-                # Insert before "location / {"
-                sudo awk '/location \/ \{/ && !done {system("cat /tmp/webhook_block.txt"); done=1} {print}' "$SITE_CONF" > /tmp/site_conf_new
-                sudo cp /tmp/site_conf_new "$SITE_CONF"
-                echo "✅ Webhook added to HTTPS config"
-              else
-                echo "✅ Webhook already in HTTPS config"
-              fi
+            # Update HTTPS site config - add webhook if missing
+            if [ -f /etc/nginx/sites-available/dataguardianpro.nl ] && ! grep -q "location /webhook/" /etc/nginx/sites-available/dataguardianpro.nl; then
+              echo "🔧 Adding webhook to HTTPS config..."
+              sudo sed -i 's|location / {|location /webhook/ { proxy_pass http://127.0.0.1:5001; proxy_buffering off; }\n    location / {|' /etc/nginx/sites-available/dataguardianpro.nl
+              echo "✅ Webhook added"
             fi
             
             sudo nginx -t && sudo systemctl reload nginx
