@@ -145,15 +145,55 @@ jobs:
             
             # Update nginx config for webhook routing
             echo "🔧 Updating nginx configuration..."
-            # Download latest nginx.conf from GitHub
-            curl -sL "https://raw.githubusercontent.com/${{ github.repository }}/main/nginx.conf" -o /tmp/nginx.conf
-            if [ -f /tmp/nginx.conf ] && [ -s /tmp/nginx.conf ]; then
-              sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf
-              sudo nginx -t && sudo systemctl reload nginx
-              echo "✅ Nginx configuration updated from GitHub"
-            else
-              echo "⚠️ Failed to download nginx.conf from GitHub"
-            fi
+            cat > /tmp/nginx.conf << 'NGINXEOF'
+events {
+    worker_connections 1024;
+}
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+    gzip on;
+    upstream dataguardian_app {
+        server 127.0.0.1:5000;
+    }
+    upstream webhook_server {
+        server 127.0.0.1:5001;
+    }
+    server {
+        listen 80;
+        server_name dataguardianpro.nl www.dataguardianpro.nl 45.81.35.202;
+        client_max_body_size 100M;
+        location /.well-known/acme-challenge/ {
+            root /var/www/html;
+        }
+        location /health {
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        location /webhook/ {
+            proxy_pass http://webhook_server;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Stripe-Signature $http_stripe_signature;
+            proxy_buffering off;
+        }
+        location / {
+            proxy_pass http://dataguardian_app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_read_timeout 86400;
+        }
+    }
+}
+NGINXEOF
+            sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "✅ Nginx configuration updated"
             
             # Verify webhook server is accessible
             echo "🔍 Testing webhook endpoint..."
