@@ -117,9 +117,51 @@ jobs:
               -e DATAGUARDIAN_MASTER_KEY="${{ secrets.DATAGUARDIAN_MASTER_KEY }}" \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
               -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
+              -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
               -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
               -e DISABLE_RLS=true \
               ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest
+            
+            # Start Webhook Server container
+            echo "📦 Starting Webhook Server..."
+            docker stop webhook-server 2>/dev/null || true
+            docker rm webhook-server 2>/dev/null || true
+            docker run -d \
+              --name webhook-server \
+              --network dataguardian-net \
+              --restart unless-stopped \
+              -p 5001:5001 \
+              -e ENVIRONMENT=production \
+              -e PYTHONUNBUFFERED=1 \
+              -e REDIS_URL="redis://redis-cache:6379/0" \
+              -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
+              -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
+              -e DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/myapp:latest \
+              python services/webhook_server.py
+            
+            echo "✅ Webhook server started on port 5001"
+            
+            # Update nginx config for webhook routing
+            echo "🔧 Updating nginx configuration..."
+            if [ -f "${{ secrets.APP_DIR }}/nginx.conf" ]; then
+              sudo cp ${{ secrets.APP_DIR }}/nginx.conf /etc/nginx/nginx.conf
+              sudo nginx -t && sudo systemctl reload nginx
+              echo "✅ Nginx configuration updated"
+            else
+              echo "⚠️ nginx.conf not found in app directory"
+            fi
+            
+            # Verify webhook server is accessible
+            echo "🔍 Testing webhook endpoint..."
+            sleep 3
+            if curl -s http://localhost:5001/webhook/health | grep -q "healthy"; then
+              echo "✅ Webhook server is healthy"
+            else
+              echo "⚠️ Webhook server health check failed"
+              docker logs webhook-server --tail=10
+            fi
             
             if [ $? -ne 0 ]; then
               echo "❌ Failed to start container"
