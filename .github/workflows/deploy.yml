@@ -145,12 +145,14 @@ jobs:
             
             # Update nginx config for webhook routing
             echo "🔧 Updating nginx configuration..."
-            if [ -f "${{ secrets.APP_DIR }}/nginx.conf" ]; then
-              sudo cp ${{ secrets.APP_DIR }}/nginx.conf /etc/nginx/nginx.conf
+            # Download latest nginx.conf from GitHub
+            curl -sL "https://raw.githubusercontent.com/${{ github.repository }}/main/nginx.conf" -o /tmp/nginx.conf
+            if [ -f /tmp/nginx.conf ] && [ -s /tmp/nginx.conf ]; then
+              sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf
               sudo nginx -t && sudo systemctl reload nginx
-              echo "✅ Nginx configuration updated"
+              echo "✅ Nginx configuration updated from GitHub"
             else
-              echo "⚠️ nginx.conf not found in app directory"
+              echo "⚠️ Failed to download nginx.conf from GitHub"
             fi
             
             # Verify webhook server is accessible
