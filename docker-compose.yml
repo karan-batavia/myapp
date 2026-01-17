@@ -60,6 +60,32 @@ services:
       timeout: 10s
       retries: 5
 
+  # Stripe Webhook Server
+  webhook:
+    build: .
+    container_name: dataguardian-webhook
+    command: python services/webhook_server.py
+    ports:
+      - "5001:5001"
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://dataguardian:secure_password_2024@postgres:5432/dataguardian_prod
+      - REDIS_URL=redis://redis:6379/0
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+    networks:
+      - dataguardian-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/webhook/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Redis Cache
   redis:
     image: redis:7-alpine
