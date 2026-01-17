@@ -1,0 +1,159 @@
+an 18 00:37:05 vishaalnoord7.retzor.com nginx[3691372]: nginx: [emerg] unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+Jan 18 00:37:05 vishaalnoord7.retzor.com systemd[1]: nginx.service: Control process exited, code=exited, status=1/FAILURE
+Jan 18 00:37:05 vishaalnoord7.retzor.com systemd[1]: Reload failed for A high performance web server and a reverse proxy server.
+root@vishaalnoord7:/opt/dataguardian# # First, check webhook server works locally
+root@vishaalnoord7:/opt/dataguardian# curl http://localhost:5001/webhook/health
+.working
+
+# Create the fixed config
+sudo tee /etc/nginx/nginx.conf << 'EOF'
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent"';
+
+    access_log /var{"service":"DataGuardian Pro Webhook Server","status":"healthy","version":"1.0.0"}
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian# # Backup current working config
+root@vishaalnoord7:/opt/dataguardian# sudo cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.working
+
+# Create the fixed config
+sudo tee /etc/nginx/nginx.conf << 'EOF'
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent"';
+
+    access_log /varroot@vishaalnoord7:/opt/dataguardian# /log/nginx/access.log main;
+xt/css application/json application/javascript text/xml;
+
+    upstream dataguardian_app {
+        server 127.0-bash: /log/nginx/access.log: No such file or directory
+.0.1:5000;
+    }
+
+    upstream webhook_server {
+    root@vishaalnoord7:/opt/dataguardian#     error_log /var/log/nginx/error.log;
+-bash: error_log: command not found
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#     gzip on;
+gzip: on: No such file or directory
+root@vishaalnoord7:/opt/dataguardian#     gzip_types text/plain text/css application/json application/javascript text/xml;
+-bash: gzip_types: command not found
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#     upstream dataguardian_app {
+-bash: upstream: command not found
+root@vishaalnoord7:/opt/dataguardian#         server 127.0.0.1:5000;
+-bash: server: command not found
+root@vishaalnoord7:/opt/dataguardian#     }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#     upstream webhook_server {
+-bash: upstream: command not found
+root@vishaalnoord7:/opt/dataguardian#         server 127.0.0.1:5001;
+  listen 80;
+        server_name dataguardianpro.nl www-bash: server: command not found
+root@vishaalnoord7:/opt/dataguardian#     }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#     server {
+-bash: server: command not found
+root@vishaalnoord7:/opt/dataguardian#         listen 80;
+-bash: listen: command not found
+root@vishaalnoord7:/opt/dataguardian#         server_name dataguardianpro.nl www.dataguardianpro.nl 45.81.35.202;
+body_size 100M;
+
+        location /health {
+         -bash: server_name: command not found
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#         client_max_body_size 100M;
+-bash: client_max_body_size: command not found
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#         location /health {
+-bash: location: command not found
+root@vishaalnoord7:/opt/dataguardian#             return 200 "healthy\n";
+-bash: return: too many arguments
+root@vishaalnoord7:/opt/dataguardian#             add_header Content-Type text/plain;
+    proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Stripe-Signature $http_stripe_signature;
+            proxy_buffering off;
+        }
+
+        location / {
+            proxy_pass ht-bash: add_header: command not found
+tp://dataguardian_app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgroot@vishaalnoord7:/opt/dataguardian#         }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian#
+         proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $prroot@vishaalnoord7:/opt/dataguardian#         location /webhook/ {
+oxy_add_x_forwarded_for;
+            proxy_set_hea-bash: location: command not found
+der X-Forwarded-Proto $scheme;
+            proxy_reroot@vishaalnoord7:/opt/dataguardian#             proxy_pass http://webhook_server;
+-bash: proxy_pass: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header Host $host;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header X-Real-IP $remote_addr;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header Stripe-Signature $http_stripe_signature;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_buffering off;
+-bash: proxy_buffering: command not found
+root@vishaalnoord7:/opt/dataguardian#         }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian#         location / {
+-bash: location: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_pass http://dataguardian_app;
+-bash: proxy_pass: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_http_version 1.1;
+-bash: proxy_http_version: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header Upgrade $http_upgrade;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header Connection "upgrade";
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header Host $host;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header X-Real-IP $remote_addr;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_set_header X-Forwarded-Proto $scheme;
+-bash: proxy_set_header: command not found
+root@vishaalnoord7:/opt/dataguardian#             proxy_read_timeout 86400;
+-bash: proxy_read_timeout: command not found
+root@vishaalnoord7:/opt/dataguardian#         }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian#     }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian# }
+-bash: syntax error near unexpected token `}'
+root@vishaalnoord7:/opt/dataguardian# EOF
+-bash: EOF: command not found
+root@vishaalnoord7:/opt/dataguardian#
+root@vishaalnoord7:/opt/dataguardian# # Test config
+root@vishaalnoord7:/opt/dataguardian# sudo nginx -t
+
+# If test passes, reload
+sudo systemctl reload nginx
+
+# Test webhook
+curl https://dataguardianpro.nl/webhook/healthnginx: [emerg] unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+nginx: configuration file /etc/nginx/nginx.conf test failed
