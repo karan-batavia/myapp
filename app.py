@@ -1274,6 +1274,9 @@ def render_landing_page():
                     <span style="color: #E65100; font-weight: 600; font-size: 0.8rem;">SOC2 & NIS2</span>
                 </div>
             </div>
+            <p style="font-size: 0.95rem; color: #1B2559; line-height: 1.5; margin: 1rem 0 0 0; padding: 0.75rem 1rem; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 8px; border-left: 3px solid #4CAF50;">
+                <strong style="color: #2E7D32;">💰</strong> {_('landing.value_proposition', 'Achieve 100% EU compliance while reducing privacy audit costs by 60-80% and avoiding fines up to €35M or 7% of global turnover.')}
+            </p>
         </div>
         """, unsafe_allow_html=True)
         
@@ -1304,7 +1307,7 @@ def render_landing_page():
         st.markdown("""
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #4CAF5012, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5020;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">12</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">13</div>
                 <div style="font-size: 0.65rem; color: #666;">Scanners</div>
             </div>
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #FF980012, #FF980005); border-radius: 8px; border: 1px solid #FF980020;">
