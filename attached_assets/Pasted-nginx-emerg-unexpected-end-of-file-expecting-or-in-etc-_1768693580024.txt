@@ -1,0 +1,98 @@
+nginx: [emerg] unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+nginx: configuration file /etc/nginx/nginx.conf test failed
+root@vishaalnoord7:/opt/dataguardian# sudo nano /etc/nginx/nginx.conf
+root@vishaalnoord7:/opt/dataguardian# cat /etc/nginx/nginx.conf
+404: Not Foundroot@vishaalnoord7:/opt/dataguardian# cat > /tmp/nginx.conf << 'EOF'
+> events {
+>     worker_connections 1024;
+> }
+> http {
+>     include       /etc/nginx/mime.types;
+>     default_type  application/octet-stream;
+>     access_log /var/log/nginx/access.log;
+>     error_log /var/log/nginx/error.log;
+>     gzip on;
+>     upstream dataguardian_app {
+>         server 127.0.0.1:5000;
+>     }
+>     upstream webhook_server {
+>         server 127.0.0.1:5001;
+>     }
+>     server {
+>         listen 80;
+>         server_name dataguardianpro.nl www.dataguardianpro.nl 45.81.35.202;
+>         client_max_body_size 100M;
+>         location /health {
+>             return 200 "healthy\n";
+>             add_header Content-Type text/plain;
+>         }
+>         location /webhook/ {
+>             proxy_pass http://webhook_server;
+>             proxy_set_header Host $host;
+>             proxy_set_header X-Real-IP $remote_addr;
+>             proxy_set_header Stripe-Signature $http_stripe_signature;
+>             proxy_buffering off;
+>         }
+>         location / {
+>             proxy_pass http://dataguardian_app;
+>             proxy_http_version 1.1;
+>             proxy_set_header Upgrade $http_upgrade;
+>             proxy_set_header Connection "upgrade";
+>             proxy_set_header Host $host;
+>             proxy_set_header X-Real-IP $remote_addr;
+>             proxy_read_timeout 86400;
+>         }
+>     }
+> }
+> EOF
+& sudo systemctl reload nginx && curl https://dataguroot@vishaalnoord7:/opt/dataguardian# sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf && sudo nginx -t && sudo systemctl reload nginx && curl https://dataguardianpro.nl/webhook/health
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+<!--
+ Copyright (c) Streamlit Inc. (2018-2022) Snowflake Inc. (2022-2026)
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <link rel="shortcut icon" href="./favicon.png" />
+    <link
+      rel="preload"
+      href="./static/media/SourceSansVF-Upright.ttf.BsWL4Kly.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
+    <title>Streamlit</title>
+
+    <!-- initialize window.prerenderReady to false and then set to true in React app when app is ready for indexing -->
+    <script>
+      window.prerenderReady = false
+    </script>
+    <script type="module" crossorigin src="./static/js/index.DFT9nVK6.js"></script>
+    <link rel="stylesheet" crossorigin href="./static/css/index.BUP6fTcR.css">
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+  </body>
+</html>
+root@vishaalnoord7:/opt/dataguardian#
