@@ -1,0 +1,29 @@
+root@vishaalnoord7:/opt/dataguardian# sudo cp /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf 2>/dev/null || echo "No backup found"
+No backup found
+root@vishaalnoord7:/opt/dataguardian# sudo systemctl status nginx
+● nginx.service - A high performance web server and a reverse proxy server
+     Loaded: loaded (/lib/systemd/system/nginx.service; enabled; vendor preset: enabled)
+     Active: active (running) since Wed 2025-12-31 20:40:01 CET; 2 weeks 3 days ago
+       Docs: man:nginx(8)
+    Process: 2179167 ExecStartPre=/usr/sbin/nginx -t -q -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+    Process: 2179173 ExecStart=/usr/sbin/nginx -g daemon on; master_process on; (code=exited, status=0/SUCCESS)
+    Process: 3691372 ExecReload=/usr/sbin/nginx -g daemon on; master_process on; -s reload (code=exited, status=1/FAILURE)
+   Main PID: 2179174 (nginx)
+      Tasks: 3 (limit: 2220)
+     Memory: 11.8M
+        CPU: 1min 41.859s
+     CGroup: /system.slice/nginx.service
+             ├─2179174 "nginx: master process /usr/sbin/nginx -g daemon on; master_process on;"
+             ├─3623974 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+             └─3623975 "nginx: worker process" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" "" ""
+
+Jan 16 06:25:02 vishaalnoord7.retzor.com nginx[3541246]: nginx: [warn] conflicting server name "www.dataguardianpro.nl" on 0.0.0.0:80, ignored
+Jan 16 06:25:02 vishaalnoord7.retzor.com systemd[1]: Reloaded A high performance web server and a reverse proxy server.
+Jan 17 06:25:03 vishaalnoord7.retzor.com systemd[1]: Reloading A high performance web server and a reverse proxy server...
+Jan 17 06:25:03 vishaalnoord7.retzor.com nginx[3623971]: nginx: [warn] conflicting server name "dataguardianpro.nl" on 0.0.0.0:80, ignored
+Jan 17 06:25:03 vishaalnoord7.retzor.com nginx[3623971]: nginx: [warn] conflicting server name "www.dataguardianpro.nl" on 0.0.0.0:80, ignored
+Jan 17 06:25:03 vishaalnoord7.retzor.com systemd[1]: Reloaded A high performance web server and a reverse proxy server.
+Jan 18 00:37:05 vishaalnoord7.retzor.com systemd[1]: Reloading A high performance web server and a reverse proxy server...
+Jan 18 00:37:05 vishaalnoord7.retzor.com nginx[3691372]: nginx: [emerg] unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+Jan 18 00:37:05 vishaalnoord7.retzor.com systemd[1]: nginx.service: Control process exited, code=exited, status=1/FAILURE
+Jan 18 00:37:05 vishaalnoord7.retzor.com systemd[1]: Reload failed for A high performance web server and a reverse proxy server.
