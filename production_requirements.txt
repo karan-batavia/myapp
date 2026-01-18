@@ -68,7 +68,7 @@ markdown2>=2.4.0
 
 # Document Generation & Export
 weasyprint>=60.0
-svglib>=1.5.1
+# svglib removed - not used and causes pycairo build issues
 
 # Web Framework Extensions
 flask>=2.3.0
