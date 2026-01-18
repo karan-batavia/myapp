@@ -8,7 +8,7 @@
     "active": true,
     "license_tier": "enterprise",
     "created_at": null,
-    "last_login": "2026-01-17T11:38:10.899947",
+    "last_login": "2026-01-18T13:39:50.748774",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -73,7 +73,7 @@
     "active": true,
     "license_tier": "enterprise",
     "created_at": null,
-    "last_login": "2026-01-17T11:38:10.899947",
+    "last_login": "2026-01-18T13:39:50.748774",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -384,6 +384,19 @@
     "role": "user",
     "active": true,
     "license_tier": "trial",
+    "created_at": null,
+    "last_login": null,
+    "failed_attempts": 0,
+    "locked_until": null
+  },
+  "vishu314@rediffmail.com": {
+    "user_id": "179",
+    "username": "vishu314@rediffmail.com",
+    "email": "vishu314@rediffmail.com",
+    "password_hash": "$2b$12$J/0y6mqEeft5iqi75StHmOVBEo8GAm16dtPT7fdA/Yed3IRHc6MVS",
+    "role": "user",
+    "active": true,
+    "license_tier": "professional",
     "created_at": null,
     "last_login": null,
     "failed_attempts": 0,
