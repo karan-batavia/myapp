@@ -27,9 +27,9 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY production_requirements.txt requirements.txt
 
-# Install pycairo first (needs pkg-config in PATH), then rest of dependencies
+# Install pycairo with pre-built wheel, then rest of dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir meson ninja pycairo && \
+    pip install --no-cache-dir "pycairo==1.26.0" && \
     pip install --no-cache-dir -r requirements.txt && \
     pip cache purge && \
     apt-get clean && \
