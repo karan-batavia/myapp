@@ -8,11 +8,16 @@ import sys
 import json
 import logging
 
-# Add current directory to path for imports
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path for imports (when run as module)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
 from flask import Flask, request, jsonify
-from webhook_handler import process_stripe_webhook
+from services.webhook_handler import process_stripe_webhook
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
