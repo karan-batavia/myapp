@@ -716,7 +716,7 @@ def render_settings_page():
                     st.info("No active subscription. Upgrade to unlock premium features.")
                     if st.button("🚀 Upgrade Now", type="primary", key="billing_upgrade"):
                         st.session_state['show_pricing'] = True
-                        st.rerun()
+                        st.switch_page("pages/6_Pricing.py")
             
             with col2:
                 st.markdown("#### Policies")

@@ -269,6 +269,7 @@ class LicenseIntegration:
                         st.warning("⚠️ Running low on scans!")
                     if st.button("Upgrade Now", key="upgrade_sidebar"):
                         st.session_state['show_pricing'] = True
+                        st.switch_page("pages/6_Pricing.py")
             return
         
         # Fall back to global license info
