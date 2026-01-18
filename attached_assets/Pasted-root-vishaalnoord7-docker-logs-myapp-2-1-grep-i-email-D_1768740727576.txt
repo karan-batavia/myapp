@@ -1,0 +1,20 @@
+root@vishaalnoord7:~# docker logs myapp 2>&1 | grep -i email
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+WARNING:services.email_service:Email service disabled - SMTP credentials not configured
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
