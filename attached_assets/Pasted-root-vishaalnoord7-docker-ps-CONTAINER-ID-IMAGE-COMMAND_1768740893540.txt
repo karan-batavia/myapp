@@ -1,0 +1,44 @@
+root@vishaalnoord7:~# docker ps
+CONTAINER ID   IMAGE                        COMMAND                  CREATED             STATUS                         PORTS                                                   NAMES
+befc8bbfe1d4   vishaalnoord7/myapp:latest   "python services/web…"   About an hour ago   Up About an hour (unhealthy)   5000/tcp, 0.0.0.0:5001->5001/tcp, [::]:5001->5001/tcp   webhook-server
+1761385f56e9   vishaalnoord7/myapp:latest   "streamlit run app.p…"   About an hour ago   Up About an hour (healthy)     0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp             myapp
+85933978372c   redis:7-alpine               "docker-entrypoint.s…"   2 weeks ago         Up 2 weeks                     6379/tcp                                                redis-cache
+f4540556c30c   redis:7-alpine               "docker-entrypoint.s…"   3 months ago        Up 3 months                    0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp             dataguardian-redis
+root@vishaalnoord7:~# docker logs myapp 2>&1 | grep -i email
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+WARNING:services.email_service:Email service disabled - SMTP credentials not configured
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=1, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_OPEN, cookie=0, name='email_service.py'>
+DEBUG:watchdog.observers.inotify_buffer:in-event <InotifyEvent: src_path=b'/app/services/email_service.py', wd=21, mask=IN_CLOSE_NOWRITE, cookie=0, name='email_service.py'>
+root@vishaalnoord7:~# docker restart myapp
+myapp
+root@vishaalnoord7:~# docker logs --tail=50 myapp 2>&1 | grep -i email
+root@vishaalnoord7:~# docker ps
+CONTAINER ID   IMAGE                        COMMAND                  CREATED             STATUS                         PORTS                                                   NAMES
+befc8bbfe1d4   vishaalnoord7/myapp:latest   "python services/web…"   About an hour ago   Up About an hour (unhealthy)   5000/tcp, 0.0.0.0:5001->5001/tcp, [::]:5001->5001/tcp   webhook-server
+1761385f56e9   vishaalnoord7/myapp:latest   "streamlit run app.p…"   About an hour ago   Up 32 seconds (healthy)        0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp             myapp
+85933978372c   redis:7-alpine               "docker-entrypoint.s…"   2 weeks ago         Up 2 weeks                     6379/tcp                                                redis-cache
+f4540556c30c   redis:7-alpine               "docker-entrypoint.s…"   3 months ago        Up 3 months                    0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp             dataguardian-redis
+root@vishaalnoord7:~# docker ps
+CONTAINER ID   IMAGE                        COMMAND                  CREATED             STATUS                         PORTS                                                   NAMES
+befc8bbfe1d4   vishaalnoord7/myapp:latest   "python services/web…"   About an hour ago   Up About an hour (unhealthy)   5000/tcp, 0.0.0.0:5001->5001/tcp, [::]:5001->5001/tcp   webhook-server
+1761385f56e9   vishaalnoord7/myapp:latest   "streamlit run app.p…"   About an hour ago   Up 37 seconds (healthy)        0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp             myapp
+85933978372c   redis:7-alpine               "docker-entrypoint.s…"   2 weeks ago         Up 2 weeks                     6379/tcp                                                redis-cache
+f4540556c30c   redis:7-alpine               "docker-entrypoint.s…"   3 months ago        Up 3 months                    0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp             dataguardian-redis
+root@vishaalnoord7:~# docker logs --tail=50 myapp 2>&1 | grep -i email
+root@vishaalnoord7:~# docker logs --tail=50 myapp 2>&1 | grep -i email
+root@vishaalnoord7:~# docker logs --tail=50 myapp 2>&1 | grep -i email
