@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies including pycairo via apt
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -11,17 +11,9 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     postgresql-client \
     tesseract-ocr \
-    pkg-config \
-    libcairo2-dev \
-    libgirepository1.0-dev \
-    libffi-dev \
-    libpango1.0-dev \
-    libgdk-pixbuf2.0-dev \
     libxml2-dev \
     libxmlsec1-dev \
     libxmlsec1-openssl \
-    python3-cairo \
-    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
