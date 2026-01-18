@@ -1,0 +1,62 @@
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+root@vishaalnoord7:/opt/dataguardian# sudo systemctl start nginx
+root@vishaalnoord7:/opt/dataguardian# sudo tail -20 /var/log/nginx/error.log
+2026/01/18 00:32:18 [emerg] 3690848#3690848: invalid value "must-revalidate" in /etc/nginx/nginx.conf:21
+2026/01/18 00:36:21 [emerg] 3691298#3691298: unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+2026/01/18 00:37:05 [emerg] 3691372#3691372: unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+2026/01/18 00:39:59 [emerg] 3691703#3691703: unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+2026/01/18 00:41:39 [emerg] 3691861#3691861: unexpected end of file, expecting ";" or "}" in /etc/nginx/nginx.conf:1
+2026/01/18 00:45:35 [notice] 3692254#3692254: signal process started
+2026/01/18 01:06:43 [notice] 3694682#3694682: signal process started
+root@vishaalnoord7:/opt/dataguardian# ls -la /etc/nginx/sites-enabled/
+total 8
+drwxr-xr-x 2 root root 4096 Nov 15 00:05 .
+drwxr-xr-x 8 root root 4096 Jan 18 00:43 ..
+lrwxrwxrwx 1 root root   39 Nov 15 00:05 dataguardian -> /etc/nginx/sites-available/dataguardian
+lrwxrwxrwx 1 root root   45 Sep 30 23:34 dataguardianpro.nl -> /etc/nginx/sites-available/dataguardianpro.nl
+root@vishaalnoord7:/opt/dataguardian# grep "sites-enabled" /etc/nginx/nginx.conf
+root@vishaalnoord7:/opt/dataguardian# cat /etc/nginx/nginx.conf
+events {
+    worker_connections 1024;
+}
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    access_log /var/log/nginx/access.log;
+    error_log /var/log/nginx/error.log;
+    gzip on;
+    upstream dataguardian_app {
+        server 127.0.0.1:5000;
+    }
+    upstream webhook_server {
+        server 127.0.0.1:5001;
+    }
+    server {
+        listen 80;
+        server_name dataguardianpro.nl www.dataguardianpro.nl 45.81.35.202;
+        client_max_body_size 100M;
+        location /.well-known/acme-challenge/ {
+            root /var/www/html;
+        }
+        location /health {
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        location /webhook/ {
+            proxy_pass http://webhook_server;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header Stripe-Signature $http_stripe_signature;
+            proxy_buffering off;
+        }
+        location / {
+            proxy_pass http://dataguardian_app;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_read_timeout 86400;
+        }
+    }
+}
