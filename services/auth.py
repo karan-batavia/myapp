@@ -9,6 +9,11 @@ from typing import Dict, Any, Optional, Tuple, List, Set
 from cryptography.fernet import Fernet
 import base64
 
+try:
+    from email_service import email_service
+except ImportError:
+    from services.email_service import email_service
+
 # Enhanced secure user store with encryption
 # Users are stored encrypted in JSON file with proper security measures
 USERS_FILE = "users.json"
@@ -543,6 +548,18 @@ def create_user(username: str, password: str, role: str, email: str) -> Tuple[bo
     }
     
     _save_users(users)
+    
+    # Send welcome email to new user
+    try:
+        email_service.send_welcome_email({
+            'username': username,
+            'email': email,
+            'role': role
+        })
+        logger.info(f"Welcome email sent to new user: {username}")
+    except Exception as e:
+        logger.warning(f"Failed to send welcome email to {username}: {str(e)}")
+    
     return True, "User created successfully"
 
 def update_user(username: str, updates: Dict[str, Any]) -> bool:

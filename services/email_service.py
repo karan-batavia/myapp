@@ -502,6 +502,101 @@ class EmailService:
             logger.error(f"Failed to send email to {to_email}: {str(e)}")
             return False
     
+    def send_welcome_email(self, user_data: Dict[str, Any]) -> bool:
+        """
+        Send welcome email after user registration
+        
+        Args:
+            user_data: User details (username, email, role)
+            
+        Returns:
+            True if email sent successfully
+        """
+        if not self.enabled:
+            logger.warning("Email service not configured - skipping welcome email")
+            return False
+        
+        try:
+            subject = "Welcome to DataGuardian Pro - Registration Confirmed"
+            email_body = self._create_welcome_email_html(user_data)
+            
+            return self._send_email(
+                to_email=user_data['email'],
+                subject=subject,
+                html_body=email_body
+            )
+            
+        except Exception as e:
+            logger.error(f"Failed to send welcome email: {str(e)}")
+            return False
+    
+    def _create_welcome_email_html(self, user_data: Dict[str, Any]) -> str:
+        """Create HTML email for welcome/registration confirmation"""
+        username = user_data.get('username', 'User')
+        role = user_data.get('role', 'user').title()
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: #1976d2; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; background: #f9f9f9; }}
+                .footer {{ padding: 20px; text-align: center; font-size: 12px; color: #666; }}
+                .details {{ background: white; padding: 15px; margin: 15px 0; border-radius: 5px; }}
+                .button {{ background: #1976d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; }}
+                .feature-list {{ list-style: none; padding: 0; }}
+                .feature-list li {{ padding: 8px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Welcome to DataGuardian Pro</h1>
+                    <p>Your Registration is Complete</p>
+                </div>
+                
+                <div class="content">
+                    <h2>Hello {username}!</h2>
+                    <p>Thank you for registering with DataGuardian Pro - Europe's leading privacy compliance platform.</p>
+                    
+                    <div class="details">
+                        <p><strong>Username:</strong> {username}</p>
+                        <p><strong>Account Type:</strong> {role}</p>
+                        <p><strong>Registration Date:</strong> {datetime.now().strftime('%B %d, %Y')}</p>
+                    </div>
+                    
+                    <h3>What You Can Do Now</h3>
+                    <ul class="feature-list">
+                        <li>🔍 <strong>PII Scanning:</strong> Detect personal data across documents, databases, and code</li>
+                        <li>🇳🇱 <strong>Netherlands Compliance:</strong> 100% GDPR + UAVG coverage</li>
+                        <li>🤖 <strong>EU AI Act:</strong> Complete 113-article compliance checking</li>
+                        <li>📊 <strong>Professional Reports:</strong> Generate audit-ready compliance reports</li>
+                        <li>🛡️ <strong>Deepfake Detection:</strong> Audio/video authenticity verification</li>
+                    </ul>
+                    
+                    <p style="text-align: center; margin: 30px 0;">
+                        <a href="https://dataguardianpro.nl" class="button">Start Using DataGuardian Pro</a>
+                    </p>
+                    
+                    <h3>Need Help?</h3>
+                    <p>Our team is here to support you. Contact us at {self.company_info['email']} for any questions.</p>
+                </div>
+                
+                <div class="footer">
+                    <p><strong>{self.company_info['name']}</strong></p>
+                    <p>{self.company_info['address']}, {self.company_info['postal_code']} {self.company_info['city']}</p>
+                    <p>VAT: {self.company_info['vat_number']} | KvK: {self.company_info['kvk_number']}</p>
+                    <p>This email was sent because you registered at DataGuardian Pro</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    
     def test_email_configuration(self) -> Dict[str, Any]:
         """Test email configuration and return status"""
         if not self.enabled:
