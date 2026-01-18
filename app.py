@@ -1307,7 +1307,7 @@ def render_landing_page():
         st.markdown("""
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #4CAF5012, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5020;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">12+5</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">17</div>
                 <div style="font-size: 0.65rem; color: #666;">Scanners</div>
             </div>
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #FF980012, #FF980005); border-radius: 8px; border: 1px solid #FF980020;">
