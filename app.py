@@ -916,7 +916,7 @@ def render_freemium_registration():
                         if success:
                             try:
                                 user_service.update_user(user_id, {
-                                    'metadata': {'free_scans_remaining': 1, 'trial_started': True}
+                                    'metadata': {'free_scans_remaining': 3, 'trial_started': True}
                                 })
                             except Exception:
                                 pass
@@ -927,7 +927,7 @@ def render_freemium_registration():
                                 'user_id': user_id,
                                 'user_role': 'user',
                                 'license_tier': 'trial',
-                                'free_scans_remaining': 1,
+                                'free_scans_remaining': 3,
                                 'subscription_plan': 'trial',
                                 'show_registration': False
                             })
@@ -952,9 +952,9 @@ def render_freemium_registration():
                             st.markdown("### ✅ Welcome to DataGuardian Pro!")
                             st.info(f"""
 **Your Account:** {email}  
-**Plan:** Free Trial (1 scan included)  
+**Plan:** Free Trial (3 scans included)  
 
-Use the navigation menu to start your free scan. Upgrade anytime for unlimited scanning.
+Use the navigation menu to start your free scans. Upgrade anytime for unlimited scanning.
                             """)
                             
                             st.rerun()
@@ -1161,25 +1161,26 @@ def render_landing_page():
                                     tier = row[0] or 'trial'
                                     st.session_state.license_tier = tier
                                     logging.info(f"Set license_tier to: {tier} for user {auth_result.username}")
-                                    # Load free scans from metadata (default 0 for existing users)
+                                    # Load free scans from metadata (default 3 for trial users)
                                     if row[1]:
                                         try:
                                             metadata = row[1] if isinstance(row[1], dict) else json.loads(str(row[1])) if row[1] else {}
-                                            st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', 0)
+                                            default_scans = 3 if tier == 'trial' else 0
+                                            st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', default_scans)
                                         except:
-                                            st.session_state.free_scans_remaining = 0
+                                            st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
                                     else:
-                                        st.session_state.free_scans_remaining = 0
+                                        st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
                                 else:
                                     st.session_state.license_tier = 'trial'
-                                    st.session_state.free_scans_remaining = 0
+                                    st.session_state.free_scans_remaining = 3
                             else:
                                 st.session_state.license_tier = 'trial'
-                                st.session_state.free_scans_remaining = 0
+                                st.session_state.free_scans_remaining = 3
                         except Exception as e:
                             logging.error(f"Error loading license tier: {e}")
                             st.session_state.license_tier = 'trial'
-                            st.session_state.free_scans_remaining = 0
+                            st.session_state.free_scans_remaining = 3
                         
                         # Track successful login
                         try:
@@ -1207,7 +1208,7 @@ def render_landing_page():
         st.write(f"**{_('register.new_user', 'New user?')}**")
         
         # Freemium trial button
-        if st.button("🚀 Try Free Scan", type="primary", help="Get 1 free AI Model scan (€41 value)"):
+        if st.button("🚀 Try Free Scan", type="primary", help="Get 3 free scans to test the platform"):
             st.session_state['show_registration'] = True
             
         # Full registration button
