@@ -77,3 +77,4 @@ npm-debug.log
 
 # Exclude test keys (use real keys from environment)
 test_keys.txt
+attached_assets/
