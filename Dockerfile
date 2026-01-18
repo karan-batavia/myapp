@@ -14,6 +14,14 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libcairo2-dev \
     libgirepository1.0-dev \
+    libffi-dev \
+    libpango1.0-dev \
+    libgdk-pixbuf2.0-dev \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libxmlsec1-openssl \
+    meson \
+    ninja-build \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
