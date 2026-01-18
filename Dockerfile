@@ -3,7 +3,7 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies including pycairo via apt
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
@@ -20,15 +20,16 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     libxmlsec1-dev \
     libxmlsec1-openssl \
-    meson \
-    ninja-build \
+    python3-cairo \
+    cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY production_requirements.txt requirements.txt
 
-# Install Python dependencies (optimize for space)
+# Install pycairo first (needs pkg-config in PATH), then rest of dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir meson ninja pycairo && \
     pip install --no-cache-dir -r requirements.txt && \
     pip cache purge && \
     apt-get clean && \
