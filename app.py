@@ -50,6 +50,25 @@ if st.query_params.get("health") == "check":
     st.write("OK")
     st.stop()
 
+# Handle payment success callback - update user session after successful payment
+if st.query_params.get("payment_success") == "true":
+    session_id = st.query_params.get("session_id")
+    if session_id and 'user' in st.session_state:
+        try:
+            import stripe
+            import os
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+            checkout_session = stripe.checkout.Session.retrieve(session_id)
+            if checkout_session.payment_status == "paid":
+                plan_tier = checkout_session.metadata.get('plan_tier', 'professional')
+                st.session_state['user']['license_tier'] = plan_tier
+                st.session_state['license_tier'] = plan_tier
+                st.success(f"Payment successful! Your account has been upgraded to {plan_tier.title()}.")
+        except Exception:
+            pass
+    st.query_params.clear()
+    st.rerun()
+
 # Core imports - keep essential imports minimal
 import logging
 import uuid
