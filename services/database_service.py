@@ -250,20 +250,25 @@ class DatabaseService:
             return False
         
         try:
+            # Extract user_id from metadata
+            metadata = subscription.get('metadata', {})
+            user_id = metadata.get('user_id')
+            
             with self.get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute("""
                         INSERT INTO subscription_records 
                         (subscription_id, customer_id, customer_email, plan_name, status,
                          amount, currency, billing_interval, current_period_start,
-                         current_period_end, metadata)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                         current_period_end, metadata, user_id)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT (subscription_id)
                         DO UPDATE SET
                             status = EXCLUDED.status,
                             amount = EXCLUDED.amount,
                             current_period_start = EXCLUDED.current_period_start,
                             current_period_end = EXCLUDED.current_period_end,
+                            user_id = COALESCE(EXCLUDED.user_id, subscription_records.user_id),
                             updated_at = CURRENT_TIMESTAMP
                     """, (
                         subscription['id'],
@@ -276,10 +281,11 @@ class DatabaseService:
                         subscription.get('interval', 'month'),
                         datetime.fromtimestamp(subscription.get('current_period_start', 0)),
                         datetime.fromtimestamp(subscription.get('current_period_end', 0)),
-                        json.dumps(subscription.get('metadata', {}))
+                        json.dumps(metadata),
+                        int(user_id) if user_id else None
                     ))
                 conn.commit()
-                logger.info(f"Subscription record stored: {subscription['id']}")
+                logger.info(f"Subscription record stored: {subscription['id']} for user_id: {user_id}")
                 return True
                 
         except Exception as e:
