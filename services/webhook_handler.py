@@ -285,15 +285,37 @@ class WebhookHandler:
         """Handle new subscription creation"""
         subscription_id = subscription.get('id')
         customer_id = subscription.get('customer')
+        metadata = subscription.get('metadata', {})
         
         logger.info(f"New subscription created: {subscription_id}")
+        
+        # Extract user_id and plan_tier from metadata
+        user_id = metadata.get('user_id')
+        plan_tier = metadata.get('plan_tier', 'professional')
         
         # Set up subscription in database
         self._create_subscription_record(subscription)
         
+        # CRITICAL: Update the user's license_tier in platform_users
+        if user_id:
+            success = self._update_user_license_tier(user_id, plan_tier, subscription_id)
+            if success:
+                logger.info(f"User {user_id} upgraded to {plan_tier} tier")
+            else:
+                logger.error(f"Failed to upgrade user {user_id} to {plan_tier}")
+        else:
+            # Try to find user by customer email
+            customer_email = subscription.get('customer_email')
+            if customer_email:
+                success = self._update_user_license_tier_by_email(customer_email, plan_tier, subscription_id)
+                if success:
+                    logger.info(f"User {customer_email} upgraded to {plan_tier} tier")
+                else:
+                    logger.error(f"Failed to upgrade user {customer_email} to {plan_tier}")
+        
         return {
             'status': 'success',
-            'message': 'Subscription created',
+            'message': 'Subscription created and user upgraded',
             'subscription_id': subscription_id
         }
     
@@ -317,6 +339,7 @@ class WebhookHandler:
         """Handle subscription cancellation"""
         subscription_id = subscription.get('id')
         customer_id = subscription.get('customer')
+        metadata = subscription.get('metadata', {})
         
         logger.info(f"Subscription cancelled: {subscription_id}")
         
@@ -324,11 +347,33 @@ class WebhookHandler:
         if subscription_id:
             self._cancel_subscription_record(subscription_id)
         
+        # Downgrade user to trial tier
+        user_id = metadata.get('user_id')
+        if user_id:
+            self._update_user_license_tier(user_id, 'trial', None)
+            logger.info(f"User {user_id} downgraded to trial tier after cancellation")
+        
         return {
             'status': 'success',
             'message': 'Subscription cancelled',
             'subscription_id': subscription_id
         }
+    
+    def _update_user_license_tier(self, user_id: str, tier: str, subscription_id: Optional[str]) -> bool:
+        """Update user's license tier in platform_users table"""
+        try:
+            return database_service.update_user_license_tier(user_id, tier, subscription_id)
+        except Exception as e:
+            logger.error(f"Error updating user license tier: {str(e)}")
+            return False
+    
+    def _update_user_license_tier_by_email(self, email: str, tier: str, subscription_id: Optional[str]) -> bool:
+        """Update user's license tier by email"""
+        try:
+            return database_service.update_user_license_tier_by_email(email, tier, subscription_id)
+        except Exception as e:
+            logger.error(f"Error updating user license tier by email: {str(e)}")
+            return False
     
     # Helper methods for database operations (implement based on your database)
     def _store_payment_record(self, payment_record: Dict[str, Any]) -> None:

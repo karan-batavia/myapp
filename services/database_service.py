@@ -602,5 +602,77 @@ class DatabaseService:
             logger.error(f"Failed to update subscription record: {str(e)}")
             return False
 
+    def update_user_license_tier(self, user_id: str, tier: str, subscription_id: Optional[str] = None) -> bool:
+        """Update user's license tier in platform_users table by user_id"""
+        if not self.enabled:
+            return False
+        
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    # Update the user's license tier and subscription info
+                    cursor.execute("""
+                        UPDATE platform_users 
+                        SET license_tier = %s,
+                            metadata = COALESCE(metadata, '{}'::jsonb) || %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = %s
+                    """, (
+                        tier,
+                        json.dumps({
+                            'subscription_id': subscription_id,
+                            'tier_updated_at': datetime.now().isoformat()
+                        }),
+                        int(user_id)
+                    ))
+                conn.commit()
+                
+                if cursor.rowcount > 0:
+                    logger.info(f"User {user_id} license tier updated to {tier}")
+                    return True
+                else:
+                    logger.warning(f"No user found with id {user_id}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Failed to update user license tier: {str(e)}")
+            return False
+    
+    def update_user_license_tier_by_email(self, email: str, tier: str, subscription_id: Optional[str] = None) -> bool:
+        """Update user's license tier in platform_users table by email"""
+        if not self.enabled:
+            return False
+        
+        try:
+            with self.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    # Update the user's license tier and subscription info by email
+                    cursor.execute("""
+                        UPDATE platform_users 
+                        SET license_tier = %s,
+                            metadata = COALESCE(metadata, '{}'::jsonb) || %s,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE email = %s
+                    """, (
+                        tier,
+                        json.dumps({
+                            'subscription_id': subscription_id,
+                            'tier_updated_at': datetime.now().isoformat()
+                        }),
+                        email
+                    ))
+                conn.commit()
+                
+                if cursor.rowcount > 0:
+                    logger.info(f"User {email} license tier updated to {tier}")
+                    return True
+                else:
+                    logger.warning(f"No user found with email {email}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Failed to update user license tier by email: {str(e)}")
+            return False
+
 # Global database service instance
 database_service = DatabaseService()
