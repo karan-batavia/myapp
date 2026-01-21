@@ -812,11 +812,13 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
         price_cents = int(pricing.get('price', 0) * 100)
         interval = "year" if billing_cycle == BillingCycle.ANNUAL else "month"
         
-        base_url = os.getenv('REPLIT_DEV_DOMAIN')
-        if base_url:
-            base_url = f"https://{base_url}"
-        else:
-            base_url = os.getenv('BASE_URL', 'http://localhost:5000')
+        base_url = os.getenv('BASE_URL')
+        if not base_url:
+            replit_domain = os.getenv('REPLIT_DEV_DOMAIN')
+            if replit_domain:
+                base_url = f"https://{replit_domain}"
+            else:
+                base_url = 'https://dataguardianpro.nl'
         
         payment_methods = ["card"]
         if country_code == "NL":

@@ -223,10 +223,8 @@ def get_base_url() -> str:
                 first_domain = replit_domains.split(',')[0].strip()
                 base_url = f"https://{first_domain}"
             else:
-                # Last resort fallback - use localhost with warning
-                port = os.getenv('PORT', '5000')
-                base_url = f"http://localhost:{port}"
-                st.warning("⚠️ Using localhost URL - Set BASE_URL environment variable for production")
+                # Last resort fallback - use production domain
+                base_url = 'https://dataguardianpro.nl'
     
     return base_url.rstrip('/')
 
