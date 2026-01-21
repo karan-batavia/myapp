@@ -117,8 +117,30 @@ class WebhookHandler:
         metadata = session.get('metadata', {})
         
         logger.info(f"Checkout completed: {session_id} for {customer_email}")
+        logger.info(f"Checkout metadata: {metadata}")
         
-        # Extract scan details from metadata
+        # Extract subscription plan details from metadata (for tier upgrades)
+        user_id = metadata.get('user_id')
+        plan_tier = metadata.get('plan_tier')
+        
+        # CRITICAL: Update user's license tier if this is a subscription checkout
+        if plan_tier:
+            logger.info(f"Subscription checkout detected - upgrading to tier: {plan_tier}")
+            
+            if user_id:
+                success = self._update_user_license_tier(user_id, plan_tier, session_id)
+                if success:
+                    logger.info(f"User {user_id} upgraded to {plan_tier} tier via checkout")
+                else:
+                    logger.error(f"Failed to upgrade user {user_id} to {plan_tier} via checkout")
+            elif customer_email:
+                success = self._update_user_license_tier_by_email(customer_email, plan_tier, session_id)
+                if success:
+                    logger.info(f"User {customer_email} upgraded to {plan_tier} tier via checkout")
+                else:
+                    logger.error(f"Failed to upgrade user {customer_email} to {plan_tier} via checkout")
+        
+        # Extract scan details from metadata (for per-scan payments)
         scan_type = metadata.get('scan_type', 'Unknown')
         country_code = metadata.get('country_code', 'NL')
         
@@ -130,6 +152,8 @@ class WebhookHandler:
             'currency': session.get('currency', 'eur'),
             'scan_type': scan_type,
             'country_code': country_code,
+            'plan_tier': plan_tier,
+            'user_id': user_id,
             'status': 'completed',
             'timestamp': datetime.utcnow().isoformat(),
             'payment_method': session.get('payment_method_types', ['unknown'])[0]
@@ -138,15 +162,16 @@ class WebhookHandler:
         # Store payment record (in production, save to database)
         self._store_payment_record(payment_record)
         
-        # Trigger scan processing
-        self._trigger_scan_processing(payment_record)
+        # Trigger scan processing (only if this is a scan payment, not subscription)
+        if not plan_tier:
+            self._trigger_scan_processing(payment_record)
         
         # Send confirmation email
         self._send_payment_confirmation(payment_record)
         
         return {
             'status': 'success',
-            'message': f'Payment processed for {scan_type}',
+            'message': f'Payment processed for {plan_tier or scan_type}',
             'payment_id': session_id
         }
     
