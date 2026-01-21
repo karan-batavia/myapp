@@ -53,21 +53,40 @@ if st.query_params.get("health") == "check":
 # Handle payment success callback - update user session after successful payment
 if st.query_params.get("payment_success") == "true":
     session_id = st.query_params.get("session_id")
-    if session_id and 'user' in st.session_state:
+    _payment_success = False
+    _plan_tier = "professional"
+    
+    if session_id:
         try:
             import stripe
             import os
             stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
             checkout_session = stripe.checkout.Session.retrieve(session_id)
             if checkout_session.payment_status == "paid":
-                plan_tier = checkout_session.metadata.get('plan_tier', 'professional')
-                st.session_state['user']['license_tier'] = plan_tier
-                st.session_state['license_tier'] = plan_tier
-                st.success(f"Payment successful! Your account has been upgraded to {plan_tier.title()}.")
-        except Exception:
-            pass
+                # Check both 'tier' and 'plan_tier' for compatibility
+                _plan_tier = checkout_session.metadata.get('plan_tier') or checkout_session.metadata.get('tier', 'professional')
+                _payment_success = True
+                
+                # Update session state if user is logged in
+                if 'user' in st.session_state:
+                    st.session_state['user']['license_tier'] = _plan_tier
+                    st.session_state['license_tier'] = _plan_tier
+                
+                # Store success flag for display after rerun
+                st.session_state['payment_just_completed'] = True
+                st.session_state['payment_new_tier'] = _plan_tier
+        except Exception as e:
+            import logging
+            logging.error(f"Payment success handler error: {str(e)}")
+    
     st.query_params.clear()
     st.rerun()
+
+# Show payment success message if just completed
+if st.session_state.get('payment_just_completed'):
+    _tier = st.session_state.pop('payment_new_tier', 'professional')
+    st.session_state.pop('payment_just_completed', None)
+    st.success(f"Payment successful! Your account has been upgraded to {_tier.title()}.")
 
 # Core imports - keep essential imports minimal
 import logging

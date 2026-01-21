@@ -847,12 +847,21 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
             customer_email=customer_data['email'],
             metadata={
                 "tier": tier.value,
+                "plan_tier": tier.value,
+                "user_id": str(st.session_state.get('user', {}).get('id', '')),
                 "billing_cycle": billing_cycle.value,
                 "company_name": customer_data['company_name'][:500],
                 "first_name": customer_data['first_name'][:100],
                 "last_name": customer_data['last_name'][:100],
                 "country": country_code,
                 "vat_number": (customer_data.get('vat_number') or "")[:50],
+            },
+            subscription_data={
+                "metadata": {
+                    "tier": tier.value,
+                    "plan_tier": tier.value,
+                    "user_id": str(st.session_state.get('user', {}).get('id', '')),
+                }
             },
             billing_address_collection="required",
             tax_id_collection={"enabled": True},
