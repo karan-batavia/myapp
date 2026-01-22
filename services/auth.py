@@ -17,6 +17,7 @@ except ImportError:
 # Enhanced secure user store with encryption
 # Users are stored encrypted in JSON file with proper security measures
 USERS_FILE = "users.json"
+SECURE_USERS_FILE = "secure_users.json"
 USERS_ENCRYPTION_KEY_FILE = "users.key"
 
 # Main logger
@@ -614,6 +615,21 @@ def delete_user(username: str) -> bool:
 # MFA/2FA Functions - SOC 2 Compliant Multi-Factor Authentication
 # ============================================================================
 
+def _load_secure_users() -> Dict[str, Dict[str, Any]]:
+    """Load users from secure_users.json file."""
+    if os.path.exists(SECURE_USERS_FILE):
+        try:
+            with open(SECURE_USERS_FILE, "r") as f:
+                return json.load(f)
+        except:
+            return {}
+    return {}
+
+def _save_secure_users(users: Dict[str, Dict[str, Any]]) -> None:
+    """Save users to secure_users.json file."""
+    with open(SECURE_USERS_FILE, "w") as f:
+        json.dump(users, f, indent=2, default=str)
+
 def enable_mfa(username: str, email: str = None) -> Dict[str, Any]:
     """
     Enable MFA for a user and return setup data.
@@ -627,23 +643,36 @@ def enable_mfa(username: str, email: str = None) -> Dict[str, Any]:
     """
     from services.mfa_service import enable_mfa_for_user
     
+    secure_users = _load_secure_users()
     users = _load_users()
-    if username not in users:
+    
+    if username in secure_users:
+        user_data = secure_users[username]
+        user_email = email or user_data.get("email", username)
+        result = enable_mfa_for_user(username, user_email)
+        
+        if result["success"]:
+            secure_users[username]["mfa_enabled"] = False
+            secure_users[username]["mfa_secret"] = result["secret"]
+            secure_users[username]["mfa_backup_codes"] = result["backup_code_hashes"]
+            secure_users[username]["mfa_setup_pending"] = True
+            _save_secure_users(secure_users)
+            security_logger.info(f"MFA setup initiated for user: {username}")
+        return result
+    elif username in users:
+        user_email = email or users[username].get("email", username)
+        result = enable_mfa_for_user(username, user_email)
+        
+        if result["success"]:
+            users[username]["mfa_enabled"] = False
+            users[username]["mfa_secret"] = result["secret"]
+            users[username]["mfa_backup_codes"] = result["backup_code_hashes"]
+            users[username]["mfa_setup_pending"] = True
+            _save_users(users)
+            security_logger.info(f"MFA setup initiated for user: {username}")
+        return result
+    else:
         return {"success": False, "error": "User not found"}
-    
-    user_email = email or users[username].get("email", username)
-    result = enable_mfa_for_user(username, user_email)
-    
-    if result["success"]:
-        users[username]["mfa_enabled"] = False
-        users[username]["mfa_secret"] = result["secret"]
-        users[username]["mfa_backup_codes"] = result["backup_code_hashes"]
-        users[username]["mfa_setup_pending"] = True
-        _save_users(users)
-        
-        security_logger.info(f"MFA setup initiated for user: {username}")
-        
-    return result
 
 
 def confirm_mfa_setup(username: str, verification_code: str) -> Tuple[bool, str]:
@@ -659,30 +688,49 @@ def confirm_mfa_setup(username: str, verification_code: str) -> Tuple[bool, str]
     """
     from services.mfa_service import verify_mfa_code
     
+    secure_users = _load_secure_users()
     users = _load_users()
-    if username not in users:
-        return False, "User not found"
     
-    user = users[username]
-    if not user.get("mfa_setup_pending"):
-        return False, "No MFA setup in progress"
-    
-    secret = user.get("mfa_secret")
-    if not secret:
-        return False, "MFA secret not found"
-    
-    result = verify_mfa_code(verification_code, totp_secret=secret)
-    
-    if result["valid"]:
-        users[username]["mfa_enabled"] = True
-        users[username]["mfa_setup_pending"] = False
-        users[username]["mfa_enabled_at"] = datetime.now().isoformat()
-        _save_users(users)
+    if username in secure_users:
+        user = secure_users[username]
+        if not user.get("mfa_setup_pending"):
+            return False, "No MFA setup in progress"
         
-        security_logger.info(f"MFA enabled for user: {username}")
-        return True, "MFA enabled successfully"
-    
-    return False, "Invalid verification code"
+        secret = user.get("mfa_secret")
+        if not secret:
+            return False, "MFA secret not found"
+        
+        result = verify_mfa_code(verification_code, totp_secret=secret)
+        
+        if result["valid"]:
+            secure_users[username]["mfa_enabled"] = True
+            secure_users[username]["mfa_setup_pending"] = False
+            secure_users[username]["mfa_enabled_at"] = datetime.now().isoformat()
+            _save_secure_users(secure_users)
+            security_logger.info(f"MFA enabled for user: {username}")
+            return True, "MFA enabled successfully"
+        return False, "Invalid verification code"
+    elif username in users:
+        user = users[username]
+        if not user.get("mfa_setup_pending"):
+            return False, "No MFA setup in progress"
+        
+        secret = user.get("mfa_secret")
+        if not secret:
+            return False, "MFA secret not found"
+        
+        result = verify_mfa_code(verification_code, totp_secret=secret)
+        
+        if result["valid"]:
+            users[username]["mfa_enabled"] = True
+            users[username]["mfa_setup_pending"] = False
+            users[username]["mfa_enabled_at"] = datetime.now().isoformat()
+            _save_users(users)
+            security_logger.info(f"MFA enabled for user: {username}")
+            return True, "MFA enabled successfully"
+        return False, "Invalid verification code"
+    else:
+        return False, "User not found"
 
 
 def disable_mfa(username: str, password: str) -> Tuple[bool, str]:
@@ -723,11 +771,16 @@ def get_mfa_status(username: str) -> Dict[str, Any]:
     Returns:
         Dict with mfa_enabled, setup_pending status
     """
+    secure_users = _load_secure_users()
     users = _load_users()
-    if username not in users:
+    
+    if username in secure_users:
+        user = secure_users[username]
+    elif username in users:
+        user = users[username]
+    else:
         return {"enabled": False, "setup_pending": False, "error": "User not found"}
     
-    user = users[username]
     return {
         "enabled": user.get("mfa_enabled", False),
         "setup_pending": user.get("mfa_setup_pending", False),
