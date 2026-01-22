@@ -571,7 +571,7 @@ def render_settings_page():
                 "Data Retention (days)",
                 min_value=30,
                 max_value=2555,  # 7 years
-                value=compliance_settings.get("retention_days", 365)
+                value=int(compliance_settings.get("retention_days", 365))
             )
         
         with col2:
