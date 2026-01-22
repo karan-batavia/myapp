@@ -10,6 +10,12 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
+try:
+    from utils.redis_cache import RedisCache
+    _redis_cache = RedisCache(strict_mode=False)
+except Exception:
+    _redis_cache = None
+
 def get_organization_id():
     """Get organization ID for multi-tenant support"""
     return st.session_state.get('organization_id', 'default')
@@ -19,8 +25,16 @@ def get_organization_id():
 def _get_cached_dashboard_metrics(username: str, org_id: str) -> dict:
     """
     Cache dashboard metrics for 60 seconds to avoid repeated database queries.
-    Invalidates automatically when new scans are completed.
+    Uses Redis for distributed caching + Streamlit cache for session-level.
     """
+    cache_key = f"dashboard_metrics:{username}:{org_id}"
+    
+    if _redis_cache:
+        cached = _redis_cache.get(cache_key)
+        if cached:
+            logger.debug(f"Dashboard metrics loaded from Redis cache for {username}")
+            return cached
+    
     from services.results_aggregator import ResultsAggregator
     
     aggregator = ResultsAggregator()
@@ -64,13 +78,19 @@ def _get_cached_dashboard_metrics(username: str, org_id: str) -> dict:
     
     avg_compliance = sum(compliance_scores) / len(compliance_scores) if compliance_scores else 0
     
-    return {
+    result = {
         'total_scans': total_scans,
         'total_pii': total_pii,
         'high_risk_issues': high_risk_issues,
         'avg_compliance': avg_compliance,
         'recent_scans': recent_scans
     }
+    
+    if _redis_cache:
+        _redis_cache.set(cache_key, result, ttl=120)
+        logger.debug(f"Dashboard metrics cached in Redis for {username}")
+    
+    return result
 
 
 def render_dashboard():
