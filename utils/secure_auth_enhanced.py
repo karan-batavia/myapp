@@ -25,6 +25,8 @@ class AuthResult:
     token: Optional[str] = None
     message: Optional[str] = None
     expires_at: Optional[datetime] = None
+    mfa_required: bool = False
+    mfa_verified: bool = False
 
 class SecureAuthManager:
     """Enhanced authentication manager with JWT and bcrypt security"""
@@ -396,6 +398,55 @@ def get_auth_manager() -> SecureAuthManager:
 def authenticate_user(username: str, password: str) -> AuthResult:
     """Authenticate user and return result"""
     return get_auth_manager().authenticate(username, password)
+
+
+def authenticate_user_with_mfa(username: str, password: str, mfa_code: Optional[str] = None) -> AuthResult:
+    """
+    Authenticate user with MFA support.
+    
+    Returns AuthResult with mfa_required=True if MFA is needed but code not provided.
+    """
+    result = get_auth_manager().authenticate(username, password)
+    
+    if not result.success:
+        return result
+    
+    try:
+        from services.auth import get_mfa_status, verify_mfa
+        
+        mfa_status = get_mfa_status(username)
+        
+        if not mfa_status.get("enabled"):
+            return result
+        
+        if not mfa_code:
+            return AuthResult(
+                success=False,
+                user_id=result.user_id,
+                username=result.username,
+                role=result.role,
+                mfa_required=True,
+                message="MFA code required"
+            )
+        
+        mfa_valid, method = verify_mfa(username, mfa_code)
+        if not mfa_valid:
+            return AuthResult(
+                success=False,
+                username=username,
+                mfa_required=True,
+                message="Invalid MFA code"
+            )
+        
+        result.mfa_verified = True
+        return result
+        
+    except ImportError:
+        return result
+    except Exception as e:
+        logger.error(f"MFA verification error: {e}")
+        return result
+
 
 def validate_token(token: str) -> AuthResult:
     """Validate JWT token"""

@@ -39,6 +39,13 @@ if 'page_configured' not in st.session_state:
     )
     st.session_state['page_configured'] = True
 
+# Apply SOC 2 compliant security headers
+try:
+    from utils.security_headers import apply_security_headers
+    apply_security_headers()
+except ImportError:
+    pass  # Security headers module not available
+
 # Import repository cache for cache management
 try:
     from utils.repository_cache import repository_cache
