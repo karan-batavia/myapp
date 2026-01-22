@@ -357,7 +357,14 @@ def create_checkout_session(scan_type: str, user_email: str, metadata: Optional[
 def create_subscription_checkout(plan_tier: str, user_email: str, user_id: int, 
                                   country_code: str = "NL", vat_number: str = None) -> Optional[Dict[str, Any]]:
     """
-    Create a Stripe checkout session for subscription plans
+    DEPRECATED: Use components.pricing_display.create_stripe_checkout() instead.
+    
+    This function is kept for backwards compatibility but will be removed in a future version.
+    The pricing_display version has more features including:
+    - Annual billing support
+    - Full customer data collection
+    - Better error handling
+    - CheckoutStateManager integration
     
     Args:
         plan_tier: The subscription tier (startup, professional, growth, scale)
@@ -369,6 +376,12 @@ def create_subscription_checkout(plan_tier: str, user_email: str, user_id: int,
     Returns:
         Dictionary containing checkout session details if successful
     """
+    import warnings
+    warnings.warn(
+        "create_subscription_checkout() is deprecated. Use components.pricing_display.create_stripe_checkout() instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
     # Plan pricing in cents
     PLAN_PRICES = {
         "startup": 5900,      # €59/month

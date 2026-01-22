@@ -63,7 +63,6 @@ if st.query_params.get("payment_success") == "true":
             stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
             checkout_session = stripe.checkout.Session.retrieve(session_id)
             if checkout_session.payment_status == "paid":
-                # Check both 'tier' and 'plan_tier' for compatibility
                 _plan_tier = checkout_session.metadata.get('plan_tier') or checkout_session.metadata.get('tier', 'professional')
                 _payment_success = True
                 
@@ -71,8 +70,28 @@ if st.query_params.get("payment_success") == "true":
                 if 'user' in st.session_state:
                     st.session_state['user']['license_tier'] = _plan_tier
                     st.session_state['license_tier'] = _plan_tier
+                    
+                    # Also refresh from database to ensure consistency
+                    try:
+                        from services.database_service import database_service
+                        user_id = st.session_state['user'].get('id')
+                        if user_id:
+                            with database_service.get_connection() as conn:
+                                with conn.cursor() as cursor:
+                                    cursor.execute(
+                                        "SELECT license_tier FROM platform_users WHERE id = %s",
+                                        (user_id,)
+                                    )
+                                    result = cursor.fetchone()
+                                    if result and result[0]:
+                                        db_tier = result[0]
+                                        st.session_state['user']['license_tier'] = db_tier
+                                        st.session_state['license_tier'] = db_tier
+                                        _plan_tier = db_tier
+                    except Exception as db_err:
+                        import logging
+                        logging.warning(f"Could not refresh tier from database: {db_err}")
                 
-                # Store success flag for display after rerun
                 st.session_state['payment_just_completed'] = True
                 st.session_state['payment_new_tier'] = _plan_tier
         except Exception as e:
