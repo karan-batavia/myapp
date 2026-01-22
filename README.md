@@ -1,177 +1,176 @@
 # DataGuardian Pro - Enterprise Privacy Compliance Platform
 
-DataGuardian Pro is a comprehensive enterprise privacy compliance platform designed to detect, analyze, and report on personally identifiable information (PII) across multiple data sources. With specialized focus on GDPR compliance, particularly Dutch implementation (UAVG), it provides organizations with the tools needed to maintain data privacy compliance.
+**The only deepfake detector built for European compliance**
+
+DataGuardian Pro is a comprehensive enterprise privacy compliance platform designed to detect, analyze, and report on personally identifiable information (PII) across multiple data sources. With 100% GDPR coverage (99 articles), 100% Netherlands UAVG coverage (51 articles), and 100% EU AI Act coverage (113 articles), it provides organizations with enterprise-grade tools for complete data privacy compliance.
 
 ![DataGuardian Pro Logo](generated-icon.png)
 
-## Development and Deployment Workflow
+## Key Features
 
-DataGuardian Pro supports multiple development and deployment workflows:
+### Compliance Coverage
+- **100% GDPR Compliance**: All 99 articles across 11 chapters
+- **100% UAVG Compliance**: All 51 Dutch articles including BSN processing, AP Guidelines 2024-2025
+- **100% EU AI Act Compliance**: All 113 articles with phased implementation tracking (Feb 2025 - Aug 2027)
+- **Maximum Penalty Tracking**: Up to €35M or 7% global turnover for prohibited AI practices
 
-### Option 1: Replit → Azure DevOps → Azure (Recommended)
+### 15 Enterprise Scanners
+1. **Code Scanner**: Detects PII, credentials, and sensitive data in source code
+2. **Blob/Document Scanner**: Finds PII in documents (PDFs, Word, Excel, etc.)
+3. **Image OCR Scanner**: Identifies PII in images using advanced OCR
+4. **Website Scanner**: Crawls websites to discover PII and compliance issues
+5. **Database Scanner**: Locates PII in database systems (PostgreSQL, MySQL, SQLite)
+6. **DPIA Scanner**: 5-step wizard for GDPR Article 35 Data Protection Impact Assessment
+7. **AI Model Scanner**: Evaluates AI models for EU AI Act compliance with 38+ detection functions
+8. **SOC2 Scanner**: Security and compliance assessment
+9. **Sustainability Scanner**: Cloud infrastructure sustainability analysis
+10. **Audio/Video Deepfake Scanner**: Enterprise deepfake detection for audio (MP3, WAV, FLAC, M4A) and video (MP4, AVI, MOV, MKV)
+11. **Enterprise Connector Scanner**: Microsoft 365, Google Workspace, Exact Online integration
+12. **Repository Scanner**: Banking-sector code repository scanner for PCI-DSS v4.0 compliance
 
-1. **Development on Replit**: Write and test code in Replit's collaborative environment
-2. **Version Control with Azure DevOps**: Push changes to Azure DevOps repository
-3. **Automated Deployment to Azure**: Azure DevOps Pipeline automatically deploys changes to Azure
+#### Repository Sub-Scanners
+- Git History Scanner
+- Commit Scanner
+- Branch Scanner
+- Tag Scanner
+- Staging/Submodule Scanner
 
-To get started with this workflow:
+### Security Features
+- **Two-Factor Authentication (2FA)**: TOTP-based MFA with QR code setup
+- **Role-Based Access Control**: 7 predefined enterprise roles
+- **JWT Authentication**: Secure token-based sessions
+- **Bcrypt Password Hashing**: Industry-standard password security
+- **GDPR Data Protection Layer**: Consent management, data retention enforcement, PII anonymization
 
-```bash
-# Connect to Azure DevOps from Replit
-./scripts/connect-azure-devops.sh
-```
+### Enterprise Features
+- **AI-Powered Fraud Detection**: Document scanning with ChatGPT patterns, statistical anomaly analysis
+- **Smart Risk Analyzer**: AI-powered severity assessment with region-specific rules
+- **Multi-format Reports**: Professional PDF and HTML reports with certificate generation
+- **Multilingual Support**: English and Dutch with automatic browser language detection
+- **EU AI Act Calculator**: 4-step wizard for risk classification
 
-For detailed instructions, see [Azure DevOps Deployment Guide](docs/azure-devops-deployment.md)
+## Pricing
 
-### Option 2: Replit → GitHub → Azure
+| Plan | Price | Ideal For |
+|------|-------|-----------|
+| **Startup** | €59/month | Small teams getting started |
+| **Professional** | €99/month | Growing businesses |
+| **Growth** | €179/month | Scaling organizations |
+| **Scale** | €499/month | Enterprise deployments |
 
-1. **Development on Replit**: Write and test code in Replit's collaborative environment
-2. **Version Control with GitHub**: Push changes to GitHub for version control
-3. **Automated Deployment to Azure**: GitHub Actions automatically deploys changes to Azure
-
-To get started with this workflow:
-
-```bash
-# Connect to GitHub from Replit
-./scripts/connect-github.sh
-
-# Set up Azure resources (requires Azure CLI)
-./scripts/azure-setup.sh
-```
-
-For detailed instructions, see [Azure GitHub Deployment Guide](docs/azure-github-deployment.md)
-
-## Features
-
-- **Multi-Service Scanning Engine**: Scan code, PDFs, images, databases, APIs, websites, and AI models
-- **Intelligent Risk Analysis**: Smart AI-powered risk severity assessment
-- **Comprehensive Reporting**: Detailed multilingual PDF and HTML reports
-- **Internationalization**: Full support for English and Dutch languages
-- **Role-Based Access Control**: Enterprise-grade security with 7 predefined roles
-- **Modularity**: Scalable cloud-native architecture
-- **Compliance Focus**: Built specifically for GDPR/UAVG requirements
+*All plans include iDEAL and SEPA payment options, 30-day money-back guarantee*
 
 ## Technical Stack
 
-- **Frontend**: Streamlit interactive web interface
-- **Database**: PostgreSQL for storing scan results and configuration
-- **Backend**: Python with specialized scanning services
-- **Containerization**: Docker and Docker Compose for easy deployment
-- **Security**: Advanced authentication and authorization
-- **Language Support**: Native multilingual capabilities
+- **Frontend**: Streamlit web application with multi-page architecture
+- **Database**: PostgreSQL 16 with connection pooling
+- **Caching**: Redis for high-performance caching
+- **Backend**: Python 3.11 with specialized scanning services
+- **Containerization**: Docker with multi-stage builds
+- **CI/CD**: GitHub Actions with automated Docker Hub deployment
+- **Security**: JWT authentication, bcrypt hashing, 2FA support
 
-## Deployment Options
+## Deployment
 
-### Local Docker Deployment
+### Production Deployment (Recommended)
 
-The easiest way to deploy DataGuardian Pro is using the provided Docker Compose configuration:
+DataGuardian Pro uses GitHub Actions for automated deployment:
 
-1. Ensure Docker and Docker Compose are installed on your system
-2. Clone this repository
-3. Run the deployment script:
-   ```
-   ./deploy.sh
-   ```
-4. Access the application at http://localhost:5000
-
-### Manual Deployment
-
-For manual deployment:
-
-1. Clone this repository
-2. Create and configure `.env` file (use `.env.example` as a template)
-3. Build and start the containers:
-   ```
-   docker-compose build
-   docker-compose up -d
-   ```
-4. Access the application at http://localhost:5000
-
-### Cloud Deployment
-
-DataGuardian Pro offers multiple deployment options for cloud environments:
-
-#### One-Click Azure Deployment with Terraform
-
-For the easiest deployment experience, use our Terraform configuration:
+1. **Push to GitHub**: Changes trigger the CI/CD pipeline
+2. **Docker Build**: Image built and pushed to Docker Hub
+3. **Auto Deploy**: Container deployed to production server
 
 ```bash
-# Deploy all Azure resources with a single command
-cd terraform
-./deploy.sh
+# Production environment
+Domain: dataguardianpro.nl
+Server: 45.81.35.202
+Port: 5000 (main app), 5001 (webhook server)
 ```
 
-This will deploy:
-- Azure PostgreSQL Flexible Server
-- Azure Container Registry
-- Azure App Service (Web App for Containers)
-- Application Insights monitoring
-- All required networking and security configurations
-
-After infrastructure deployment, build and push your Docker image:
+### Docker Deployment
 
 ```bash
-# Build and push Docker image to ACR
-cd terraform
-./push-docker-image.sh
+# Pull the latest image
+docker pull vishaalnoord7/myapp:latest
+
+# Run with environment file
+docker run -d --name dataguardian \
+  -p 5000:5000 \
+  --env-file /opt/dataguardian/.env \
+  --network dataguardian-net \
+  vishaalnoord7/myapp:latest
 ```
 
-For detailed instructions, see [Terraform Deployment Guide](terraform/README.md)
+### Environment Variables
 
-#### Other Cloud Providers
+Create a `.env` file with:
 
-DataGuardian Pro can be deployed to any cloud provider that supports Docker containers:
+```env
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+REDIS_URL=redis://localhost:6379
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+JWT_SECRET=your-jwt-secret
+DATAGUARDIAN_MASTER_KEY=your-master-key
+OPENAI_API_KEY=sk-...
+```
 
-- **Azure**: Use our Terraform configuration (recommended), Azure Container Instances, or AKS
-- **AWS**: Use ECS, EKS, or Elastic Beanstalk
-- **GCP**: Use Google Kubernetes Engine or Cloud Run
+## Architecture
 
-## Configuration
+```
+dataguardian-pro/
+├── app.py                 # Main application entry point
+├── pages/                 # Multi-page Streamlit pages
+│   ├── 1_New_Scan.py
+│   ├── 2_Dashboard.py
+│   ├── 3_Results.py
+│   ├── 4_History.py
+│   ├── 5_Settings.py
+│   ├── 6_Pricing.py
+│   └── 7_Admin.py
+├── page_modules/          # Reusable page logic
+├── services/              # Scanner implementations
+│   ├── scanner_code.py
+│   ├── scanner_blob.py
+│   ├── scanner_image.py
+│   ├── scanner_website.py
+│   ├── scanner_database.py
+│   ├── scanner_ai_model.py
+│   ├── scanner_dpia.py
+│   ├── scanner_soc2.py
+│   ├── scanner_sustainability.py
+│   ├── scanner_deepfake.py
+│   ├── scanner_enterprise.py
+│   ├── scanner_repository.py
+│   ├── auth.py
+│   └── webhook_server.py
+├── utils/                 # Utility functions
+│   ├── db_cache.py
+│   ├── redis_cache.py
+│   ├── session_cache.py
+│   └── streaming_file_processor.py
+├── api/                   # REST API endpoints
+├── translations/          # i18n files (EN, NL)
+├── components/            # Reusable UI components
+└── database/              # Schema and migrations
+```
 
-Configure the application through the `.env` file:
+## Data Residency
 
-- Database credentials
-- Application port
-- API keys for external services
-- Debug and environment settings
+DataGuardian Pro is hosted exclusively in the Netherlands/EU for complete GDPR compliance:
 
-## Usage
+- **Primary Hosting**: Netherlands (Hetzner Cloud)
+- **Data Processing**: EU-only
+- **No US Data Transfer**: Complete data sovereignty
 
-1. **Login**: Use default credentials (admin/password) for first-time login
-2. **Select Scan Type**: Choose from code, document, image, database, API, website, or AI model scanning
-3. **Configure Scan**: Set parameters specific to your scan type
-4. **Run Scan**: Execute and view real-time progress
-5. **Review Results**: Analyze findings in the dashboard
-6. **Generate Reports**: Create PDF or HTML reports in your preferred language
+## Support
 
-## Scanner Types
-
-- **Code Scanner**: Detects PII, credentials, and sensitive data in source code
-- **Blob Scanner**: Finds PII in documents (PDFs, Word files, etc.)
-- **Image Scanner**: Identifies PII in images using OCR and AI
-- **Database Scanner**: Locates PII in database systems (PostgreSQL, MySQL, SQLite)
-- **API Scanner**: Tests APIs for privacy and security issues
-- **Website Scanner**: Crawls websites to discover PII and compliance issues
-- **AI Model Scanner**: Evaluates AI models for data protection compliance
-
-## Development
-
-### Directory Structure
-
-- `/app.py`: Main application entry point
-- `/services/`: Individual scanning services
-- `/utils/`: Utility functions and helpers
-- `/translations/`: Language files
-- `/database/`: Database schema and initialization files
-
-### Adding a New Scanner
-
-1. Create a new scanner class in the `/services/` directory
-2. Implement the standard scanner interface
-3. Add UI components in `app.py`
-4. Update result aggregation logic
-5. Add translations for new scanner elements
+For enterprise support and custom deployments, contact us at support@dataguardianpro.nl
 
 ## License
 
 Copyright © 2025 DataGuardian Pro - All rights reserved.
+
+---
+
+**Built for European Compliance** | **Netherlands Data Residency** | **Enterprise-Grade Security**
