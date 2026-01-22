@@ -773,17 +773,90 @@ def render_settings_page():
                 value=security_settings.get("login_alerts", True)
             )
             
-            two_factor = st.checkbox(
-                "Two-Factor Authentication", 
-                value=security_settings.get("two_factor_enabled", False),
-                help="Enable 2FA for enhanced security (coming soon)"
-            )
+        st.markdown("---")
+        st.markdown("### 🔐 Two-Factor Authentication (2FA)")
+        
+        try:
+            from services.auth import get_mfa_status, enable_mfa, confirm_mfa_setup, disable_mfa
+            from services.mfa_service import get_mfa_service
+            import base64
+            
+            mfa_status = get_mfa_status(username)
+            
+            if mfa_status.get("enabled"):
+                st.success("✅ Two-Factor Authentication is **enabled**")
+                st.write(f"Backup codes remaining: {mfa_status.get('backup_codes_remaining', 0)}")
+                
+                with st.expander("Disable 2FA"):
+                    disable_password = st.text_input("Enter your password to disable 2FA", type="password", key="disable_mfa_pwd")
+                    if st.button("🔓 Disable 2FA", key="disable_mfa_btn"):
+                        if disable_password:
+                            success, msg = disable_mfa(username, disable_password)
+                            if success:
+                                st.success(msg)
+                                st.rerun()
+                            else:
+                                st.error(msg)
+                        else:
+                            st.warning("Please enter your password")
+            else:
+                st.info("🔒 Two-Factor Authentication is not enabled")
+                
+                if "mfa_setup_data" not in st.session_state:
+                    if st.button("🔐 Enable 2FA", key="enable_mfa_btn"):
+                        result = enable_mfa(username)
+                        if result.get("success"):
+                            st.session_state.mfa_setup_data = result
+                            st.rerun()
+                        else:
+                            st.error(result.get("error", "Failed to initialize 2FA"))
+                else:
+                    setup_data = st.session_state.mfa_setup_data
+                    
+                    st.markdown("#### Step 1: Scan QR Code")
+                    st.write("Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)")
+                    
+                    qr_image = base64.b64decode(setup_data["qr_code_base64"])
+                    st.image(qr_image, width=200)
+                    
+                    with st.expander("Can't scan? Enter manually"):
+                        st.code(setup_data["secret"])
+                    
+                    st.markdown("#### Step 2: Enter Verification Code")
+                    verify_code = st.text_input("Enter the 6-digit code from your app", max_chars=6, key="mfa_verify_code")
+                    
+                    col_confirm, col_cancel = st.columns(2)
+                    with col_confirm:
+                        if st.button("✅ Verify & Enable", key="confirm_mfa_btn"):
+                            if verify_code and len(verify_code) == 6:
+                                success, msg = confirm_mfa_setup(username, verify_code)
+                                if success:
+                                    st.success("2FA enabled successfully!")
+                                    st.markdown("**Save your backup codes:**")
+                                    for i, code in enumerate(setup_data.get("backup_codes", []), 1):
+                                        st.code(f"{i}. {code}")
+                                    del st.session_state.mfa_setup_data
+                                else:
+                                    st.error(msg)
+                            else:
+                                st.warning("Please enter a valid 6-digit code")
+                    
+                    with col_cancel:
+                        if st.button("❌ Cancel", key="cancel_mfa_btn"):
+                            del st.session_state.mfa_setup_data
+                            st.rerun()
+        
+        except ImportError as e:
+            st.warning("2FA module not available")
+        except Exception as e:
+            st.error(f"Error loading 2FA settings: {str(e)}")
+        
+        st.markdown("---")
         
         if st.button("💾 Save Security Settings", key="save_security"):
             settings_manager.save_user_setting(username, "security", "session_timeout_minutes", session_timeout)
             settings_manager.save_user_setting(username, "security", "audit_log_retention", audit_retention)
             settings_manager.save_user_setting(username, "security", "login_alerts", login_alerts)
-            settings_manager.save_user_setting(username, "security", "two_factor_enabled", two_factor)
             st.success("Security settings saved successfully!")
     
     # Downloads Management
