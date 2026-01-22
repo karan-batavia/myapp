@@ -102,3 +102,7 @@ xlrd>=2.0.1
 
 # File type detection
 python-magic>=0.4.27
+
+# MFA/2FA dependencies
+pyotp>=2.9.0
+qrcode>=8.0
