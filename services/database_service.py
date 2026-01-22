@@ -613,10 +613,19 @@ class DatabaseService:
         if not self.enabled:
             return False
         
+        if not user_id or not str(user_id).strip():
+            logger.warning(f"Invalid user_id provided: '{user_id}'")
+            return False
+        
+        try:
+            user_id_int = int(user_id)
+        except (ValueError, TypeError):
+            logger.warning(f"user_id is not a valid integer: '{user_id}'")
+            return False
+        
         try:
             with self.get_connection() as conn:
                 with conn.cursor() as cursor:
-                    # Update the user's license tier and subscription info
                     cursor.execute("""
                         UPDATE platform_users 
                         SET license_tier = %s,
@@ -629,7 +638,7 @@ class DatabaseService:
                             'subscription_id': subscription_id,
                             'tier_updated_at': datetime.now().isoformat()
                         }),
-                        int(user_id)
+                        user_id_int
                     ))
                 conn.commit()
                 

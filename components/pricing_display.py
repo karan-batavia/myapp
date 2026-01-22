@@ -798,6 +798,12 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
     import stripe
     
     try:
+        user_id = st.session_state.get('user', {}).get('id')
+        if not user_id:
+            logger.warning("Checkout attempted without user login")
+            st.error(_('pricing.login_required', 'Please log in before subscribing.'))
+            return
+        
         stripe_key = os.getenv('STRIPE_SECRET_KEY')
         if not stripe_key:
             logger.error("STRIPE_SECRET_KEY not configured")
@@ -850,7 +856,7 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
             metadata={
                 "tier": tier.value,
                 "plan_tier": tier.value,
-                "user_id": str(st.session_state.get('user', {}).get('id', '')),
+                "user_id": str(user_id),
                 "billing_cycle": billing_cycle.value,
                 "company_name": customer_data['company_name'][:500],
                 "first_name": customer_data['first_name'][:100],
@@ -862,7 +868,7 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
                 "metadata": {
                     "tier": tier.value,
                     "plan_tier": tier.value,
-                    "user_id": str(st.session_state.get('user', {}).get('id', '')),
+                    "user_id": str(user_id),
                 }
             },
             billing_address_collection="required",
