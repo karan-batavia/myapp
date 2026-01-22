@@ -8,25 +8,9 @@
     "active": true,
     "license_tier": "enterprise",
     "created_at": null,
-    "last_login": "2026-01-22T14:58:45.837396",
+    "last_login": "2026-01-22T15:40:48.253951",
     "failed_attempts": 0,
-    "locked_until": null,
-    "mfa_enabled": true,
-    "mfa_secret": "D43S4HQ6DQLJ2ALT6PNGB4PWKZKDD3XA",
-    "mfa_backup_codes": [
-      "cbc7bc4b82f00400d501574fa3578febbbbf6fedac503bfe2718379c7e61089b",
-      "88baac9aa45a9b31226e4727b6f38aee85a3a08aad32f043389f240e55297d40",
-      "ec7dad695ee0fe30949ec7813257ac932bf229af79ceaeaea0409fe3afa391d8",
-      "8282268861dbaf45d92ee9241d298107840c8d19fbba0532ca4a36ccecfa32b1",
-      "4163d667f61cc1e5544dcef0b2c7eb1e462fb0278f2e2121b1fcacdcb381f8d2",
-      "a803e1bc9d26fe62ed48d7ec5c96460360d0582c0e2d7b1fa91edaaf8c8f3d05",
-      "331bce6eeaa48bfb78de3660bfed52dff8c9619d65e941b85a4a5dd181101dbb",
-      "73fad43dd9862f4c3bcca1f6b98487bf7e815552e0c3571cd84785e01c67f655",
-      "1630bec5b5e15e86275b2637e7006a4992c0fba59cdcdbf7f7b2ab11ba4d5e88",
-      "840cdced51616b0704ba5d909a21e95e80425a26d72b9416bfee0f2d6379752a"
-    ],
-    "mfa_setup_pending": false,
-    "mfa_enabled_at": "2026-01-22T15:01:54.729946"
+    "locked_until": null
   },
   "test_analyst": {
     "user_id": "2",
@@ -89,7 +73,7 @@
     "active": true,
     "license_tier": "enterprise",
     "created_at": null,
-    "last_login": "2026-01-22T14:58:45.837396",
+    "last_login": "2026-01-22T15:40:48.253951",
     "failed_attempts": 0,
     "locked_until": null
   },
