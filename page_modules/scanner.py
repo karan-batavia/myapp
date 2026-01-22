@@ -6761,25 +6761,62 @@ def render_ai_model_scanner_interface(region: str, username: str):
     # Import required modules to avoid unbound variables
     from utils.activity_tracker import ScannerType
     
+    # Debug: Check current language and translations
+    current_lang = st.session_state.get('language', 'en')
+    
+    # Force reinitialize i18n to ensure fresh translations (same fix as Enterprise Scanner)
+    from utils.i18n import initialize, set_language, _translations, load_translations, get_text as _
+    import json
+    import os
+    
+    # Clear translations cache completely to force reload
+    _translations.clear()
+    
+    # Manually load Dutch translations if the language is nl
+    if current_lang == 'nl':
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        nl_file = os.path.join(base_dir, 'translations', 'nl.json')
+        try:
+            with open(nl_file, 'r', encoding='utf-8') as f:
+                _translations['nl'] = json.load(f)
+        except Exception as e:
+            pass  # Silent fail - translations will fall back to English
+    
+    # Explicitly set the language and reinitialize
+    set_language(current_lang)
+    initialize()
+    
+    # Clear Redis cache for scan results to prevent stale cached results
+    try:
+        from utils.redis_cache import RedisCache
+        redis_cache = RedisCache()
+        # Clear any cached scan results for this user
+        redis_cache.clear_namespace("scan_results")
+    except Exception:
+        pass  # Redis may not be available
+    
     # Initialize variables at function start to avoid scope issues
     session_id = st.session_state.get('session_id', str(uuid.uuid4()))
     user_id = st.session_state.get('user_id', username)
     
-    st.subheader("🤖 AI Model Privacy & Bias Scanner")
+    st.subheader(_('scan.ai_model_scanner_title', "🤖 AI Model Privacy & Bias Scanner"))
     
-    # Enhanced description
-    st.write(
+    # Enhanced description - use translations
+    st.write(_('scan.ai_model_description', 
         "Analyze AI/ML models for privacy risks, bias detection, data leakage, and compliance issues. "
         "Supports multiple frameworks including TensorFlow, PyTorch, scikit-learn, and ONNX models."
-    )
+    ))
     
-    st.info(
+    st.info(_('scan.ai_model_info',
         "AI Model scanning identifies potential privacy violations, bias in model predictions, "
         "training data leakage, and compliance issues with privacy regulations like GDPR."
-    )
+    ))
     
-    # Create tabs for different scanner modes
-    tab1, tab2 = st.tabs(["🔍 Model Analysis", "📊 AI Act Calculator"])
+    # Create tabs for different scanner modes - use translations
+    tab1, tab2 = st.tabs([
+        _('scan.ai_model_tab_analysis', "🔍 Model Analysis"), 
+        _('scan.ai_model_tab_calculator', "📊 AI Act Calculator")
+    ])
     
     with tab1:
         render_model_analysis_interface(region, username)
