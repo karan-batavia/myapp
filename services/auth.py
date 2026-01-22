@@ -609,6 +609,263 @@ def delete_user(username: str) -> bool:
     _save_users(users)
     return True
 
+
+# ============================================================================
+# MFA/2FA Functions - SOC 2 Compliant Multi-Factor Authentication
+# ============================================================================
+
+def enable_mfa(username: str, email: str = None) -> Dict[str, Any]:
+    """
+    Enable MFA for a user and return setup data.
+    
+    Args:
+        username: The username to enable MFA for
+        email: Optional email for QR code provisioning
+        
+    Returns:
+        Dict with setup data including QR code and backup codes
+    """
+    from services.mfa_service import enable_mfa_for_user
+    
+    users = _load_users()
+    if username not in users:
+        return {"success": False, "error": "User not found"}
+    
+    user_email = email or users[username].get("email", username)
+    result = enable_mfa_for_user(username, user_email)
+    
+    if result["success"]:
+        users[username]["mfa_enabled"] = False
+        users[username]["mfa_secret"] = result["secret"]
+        users[username]["mfa_backup_codes"] = result["backup_code_hashes"]
+        users[username]["mfa_setup_pending"] = True
+        _save_users(users)
+        
+        security_logger.info(f"MFA setup initiated for user: {username}")
+        
+    return result
+
+
+def confirm_mfa_setup(username: str, verification_code: str) -> Tuple[bool, str]:
+    """
+    Confirm MFA setup by verifying the first code.
+    
+    Args:
+        username: The username
+        verification_code: TOTP code from authenticator app
+        
+    Returns:
+        Tuple of (success, message)
+    """
+    from services.mfa_service import verify_mfa_code
+    
+    users = _load_users()
+    if username not in users:
+        return False, "User not found"
+    
+    user = users[username]
+    if not user.get("mfa_setup_pending"):
+        return False, "No MFA setup in progress"
+    
+    secret = user.get("mfa_secret")
+    if not secret:
+        return False, "MFA secret not found"
+    
+    result = verify_mfa_code(verification_code, totp_secret=secret)
+    
+    if result["valid"]:
+        users[username]["mfa_enabled"] = True
+        users[username]["mfa_setup_pending"] = False
+        users[username]["mfa_enabled_at"] = datetime.now().isoformat()
+        _save_users(users)
+        
+        security_logger.info(f"MFA enabled for user: {username}")
+        return True, "MFA enabled successfully"
+    
+    return False, "Invalid verification code"
+
+
+def disable_mfa(username: str, password: str) -> Tuple[bool, str]:
+    """
+    Disable MFA for a user (requires password confirmation).
+    
+    Args:
+        username: The username
+        password: Password for confirmation
+        
+    Returns:
+        Tuple of (success, message)
+    """
+    users = _load_users()
+    if username not in users:
+        return False, "User not found"
+    
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    if users[username]["password_hash"] != password_hash:
+        security_logger.warning(f"MFA disable failed - wrong password for user: {username}")
+        return False, "Invalid password"
+    
+    users[username]["mfa_enabled"] = False
+    users[username]["mfa_secret"] = None
+    users[username]["mfa_backup_codes"] = None
+    users[username]["mfa_setup_pending"] = False
+    users[username]["mfa_disabled_at"] = datetime.now().isoformat()
+    _save_users(users)
+    
+    security_logger.info(f"MFA disabled for user: {username}")
+    return True, "MFA disabled successfully"
+
+
+def get_mfa_status(username: str) -> Dict[str, Any]:
+    """
+    Get MFA status for a user.
+    
+    Returns:
+        Dict with mfa_enabled, setup_pending status
+    """
+    users = _load_users()
+    if username not in users:
+        return {"enabled": False, "setup_pending": False, "error": "User not found"}
+    
+    user = users[username]
+    return {
+        "enabled": user.get("mfa_enabled", False),
+        "setup_pending": user.get("mfa_setup_pending", False),
+        "enabled_at": user.get("mfa_enabled_at"),
+        "backup_codes_remaining": len(user.get("mfa_backup_codes", []))
+    }
+
+
+def verify_mfa(username: str, code: str) -> Tuple[bool, str]:
+    """
+    Verify MFA code for a user.
+    
+    Args:
+        username: The username
+        code: TOTP or backup code
+        
+    Returns:
+        Tuple of (success, method_used)
+    """
+    from services.mfa_service import verify_mfa_code
+    
+    users = _load_users()
+    if username not in users:
+        return False, "User not found"
+    
+    user = users[username]
+    if not user.get("mfa_enabled"):
+        return True, "mfa_not_required"
+    
+    secret = user.get("mfa_secret")
+    backup_codes = user.get("mfa_backup_codes", [])
+    
+    result = verify_mfa_code(code, totp_secret=secret, backup_code_hashes=backup_codes)
+    
+    if result["valid"]:
+        if result["method"] == "backup_code":
+            from services.mfa_service import get_mfa_service
+            service = get_mfa_service()
+            code_hash = service.hash_backup_code(code)
+            if code_hash in backup_codes:
+                backup_codes.remove(code_hash)
+                users[username]["mfa_backup_codes"] = backup_codes
+                _save_users(users)
+                security_logger.info(f"Backup code used for user: {username}")
+        
+        security_logger.info(f"MFA verification successful for user: {username} via {result['method']}")
+        return True, result["method"]
+    
+    security_logger.warning(f"MFA verification failed for user: {username}")
+    return False, "invalid_code"
+
+
+def authenticate_with_mfa(
+    username_or_email: str, 
+    password: str, 
+    mfa_code: Optional[str] = None
+) -> Tuple[Optional[Dict[str, Any]], Optional[str]]:
+    """
+    Authenticate a user with optional MFA verification.
+    
+    Args:
+        username_or_email: Username or email
+        password: Password
+        mfa_code: Optional MFA code (required if MFA is enabled)
+        
+    Returns:
+        Tuple of (user_data, error_or_status)
+        - (user_data, None) - Success
+        - (None, "mfa_required") - Password OK, MFA code needed
+        - (None, "invalid_credentials") - Wrong password
+        - (None, "invalid_mfa") - Wrong MFA code
+    """
+    user_data = authenticate(username_or_email, password)
+    
+    if not user_data:
+        security_logger.warning(f"Authentication failed for: {username_or_email}")
+        return None, "invalid_credentials"
+    
+    username = user_data.get("username", username_or_email)
+    
+    mfa_status = get_mfa_status(username)
+    if not mfa_status.get("enabled"):
+        return user_data, None
+    
+    if not mfa_code:
+        return None, "mfa_required"
+    
+    mfa_valid, method = verify_mfa(username, mfa_code)
+    if not mfa_valid:
+        security_logger.warning(f"MFA verification failed for: {username}")
+        return None, "invalid_mfa"
+    
+    user_data["mfa_verified"] = True
+    user_data["mfa_method"] = method
+    
+    return user_data, None
+
+
+def regenerate_backup_codes(username: str, password: str) -> Dict[str, Any]:
+    """
+    Regenerate backup codes for a user.
+    
+    Args:
+        username: The username
+        password: Password for confirmation
+        
+    Returns:
+        Dict with new backup codes or error
+    """
+    from services.mfa_service import get_mfa_service
+    
+    users = _load_users()
+    if username not in users:
+        return {"success": False, "error": "User not found"}
+    
+    password_hash = hashlib.sha256(password.encode()).hexdigest()
+    if users[username]["password_hash"] != password_hash:
+        return {"success": False, "error": "Invalid password"}
+    
+    if not users[username].get("mfa_enabled"):
+        return {"success": False, "error": "MFA is not enabled"}
+    
+    service = get_mfa_service()
+    new_codes = service.generate_backup_codes()
+    hashed_codes = [service.hash_backup_code(code) for code in new_codes]
+    
+    users[username]["mfa_backup_codes"] = hashed_codes
+    users[username]["backup_codes_regenerated_at"] = datetime.now().isoformat()
+    _save_users(users)
+    
+    security_logger.info(f"Backup codes regenerated for user: {username}")
+    
+    return {
+        "success": True,
+        "backup_codes": new_codes
+    }
+
+
 def is_authenticated() -> bool:
     """
     Check if user is authenticated in the current Streamlit session.
