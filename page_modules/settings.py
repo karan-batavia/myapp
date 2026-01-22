@@ -625,7 +625,7 @@ def render_settings_page():
                 "Max Concurrent Scans",
                 min_value=1,
                 max_value=10,
-                value=scanner_settings.get("max_concurrent", 3)
+                value=int(scanner_settings.get("max_concurrent", 3))
             )
         
         with col2:
@@ -633,14 +633,14 @@ def render_settings_page():
                 "Scan Timeout (seconds)",
                 min_value=60,
                 max_value=1800,
-                value=scanner_settings.get("timeout_seconds", 300)
+                value=int(scanner_settings.get("timeout_seconds", 300))
             )
             
             file_size_limit = st.number_input(
                 "File Size Limit (MB)",
                 min_value=1,
                 max_value=500,
-                value=scanner_settings.get("file_size_limit_mb", 100)
+                value=int(scanner_settings.get("file_size_limit_mb", 100))
             )
         
         scan_depth = st.selectbox(
@@ -757,14 +757,14 @@ def render_settings_page():
                 "Session Timeout (minutes)",
                 min_value=15,
                 max_value=480,
-                value=security_settings.get("session_timeout_minutes", 60)
+                value=int(security_settings.get("session_timeout_minutes", 60))
             )
             
             audit_retention = st.number_input(
                 "Audit Log Retention (days)",
                 min_value=90,
                 max_value=2555,
-                value=security_settings.get("audit_log_retention", 730)
+                value=int(security_settings.get("audit_log_retention", 730))
             )
         
         with col2:
