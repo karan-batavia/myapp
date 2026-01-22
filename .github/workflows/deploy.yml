@@ -71,21 +71,21 @@ jobs:
             echo "🔗 Setting up Docker network..."
             docker network create dataguardian-net 2>/dev/null || echo "Network already exists"
             
-            # Start Redis container if not running
-            echo "📦 Ensuring Redis is running..."
-            if ! docker ps | grep -q redis-cache; then
-              echo "Starting Redis container..."
-              docker stop redis-cache 2>/dev/null || true
-              docker rm redis-cache 2>/dev/null || true
+            # Ensure dataguardian-redis is on the network
+            echo "📦 Ensuring Redis is connected to network..."
+            if docker ps | grep -q dataguardian-redis; then
+              docker network connect dataguardian-net dataguardian-redis 2>/dev/null || echo "Redis already on network"
+              echo "✅ dataguardian-redis connected to network"
+            else
+              echo "Starting dataguardian-redis container..."
               docker run -d \
-                --name redis-cache \
+                --name dataguardian-redis \
                 --network dataguardian-net \
                 --restart unless-stopped \
+                -p 6379:6379 \
                 -v redis-data:/data \
                 redis:7-alpine redis-server --appendonly yes
-              echo "✅ Redis container started"
-            else
-              echo "✅ Redis already running"
+              echo "✅ dataguardian-redis started"
             fi
             
             # Pull latest Docker image from Docker Hub
@@ -112,7 +112,7 @@ jobs:
               -v ${{ secrets.APP_DIR }}:/data \
               -e ENVIRONMENT=production \
               -e PYTHONUNBUFFERED=1 \
-              -e REDIS_URL="redis://redis-cache:6379/0" \
+              -e REDIS_URL="redis://dataguardian-redis:6379/0" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e DATAGUARDIAN_MASTER_KEY="${{ secrets.DATAGUARDIAN_MASTER_KEY }}" \
               -e OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY }}" \
@@ -133,7 +133,7 @@ jobs:
               -p 5001:5001 \
               -e ENVIRONMENT=production \
               -e PYTHONUNBUFFERED=1 \
-              -e REDIS_URL="redis://redis-cache:6379/0" \
+              -e REDIS_URL="redis://dataguardian-redis:6379/0" \
               -e JWT_SECRET="${{ secrets.JWT_SECRET }}" \
               -e STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
               -e STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
