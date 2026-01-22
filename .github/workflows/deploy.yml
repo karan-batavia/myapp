@@ -143,21 +143,62 @@ jobs:
             
             echo "✅ Webhook server started on port 5001"
             
-            # Update nginx.conf (base64 encoded to avoid YAML issues)
-            echo "🔧 Updating nginx configuration..."
-            echo "ZXZlbnRzIHsKICAgIHdvcmtlcl9jb25uZWN0aW9ucyAxMDI0Owp9CgpodHRwIHsKICAgIGluY2x1ZGUgICAgICAgL2V0Yy9uZ2lueC9taW1lLnR5cGVzOwogICAgZGVmYXVsdF90eXBlICBhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW07CgogICAgIyBMb2dnaW5nCiAgICBsb2dfZm9ybWF0IG1haW4gJyRyZW1vdGVfYWRkciAtICRyZW1vdGVfdXNlciBbJHRpbWVfbG9jYWxdICIkcmVxdWVzdCIgJwogICAgICAgICAgICAgICAgICAgICckc3RhdHVzICRib2R5X2J5dGVzX3NlbnQgIiRodHRwX3JlZmVyZXIiICcKICAgICAgICAgICAgICAgICAgICAnIiRodHRwX3VzZXJfYWdlbnQiICIkaHR0cF94X2ZvcndhcmRlZF9mb3IiJzsKCiAgICBhY2Nlc3NfbG9nIC92YXIvbG9nL25naW54L2FjY2Vzcy5sb2cgbWFpbjsKICAgIGVycm9yX2xvZyAvdmFyL2xvZy9uZ2lueC9lcnJvci5sb2c7CgogICAgIyBHemlwIGNvbXByZXNzaW9uCiAgICBnemlwIG9uOwogICAgZ3ppcF92YXJ5IG9uOwogICAgZ3ppcF9taW5fbGVuZ3RoIDEwMjQwOwogICAgZ3ppcF9wcm94aWVkIGV4cGlyZWQgbm8tY2FjaGUgbm8tc3RvcmUgcHJpdmF0ZSBhdXRoOwogICAgZ3ppcF90eXBlcwogICAgICAgIHRleHQvcGxhaW4KICAgICAgICB0ZXh0L2NzcwogICAgICAgIHRleHQveG1sCiAgICAgICAgdGV4dC9qYXZhc2NyaXB0CiAgICAgICAgYXBwbGljYXRpb24veC1qYXZhc2NyaXB0CiAgICAgICAgYXBwbGljYXRpb24veG1sK3JzcwogICAgICAgIGFwcGxpY2F0aW9uL2phdmFzY3JpcHQKICAgICAgICBhcHBsaWNhdGlvbi9qc29uOwoKICAgICMgV2ViU29ja2V0IHVwZ3JhZGUgbWFwCiAgICBtYXAgJGh0dHBfdXBncmFkZSAkY29ubmVjdGlvbl91cGdyYWRlIHsKICAgICAgICBkZWZhdWx0IHVwZ3JhZGU7CiAgICAgICAgJycgY2xvc2U7CiAgICB9CgogICAgIyBVcHN0cmVhbSBmb3IgRGF0YUd1YXJkaWFuIFBybyAoRG9ja2VyIGNvbnRhaW5lciBvbiBwb3J0IDUwMDApCiAgICB1cHN0cmVhbSBkYXRhZ3VhcmRpYW5fYXBwIHsKICAgICAgICBzZXJ2ZXIgMTI3LjAuMC4xOjUwMDA7CiAgICAgICAga2VlcGFsaXZlIDMyOwogICAgfQoKICAgICMgVXBzdHJlYW0gZm9yIFdlYmhvb2sgU2VydmVyIChEb2NrZXIgY29udGFpbmVyIG9uIHBvcnQgNTAwMSkKICAgIHVwc3RyZWFtIHdlYmhvb2tfc2VydmVyIHsKICAgICAgICBzZXJ2ZXIgMTI3LjAuMC4xOjUwMDE7CiAgICAgICAga2VlcGFsaXZlIDg7CiAgICB9CgogICAgIyBJbmNsdWRlIHNpdGVzLWVuYWJsZWQgZm9yIHNlcnZlciBjb25maWd1cmF0aW9ucwogICAgaW5jbHVkZSAvZXRjL25naW54L3NpdGVzLWVuYWJsZWQvKjsKfQo=" | base64 -d > /tmp/nginx.conf
-            sudo cp /tmp/nginx.conf /etc/nginx/nginx.conf
-            
-            # Update sites-available config with webhook support
-            echo "🔧 Updating HTTPS site configuration..."
-            echo "IyBIVFRQIHNlcnZlciAtIHJlZGlyZWN0IHRvIEhUVFBTIChleGNlcHQgZm9yIExldCdzIEVuY3J5cHQpCnNlcnZlciB7CiAgICBsaXN0ZW4gODA7CiAgICBsaXN0ZW4gWzo6XTo4MDsKICAgIHNlcnZlcl9uYW1lIGRhdGFndWFyZGlhbnByby5ubCB3d3cuZGF0YWd1YXJkaWFucHJvLm5sIDQ1LjgxLjM1LjIwMjsKCiAgICAjIExldCdzIEVuY3J5cHQgY2hhbGxlbmdlCiAgICBsb2NhdGlvbiAvLndlbGwta25vd24vYWNtZS1jaGFsbGVuZ2UvIHsKICAgICAgICByb290IC92YXIvd3d3L2h0bWw7CiAgICB9CgogICAgIyBIZWFsdGggY2hlY2sgKGZvciBtb25pdG9yaW5nKQogICAgbG9jYXRpb24gL2hlYWx0aCB7CiAgICAgICAgYWNjZXNzX2xvZyBvZmY7CiAgICAgICAgcmV0dXJuIDIwMCAiaGVhbHRoeVxuIjsKICAgICAgICBhZGRfaGVhZGVyIENvbnRlbnQtVHlwZSB0ZXh0L3BsYWluOwogICAgfQoKICAgICMgUmVkaXJlY3QgYWxsIG90aGVyIEhUVFAgdG8gSFRUUFMKICAgIGxvY2F0aW9uIC8gewogICAgICAgIHJldHVybiAzMDEgaHR0cHM6Ly8kaG9zdCRyZXF1ZXN0X3VyaTsKICAgIH0KfQoKIyBIVFRQUyBzZXJ2ZXIKc2VydmVyIHsKICAgIGxpc3RlbiA0NDMgc3NsIGh0dHAyOwogICAgbGlzdGVuIFs6Ol06NDQzIHNzbCBodHRwMjsKICAgIHNlcnZlcl9uYW1lIGRhdGFndWFyZGlhbnByby5ubCB3d3cuZGF0YWd1YXJkaWFucHJvLm5sOwoKICAgIHNzbF9jZXJ0aWZpY2F0ZSAvZXRjL2xldHNlbmNyeXB0L2xpdmUvZGF0YWd1YXJkaWFucHJvLm5sL2Z1bGxjaGFpbi5wZW07CiAgICBzc2xfY2VydGlmaWNhdGVfa2V5IC9ldGMvbGV0c2VuY3J5cHQvbGl2ZS9kYXRhZ3VhcmRpYW5wcm8ubmwvcHJpdmtleS5wZW07CiAgICBzc2xfcHJvdG9jb2xzIFRMU3YxLjIgVExTdjEuMzsKICAgIHNzbF9wcmVmZXJfc2VydmVyX2NpcGhlcnMgb247CiAgICBzc2xfY2lwaGVycyBFQ0RIRS1FQ0RTQS1BRVMxMjgtR0NNLVNIQTI1NjpFQ0RIRS1SU0EtQUVTMTI4LUdDTS1TSEEyNTY6RUNESEUtRUNEU0EtQUVTMjU2LUdDTS1TSEEzODQ6RUNESEUtUlNBLUFFUzI1Ni1HQ00tU0hBMzg0OwogICAgY2xpZW50X21heF9ib2R5X3NpemUgMTAwTTsKCiAgICAjIEhlYWx0aCBjaGVjawogICAgbG9jYXRpb24gL2hlYWx0aCB7CiAgICAgICAgYWNjZXNzX2xvZyBvZmY7CiAgICAgICAgcmV0dXJuIDIwMCAiaGVhbHRoeVxuIjsKICAgICAgICBhZGRfaGVhZGVyIENvbnRlbnQtVHlwZSB0ZXh0L3BsYWluOwogICAgfQoKICAgICMgV2ViaG9vayBlbmRwb2ludHMgKFN0cmlwZSkKICAgIGxvY2F0aW9uIC93ZWJob29rLyB7CiAgICAgICAgcHJveHlfcGFzcyBodHRwOi8vd2ViaG9va19zZXJ2ZXI7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBIb3N0ICRob3N0OwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1SZWFsLUlQICRyZW1vdGVfYWRkcjsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtRm9yd2FyZGVkLUZvciAkcHJveHlfYWRkX3hfZm9yd2FyZGVkX2ZvcjsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFgtRm9yd2FyZGVkLVByb3RvICRzY2hlbWU7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBTdHJpcGUtU2lnbmF0dXJlICRodHRwX3N0cmlwZV9zaWduYXR1cmU7CiAgICAgICAgcHJveHlfYnVmZmVyaW5nIG9mZjsKICAgIH0KCiAgICAjIE1haW4gYXBwbGljYXRpb24KICAgIGxvY2F0aW9uIC8gewogICAgICAgIHByb3h5X3Bhc3MgaHR0cDovL2RhdGFndWFyZGlhbl9hcHA7CiAgICAgICAgcHJveHlfaHR0cF92ZXJzaW9uIDEuMTsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIFVwZ3JhZGUgJGh0dHBfdXBncmFkZTsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIENvbm5lY3Rpb24gJGNvbm5lY3Rpb25fdXBncmFkZTsKICAgICAgICBwcm94eV9zZXRfaGVhZGVyIEhvc3QgJGhvc3Q7CiAgICAgICAgcHJveHlfc2V0X2hlYWRlciBYLVJlYWwtSVAgJHJlbW90ZV9hZGRyOwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1Gb3J3YXJkZWQtRm9yICRwcm94eV9hZGRfeF9mb3J3YXJkZWRfZm9yOwogICAgICAgIHByb3h5X3NldF9oZWFkZXIgWC1Gb3J3YXJkZWQtUHJvdG8gJHNjaGVtZTsKICAgICAgICBwcm94eV9yZWFkX3RpbWVvdXQgODY0MDA7CiAgICB9Cn0K" | base64 -d > /tmp/dataguardianpro.nl
-            sudo cp /tmp/dataguardianpro.nl /etc/nginx/sites-available/dataguardianpro.nl
-            
-            # Ensure symlink exists in sites-enabled
+            # Update nginx site configuration for Streamlit
+            echo "Updating nginx site configuration..."
+            cat > /tmp/dataguardianpro.conf << 'NGINXEOF'
+server {
+    listen 80;
+    server_name dataguardianpro.nl www.dataguardianpro.nl;
+    location /.well-known/acme-challenge/ { root /var/www/html; }
+    location / { return 301 https://\$host\$request_uri; }
+}
+server {
+    listen 443 ssl http2;
+    server_name dataguardianpro.nl www.dataguardianpro.nl;
+    ssl_certificate /etc/letsencrypt/live/dataguardianpro.nl/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/dataguardianpro.nl/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    client_max_body_size 200M;
+    location / {
+        proxy_pass http://localhost:5000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 86400;
+        proxy_buffering off;
+    }
+    location /static {
+        proxy_pass http://localhost:5000/static;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
+    }
+    location /_stcore {
+        proxy_pass http://localhost:5000/_stcore;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host \$host;
+    }
+    location /webhook/ {
+        proxy_pass http://localhost:5001/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+    location /healthz { proxy_pass http://localhost:5000/healthz; }
+}
+NGINXEOF
+            sudo cp /tmp/dataguardianpro.conf /etc/nginx/sites-available/dataguardianpro.nl
             sudo ln -sf /etc/nginx/sites-available/dataguardianpro.nl /etc/nginx/sites-enabled/dataguardianpro.nl
-            
             sudo nginx -t && sudo systemctl reload nginx
-            echo "✅ Nginx configuration updated"
+            echo "Nginx configuration updated"
             
             # Verify webhook server is accessible
             echo "🔍 Testing webhook endpoint..."
