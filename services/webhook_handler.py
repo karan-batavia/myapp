@@ -126,19 +126,23 @@ class WebhookHandler:
         # CRITICAL: Update user's license tier if this is a subscription checkout
         if plan_tier:
             logger.info(f"Subscription checkout detected - upgrading to tier: {plan_tier}")
+            success = False
             
+            # Try to update by user_id first
             if user_id:
                 success = self._update_user_license_tier(user_id, plan_tier, session_id)
                 if success:
-                    logger.info(f"User {user_id} upgraded to {plan_tier} tier via checkout")
+                    logger.info(f"User {user_id} upgraded to {plan_tier} tier via checkout (by ID)")
                 else:
-                    logger.error(f"Failed to upgrade user {user_id} to {plan_tier} via checkout")
-            elif customer_email:
+                    logger.warning(f"Failed to upgrade user {user_id} by ID, trying by email...")
+            
+            # Fallback: try by email if user_id update failed or wasn't available
+            if not success and customer_email:
                 success = self._update_user_license_tier_by_email(customer_email, plan_tier, session_id)
                 if success:
-                    logger.info(f"User {customer_email} upgraded to {plan_tier} tier via checkout")
+                    logger.info(f"User {customer_email} upgraded to {plan_tier} tier via checkout (by email)")
                 else:
-                    logger.error(f"Failed to upgrade user {customer_email} to {plan_tier} via checkout")
+                    logger.error(f"Failed to upgrade user by email {customer_email} to {plan_tier}")
         
         # Extract scan details from metadata (for per-scan payments)
         scan_type = metadata.get('scan_type', 'Unknown')
@@ -322,21 +326,24 @@ class WebhookHandler:
         self._create_subscription_record(subscription)
         
         # CRITICAL: Update the user's license_tier in platform_users
+        success = False
+        customer_email = subscription.get('customer_email')
+        
+        # Try to update by user_id first
         if user_id:
             success = self._update_user_license_tier(user_id, plan_tier, subscription_id)
             if success:
-                logger.info(f"User {user_id} upgraded to {plan_tier} tier")
+                logger.info(f"User {user_id} upgraded to {plan_tier} tier (by ID)")
             else:
-                logger.error(f"Failed to upgrade user {user_id} to {plan_tier}")
-        else:
-            # Try to find user by customer email
-            customer_email = subscription.get('customer_email')
-            if customer_email:
-                success = self._update_user_license_tier_by_email(customer_email, plan_tier, subscription_id)
-                if success:
-                    logger.info(f"User {customer_email} upgraded to {plan_tier} tier")
-                else:
-                    logger.error(f"Failed to upgrade user {customer_email} to {plan_tier}")
+                logger.warning(f"Failed to upgrade user {user_id} by ID, trying by email...")
+        
+        # Fallback: try by email if user_id update failed or wasn't available
+        if not success and customer_email:
+            success = self._update_user_license_tier_by_email(customer_email, plan_tier, subscription_id)
+            if success:
+                logger.info(f"User {customer_email} upgraded to {plan_tier} tier (by email)")
+            else:
+                logger.error(f"Failed to upgrade user by email {customer_email} to {plan_tier}")
         
         return {
             'status': 'success',
