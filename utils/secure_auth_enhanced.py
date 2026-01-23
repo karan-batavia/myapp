@@ -67,13 +67,13 @@ class SecureAuthManager:
             logger.error(f"Password verification error: {e}")
             return False
     
-    def _generate_token(self, user_data: Dict) -> Tuple[str, datetime]:
+    def _generate_token(self, user_data: Dict, username: str = None) -> Tuple[str, datetime]:
         """Generate JWT token for authenticated user"""
         expires_at = datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
         
         payload = {
             'user_id': user_data['user_id'],
-            'username': user_data['username'],
+            'username': user_data.get('username', username) or user_data.get('email', ''),
             'role': user_data['role'],
             'exp': expires_at,
             'iat': datetime.utcnow(),
@@ -279,7 +279,7 @@ class SecureAuthManager:
         self._clear_failed_attempts(username)
         
         # Generate JWT token
-        token, expires_at = self._generate_token(user)
+        token, expires_at = self._generate_token(user, username)
         
         logger.info(f"User {username} authenticated successfully")
         return AuthResult(

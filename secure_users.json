@@ -422,6 +422,9 @@
     "license_tier": "free",
     "company_name": "Test Company BV",
     "created_at": "2026-01-23T16:30:00Z",
-    "email": "test@dataguardianpro.nl"
+    "email": "test@dataguardianpro.nl",
+    "failed_attempts": 0,
+    "locked_until": null,
+    "last_login": "2026-01-23T16:31:43.464565"
   }
 }
