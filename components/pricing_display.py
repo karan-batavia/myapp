@@ -798,7 +798,7 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
     import stripe
     
     try:
-        user_id = st.session_state.get('user', {}).get('id')
+        user_id = st.session_state.get('user_id') or st.session_state.get('user', {}).get('id')
         if not user_id:
             logger.warning("Checkout attempted without user login")
             st.error(_('pricing.login_required', 'Please log in before subscribing.'))
