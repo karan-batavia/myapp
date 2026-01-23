@@ -67,7 +67,7 @@ class SecureAuthManager:
             logger.error(f"Password verification error: {e}")
             return False
     
-    def _generate_token(self, user_data: Dict, username: str = None) -> Tuple[str, datetime]:
+    def _generate_token(self, user_data: Dict, username: Optional[str] = None) -> Tuple[str, datetime]:
         """Generate JWT token for authenticated user"""
         expires_at = datetime.utcnow() + timedelta(hours=self.token_expiry_hours)
         
