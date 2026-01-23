@@ -113,6 +113,10 @@ if st.session_state.get('payment_just_completed'):
     _tier = st.session_state.pop('payment_new_tier', 'professional')
     st.session_state.pop('payment_just_completed', None)
     st.success(f"Payment successful! Your account has been upgraded to {_tier.title()}.")
+    st.info("Please log in to access your upgraded account.")
+    if st.button("Go to Login", key="payment_success_login"):
+        st.session_state['show_login'] = True
+        st.rerun()
 
 # Core imports - keep essential imports minimal
 import logging
