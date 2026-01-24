@@ -1478,7 +1478,7 @@ def render_landing_page():
     st.markdown(f"""
     <div style="text-align: center; margin: 2rem 0;">
         <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
-            {_('landing.scanner_showcase_title', '12 Powerful Privacy Scanners')}
+            {_('landing.scanner_showcase_title', 'Powerful Privacy Scanners')}
         </h2>
         <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
             {_('landing.scanner_showcase_subtitle', 'Everything you need for complete GDPR, EU AI Act, and data protection compliance')}
