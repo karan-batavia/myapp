@@ -1575,7 +1575,7 @@ class AIModelScanner:
                         'description': "AI system detected without proper transparency disclosure to users",
                         'remediation': "Add clear disclosure that users are interacting with an AI system",
                         'id': f"AI-ACT-{self._generate_uuid()}",
-                        'location': 'AI System Interface'
+                        'location': 'AI Model > User Interface Disclosure'
                     }
                 ])
             
@@ -1591,7 +1591,7 @@ class AIModelScanner:
             "description":
             f"Model requires GDPR compliance assessment for {region}",
             "risk_level": "medium",
-            "location": "Compliance Analysis",
+            "location": "AI Model > Compliance Assessment",
             "details": {
                 "region": region,
                 "leakage_types": leakage_types
@@ -2098,7 +2098,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'Comprehensive training data documentation implemented per EU AI Act Article 11',
             'risk_level': 'low',
-            'location': 'Model Documentation',
+            'location': 'AI Model > Technical Documentation',
             'details': {
                 'implementation': 'Enhanced documentation framework',
                 'compliance_boost': '15-20 points',
@@ -2113,7 +2113,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'Differential privacy and data anonymization implemented',
             'risk_level': 'low',
-            'location': 'Privacy Framework',
+            'location': 'AI Model > Privacy Safeguards',
             'details': {
                 'implementation': 'Advanced privacy safeguards',
                 'compliance_boost': '15-20 points',
@@ -2128,7 +2128,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'LIME/SHAP explainability tools integrated for GDPR Article 22 compliance',
             'risk_level': 'low',
-            'location': 'Explainability System',
+            'location': 'AI Model > Explainability Module',
             'details': {
                 'implementation': 'Enhanced explainability features',
                 'compliance_boost': '15-20 points',
@@ -2145,7 +2145,7 @@ class AIModelScanner:
             'category': 'Human Oversight',
             'description': 'Human oversight mechanisms implemented per AI Act Article 14',
             'risk_level': 'low',
-            'location': 'Oversight Framework',
+            'location': 'AI Model > Human Oversight Controls',
             'details': {
                 'implementation': 'Comprehensive human oversight',
                 'compliance_boost': '15-20 points',
@@ -2160,7 +2160,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'Demographic parity and fairness metrics implemented',
             'risk_level': 'low',
-            'location': 'Fairness System',
+            'location': 'AI Model > Fairness Testing',
             'details': {
                 'implementation': 'Advanced bias mitigation',
                 'compliance_boost': '15-20 points',
@@ -2175,7 +2175,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'Data lineage tracking and versioning implemented per AI Act Article 10',
             'risk_level': 'low',
-            'location': 'Governance Framework',
+            'location': 'AI Model > Data Governance',
             'details': {
                 'implementation': 'Robust data governance',
                 'compliance_boost': '10-15 points',
@@ -2192,7 +2192,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'Comprehensive risk assessment framework per AI Act Article 9',
             'risk_level': 'low',
-            'location': 'Risk Management',
+            'location': 'AI Model > Risk Assessment',
             'details': {
                 'implementation': 'Enterprise risk management',
                 'compliance_boost': '10-15 points',
@@ -2207,7 +2207,7 @@ class AIModelScanner:
             'category': 'AI Act 2025 Enhancement',
             'description': 'CE marking and conformity assessment implemented',
             'risk_level': 'low',
-            'location': 'Regulatory Framework',
+            'location': 'AI Model > Regulatory Compliance',
             'details': {
                 'implementation': 'Full regulatory compliance',
                 'compliance_boost': '5-10 points',

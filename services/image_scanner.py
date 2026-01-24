@@ -402,7 +402,7 @@ class ImageScanner:
                     "context": f"Text extracted via OCR: '{match}'",
                     "extraction_method": "ocr_text_analysis",
                     "risk_level": self._get_risk_level(pii_type),
-                    "location": "extracted_text",
+                    "location": f"{file_path} > OCR Extracted Text",
                     "reason": self._get_reason(pii_type, self.region)
                 }
                 findings.append(finding)
@@ -467,7 +467,7 @@ class ImageScanner:
                     "context": "Dutch BSN (Burgerservicenummer) detected via OCR",
                     "extraction_method": "ocr_bsn_11_proef_validation",
                     "risk_level": "Critical",
-                    "location": "extracted_text",
+                    "location": f"{file_path} > OCR Extracted Text",
                     "reason": "BSN is highly protected under Dutch UAVG (Article 46) and GDPR. Requires explicit legal basis for processing.",
                     "gdpr_articles": ["Article 87 - National identification number", "UAVG Article 46"],
                     "uavg_compliant": False
@@ -489,7 +489,7 @@ class ImageScanner:
                         "context": "Potential Dutch BSN detected (passes 11-proef validation)",
                         "extraction_method": "ocr_bsn_11_proef_validation",
                         "risk_level": "Critical",
-                        "location": "extracted_text",
+                        "location": f"{file_path} > OCR Extracted Text",
                         "reason": "BSN is highly protected under Dutch UAVG (Article 46) and GDPR. Requires explicit legal basis for processing.",
                         "gdpr_articles": ["Article 87 - National identification number", "UAVG Article 46"],
                         "uavg_compliant": False
@@ -522,7 +522,7 @@ class ImageScanner:
                 "context": "Detected human face(s) in image based on filename analysis",
                 "extraction_method": "filename_pattern_analysis",
                 "risk_level": "Critical",
-                "location": "visual_content",
+                "location": f"{image_path} > Visual Content",
                 "reason": "Biometric data like facial images is special category data under GDPR Article 9 requiring explicit consent"
             }
             findings.append(finding)
@@ -567,7 +567,7 @@ class ImageScanner:
                     "context": f"Detected {doc_type} document in image based on filename",
                     "extraction_method": "filename_analysis",
                     "risk_level": self._get_risk_level(doc_type),
-                    "location": "document_content",
+                    "location": f"{image_path} > Document Content",
                     "reason": f"{doc_type} contains highly sensitive personal identification data protected under GDPR"
                 }
                 findings.append(finding)
@@ -599,7 +599,7 @@ class ImageScanner:
                 "context": "Detected payment card information in image based on filename",
                 "extraction_method": "filename_analysis",
                 "risk_level": "Critical",
-                "location": "financial_data",
+                "location": f"{image_path} > Financial Data",
                 "reason": "Payment card information requires PCI DSS compliance and GDPR protection for financial data"
             }
             findings.append(finding)
@@ -673,7 +673,7 @@ class ImageScanner:
                     "context": f"GPS coordinates embedded in image: {lat_lon if lat_lon else 'Raw GPS data present'}",
                     "extraction_method": "exif_extraction",
                     "risk_level": "Critical",
-                    "location": "exif_metadata",
+                    "location": f"{image_path} > EXIF Metadata",
                     "reason": "GPS location data reveals exact physical location of photo capture. Under GDPR Article 9, location data combined with other data can identify individuals. Must be stripped before public sharing.",
                     "gdpr_articles": ["Article 4(1) - Personal Data Definition", "Article 9 - Special Categories"],
                     "metadata_details": gps_data,
@@ -693,7 +693,7 @@ class ImageScanner:
                     "context": f"Device identification data: {', '.join([f'{k}={v}' for k,v in device_info.items()])}",
                     "extraction_method": "exif_extraction",
                     "risk_level": "High",
-                    "location": "exif_metadata",
+                    "location": f"{image_path} > EXIF Metadata",
                     "reason": "Device serial numbers and camera identifiers can be used to track and identify individuals across multiple images. This creates a persistent identifier under GDPR.",
                     "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
                     "metadata_details": device_info,
@@ -713,7 +713,7 @@ class ImageScanner:
                     "context": f"Timestamps found: {', '.join([f'{k}={v}' for k,v in timestamp_info.items()])}",
                     "extraction_method": "exif_extraction",
                     "risk_level": "Medium",
-                    "location": "exif_metadata",
+                    "location": f"{image_path} > EXIF Metadata",
                     "reason": "Timestamps can reveal patterns of behavior and location when combined with other data.",
                     "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
                     "metadata_details": timestamp_info,
@@ -733,7 +733,7 @@ class ImageScanner:
                     "context": f"Author/creator information: {', '.join([f'{k}={v}' for k,v in author_info.items()])}",
                     "extraction_method": "exif_extraction",
                     "risk_level": "High",
-                    "location": "exif_metadata",
+                    "location": f"{image_path} > EXIF Metadata",
                     "reason": "Author names and comments directly identify individuals. This is PII under GDPR.",
                     "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
                     "metadata_details": author_info,
@@ -835,7 +835,7 @@ class ImageScanner:
                     "context": "QR code or barcode detected based on filename",
                     "extraction_method": "filename_analysis",
                     "risk_level": "Medium",
-                    "location": "image_content",
+                    "location": f"{image_path} > Image Content",
                     "reason": "QR codes and barcodes may contain PII such as URLs with tracking parameters, personal contact info (vCards), or encoded credentials.",
                     "gdpr_articles": ["Article 4(1) - Personal Data Definition"],
                     "remediation": "Review QR/barcode content for PII before sharing"
@@ -866,7 +866,7 @@ class ImageScanner:
                                 "context": f"{code_type} detected with {', '.join(pii_indicators)}",
                                 "extraction_method": "qr_barcode_scan",
                                 "risk_level": risk_level,
-                                "location": "encoded_data",
+                                "location": f"{image_path} > Encoded Data",
                                 "decoded_content": data[:200] + "..." if len(data) > 200 else data,
                                 "pii_types_found": pii_indicators,
                                 "reason": f"QR/Barcode contains potentially sensitive data: {', '.join(pii_indicators)}",
@@ -893,7 +893,7 @@ class ImageScanner:
                             "context": f"QR code decoded: {data[:100]}..." if len(data) > 100 else f"QR code decoded: {data}",
                             "extraction_method": "opencv_qr_detection",
                             "risk_level": "High" if pii_indicators else "Medium",
-                            "location": "encoded_data",
+                            "location": f"{image_path} > Encoded Data",
                             "decoded_content": data[:200] if len(data) > 200 else data,
                             "pii_types_found": pii_indicators if pii_indicators else ["content_review_needed"],
                             "reason": "QR code content requires privacy review",
@@ -990,7 +990,7 @@ class ImageScanner:
                     "context": "Visible watermark detected in image corners or edges",
                     "extraction_method": "watermark_detection",
                     "risk_level": "Medium",
-                    "location": "image_overlay",
+                    "location": f"{image_path} > Image Overlay",
                     "reason": "Watermarks may contain company names, tracking IDs, or copyright info that could identify source/ownership.",
                     "gdpr_articles": ["Article 4(1) - If watermark identifies creator"],
                     "analysis_scores": {
@@ -1011,7 +1011,7 @@ class ImageScanner:
                     "context": "Potential invisible/steganographic watermark detected in frequency domain",
                     "extraction_method": "frequency_analysis",
                     "risk_level": "High",
-                    "location": "image_data",
+                    "location": f"{image_path} > Image Data",
                     "reason": "Invisible watermarks can embed tracking identifiers, user IDs, or device fingerprints without user knowledge. This is a privacy concern under GDPR transparency requirements.",
                     "gdpr_articles": ["Article 5(1)(a) - Transparency", "Article 13 - Information to be provided"],
                     "analysis_scores": {
@@ -1155,7 +1155,7 @@ class ImageScanner:
                     "context": "Screenshot detected based on filename pattern",
                     "extraction_method": "filename_analysis",
                     "risk_level": "High",
-                    "location": "image_content",
+                    "location": f"{image_path} > Image Content",
                     "reason": "Screenshots often contain visible PII: usernames, emails, chat messages, notifications, browser URLs, and personal content. GDPR requires consent for sharing such content.",
                     "gdpr_articles": ["Article 6 - Lawfulness of processing", "Article 7 - Consent"],
                     "potential_pii": ["usernames", "email_addresses", "chat_messages", "notifications", "browser_history"],
@@ -1177,7 +1177,7 @@ class ImageScanner:
                         "context": "Image shows characteristics of a screenshot (UI elements, status bars, navigation)",
                         "extraction_method": "visual_analysis",
                         "risk_level": "Medium",
-                        "location": "image_content",
+                        "location": f"{image_path} > Image Content",
                         "reason": "Image appears to be a screenshot which may contain personal information from apps, browsers, or system notifications.",
                         "gdpr_articles": ["Article 6 - Lawfulness of processing"],
                         "analysis_score": round(screenshot_score, 3),
@@ -1276,7 +1276,7 @@ class ImageScanner:
                     "context": "Document with signature detected based on filename",
                     "extraction_method": "filename_analysis",
                     "risk_level": "Critical",
-                    "location": "document_signature",
+                    "location": f"{image_path} > Document Signature",
                     "reason": "Handwritten signatures are biometric data under GDPR Article 9 (special categories). They uniquely identify individuals and require explicit consent for processing.",
                     "gdpr_articles": ["Article 9(1) - Biometric Data", "Article 9(2)(a) - Explicit Consent"],
                     "remediation": "Ensure explicit consent exists for signature processing. Redact signatures if sharing with unauthorized parties."
@@ -1297,7 +1297,7 @@ class ImageScanner:
                         "context": "Handwritten signature pattern detected in image",
                         "extraction_method": "visual_analysis",
                         "risk_level": "Critical" if signature_score >= 0.6 else "High",
-                        "location": "document_content",
+                        "location": f"{image_path} > Document Content",
                         "reason": "Potential handwritten signature detected. Signatures are biometric identifiers under GDPR and require special handling.",
                         "gdpr_articles": ["Article 9(1) - Biometric Data"],
                         "analysis_score": round(signature_score, 3),
@@ -1411,7 +1411,7 @@ class ImageScanner:
                     "context": "Potential hidden data detected in image using statistical analysis",
                     "extraction_method": "steganography_detection",
                     "risk_level": risk_level,
-                    "location": "image_data",
+                    "location": f"{image_path} > Image Data",
                     "reason": "Image shows statistical anomalies consistent with steganographic data hiding. Hidden data could contain PII, credentials, or other sensitive information that bypasses normal security controls.",
                     "gdpr_articles": ["Article 32 - Security of Processing"],
                     "analysis_details": {
@@ -1645,7 +1645,7 @@ class ImageScanner:
                     "context": f"{severity} of synthetic/deepfake content detected",
                     "extraction_method": "deepfake_detection_algorithm",
                     "risk_level": risk_level,
-                    "location": "image_content",
+                    "location": f"{image_path} > Image Content",
                     "reason": self._get_deepfake_compliance_reason(),
                     "eu_ai_act_compliance": self._check_eu_ai_act_article_50(image_path, total_score),
                     "analysis_details": {
@@ -2126,7 +2126,7 @@ class ImageScanner:
                     "context": f"Advanced fraud analysis detected potential manipulation (score: {result.fraud_score:.1%})",
                     "extraction_method": "advanced_fraud_detector",
                     "risk_level": "Critical" if result.fraud_score >= 0.6 else "High" if result.fraud_score >= 0.4 else "Medium",
-                    "location": "image_content",
+                    "location": f"{image_path} > Image Content",
                     "reason": "; ".join(result.recommendations[:2]),
                     "fraud_types": [ft.value for ft in result.fraud_types],
                     "eu_ai_act_flags": result.eu_ai_act_flags,
@@ -2152,7 +2152,7 @@ class ImageScanner:
                         "context": "Potential synthetic/AI-generated content detected without proper labeling",
                         "extraction_method": "eu_ai_act_article_50_check",
                         "risk_level": "High",
-                        "location": "image_content",
+                        "location": f"{image_path} > Image Content",
                         "reason": "EU AI Act Article 50 requires synthetic content to be clearly labeled",
                         "eu_ai_act_articles": result.eu_ai_act_flags,
                         "severity": "High"
