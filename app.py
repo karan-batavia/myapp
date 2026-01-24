@@ -67,11 +67,34 @@ if st.query_params.get("payment_success") == "true":
         try:
             import stripe
             import os
+            import logging
+            from datetime import datetime
+            
             stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
             checkout_session = stripe.checkout.Session.retrieve(session_id)
+            
+            # DIAGNOSTIC: Log session details to understand payment status
+            session_created = datetime.fromtimestamp(checkout_session.created)
+            logging.info(f"[PAYMENT DEBUG] Session ID: {session_id[:30]}...")
+            logging.info(f"[PAYMENT DEBUG] Session created: {session_created}")
+            logging.info(f"[PAYMENT DEBUG] Payment status: {checkout_session.payment_status}")
+            logging.info(f"[PAYMENT DEBUG] Status: {checkout_session.status}")
+            logging.info(f"[PAYMENT DEBUG] Amount total: {checkout_session.amount_total}")
+            logging.info(f"[PAYMENT DEBUG] Customer email: {checkout_session.customer_email}")
+            
+            # Check if session is recent (within last hour) to prevent old session reuse
+            import time
+            session_age_minutes = (time.time() - checkout_session.created) / 60
+            logging.info(f"[PAYMENT DEBUG] Session age: {session_age_minutes:.1f} minutes")
+            
             if checkout_session.payment_status == "paid":
+                # Warn if session is old (might be cached/reused)
+                if session_age_minutes > 60:
+                    logging.warning(f"[PAYMENT DEBUG] WARNING: Session is {session_age_minutes:.0f} minutes old - might be reused!")
+                
                 _plan_tier = checkout_session.metadata.get('plan_tier') or checkout_session.metadata.get('tier', 'professional')
                 _payment_success = True
+                logging.info(f"[PAYMENT DEBUG] Payment VERIFIED as paid, tier: {_plan_tier}")
                 
                 # Update session state if user is logged in
                 if 'user' in st.session_state:
@@ -96,11 +119,12 @@ if st.query_params.get("payment_success") == "true":
                                         st.session_state['license_tier'] = db_tier
                                         _plan_tier = db_tier
                     except Exception as db_err:
-                        import logging
                         logging.warning(f"Could not refresh tier from database: {db_err}")
                 
                 st.session_state['payment_just_completed'] = True
                 st.session_state['payment_new_tier'] = _plan_tier
+            else:
+                logging.warning(f"[PAYMENT DEBUG] Payment NOT verified - status: {checkout_session.payment_status}")
         except Exception as e:
             import logging
             logging.error(f"Payment success handler error: {str(e)}")
