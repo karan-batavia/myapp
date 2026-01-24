@@ -555,7 +555,7 @@ class BlobScanner:
                     'value': pii_value,
                     'file': os.path.basename(file_path),
                     'line': line_number if line_number > 0 else 'N/A',
-                    'location': f"Line {line_number}" if line_number > 0 else "Document",
+                    'location': f"{file_path}:{line_number}" if line_number > 0 else file_path,
                     'element': element_context,
                     'description': f"{pii_item.get('type', 'PII')} found in document",
                     'severity': 'High' if pii_item.get('type') in ['BSN', 'Credit Card', 'SSN'] else 'Medium',
@@ -589,7 +589,7 @@ class BlobScanner:
                     'type': 'BSN_VIOLATION',
                     'value': bsn,
                     'risk_level': 'High',
-                    'location': f'File: {os.path.basename(file_path)}',
+                    'location': file_path,
                     'description': 'Unauthorized BSN collection example detected',
                     'gdpr_article': 'UAVG Article 46',
                     'recommendation': 'Remove unauthorized BSN examples or add proper legal basis'
@@ -601,7 +601,7 @@ class BlobScanner:
                     'type': 'AI_ACT_VIOLATION',
                     'value': 'High-risk AI system without safeguards',
                     'risk_level': 'Critical',
-                    'location': f'File: {os.path.basename(file_path)}',
+                    'location': file_path,
                     'description': 'High-risk AI system detected without proper compliance framework',
                     'gdpr_article': 'EU AI Act Annex III',
                     'recommendation': 'Implement AI governance framework with human oversight'
@@ -613,7 +613,7 @@ class BlobScanner:
                     'type': 'GDPR_LAWFULNESS_VIOLATION',
                     'value': 'Processing without legal basis',
                     'risk_level': 'High',
-                    'location': f'File: {os.path.basename(file_path)}',
+                    'location': file_path,
                     'description': 'Data processing without proper legal basis under GDPR Article 6',
                     'gdpr_article': 'GDPR Article 6',
                     'recommendation': 'Establish clear legal basis for all data processing activities'
@@ -625,7 +625,7 @@ class BlobScanner:
                     'type': 'GDPR_TRANSPARENCY_VIOLATION',
                     'value': 'Hidden data processing',
                     'risk_level': 'High',
-                    'location': f'File: {os.path.basename(file_path)}',
+                    'location': file_path,
                     'description': 'Data processing without transparent disclosure to data subjects',
                     'gdpr_article': 'GDPR Article 5(1)(a)',
                     'recommendation': 'Implement clear privacy notices and transparent data processing disclosure'
@@ -637,7 +637,7 @@ class BlobScanner:
                     'type': 'GDPR_DATA_MINIMIZATION_VIOLATION',
                     'value': 'Excessive data collection',
                     'risk_level': 'Medium',
-                    'location': f'File: {os.path.basename(file_path)}',
+                    'location': file_path,
                     'description': 'Data collection exceeds what is necessary for stated purposes',
                     'gdpr_article': 'GDPR Article 5(1)(c)',
                     'recommendation': 'Review and limit data collection to what is strictly necessary'
@@ -649,7 +649,7 @@ class BlobScanner:
                     'type': 'GDPR_SPECIAL_CATEGORY_VIOLATION',
                     'value': 'Special category data without proper basis',
                     'risk_level': 'Critical',
-                    'location': f'File: {os.path.basename(file_path)}',
+                    'location': file_path,
                     'description': 'Special categories of personal data processed without explicit consent or other Article 9 basis',
                     'gdpr_article': 'GDPR Article 9',
                     'recommendation': 'Obtain explicit consent or establish other lawful basis under Article 9'

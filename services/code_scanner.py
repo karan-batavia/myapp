@@ -1306,7 +1306,7 @@ class CodeScanner:
                     secret_finding = {
                         'type': f'Secret:{secret_type.replace("_", " ").title()}',
                         'value': f'{value[:3]}***{value[-3:]}' if len(value) > 6 else '***',
-                        'location': f'Line {line_no}',
+                        'location': f'{file_path}:{line_no}',
                         'risk_level': 'High',
                         'reason': f'Potential secret detected: {secret_type}',
                         'provider': provider,
@@ -1398,7 +1398,7 @@ class CodeScanner:
                                     secret_finding = {
                                         'type': f'Secret:{secret_type.replace("_", " ").title()}',
                                         'value': f'{value[:3]}***{value[-3:]}' if len(value) > 6 else '***',
-                                        'location': f'Line {line_number}',
+                                        'location': f'{file_path}:{line_number}',
                                         'risk_level': 'High',
                                         'reason': f'Potential secret detected: {secret_type}',
                                         'provider': provider,
@@ -1416,7 +1416,7 @@ class CodeScanner:
                 if buffer.strip():
                     line_pii = self._scan_content(buffer, "code", file_path)
                     for pii in line_pii:
-                        pii['location'] = f'Line {line_number} (code)'
+                        pii['location'] = f'{file_path}:{line_number}'
                     all_pii.extend(line_pii)
         
         except (OSError, PermissionError) as e:
@@ -1476,7 +1476,7 @@ class CodeScanner:
                                         findings.append({
                                             'type': 'High Entropy String',
                                             'value': f'{string_value[:3]}***{string_value[-3:]}',
-                                            'location': f'Line {line_number}',
+                                            'location': f'{file_path}:{line_number}',
                                             'risk_level': 'Medium',
                                             'reason': f'String with high entropy (randomness) detected. Entropy: {entropy:.2f}',
                                             'entropy': f"{entropy:.2f}"
@@ -1554,7 +1554,7 @@ class CodeScanner:
                         'type': f'Code Fraud: {category.replace("_", " ").title()}',
                         'category': 'Code Fraud Detection',
                         'value': matched_text[:100] + ('...' if len(matched_text) > 100 else ''),
-                        'location': f'Line {line_number}',
+                        'location': f'{file_path}:{line_number}',
                         'file_path': file_path,
                         'risk_level': severity_map.get(category, 'Medium'),
                         'severity': severity_map.get(category, 'Medium'),
@@ -1832,7 +1832,7 @@ class CodeScanner:
                         findings.append({
                             'type': 'High Entropy String',
                             'value': f'{string_value[:3]}***{string_value[-3:]}',  # Mask the value
-                            'location': f'Line {line_no}',
+                            'location': f'{file_path}:{line_no}',
                             'risk_level': 'Medium',
                             'reason': f'String with high entropy (randomness) detected. Entropy: {entropy_formatted}',
                             'entropy': entropy_formatted
@@ -2048,7 +2048,7 @@ class CodeScanner:
                 finding = {
                     'type': pii_type,
                     'value': pii_item['value'],
-                    'location': f'Line {line_num} ({content_type})',
+                    'location': f'{file_path}:{line_num}',
                     'risk_level': risk_level,
                     'reason': self._get_reason(pii_type, risk_level)
                 }
@@ -2068,7 +2068,7 @@ class CodeScanner:
                             uavg_finding = {
                                 'type': f'UAVG-{category.replace("_", " ").title()}',
                                 'value': match.group()[:50] + '...' if len(match.group()) > 50 else match.group(),
-                                'location': f'Line {line_num} ({content_type})',
+                                'location': f'{file_path}:{line_num}',
                                 'risk_level': uavg_risk_level,
                                 'reason': self._get_uavg_reason(category),
                                 'compliance_frameworks': ['GDPR', 'UAVG'],
@@ -2087,7 +2087,7 @@ class CodeScanner:
                             finding = {
                                 'type': f'Vulnerability:{vuln_type.replace("_", " ").title()}',
                                 'value': line.strip(),
-                                'location': f'Line {line_num} (code)',
+                                'location': f'{file_path}:{line_num}',
                                 'risk_level': 'High',
                                 'reason': f'Potential security vulnerability: {vuln_type.replace("_", " ")}. This pattern is commonly found in intentionally vulnerable applications.'
                             }
@@ -2106,7 +2106,7 @@ class CodeScanner:
                             finding = {
                                 'type': f'Vulnerability:{vuln_type.replace("_", " ").title()}',
                                 'value': match.group(0),
-                                'location': f'Lines {i+1}-{min(i+5, len(lines))} (code)',
+                                'location': f'{file_path}:{i+1}-{min(i+5, len(lines))}',
                                 'risk_level': 'High',
                                 'reason': f'Potential security vulnerability: {vuln_type.replace("_", " ")}. This pattern is commonly found in intentionally vulnerable applications.'
                             }
