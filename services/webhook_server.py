@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 @app.route('/webhook/stripe', methods=['POST'])
+@app.route('/stripe', methods=['POST'])
 def stripe_webhook():
     """
     Stripe webhook endpoint
