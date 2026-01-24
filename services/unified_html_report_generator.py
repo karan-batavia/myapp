@@ -1572,7 +1572,7 @@ class UnifiedHTMLReportGenerator:
         
         return f"""
         <div class="recommendations-section">
-            <h4>💡 Actionable Recommendations</h4>
+            <h4>💡 Praktische Aanbevelingen</h4>
             {recommendations_html}
         </div>
         """
@@ -1865,7 +1865,7 @@ class UnifiedHTMLReportGenerator:
             
             return f"""
             <div class="compliance-forecast-section">
-                <h2>📈 Compliance Score Forecast</h2>
+                <h2>📈 Nalevingsscore Prognose</h2>
                 <div class="forecast-summary">
                     <div class="forecast-metric">
                         <span class="metric-value">{prediction.future_score:.1f}%</span>
@@ -1931,39 +1931,39 @@ class UnifiedHTMLReportGenerator:
         """Generate a fallback forecast section when full prediction is unavailable."""
         return f"""
         <div class="compliance-forecast-section">
-            <h2>🎯 Compliance Score Analysis</h2>
+            <h2>🎯 Nalevingsscore Analyse</h2>
             <div class="forecast-summary">
                 <div class="forecast-metric">
                     <span class="metric-value">{current_score:.1f}%</span>
-                    <span class="metric-label">📊 Current Compliance Score</span>
+                    <span class="metric-label">📊 Huidige Nalevingsscore</span>
                 </div>
                 <div class="forecast-metric">
-                    <span class="metric-value">{'🟢 Excellent' if current_score >= 90 else '🟡 Good' if current_score >= 80 else '🟠 Attention' if current_score >= 70 else '🔴 Critical'}</span>
-                    <span class="metric-label">🚨 Risk Level</span>
+                    <span class="metric-value">{'🟢 Uitstekend' if current_score >= 90 else '🟡 Goed' if current_score >= 80 else '🟠 Aandacht' if current_score >= 70 else '🔴 Kritiek'}</span>
+                    <span class="metric-label">🚨 Risiconiveau</span>
                 </div>
                 <div class="forecast-metric">
-                    <span class="metric-value">{'Financial Services: 78.5%' if current_score < 78.5 else 'Technology: 81.2%'}</span>
-                    <span class="metric-label">🏢 Industry Benchmark</span>
+                    <span class="metric-value">{'Financiële Diensten: 78.5%' if current_score < 78.5 else 'Technologie: 81.2%'}</span>
+                    <span class="metric-label">🏢 Sector Benchmark</span>
                 </div>
             </div>
             
             <div class="forecast-explanation">
-                <h4>📊 Compliance Score Analysis</h4>
+                <h4>📊 Nalevingsscore Analyse</h4>
                 <div class="explanation-grid">
                     <div class="explanation-item">
-                        <strong>📊 Current Status:</strong> Your compliance score of {current_score:.1f}% indicates {'excellent' if current_score >= 90 else 'good' if current_score >= 80 else 'moderate' if current_score >= 70 else 'critical'} compliance posture.
+                        <strong>📊 Huidige Status:</strong> Uw nalevingsscore van {current_score:.1f}% geeft een {'uitstekende' if current_score >= 90 else 'goede' if current_score >= 80 else 'matige' if current_score >= 70 else 'kritieke'} nalevingspositie aan.
                     </div>
                     <div class="explanation-item">
-                        <strong>🏢 Industry Comparison:</strong> {'Above average' if current_score > 80 else 'Below average' if current_score < 75 else 'Average'} compared to industry benchmarks.
+                        <strong>🏢 Sectorvergelijking:</strong> {'Boven gemiddeld' if current_score > 80 else 'Onder gemiddeld' if current_score < 75 else 'Gemiddeld'} vergeleken met sector benchmarks.
                     </div>
                     <div class="explanation-item">
-                        <strong>📈 Recommendations:</strong> {'Continue current practices' if current_score >= 85 else 'Focus on addressing critical findings' if current_score < 70 else 'Implement systematic improvements'}.
+                        <strong>📈 Aanbevelingen:</strong> {'Ga door met huidige praktijken' if current_score >= 85 else 'Focus op het aanpakken van kritieke bevindingen' if current_score < 70 else 'Implementeer systematische verbeteringen'}.
                     </div>
                 </div>
             </div>
             
             <p style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">
-                💡 <strong>Pro Tip:</strong> Advanced AI-powered compliance forecasting is available with full system dependencies installed.
+                💡 <strong>Tip:</strong> Geavanceerde AI-gestuurde nalevingsvoorspelling is beschikbaar met volledige systeemafhankelijkheden.
             </p>
         </div>
         """
@@ -2101,7 +2101,7 @@ class UnifiedHTMLReportGenerator:
         
         return f"""
         <div class="scanner-specific">
-            <h2>🤖 {t_report('ai_model_compliance', 'AI Model Compliance')}</h2>
+            <h2>🤖 {t_report('ai_model_compliance', 'AI Model Naleving')}</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{model_framework}</div>
@@ -2113,7 +2113,7 @@ class UnifiedHTMLReportGenerator:
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{compliance_score}%</div>
-                    <div class="metric-label">Compliance Score</div>
+                    <div class="metric-label">Nalevingsscore</div>
                 </div>
             </div>
             {comprehensive_html}
@@ -2146,28 +2146,28 @@ class UnifiedHTMLReportGenerator:
             traceability_html = f"""
             <div style="margin-top: 30px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #1e293b; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    📋 EU AI Act Article Traceability Matrix (All 113 Articles)
+                    📋 EU AI Act Artikel Traceerbaarheidsmatrix (Alle 113 Artikelen)
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #10b981;">{overall.get('overall_compliance_score', 0):.1f}%</div>
-                        <div style="font-size: 12px; color: #64748b;">Overall Compliance</div>
+                        <div style="font-size: 12px; color: #64748b;">Totale Naleving</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">{overall.get('total_articles', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Articles Assessed</div>
+                        <div style="font-size: 12px; color: #64748b;">Artikelen Beoordeeld</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #22c55e;">{overall.get('compliant', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Fully Compliant</div>
+                        <div style="font-size: 12px; color: #64748b;">Volledig Conform</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">{overall.get('partially_compliant', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Partial Compliance</div>
+                        <div style="font-size: 12px; color: #64748b;">Gedeeltelijk Conform</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #ef4444;">{overall.get('non_compliant', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Non-Compliant</div>
+                        <div style="font-size: 12px; color: #64748b;">Niet Conform</div>
                     </div>
                 </div>
             """
@@ -2175,14 +2175,14 @@ class UnifiedHTMLReportGenerator:
             # Chapter breakdown table
             if chapter_summary:
                 traceability_html += """
-                <h4 style="color: #475569; margin: 20px 0 15px 0;">Compliance by Chapter</h4>
+                <h4 style="color: #475569; margin: 20px 0 15px 0;">Naleving per Hoofdstuk</h4>
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <thead>
                         <tr style="background: #1e293b; color: white;">
-                            <th style="padding: 10px; text-align: left; border-radius: 4px 0 0 0;">Chapter</th>
-                            <th style="padding: 10px; text-align: center;">Articles</th>
-                            <th style="padding: 10px; text-align: center;">Compliant</th>
-                            <th style="padding: 10px; text-align: center;">Partial</th>
+                            <th style="padding: 10px; text-align: left; border-radius: 4px 0 0 0;">Hoofdstuk</th>
+                            <th style="padding: 10px; text-align: center;">Artikelen</th>
+                            <th style="padding: 10px; text-align: center;">Conform</th>
+                            <th style="padding: 10px; text-align: center;">Gedeeltelijk</th>
                             <th style="padding: 10px; text-align: center;">Score</th>
                             <th style="padding: 10px; text-align: center; border-radius: 0 4px 0 0;">Status</th>
                         </tr>
@@ -2219,17 +2219,17 @@ class UnifiedHTMLReportGenerator:
                 remediation_html = f"""
                 <div style="margin-top: 30px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 25px;">
                     <h3 style="color: #92400e; margin-bottom: 20px; border-bottom: 2px solid #f59e0b; padding-bottom: 10px;">
-                        🎯 Prioritized Remediation Plan
+                        🎯 Geprioriteerd Herstelplan
                     </h3>
                     <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
                         <thead>
                             <tr style="background: #92400e; color: white;">
                                 <th style="padding: 12px; text-align: left;">ID</th>
-                                <th style="padding: 12px; text-align: left;">Article</th>
-                                <th style="padding: 12px; text-align: left;">Finding</th>
-                                <th style="padding: 12px; text-align: center;">Priority</th>
+                                <th style="padding: 12px; text-align: left;">Artikel</th>
+                                <th style="padding: 12px; text-align: left;">Bevinding</th>
+                                <th style="padding: 12px; text-align: center;">Prioriteit</th>
                                 <th style="padding: 12px; text-align: center;">Impact</th>
-                                <th style="padding: 12px; text-align: center;">Effort</th>
+                                <th style="padding: 12px; text-align: center;">Inspanning</th>
                                 <th style="padding: 12px; text-align: center;">Deadline</th>
                             </tr>
                         </thead>
@@ -2261,7 +2261,7 @@ class UnifiedHTMLReportGenerator:
                         </tbody>
                     </table>
                     <p style="margin-top: 15px; font-size: 12px; color: #92400e; font-style: italic;">
-                        💡 Items sorted by business impact score. Focus on critical and high priority items first.
+                        💡 Items gesorteerd op zakelijke impactscore. Focus eerst op kritieke en hoge prioriteit items.
                     </p>
                 </div>
                 """
@@ -2273,18 +2273,18 @@ class UnifiedHTMLReportGenerator:
             conformity_html = f"""
             <div style="margin-top: 30px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #3b82f6; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #1e40af; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    📊 Conformity Assessment Readiness Scorecard
+                    📊 Conformiteitsbeoordeling Gereedheidsscorekaart
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
             """
             
             readiness_items = [
-                ("Overall Readiness", readiness.get('overall', 0), "#3b82f6"),
-                ("Documentation", readiness.get('documentation', 0), "#8b5cf6"),
-                ("Technical", readiness.get('technical', 0), "#06b6d4"),
-                ("Governance", readiness.get('governance', 0), "#10b981"),
-                ("Human Oversight", readiness.get('human_oversight', 0), "#f59e0b"),
-                ("Risk Management", readiness.get('risk_management', 0), "#ef4444"),
+                ("Algehele Gereedheid", readiness.get('overall', 0), "#3b82f6"),
+                ("Documentatie", readiness.get('documentation', 0), "#8b5cf6"),
+                ("Technisch", readiness.get('technical', 0), "#06b6d4"),
+                ("Bestuur", readiness.get('governance', 0), "#10b981"),
+                ("Menselijk Toezicht", readiness.get('human_oversight', 0), "#f59e0b"),
+                ("Risicobeheer", readiness.get('risk_management', 0), "#ef4444"),
             ]
             
             for label, score, color in readiness_items:
@@ -2306,11 +2306,11 @@ class UnifiedHTMLReportGenerator:
             conformity_html += f"""
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-weight: bold; color: #1e40af;">⏱️ Estimated Time to Conformity Ready:</span>
+                        <span style="font-weight: bold; color: #1e40af;">⏱️ Geschatte Tijd tot Gereedheid:</span>
                         <span style="background: #1e40af; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">{time_to_ready}</span>
                     </div>
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                        <strong style="color: #1e40af;">Key Recommendations:</strong>
+                        <strong style="color: #1e40af;">Belangrijke Aanbevelingen:</strong>
                         <ul style="margin-top: 10px; padding-left: 20px;">
             """
             
@@ -2331,34 +2331,34 @@ class UnifiedHTMLReportGenerator:
             executive_html = f"""
             <div style="margin-top: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #16a34a; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #166534; margin-bottom: 20px; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">
-                    📄 Regulator-Ready Executive Summary
+                    📄 Toezichthouder-Klaar Managementsamenvatting
                 </h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div>
-                        <h4 style="color: #166534; margin-bottom: 10px;">Compliance Overview</h4>
+                        <h4 style="color: #166534; margin-bottom: 10px;">Nalevingsoverzicht</h4>
                         <table style="width: 100%; font-size: 13px;">
-                            <tr><td style="padding: 5px; color: #64748b;">Overall Score:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('overall_score', 'N/A')}</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">Rating:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('rating', 'N/A')}</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">Articles Assessed:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('articles_assessed', 0)}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Totale Score:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('overall_score', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Beoordeling:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('rating', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Artikelen Beoordeeld:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('articles_assessed', 0)}</td></tr>
                         </table>
                     </div>
                     <div>
-                        <h4 style="color: #166534; margin-bottom: 10px;">Regulatory Deadlines</h4>
+                        <h4 style="color: #166534; margin-bottom: 10px;">Regelgevende Deadlines</h4>
                         <table style="width: 100%; font-size: 13px;">
-                            <tr><td style="padding: 5px; color: #64748b;">Prohibited Practices:</td><td style="padding: 5px; font-weight: bold;">Feb 2, 2025</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">GPAI Models:</td><td style="padding: 5px; font-weight: bold;">Aug 2, 2025</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">High-Risk Systems:</td><td style="padding: 5px; font-weight: bold;">Aug 2, 2026</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Verboden Praktijken:</td><td style="padding: 5px; font-weight: bold;">2 feb 2025</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">GPAI Modellen:</td><td style="padding: 5px; font-weight: bold;">2 aug 2025</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Hoog-Risico Systemen:</td><td style="padding: 5px; font-weight: bold;">2 aug 2026</td></tr>
                         </table>
                     </div>
                 </div>
                 <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
-                    <strong style="color: #166534;">🇳🇱 Netherlands Specific:</strong>
+                    <strong style="color: #166534;">🇳🇱 Nederland Specifiek:</strong>
                     <p style="margin-top: 10px; font-size: 13px; color: #475569;">
-                        Authority: Autoriteit Persoonsgegevens (Dutch DPA) | UAVG compliance aligned | BSN handling procedures implemented where applicable
+                        Autoriteit: Autoriteit Persoonsgegevens (AP) | UAVG naleving gewaarborgd | BSN verwerkingsprocedures geïmplementeerd waar van toepassing
                     </p>
                 </div>
                 <p style="margin-top: 15px; text-align: center; font-size: 11px; color: #64748b;">
-                    Assessment Date: {datetime.now().strftime('%Y-%m-%d')} | Assessor: DataGuardian Pro AI Compliance Platform | Valid until material changes
+                    Beoordelingsdatum: {datetime.now().strftime('%d-%m-%Y')} | Beoordelaar: DataGuardian Pro AI Compliance Platform | Geldig tot materiële wijzigingen
                 </p>
             </div>
             """
@@ -2380,11 +2380,11 @@ class UnifiedHTMLReportGenerator:
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{risk_score}</div>
-                    <div class="metric-label">Risk Score</div>
+                    <div class="metric-label">Risicoscore</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{overall_risk_level}</div>
-                    <div class="metric-label">Risk Level</div>
+                    <div class="metric-label">Risiconiveau</div>
                 </div>
             </div>
         </div>
