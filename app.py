@@ -1474,6 +1474,131 @@ def render_landing_page():
     
     st.markdown("---")
     
+    # Why DataGuardian Pro section - competitive advantage
+    st.markdown(f"""
+    <div style="text-align: center; margin: 2rem 0 1.5rem 0;">
+        <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
+            {_('landing.why_dgp_title', 'Waarom DataGuardian Pro?')}
+        </h2>
+        <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
+            {_('landing.why_dgp_subtitle', 'Speciaal gebouwd voor Nederlandse privacycompliance - geen generieke AI-tools')}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Comparison table
+    comparison_items = [
+        {
+            "icon": "🇪🇺",
+            "title": _('landing.why.data_residency_title', 'Data Blijft in EU'),
+            "dgp": _('landing.why.data_residency_dgp', 'Nederland/EU hosting - volledig GDPR-compliant'),
+            "generic": _('landing.why.data_residency_generic', 'Data naar VS-servers verzonden')
+        },
+        {
+            "icon": "🔒",
+            "title": _('landing.why.privacy_title', 'Uw Data is Veilig'),
+            "dgp": _('landing.why.privacy_dgp', 'Geen dataopslag, alleen hash-verificatie'),
+            "generic": _('landing.why.privacy_generic', 'Data traint hun AI-modellen')
+        },
+        {
+            "icon": "📋",
+            "title": _('landing.why.compliance_title', 'Volledige Compliance'),
+            "dgp": _('landing.why.compliance_dgp', '100% GDPR, UAVG, EU AI Act dekking'),
+            "generic": _('landing.why.compliance_generic', 'Generiek advies, geen garanties')
+        },
+        {
+            "icon": "📊",
+            "title": _('landing.why.audit_title', 'Audit-Ready'),
+            "dgp": _('landing.why.audit_dgp', 'Professionele rapporten voor AP-inspecties'),
+            "generic": _('landing.why.audit_generic', 'Chatgeschiedenis, geen audit trail')
+        },
+        {
+            "icon": "🏢",
+            "title": _('landing.why.enterprise_title', 'Enterprise Integratie'),
+            "dgp": _('landing.why.enterprise_dgp', 'SharePoint, SAP, Salesforce, databases'),
+            "generic": _('landing.why.enterprise_generic', 'Handmatig bestanden uploaden')
+        },
+        {
+            "icon": "🇳🇱",
+            "title": _('landing.why.dutch_title', 'Nederlandse Expertise'),
+            "dgp": _('landing.why.dutch_dgp', 'BSN 11-proef, UAVG, Telecommunicatiewet'),
+            "generic": _('landing.why.dutch_generic', 'Geen lokale regelgeving kennis')
+        }
+    ]
+    
+    st.markdown("""
+    <style>
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .comparison-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e8e8e8;
+        }
+        .comparison-card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        .comparison-icon {
+            font-size: 1.5rem;
+        }
+        .comparison-title {
+            font-weight: 700;
+            color: #1B2559;
+            font-size: 1rem;
+            margin: 0;
+        }
+        .comparison-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+        }
+        .comparison-row.dgp {
+            color: #2E7D32;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .comparison-row.generic {
+            color: #c62828;
+        }
+        .comparison-check {
+            flex-shrink: 0;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Render comparison cards in 2 columns
+    col1, col2 = st.columns(2, gap="medium")
+    for i, item in enumerate(comparison_items):
+        with col1 if i % 2 == 0 else col2:
+            st.markdown(f"""
+            <div class="comparison-card">
+                <div class="comparison-card-header">
+                    <span class="comparison-icon">{item['icon']}</span>
+                    <h4 class="comparison-title">{item['title']}</h4>
+                </div>
+                <div class="comparison-row dgp">
+                    <span class="comparison-check">✅</span>
+                    <span><strong>DataGuardian Pro:</strong> {item['dgp']}</span>
+                </div>
+                <div class="comparison-row generic">
+                    <span class="comparison-check">❌</span>
+                    <span><strong>ChatGPT/AI:</strong> {item['generic']}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
     # Scanner showcase section title
     st.markdown(f"""
     <div style="text-align: center; margin: 2rem 0;">
