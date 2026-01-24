@@ -1478,10 +1478,10 @@ def render_landing_page():
     st.markdown(f"""
     <div style="text-align: center; margin: 2rem 0 1.5rem 0;">
         <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
-            {_('landing.why_dgp_title', 'Waarom DataGuardian Pro?')}
+            {_('landing.why_dgp_title', 'Why DataGuardian Pro?')}
         </h2>
         <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
-            {_('landing.why_dgp_subtitle', 'Speciaal gebouwd voor Nederlandse privacycompliance - geen generieke AI-tools')}
+            {_('landing.why_dgp_subtitle', 'Purpose-built for privacy compliance - not generic AI tools')}
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1490,39 +1490,39 @@ def render_landing_page():
     comparison_items = [
         {
             "icon": "🇪🇺",
-            "title": _('landing.why.data_residency_title', 'Data Blijft in EU'),
-            "dgp": _('landing.why.data_residency_dgp', 'Nederland/EU hosting - volledig GDPR-compliant'),
-            "generic": _('landing.why.data_residency_generic', 'Data naar VS-servers verzonden')
+            "title": _('landing.why.data_residency_title', 'Data Stays in EU'),
+            "dgp": _('landing.why.data_residency_dgp', 'Netherlands/EU hosting - fully GDPR-compliant'),
+            "generic": _('landing.why.data_residency_generic', 'Data sent to US servers')
         },
         {
             "icon": "🔒",
-            "title": _('landing.why.privacy_title', 'Uw Data is Veilig'),
-            "dgp": _('landing.why.privacy_dgp', 'Geen dataopslag, alleen hash-verificatie'),
-            "generic": _('landing.why.privacy_generic', 'Data traint hun AI-modellen')
+            "title": _('landing.why.privacy_title', 'Your Data is Safe'),
+            "dgp": _('landing.why.privacy_dgp', 'No data storage, hash-only verification'),
+            "generic": _('landing.why.privacy_generic', 'Data trains their AI models')
         },
         {
             "icon": "📋",
-            "title": _('landing.why.compliance_title', 'Volledige Compliance'),
-            "dgp": _('landing.why.compliance_dgp', '100% GDPR, UAVG, EU AI Act dekking'),
-            "generic": _('landing.why.compliance_generic', 'Generiek advies, geen garanties')
+            "title": _('landing.why.compliance_title', 'Complete Compliance'),
+            "dgp": _('landing.why.compliance_dgp', '100% GDPR, UAVG, EU AI Act coverage'),
+            "generic": _('landing.why.compliance_generic', 'Generic advice, no guarantees')
         },
         {
             "icon": "📊",
             "title": _('landing.why.audit_title', 'Audit-Ready'),
-            "dgp": _('landing.why.audit_dgp', 'Professionele rapporten voor AP-inspecties'),
-            "generic": _('landing.why.audit_generic', 'Chatgeschiedenis, geen audit trail')
+            "dgp": _('landing.why.audit_dgp', 'Professional reports for regulator inspections'),
+            "generic": _('landing.why.audit_generic', 'Chat history, no audit trail')
         },
         {
             "icon": "🏢",
-            "title": _('landing.why.enterprise_title', 'Enterprise Integratie'),
+            "title": _('landing.why.enterprise_title', 'Enterprise Integration'),
             "dgp": _('landing.why.enterprise_dgp', 'SharePoint, SAP, Salesforce, databases'),
-            "generic": _('landing.why.enterprise_generic', 'Handmatig bestanden uploaden')
+            "generic": _('landing.why.enterprise_generic', 'Manual file uploads only')
         },
         {
             "icon": "🇳🇱",
-            "title": _('landing.why.dutch_title', 'Nederlandse Expertise'),
-            "dgp": _('landing.why.dutch_dgp', 'BSN 11-proef, UAVG, Telecommunicatiewet'),
-            "generic": _('landing.why.dutch_generic', 'Geen lokale regelgeving kennis')
+            "title": _('landing.why.dutch_title', 'Dutch Expertise'),
+            "dgp": _('landing.why.dutch_dgp', 'BSN 11-check, UAVG, Telecommunications Law'),
+            "generic": _('landing.why.dutch_generic', 'No local regulation knowledge')
         }
     ]
     
@@ -1592,7 +1592,7 @@ def render_landing_page():
                 </div>
                 <div class="comparison-row generic">
                     <span class="comparison-check">❌</span>
-                    <span><strong>ChatGPT/AI:</strong> {item['generic']}</span>
+                    <span><strong>{_('landing.why.generic_ai_label', 'Generic AI')}</strong> {item['generic']}</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
