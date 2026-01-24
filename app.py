@@ -1526,76 +1526,198 @@ def render_landing_page():
         }
     ]
     
-    st.markdown("""
+    # Create side-by-side comparison with modern design
+    st.markdown(f"""
     <style>
-        .comparison-grid {
+        .comparison-container {{
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-        .comparison-card {
-            background: white;
-            border-radius: 12px;
-            padding: 1.25rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #e8e8e8;
-        }
-        .comparison-card-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        .comparison-icon {
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 2rem 0;
+        }}
+        @media (max-width: 768px) {{
+            .comparison-container {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+        .comparison-side {{
+            border-radius: 16px;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }}
+        .comparison-side.dgp {{
+            background: linear-gradient(135deg, #1e5631 0%, #2e7d32 50%, #43a047 100%);
+            color: white;
+            box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
+        }}
+        .comparison-side.generic {{
+            background: linear-gradient(135deg, #424242 0%, #616161 50%, #757575 100%);
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }}
+        .comparison-side-header {{
+            text-align: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }}
+        .comparison-side-title {{
             font-size: 1.5rem;
-        }
-        .comparison-title {
-            font-weight: 700;
-            color: #1B2559;
-            font-size: 1rem;
-            margin: 0;
-        }
-        .comparison-row {
+            font-weight: 800;
+            margin: 0 0 0.5rem 0;
+        }}
+        .comparison-side-subtitle {{
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }}
+        .comparison-side.dgp .comparison-side-subtitle {{
+            color: #c8e6c9;
+        }}
+        .comparison-side.generic .comparison-side-subtitle {{
+            color: #bdbdbd;
+        }}
+        .comparison-feature {{
             display: flex;
             align-items: flex-start;
-            gap: 0.5rem;
-            padding: 0.5rem 0;
-            font-size: 0.9rem;
-        }
-        .comparison-row.dgp {
-            color: #2E7D32;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .comparison-row.generic {
-            color: #c62828;
-        }
-        .comparison-check {
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }}
+        .comparison-feature:last-child {{
+            border-bottom: none;
+        }}
+        .comparison-feature-icon {{
+            font-size: 1.3rem;
             flex-shrink: 0;
-        }
+        }}
+        .comparison-feature-text {{
+            flex: 1;
+        }}
+        .comparison-feature-title {{
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+        }}
+        .comparison-feature-desc {{
+            font-size: 0.85rem;
+            opacity: 0.85;
+        }}
+        .comparison-badge {{
+            position: absolute;
+            top: -5px;
+            right: 20px;
+            background: #ffd700;
+            color: #1B2559;
+            padding: 0.5rem 1rem;
+            border-radius: 0 0 8px 8px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }}
     </style>
-    """, unsafe_allow_html=True)
     
-    # Render comparison cards in 2 columns
-    col1, col2 = st.columns(2, gap="medium")
-    for i, item in enumerate(comparison_items):
-        with col1 if i % 2 == 0 else col2:
-            st.markdown(f"""
-            <div class="comparison-card">
-                <div class="comparison-card-header">
-                    <span class="comparison-icon">{item['icon']}</span>
-                    <h4 class="comparison-title">{item['title']}</h4>
-                </div>
-                <div class="comparison-row dgp">
-                    <span class="comparison-check">✅</span>
-                    <span><strong>DataGuardian Pro:</strong> {item['dgp']}</span>
-                </div>
-                <div class="comparison-row generic">
-                    <span class="comparison-check">❌</span>
-                    <span><strong>{_('landing.why.generic_ai_label', 'Generic AI')}</strong> {item['generic']}</span>
+    <div class="comparison-container">
+        <div class="comparison-side dgp">
+            <div class="comparison-badge">{_('landing.why.recommended', 'RECOMMENDED')}</div>
+            <div class="comparison-side-header">
+                <div class="comparison-side-title">DataGuardian Pro</div>
+                <div class="comparison-side-subtitle">{_('landing.why.dgp_tagline', 'Purpose-Built for EU Compliance')}</div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">🇪🇺</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[0]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[0]['dgp']}</div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">🔒</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[1]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[1]['dgp']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">📋</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[2]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[2]['dgp']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">📊</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[3]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[3]['dgp']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">🏢</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[4]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[4]['dgp']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">🇳🇱</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[5]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[5]['dgp']}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comparison-side generic">
+            <div class="comparison-side-header">
+                <div class="comparison-side-title">{_('landing.why.generic_title', 'Generic AI Tools')}</div>
+                <div class="comparison-side-subtitle">{_('landing.why.generic_tagline', 'Not Built for Compliance')}</div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">⚠️</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[0]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[0]['generic']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">⚠️</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[1]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[1]['generic']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">⚠️</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[2]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[2]['generic']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">⚠️</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[3]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[3]['generic']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">⚠️</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[4]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[4]['generic']}</div>
+                </div>
+            </div>
+            <div class="comparison-feature">
+                <span class="comparison-feature-icon">⚠️</span>
+                <div class="comparison-feature-text">
+                    <div class="comparison-feature-title">{comparison_items[5]['title']}</div>
+                    <div class="comparison-feature-desc">{comparison_items[5]['generic']}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
     
