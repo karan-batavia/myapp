@@ -1486,17 +1486,20 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Feature badges in pill style
+    # Feature badges with varied colors
     col1, col2, col3 = st.columns(3)
     with col1:
         st.success("EU Data Residency")
-        st.success("Zero Data Training")
+        st.info("GDPR & UAVG")
     with col2:
-        st.success("GDPR & UAVG")
-        st.success("SOC2 & NIS2")
+        st.warning("Deepfake Detection")
+        st.success("SOC2, NIS2 & Sustainability")
     with col3:
-        st.success("Deepfake Detection")
-        st.success("Audit-Ready Reports")
+        st.info("Audit-Ready Reports")
+        st.warning("17 Specialized Scanners")
+    
+    # Privacy callout
+    st.success("**We never store or train on your data** - Hash-only verification, zero data retention")
     
     # Legal callout
     st.info("**Reduce 80% of manual compliance work** - Documents, images, audio & video scanning")
