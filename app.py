@@ -1490,7 +1490,7 @@ def render_landing_page():
     col1, col2, col3 = st.columns(3)
     with col1:
         st.success("EU Data Residency")
-        st.info("GDPR & UAVG")
+        st.info("GDPR & UAVG  \nDPIA Template")
     with col2:
         st.warning("Deepfake Detection")
         st.success("SOC2, NIS2 & Sustainability Scoring")
