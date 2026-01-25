@@ -170,7 +170,9 @@
     "callout": {
       "privacy": "**Wij slaan uw data nooit op en trainen er niet mee** - Alleen hash-verificatie, geen data retentie",
       "reduce_work": "**Verminder 80% handmatig compliance werk** - Code repositories (GitHub), documenten, afbeeldingen, audio & video scanning"
-    }
+    },
+    "why_dgp_title": "Waarom DataGuardian Pro?",
+    "why_dgp_subtitle": "Speciaal gebouwd voor privacy compliance - geen generieke AI tools"
   },
   "sidebar": {
     "navigation": "Navigatie",
