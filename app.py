@@ -1486,26 +1486,20 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Simple feature cards using Streamlit columns
+    # Feature badges in pill style
     col1, col2, col3 = st.columns(3)
-    
     with col1:
-        st.success("**EU Data Residency**  \nYour data never leaves Europe")
+        st.success("EU Data Residency")
+        st.success("Zero Data Training")
     with col2:
-        st.success("**100% GDPR Coverage**  \nComplete Dutch compliance")
+        st.success("GDPR & UAVG")
+        st.success("SOC2 & NIS2")
     with col3:
-        st.success("**Audit-Ready Reports**  \nPass any AP inspection")
-    
-    col4, col5, col6 = st.columns(3)
-    with col4:
-        st.success("**Zero Data Training**  \nWe never learn from your data")
-    with col5:
-        st.success("**Enterprise Ready**  \nSharePoint, SAP, Salesforce")
-    with col6:
-        st.success("**Dutch Law Experts**  \nBSN, UAVG, Telecomwet")
+        st.success("Deepfake Detection")
+        st.success("Audit-Ready Reports")
     
     # Legal callout
-    st.info("**Reduce 80% of manual compliance work** - Automated scanning, instant reports, audit documentation")
+    st.info("**Reduce 80% of manual compliance work** - Documents, images, audio & video scanning")
     
     st.markdown("---")
     
