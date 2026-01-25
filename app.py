@@ -1493,7 +1493,7 @@ def render_landing_page():
         st.info("GDPR & UAVG")
     with col2:
         st.warning("Deepfake Detection")
-        st.success("SOC2, NIS2 & Sustainability")
+        st.success("SOC2, NIS2 & Sustainability Scoring")
     with col3:
         st.info("Audit-Ready Reports")
         st.warning("17 Specialized Scanners")
