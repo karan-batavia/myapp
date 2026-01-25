@@ -178,7 +178,21 @@
       "reduce_work": "**Verminder 80% handmatig compliance werk** - Code repositories (GitHub), documenten, afbeeldingen, audio & video scanning"
     },
     "why_dgp_title": "Waarom DataGuardian Pro?",
-    "why_dgp_subtitle": "Speciaal gebouwd voor privacy compliance - geen generieke AI tools"
+    "why_dgp_subtitle": "Speciaal gebouwd voor privacy compliance - geen generieke AI tools",
+    "timeline_title": "EU AI Act Compliance Tijdlijn",
+    "timeline_subtitle": "Wees voorbereid op elke deadline met DataGuardian Pro",
+    "timeline_date1": "2 feb 2025",
+    "timeline_badge1": "Verboden AI",
+    "timeline_desc1": "Verbod op onacceptabele AI-systemen",
+    "timeline_date2": "2 aug 2025",
+    "timeline_badge2": "GPAI Regels",
+    "timeline_desc2": "Vereisten voor general-purpose AI-modellen",
+    "timeline_date3": "2 aug 2026",
+    "timeline_badge3": "Hoog-Risico AI",
+    "timeline_desc3": "Volledige compliance voor hoog-risico systemen",
+    "timeline_date4": "2 aug 2027",
+    "timeline_badge4": "Ingebedde AI",
+    "timeline_desc4": "Producten met ingebedde AI-systemen"
   },
   "sidebar": {
     "navigation": "Navigatie",

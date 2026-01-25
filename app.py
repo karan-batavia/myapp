@@ -1750,6 +1750,112 @@ def render_landing_page():
         if idx < len(scanners) - 1:
             st.markdown("<hr style='margin: 2rem 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
     
+    # EU AI Act Compliance Timeline Section
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="text-align: center; margin: 2rem 0 1.5rem 0;">
+        <h2 style="color: #1B2559; font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem;">
+            ⏱️ {_('landing.timeline_title', 'EU AI Act Compliance Timeline')}
+        </h2>
+        <p style="font-size: 1rem; color: #666; max-width: 600px; margin: 0 auto;">
+            {_('landing.timeline_subtitle', 'Be prepared for every deadline with DataGuardian Pro')}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Timeline items
+    timeline_items = [
+        {
+            "date": _('landing.timeline_date1', 'Feb 2, 2025'),
+            "badge": _('landing.timeline_badge1', 'Prohibited AI'),
+            "desc": _('landing.timeline_desc1', 'Ban on unacceptable AI systems'),
+            "color": "#E53E3E",
+            "number": "1"
+        },
+        {
+            "date": _('landing.timeline_date2', 'Aug 2, 2025'),
+            "badge": _('landing.timeline_badge2', 'GPAI Rules'),
+            "desc": _('landing.timeline_desc2', 'General-purpose AI model requirements'),
+            "color": "#38A169",
+            "number": "2"
+        },
+        {
+            "date": _('landing.timeline_date3', 'Aug 2, 2026'),
+            "badge": _('landing.timeline_badge3', 'High-Risk AI'),
+            "desc": _('landing.timeline_desc3', 'Full compliance for high-risk systems'),
+            "color": "#3182CE",
+            "number": "3"
+        },
+        {
+            "date": _('landing.timeline_date4', 'Aug 2, 2027'),
+            "badge": _('landing.timeline_badge4', 'Embedded AI'),
+            "desc": _('landing.timeline_desc4', 'Products with embedded AI systems'),
+            "color": "#805AD5",
+            "number": "4"
+        }
+    ]
+    
+    st.markdown("""
+    <div style="
+        max-width: 600px; 
+        margin: 0 auto; 
+        padding: 1rem;
+        position: relative;
+    ">
+        <div style="
+            position: absolute;
+            left: 18px;
+            top: 30px;
+            bottom: 30px;
+            width: 3px;
+            background: linear-gradient(to bottom, #E53E3E, #38A169, #3182CE, #805AD5);
+            border-radius: 2px;
+        "></div>
+    """, unsafe_allow_html=True)
+    
+    for item in timeline_items:
+        st.markdown(f"""
+        <div style="
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 50px;
+        ">
+            <div style="
+                position: absolute;
+                left: 5px;
+                width: 28px;
+                height: 28px;
+                background: {item['color']};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 700;
+                font-size: 0.9rem;
+                box-shadow: 0 2px 8px {item['color']}40;
+            ">{item['number']}</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.3rem;">
+                    <span style="font-weight: 700; color: #1B2559; font-size: 1.1rem;">{item['date']}</span>
+                    <span style="
+                        background: {item['color']}15;
+                        color: {item['color']};
+                        padding: 0.2rem 0.6rem;
+                        border-radius: 12px;
+                        font-size: 0.75rem;
+                        font-weight: 600;
+                    ">{item['badge']}</span>
+                </div>
+                <p style="color: #666; margin: 0; font-size: 0.95rem;">{item['desc']}</p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    st.markdown("</div>", unsafe_allow_html=True)
+    
     # Call to action section
     st.markdown("---")
     st.markdown(f"""
