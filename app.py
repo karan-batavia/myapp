@@ -1486,137 +1486,26 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    # Comparison table
-    # Compact comparison table design
-    st.markdown("""
-    <style>
-        .why-dgp-container {
-            background: linear-gradient(135deg, #1B2559 0%, #2d3a6e 100%);
-            border-radius: 16px;
-            padding: 2rem;
-            margin: 1.5rem 0;
-            color: white;
-        }
-        .why-dgp-header {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        .why-dgp-title {
-            font-size: 1.4rem;
-            font-weight: 700;
-            margin: 0 0 0.5rem 0;
-        }
-        .why-dgp-subtitle {
-            font-size: 1rem;
-            opacity: 0.9;
-            color: #a5d6a7;
-        }
-        .why-dgp-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .why-dgp-table th {
-            padding: 0.75rem 0.5rem;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid rgba(255,255,255,0.2);
-        }
-        .why-dgp-table th.dgp-col {
-            color: #a5d6a7;
-            width: 45%;
-        }
-        .why-dgp-table th.generic-col {
-            color: #ef9a9a;
-            width: 45%;
-        }
-        .why-dgp-table th.feature-col {
-            width: 10%;
-        }
-        .why-dgp-table td {
-            padding: 0.6rem 0.5rem;
-            font-size: 0.9rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            vertical-align: top;
-        }
-        .why-dgp-table tr:last-child td {
-            border-bottom: none;
-        }
-        .dgp-check {
-            color: #66bb6a;
-            font-weight: 600;
-        }
-        .generic-x {
-            color: #ef5350;
-            opacity: 0.8;
-        }
-        .legal-callout {
-            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
-            border-radius: 12px;
-            padding: 1.25rem;
-            margin-top: 1.5rem;
-            text-align: center;
-        }
-        .legal-callout-text {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin: 0;
-        }
-        .legal-callout-sub {
-            font-size: 0.9rem;
-            opacity: 0.9;
-            margin-top: 0.25rem;
-        }
-    </style>
-    """, unsafe_allow_html=True)
+    # Simple feature cards using Streamlit columns
+    col1, col2, col3 = st.columns(3)
     
-    why_title = _('landing.why.title_short', 'Why Choose DataGuardian Pro?')
-    legal_msg = _('landing.why.legal_callout', 'We help legal and compliance teams reduce 80% of manual review work')
-    legal_sub = _('landing.why.legal_sub', 'Automated scanning, instant reports, audit-ready documentation')
-    dgp_header = _('landing.why.dgp_header', 'DataGuardian Pro')
-    generic_header = _('landing.why.generic_header', 'Generic AI')
+    with col1:
+        st.success("**EU Data Residency**  \nYour data never leaves Europe")
+    with col2:
+        st.success("**100% GDPR Coverage**  \nComplete Dutch compliance")
+    with col3:
+        st.success("**Audit-Ready Reports**  \nPass any AP inspection")
     
-    rows_html = ""
-    comparison_data = [
-        ("🇪🇺", _('landing.why.row1_dgp', 'EU data residency'), _('landing.why.row1_gen', 'US servers')),
-        ("🔒", _('landing.why.row2_dgp', 'No data training'), _('landing.why.row2_gen', 'Trains on your data')),
-        ("📋", _('landing.why.row3_dgp', '100% GDPR/UAVG coverage'), _('landing.why.row3_gen', 'Generic advice')),
-        ("📊", _('landing.why.row4_dgp', 'Audit-ready reports'), _('landing.why.row4_gen', 'No audit trail')),
-        ("🏢", _('landing.why.row5_dgp', 'Enterprise connectors'), _('landing.why.row5_gen', 'Manual uploads')),
-        ("🇳🇱", _('landing.why.row6_dgp', 'Dutch law expertise'), _('landing.why.row6_gen', 'No local knowledge')),
-    ]
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        st.success("**Zero Data Training**  \nWe never learn from your data")
+    with col5:
+        st.success("**Enterprise Ready**  \nSharePoint, SAP, Salesforce")
+    with col6:
+        st.success("**Dutch Law Experts**  \nBSN, UAVG, Telecomwet")
     
-    for icon, dgp_text, gen_text in comparison_data:
-        rows_html += f"""
-        <tr>
-            <td style="text-align: center; font-size: 1.2rem;">{icon}</td>
-            <td class="dgp-check">✓ {dgp_text}</td>
-            <td class="generic-x">✗ {gen_text}</td>
-        </tr>
-        """
-    
-    st.markdown(f"""
-    <div class="why-dgp-container">
-        <div class="why-dgp-header">
-            <div class="why-dgp-title">{why_title}</div>
-        </div>
-        <table class="why-dgp-table">
-            <thead>
-                <tr>
-                    <th class="feature-col"></th>
-                    <th class="dgp-col">{dgp_header}</th>
-                    <th class="generic-col">{generic_header}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows_html}
-            </tbody>
-        </table>
-        <div class="legal-callout">
-            <div class="legal-callout-text">{legal_msg}</div>
-            <div class="legal-callout-sub">{legal_sub}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Legal callout
+    st.info("**Reduce 80% of manual compliance work** - Automated scanning, instant reports, audit documentation")
     
     st.markdown("---")
     
