@@ -158,6 +158,18 @@
       "generic_title": "Generieke AI Tools",
       "generic_tagline": "Niet Gebouwd voor Compliance",
       "generic_ai_label": "Generieke AI"
+    },
+    "badge": {
+      "eu_residency": "EU Data Residency",
+      "gdpr_dpia": "GDPR, UAVG &  \nDPIA Sjabloon",
+      "deepfake": "Deepfake Detectie",
+      "soc2_sustainability": "SOC2, NIS2 & Duurzaamheid Scoring",
+      "audit_ready": "Audit-Klare Rapporten",
+      "enterprise": "Enterprise Integraties  \nSAP, Salesforce, Exact"
+    },
+    "callout": {
+      "privacy": "**Wij slaan uw data nooit op en trainen er niet mee** - Alleen hash-verificatie, geen data retentie",
+      "reduce_work": "**Verminder 80% handmatig compliance werk** - Code repositories (GitHub), documenten, afbeeldingen, audio & video scanning"
     }
   },
   "sidebar": {

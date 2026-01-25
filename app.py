@@ -1504,20 +1504,20 @@ def render_landing_page():
     # Feature badges with varied colors
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.success("EU Data Residency")
-        st.info("GDPR, UAVG &  \nDPIA Template")
+        st.success(_('landing.badge.eu_residency', 'EU Data Residency'))
+        st.info(_('landing.badge.gdpr_dpia', 'GDPR, UAVG &  \nDPIA Template'))
     with col2:
-        st.warning("Deepfake Detection")
-        st.success("SOC2, NIS2 & Sustainability Scoring")
+        st.warning(_('landing.badge.deepfake', 'Deepfake Detection'))
+        st.success(_('landing.badge.soc2_sustainability', 'SOC2, NIS2 & Sustainability Scoring'))
     with col3:
-        st.info("Audit-Ready Reports")
-        st.warning("Enterprise Integrations  \nSAP, Salesforce, Exact")
+        st.info(_('landing.badge.audit_ready', 'Audit-Ready Reports'))
+        st.warning(_('landing.badge.enterprise', 'Enterprise Integrations  \nSAP, Salesforce, Exact'))
     
     # Privacy callout
-    st.success("**We never store or train on your data** - Hash-only verification, zero data retention")
+    st.success(_('landing.callout.privacy', '**We never store or train on your data** - Hash-only verification, zero data retention'))
     
     # Legal callout
-    st.info("**Reduce 80% of manual compliance work** - Code repositories (GitHub), documents, images, audio & video scanning")
+    st.info(_('landing.callout.reduce_work', '**Reduce 80% of manual compliance work** - Code repositories (GitHub), documents, images, audio & video scanning'))
     
     st.markdown("---")
     
