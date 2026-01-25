@@ -68,26 +68,52 @@ if st.query_params.get("payment_success") == "true":
             import stripe
             import os
             import logging
+            import time
             from datetime import datetime
             
             stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-            checkout_session = stripe.checkout.Session.retrieve(session_id)
             
-            # DIAGNOSTIC: Log session details to understand payment status
+            # For async payment methods (iDEAL, SEPA, etc.), poll for payment status
+            # Payment may not be confirmed immediately on redirect
+            max_retries = 5
+            retry_delay = 2  # seconds
+            checkout_session = None
+            
+            for attempt in range(max_retries):
+                checkout_session = stripe.checkout.Session.retrieve(session_id)
+                
+                logging.info(f"[PAYMENT DEBUG] Attempt {attempt + 1}: Status={checkout_session.status}, Payment={checkout_session.payment_status}")
+                
+                # Check if payment is confirmed
+                if checkout_session.payment_status == "paid":
+                    logging.info(f"[PAYMENT DEBUG] Payment confirmed on attempt {attempt + 1}")
+                    break
+                elif checkout_session.status == "complete" and checkout_session.payment_status == "unpaid":
+                    # For async methods, session complete but payment still processing
+                    logging.info(f"[PAYMENT DEBUG] Session complete, waiting for payment confirmation...")
+                    time.sleep(retry_delay)
+                elif checkout_session.status == "expired":
+                    logging.warning(f"[PAYMENT DEBUG] Session expired")
+                    break
+                else:
+                    # Wait and retry
+                    time.sleep(retry_delay)
+            
+            # DIAGNOSTIC: Log session details
             session_created = datetime.fromtimestamp(checkout_session.created)
             logging.info(f"[PAYMENT DEBUG] Session ID: {session_id[:30]}...")
             logging.info(f"[PAYMENT DEBUG] Session created: {session_created}")
-            logging.info(f"[PAYMENT DEBUG] Payment status: {checkout_session.payment_status}")
-            logging.info(f"[PAYMENT DEBUG] Status: {checkout_session.status}")
+            logging.info(f"[PAYMENT DEBUG] Final Payment status: {checkout_session.payment_status}")
+            logging.info(f"[PAYMENT DEBUG] Final Status: {checkout_session.status}")
             logging.info(f"[PAYMENT DEBUG] Amount total: {checkout_session.amount_total}")
             logging.info(f"[PAYMENT DEBUG] Customer email: {checkout_session.customer_email}")
             
             # Check if session is recent (within last hour) to prevent old session reuse
-            import time
             session_age_minutes = (time.time() - checkout_session.created) / 60
             logging.info(f"[PAYMENT DEBUG] Session age: {session_age_minutes:.1f} minutes")
             
-            if checkout_session.payment_status == "paid":
+            # Accept payment if paid OR if session is complete (for async methods that confirmed via webhook)
+            if checkout_session.payment_status == "paid" or (checkout_session.status == "complete" and checkout_session.payment_status != "unpaid"):
                 # Warn if session is old (might be cached/reused)
                 if session_age_minutes > 60:
                     logging.warning(f"[PAYMENT DEBUG] WARNING: Session is {session_age_minutes:.0f} minutes old - might be reused!")
@@ -123,6 +149,11 @@ if st.query_params.get("payment_success") == "true":
                 
                 st.session_state['payment_just_completed'] = True
                 st.session_state['payment_new_tier'] = _plan_tier
+            elif checkout_session.payment_status == "unpaid" and checkout_session.status == "complete":
+                # Payment still processing (common for iDEAL/SEPA)
+                logging.info(f"[PAYMENT DEBUG] Payment processing - async method detected")
+                st.session_state['payment_pending'] = True
+                st.session_state['payment_session_id'] = session_id
             else:
                 logging.warning(f"[PAYMENT DEBUG] Payment NOT verified - status: {checkout_session.payment_status}")
         except Exception as e:
@@ -141,6 +172,30 @@ if st.session_state.get('payment_just_completed'):
     if st.button("Go to Login", key="payment_success_login"):
         st.session_state['show_login'] = True
         st.rerun()
+
+# Show payment pending message for async payments (iDEAL, SEPA)
+if st.session_state.get('payment_pending'):
+    st.warning("⏳ Your iDEAL payment is being processed. This may take a few moments.")
+    st.info("Your account will be upgraded automatically once payment is confirmed. You can safely close this page.")
+    
+    # Add refresh button
+    if st.button("🔄 Check Payment Status", key="check_payment_status"):
+        _pending_session_id = st.session_state.get('payment_session_id')
+        if _pending_session_id:
+            try:
+                import stripe
+                stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+                _session = stripe.checkout.Session.retrieve(_pending_session_id)
+                if _session.payment_status == "paid":
+                    st.session_state.pop('payment_pending', None)
+                    st.session_state.pop('payment_session_id', None)
+                    st.session_state['payment_just_completed'] = True
+                    st.session_state['payment_new_tier'] = _session.metadata.get('plan_tier', 'professional')
+                    st.rerun()
+                else:
+                    st.info(f"Payment status: {_session.payment_status}. Please wait a moment and try again.")
+            except Exception as e:
+                st.error(f"Could not check payment status: {e}")
 
 # Core imports - keep essential imports minimal
 import logging
