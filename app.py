@@ -1517,7 +1517,7 @@ def render_landing_page():
     st.success("**We never store or train on your data** - Hash-only verification, zero data retention")
     
     # Legal callout
-    st.info("**Reduce 80% of manual compliance work** - Documents, images, audio & video scanning")
+    st.info("**Reduce 80% of manual compliance work** - Code repositories (GitHub), documents, images, audio & video scanning")
     
     st.markdown("---")
     
