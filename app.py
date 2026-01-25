@@ -1487,234 +1487,133 @@ def render_landing_page():
     """, unsafe_allow_html=True)
     
     # Comparison table
-    comparison_items = [
-        {
-            "icon": "🇪🇺",
-            "title": _('landing.why.data_residency_title', 'Data Stays in EU'),
-            "dgp": _('landing.why.data_residency_dgp', 'Netherlands/EU hosting - fully GDPR-compliant'),
-            "generic": _('landing.why.data_residency_generic', 'Data sent to US servers')
-        },
-        {
-            "icon": "🔒",
-            "title": _('landing.why.privacy_title', 'Your Data is Safe'),
-            "dgp": _('landing.why.privacy_dgp', 'No data storage, hash-only verification'),
-            "generic": _('landing.why.privacy_generic', 'Data trains their AI models')
-        },
-        {
-            "icon": "📋",
-            "title": _('landing.why.compliance_title', 'Complete Compliance'),
-            "dgp": _('landing.why.compliance_dgp', '100% GDPR, UAVG, EU AI Act coverage'),
-            "generic": _('landing.why.compliance_generic', 'Generic advice, no guarantees')
-        },
-        {
-            "icon": "📊",
-            "title": _('landing.why.audit_title', 'Audit-Ready'),
-            "dgp": _('landing.why.audit_dgp', 'Professional reports for regulator inspections'),
-            "generic": _('landing.why.audit_generic', 'Chat history, no audit trail')
-        },
-        {
-            "icon": "🏢",
-            "title": _('landing.why.enterprise_title', 'Enterprise Integration'),
-            "dgp": _('landing.why.enterprise_dgp', 'SharePoint, SAP, Salesforce, databases'),
-            "generic": _('landing.why.enterprise_generic', 'Manual file uploads only')
-        },
-        {
-            "icon": "🇳🇱",
-            "title": _('landing.why.dutch_title', 'Dutch Expertise'),
-            "dgp": _('landing.why.dutch_dgp', 'BSN 11-check, UAVG, Telecommunications Law'),
-            "generic": _('landing.why.dutch_generic', 'No local regulation knowledge')
-        }
-    ]
-    
-    # Create side-by-side comparison with modern design
-    st.markdown(f"""
+    # Compact comparison table design
+    st.markdown("""
     <style>
-        .comparison-container {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-            margin: 2rem 0;
-        }}
-        @media (max-width: 768px) {{
-            .comparison-container {{
-                grid-template-columns: 1fr;
-            }}
-        }}
-        .comparison-side {{
+        .why-dgp-container {
+            background: linear-gradient(135deg, #1B2559 0%, #2d3a6e 100%);
             border-radius: 16px;
             padding: 2rem;
-            position: relative;
-            overflow: hidden;
-        }}
-        .comparison-side.dgp {{
-            background: linear-gradient(135deg, #1e5631 0%, #2e7d32 50%, #43a047 100%);
+            margin: 1.5rem 0;
             color: white;
-            box-shadow: 0 10px 40px rgba(46, 125, 50, 0.3);
-        }}
-        .comparison-side.generic {{
-            background: linear-gradient(135deg, #424242 0%, #616161 50%, #757575 100%);
-            color: white;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        }}
-        .comparison-side-header {{
+        }
+        .why-dgp-header {
             text-align: center;
             margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-        }}
-        .comparison-side-title {{
-            font-size: 1.5rem;
-            font-weight: 800;
+        }
+        .why-dgp-title {
+            font-size: 1.4rem;
+            font-weight: 700;
             margin: 0 0 0.5rem 0;
-        }}
-        .comparison-side-subtitle {{
+        }
+        .why-dgp-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            color: #a5d6a7;
+        }
+        .why-dgp-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .why-dgp-table th {
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+        .why-dgp-table th.dgp-col {
+            color: #a5d6a7;
+            width: 45%;
+        }
+        .why-dgp-table th.generic-col {
+            color: #ef9a9a;
+            width: 45%;
+        }
+        .why-dgp-table th.feature-col {
+            width: 10%;
+        }
+        .why-dgp-table td {
+            padding: 0.6rem 0.5rem;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            vertical-align: top;
+        }
+        .why-dgp-table tr:last-child td {
+            border-bottom: none;
+        }
+        .dgp-check {
+            color: #66bb6a;
+            font-weight: 600;
+        }
+        .generic-x {
+            color: #ef5350;
+            opacity: 0.8;
+        }
+        .legal-callout {
+            background: linear-gradient(135deg, #2e7d32 0%, #43a047 100%);
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-top: 1.5rem;
+            text-align: center;
+        }
+        .legal-callout-text {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0;
+        }
+        .legal-callout-sub {
             font-size: 0.9rem;
             opacity: 0.9;
-        }}
-        .comparison-side.dgp .comparison-side-subtitle {{
-            color: #c8e6c9;
-        }}
-        .comparison-side.generic .comparison-side-subtitle {{
-            color: #bdbdbd;
-        }}
-        .comparison-feature {{
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }}
-        .comparison-feature:last-child {{
-            border-bottom: none;
-        }}
-        .comparison-feature-icon {{
-            font-size: 1.3rem;
-            flex-shrink: 0;
-        }}
-        .comparison-feature-text {{
-            flex: 1;
-        }}
-        .comparison-feature-title {{
-            font-weight: 600;
-            font-size: 0.95rem;
-            margin-bottom: 0.25rem;
-        }}
-        .comparison-feature-desc {{
-            font-size: 0.85rem;
-            opacity: 0.85;
-        }}
-        .comparison-badge {{
-            position: absolute;
-            top: -5px;
-            right: 20px;
-            background: #ffd700;
-            color: #1B2559;
-            padding: 0.5rem 1rem;
-            border-radius: 0 0 8px 8px;
-            font-weight: 700;
-            font-size: 0.8rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }}
+            margin-top: 0.25rem;
+        }
     </style>
+    """, unsafe_allow_html=True)
     
-    <div class="comparison-container">
-        <div class="comparison-side dgp">
-            <div class="comparison-badge">{_('landing.why.recommended', 'RECOMMENDED')}</div>
-            <div class="comparison-side-header">
-                <div class="comparison-side-title">DataGuardian Pro</div>
-                <div class="comparison-side-subtitle">{_('landing.why.dgp_tagline', 'Purpose-Built for EU Compliance')}</div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">🇪🇺</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[0]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[0]['dgp']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">🔒</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[1]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[1]['dgp']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">📋</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[2]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[2]['dgp']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">📊</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[3]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[3]['dgp']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">🏢</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[4]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[4]['dgp']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">🇳🇱</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[5]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[5]['dgp']}</div>
-                </div>
-            </div>
+    why_title = _('landing.why.title_short', 'Why Choose DataGuardian Pro?')
+    legal_msg = _('landing.why.legal_callout', 'We help legal and compliance teams reduce 80% of manual review work')
+    legal_sub = _('landing.why.legal_sub', 'Automated scanning, instant reports, audit-ready documentation')
+    dgp_header = _('landing.why.dgp_header', 'DataGuardian Pro')
+    generic_header = _('landing.why.generic_header', 'Generic AI')
+    
+    rows_html = ""
+    comparison_data = [
+        ("🇪🇺", _('landing.why.row1_dgp', 'EU data residency'), _('landing.why.row1_gen', 'US servers')),
+        ("🔒", _('landing.why.row2_dgp', 'No data training'), _('landing.why.row2_gen', 'Trains on your data')),
+        ("📋", _('landing.why.row3_dgp', '100% GDPR/UAVG coverage'), _('landing.why.row3_gen', 'Generic advice')),
+        ("📊", _('landing.why.row4_dgp', 'Audit-ready reports'), _('landing.why.row4_gen', 'No audit trail')),
+        ("🏢", _('landing.why.row5_dgp', 'Enterprise connectors'), _('landing.why.row5_gen', 'Manual uploads')),
+        ("🇳🇱", _('landing.why.row6_dgp', 'Dutch law expertise'), _('landing.why.row6_gen', 'No local knowledge')),
+    ]
+    
+    for icon, dgp_text, gen_text in comparison_data:
+        rows_html += f"""
+        <tr>
+            <td style="text-align: center; font-size: 1.2rem;">{icon}</td>
+            <td class="dgp-check">✓ {dgp_text}</td>
+            <td class="generic-x">✗ {gen_text}</td>
+        </tr>
+        """
+    
+    st.markdown(f"""
+    <div class="why-dgp-container">
+        <div class="why-dgp-header">
+            <div class="why-dgp-title">{why_title}</div>
         </div>
-        
-        <div class="comparison-side generic">
-            <div class="comparison-side-header">
-                <div class="comparison-side-title">{_('landing.why.generic_title', 'Generic AI Tools')}</div>
-                <div class="comparison-side-subtitle">{_('landing.why.generic_tagline', 'Not Built for Compliance')}</div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">⚠️</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[0]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[0]['generic']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">⚠️</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[1]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[1]['generic']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">⚠️</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[2]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[2]['generic']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">⚠️</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[3]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[3]['generic']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">⚠️</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[4]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[4]['generic']}</div>
-                </div>
-            </div>
-            <div class="comparison-feature">
-                <span class="comparison-feature-icon">⚠️</span>
-                <div class="comparison-feature-text">
-                    <div class="comparison-feature-title">{comparison_items[5]['title']}</div>
-                    <div class="comparison-feature-desc">{comparison_items[5]['generic']}</div>
-                </div>
-            </div>
+        <table class="why-dgp-table">
+            <thead>
+                <tr>
+                    <th class="feature-col"></th>
+                    <th class="dgp-col">{dgp_header}</th>
+                    <th class="generic-col">{generic_header}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows_html}
+            </tbody>
+        </table>
+        <div class="legal-callout">
+            <div class="legal-callout-text">{legal_msg}</div>
+            <div class="legal-callout-sub">{legal_sub}</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
