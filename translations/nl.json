@@ -83,7 +83,13 @@
       "audio_video_f1": "Deepfake detectie",
       "audio_video_f2": "Stemklonen identificatie",
       "audio_video_f3": "EU AI Act 2025 compliance",
-      "audio_video_f4": "Media authenticiteit analyse"
+      "audio_video_f4": "Media authenticiteit analyse",
+      "enterprise_title": "Enterprise Connector",
+      "enterprise_desc": "Eenmalig verbinden, alles scannen. Automatisch persoonsgegevens ontdekken en beschermen in Microsoft 365, Exact Online, Google Workspace, en meer - zonder handmatige bestandsuploads.",
+      "enterprise_f1": "Eén-klik platform verbinding",
+      "enterprise_f2": "Automatische data ontdekking",
+      "enterprise_f3": "Continue monitoring",
+      "enterprise_f4": "Multi-platform dekking"
     },
     "compliance_dashboard": {
       "regulatory_coverage_title": "Regulatoire Dekking Overzicht",
