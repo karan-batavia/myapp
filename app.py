@@ -1486,6 +1486,21 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
+    # Add styling for attractive cards with borders
+    st.markdown("""
+    <style>
+        div[data-testid="stAlert"] {
+            border-radius: 12px !important;
+            border: 2px solid rgba(0,0,0,0.1) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+            font-weight: 500 !important;
+        }
+        div[data-testid="stAlert"] > div {
+            padding: 0.75rem 1rem !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Feature badges with varied colors
     col1, col2, col3 = st.columns(3)
     with col1:
