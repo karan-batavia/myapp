@@ -1496,7 +1496,7 @@ def render_landing_page():
         st.success("SOC2, NIS2 & Sustainability Scoring")
     with col3:
         st.info("Audit-Ready Reports")
-        st.warning("17 Specialized Scanners")
+        st.warning("Enterprise Integrations")
     
     # Privacy callout
     st.success("**We never store or train on your data** - Hash-only verification, zero data retention")
