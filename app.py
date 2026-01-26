@@ -2064,7 +2064,6 @@ def render_authenticated_interface():
         nav_options = [
             f"🔍 {_('scan.new_scan_title', 'New Scan')}", 
             f"🏠 {_('sidebar.dashboard', 'Dashboard')}", 
-            "🤖 Predictive Analytics",
             f"📊 {_('results.title', 'Results')}", 
             f"📋 {_('history.title', 'History')}", 
             f"⚙️ {_('sidebar.settings', 'Settings')}",
@@ -2193,8 +2192,6 @@ def render_authenticated_interface():
                 # Scanner Logs should be mapped before generic scan terms
                 nav_mapping['🔍 Scanner Logs'] = 'scanner_logs'
                 nav_mapping['Scanner Logs'] = 'scanner_logs'
-                nav_mapping['🤖 Predictive Analytics'] = 'predictive_analytics'
-                nav_mapping['Predictive Analytics'] = 'predictive_analytics'
                 
         except (FileNotFoundError, json.JSONDecodeError):
             continue
@@ -2235,8 +2232,6 @@ def render_authenticated_interface():
             current_lang_nav = _('admin.title', 'Admin')
         elif current_nav_key == 'scanner_logs':
             current_lang_nav = '🔍 Scanner Logs'
-        elif current_nav_key == 'predictive_analytics':
-            current_lang_nav = '🤖 Predictive Analytics'
         
         # Update session state to current language version
         if current_lang_nav and selected_nav != current_lang_nav:
@@ -2262,8 +2257,6 @@ def render_authenticated_interface():
         render_admin()
     elif current_nav_key == 'scanner_logs':
         render_log_dashboard()
-    elif current_nav_key == 'predictive_analytics':
-        render_predictive_analytics()
     elif selected_nav and "💰 Pricing & Plans" in selected_nav:
         render_pricing_page()
     elif selected_nav and "🚀 Upgrade License" in selected_nav:
