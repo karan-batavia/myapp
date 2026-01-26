@@ -47,9 +47,19 @@ class UnifiedHTMLReportGenerator:
         self.current_language = 'en'
         self._update_language()
     
-    def _update_language(self):
-        """Update current language from session state."""
-        self.current_language = st.session_state.get('language', 'en')
+    def _update_language(self, region: str = None):
+        """Update current language from session state or region.
+        
+        For Netherlands market compliance, reports are always generated in Dutch
+        when the region is Netherlands, regardless of UI language setting.
+        """
+        # Force Dutch for Netherlands region (business requirement)
+        if region and region.lower() in ['netherlands', 'nl', 'nederland']:
+            self.current_language = 'nl'
+            # Also update session state so t_report picks up the language
+            st.session_state['language'] = 'nl'
+        else:
+            self.current_language = st.session_state.get('language', 'en')
     
     def generate_html_report(self, scan_result: Dict[str, Any]) -> str:
         """
@@ -61,13 +71,14 @@ class UnifiedHTMLReportGenerator:
         Returns:
             Complete HTML report as string
         """
-        self._update_language()
+        # Extract region first to set correct language
+        region = scan_result.get('region', 'Netherlands')
+        self._update_language(region)
         
         # Extract basic scan information
         scan_type = scan_result.get('scan_type', 'Unknown')
         scan_id = scan_result.get('scan_id', 'Unknown')
         timestamp = scan_result.get('timestamp', datetime.now().isoformat())
-        region = scan_result.get('region', 'Netherlands')
         
         # Format timestamp based on language
         formatted_timestamp = self._format_timestamp(timestamp)
