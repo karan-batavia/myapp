@@ -2073,7 +2073,7 @@ def render_authenticated_interface():
             "🚀 Upgrade License"
         ]
         if user_role == "admin":
-            nav_options.extend([f"👥 {_('admin.title', 'Admin')}", "📈 Performance Dashboard"])
+            nav_options.append(f"👥 {_('admin.title', 'Admin')}")
         
         # Get current navigation index from session state, default to New Scan (index 0)
         current_nav_value = st.session_state.get('_nav_value', nav_options[0])
@@ -2193,8 +2193,6 @@ def render_authenticated_interface():
                 # Scanner Logs should be mapped before generic scan terms
                 nav_mapping['🔍 Scanner Logs'] = 'scanner_logs'
                 nav_mapping['Scanner Logs'] = 'scanner_logs'
-                nav_mapping['📈 Performance Dashboard'] = 'performance_dashboard'
-                nav_mapping['Performance Dashboard'] = 'performance_dashboard'
                 nav_mapping['🤖 Predictive Analytics'] = 'predictive_analytics'
                 nav_mapping['Predictive Analytics'] = 'predictive_analytics'
                 
@@ -2237,8 +2235,6 @@ def render_authenticated_interface():
             current_lang_nav = _('admin.title', 'Admin')
         elif current_nav_key == 'scanner_logs':
             current_lang_nav = '🔍 Scanner Logs'
-        elif current_nav_key == 'performance_dashboard':
-            current_lang_nav = '📈 Performance Dashboard'
         elif current_nav_key == 'predictive_analytics':
             current_lang_nav = '🤖 Predictive Analytics'
         
@@ -2266,8 +2262,6 @@ def render_authenticated_interface():
         render_admin()
     elif current_nav_key == 'scanner_logs':
         render_log_dashboard()
-    elif current_nav_key == 'performance_dashboard':
-        render_performance_dashboard_safe()
     elif current_nav_key == 'predictive_analytics':
         render_predictive_analytics()
     elif selected_nav and "💰 Pricing & Plans" in selected_nav:
