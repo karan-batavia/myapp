@@ -196,8 +196,50 @@ def render_visitor_analytics_dashboard():
     if analytics['countries']:
         st.markdown("### 🌍 Geographic Distribution")
         
+        # Country code to full name and flag mapping
+        country_names = {
+            'NL': ('🇳🇱', 'Netherlands'),
+            'DE': ('🇩🇪', 'Germany'),
+            'BE': ('🇧🇪', 'Belgium'),
+            'FR': ('🇫🇷', 'France'),
+            'GB': ('🇬🇧', 'United Kingdom'),
+            'US': ('🇺🇸', 'United States'),
+            'ES': ('🇪🇸', 'Spain'),
+            'IT': ('🇮🇹', 'Italy'),
+            'PL': ('🇵🇱', 'Poland'),
+            'AT': ('🇦🇹', 'Austria'),
+            'CH': ('🇨🇭', 'Switzerland'),
+            'SE': ('🇸🇪', 'Sweden'),
+            'NO': ('🇳🇴', 'Norway'),
+            'DK': ('🇩🇰', 'Denmark'),
+            'FI': ('🇫🇮', 'Finland'),
+            'IE': ('🇮🇪', 'Ireland'),
+            'PT': ('🇵🇹', 'Portugal'),
+            'LU': ('🇱🇺', 'Luxembourg'),
+            'CZ': ('🇨🇿', 'Czech Republic'),
+            'GR': ('🇬🇷', 'Greece'),
+            'RO': ('🇷🇴', 'Romania'),
+            'HU': ('🇭🇺', 'Hungary'),
+            'IN': ('🇮🇳', 'India'),
+            'CN': ('🇨🇳', 'China'),
+            'JP': ('🇯🇵', 'Japan'),
+            'AU': ('🇦🇺', 'Australia'),
+            'CA': ('🇨🇦', 'Canada'),
+            'BR': ('🇧🇷', 'Brazil'),
+            'RU': ('🇷🇺', 'Russia'),
+            'ZA': ('🇿🇦', 'South Africa'),
+        }
+        
+        def get_country_display(code):
+            if code in country_names:
+                flag, name = country_names[code]
+                return f"{flag} {name}"
+            return f"🌐 {code}"
+        
+        countries_display = [get_country_display(c['country']) for c in analytics['countries']]
+        
         countries_df = {
-            'Country': [c['country'] for c in analytics['countries']],
+            'Country': countries_display,
             'Visitors': [c['visitors'] for c in analytics['countries']]
         }
         
@@ -209,6 +251,7 @@ def render_visitor_analytics_dashboard():
                 y='Visitors',
                 title="Visitors by Country"
             )
+            fig_countries.update_layout(xaxis_tickangle=-45)
             st.plotly_chart(fig_countries, use_container_width=True)
         except Exception:
             st.dataframe(pd.DataFrame(countries_df), use_container_width=True, hide_index=True)
