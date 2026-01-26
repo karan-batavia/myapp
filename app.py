@@ -2928,72 +2928,81 @@ def render_predictive_analytics():
             """)
             st.markdown("---")
         
-        # Simplified Compliance Forecast Chart
-        st.subheader("Compliance Forecast")
+        # Compliance Score Summary (replace complex chart with clear metrics)
+        st.subheader("📈 Compliance Score Analysis")
         
-        if scan_history:
-            # Process data for visualization
-            dates = [datetime.fromisoformat(scan['timestamp'][:19]) for scan in scan_history[-15:]]
-            scores = [scan.get('compliance_score', 70) for scan in scan_history[-15:]]
+        if scan_history and not is_demo:
+            # Calculate meaningful statistics
+            scores = [s['compliance_score'] for s in scan_history]
+            avg_score = sum(scores) / len(scores)
+            min_score = min(scores)
+            max_score = max(scores)
+            latest_score = scores[0]
             
-            # Add forecast point
-            future_date = datetime.now() + timedelta(days=30)
+            # Score interpretation
+            if latest_score >= 80:
+                status_icon = "🟢"
+                status_text = "Good Standing"
+                status_msg = "Your compliance score is healthy. Continue regular monitoring to maintain this level."
+            elif latest_score >= 60:
+                status_icon = "🟡"
+                status_text = "Needs Attention"
+                status_msg = "Some areas require improvement. Focus on addressing high-risk findings first."
+            else:
+                status_icon = "🔴"
+                status_text = "Action Required"
+                status_msg = "Significant compliance gaps detected. Immediate action recommended to reduce GDPR risk."
             
-            fig = go.Figure()
+            # Display status card
+            st.markdown(f"""
+            ### {status_icon} Current Status: **{status_text}**
             
-            # Risk zone backgrounds (simplified)
-            fig.add_hrect(y0=75, y1=100, fillcolor="rgba(76, 175, 80, 0.08)", layer="below", line_width=0)
-            fig.add_hrect(y0=50, y1=75, fillcolor="rgba(255, 193, 7, 0.08)", layer="below", line_width=0)
-            fig.add_hrect(y0=0, y1=50, fillcolor="rgba(244, 67, 54, 0.08)", layer="below", line_width=0)
+            {status_msg}
+            """)
             
-            # Historical trend line
-            fig.add_trace(go.Scatter(
-                x=dates,
-                y=scores,
-                mode='lines+markers',
-                name='Historical',
-                line=dict(color='#1976D2', width=3),
-                marker=dict(size=6),
-                hovertemplate='%{x|%b %d}: %{y:.0f}%<extra></extra>'
-            ))
+            # Score metrics in clean columns
+            score_col1, score_col2, score_col3, score_col4 = st.columns(4)
+            with score_col1:
+                st.metric("Latest Score", f"{latest_score:.0f}%")
+            with score_col2:
+                st.metric("Average Score", f"{avg_score:.0f}%")
+            with score_col3:
+                st.metric("Best Score", f"{max_score:.0f}%")
+            with score_col4:
+                st.metric("Lowest Score", f"{min_score:.0f}%")
             
-            # Forecast point with confidence band
-            forecast_x = [dates[-1], future_date]
-            forecast_y = [scores[-1], prediction.future_score]
+            st.markdown("---")
             
-            fig.add_trace(go.Scatter(
-                x=forecast_x,
-                y=forecast_y,
-                mode='lines+markers',
-                name='Forecast',
-                line=dict(color='#FF6B35', dash='dash', width=3),
-                marker=dict(size=10),
-                hovertemplate='%{x|%b %d}: %{y:.0f}%<extra></extra>'
-            ))
+            # 30-Day Forecast section
+            st.markdown(f"""
+            ### 🔮 30-Day Forecast
             
-            # Confidence band (single trace)
-            fig.add_trace(go.Scatter(
-                x=[future_date, future_date],
-                y=[prediction.confidence_interval[0], prediction.confidence_interval[1]],
-                mode='lines',
-                name=f'Range: {prediction.confidence_interval[0]:.0f}-{prediction.confidence_interval[1]:.0f}%',
-                line=dict(color='#FF6B35', width=8),
-                opacity=0.3
-            ))
+            Based on your scan patterns, we predict your compliance score will be **{prediction.future_score:.0f}%** in 30 days.
             
-            # Clean layout
-            fig.update_layout(
-                xaxis=dict(title='', tickformat='%b %d', showgrid=False),
-                yaxis=dict(title='Compliance %', range=[0, 100], showgrid=True, gridcolor='rgba(0,0,0,0.05)'),
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                legend=dict(orientation="h", y=1.1, x=0.5, xanchor="center"),
-                height=350,
-                margin=dict(t=40, b=40, l=50, r=20),
-                hovermode='x unified'
-            )
+            **Confidence Range:** {prediction.confidence_interval[0]:.0f}% - {prediction.confidence_interval[1]:.0f}%
+            """)
             
-            st.plotly_chart(fig, use_container_width=True)
+            # Forecast interpretation
+            forecast_change = prediction.future_score - latest_score
+            if forecast_change > 5:
+                forecast_msg = f"📈 **Improving:** Your score is expected to increase by {forecast_change:.0f} points if you continue current practices."
+            elif forecast_change < -5:
+                forecast_msg = f"📉 **Declining:** Your score may drop by {abs(forecast_change):.0f} points. Take action on the recommendations above."
+            else:
+                forecast_msg = "➡️ **Stable:** Your compliance score is expected to remain steady over the next 30 days."
+            
+            st.info(forecast_msg)
+            
+            # Scan activity summary
+            scan_types_summary = {}
+            for s in scan_history:
+                scan_types_summary[s['scan_type']] = scan_types_summary.get(s['scan_type'], 0) + 1
+            
+            with st.expander("📋 Recent Scan Activity"):
+                for scan_type, count in sorted(scan_types_summary.items(), key=lambda x: x[1], reverse=True):
+                    st.markdown(f"- **{scan_type}**: {count} scan{'s' if count > 1 else ''}")
+        else:
+            st.info("Run some scans to see your compliance score analysis and forecast.")
         
         # Collapsible Details Section
         st.markdown("---")
