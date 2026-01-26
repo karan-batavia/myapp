@@ -2064,6 +2064,7 @@ def render_authenticated_interface():
         nav_options = [
             f"🔍 {_('scan.new_scan_title', 'New Scan')}", 
             f"🏠 {_('sidebar.dashboard', 'Dashboard')}", 
+            "🤖 Predictive Analytics",
             f"📊 {_('results.title', 'Results')}", 
             f"📋 {_('history.title', 'History')}", 
             f"⚙️ {_('sidebar.settings', 'Settings')}",
@@ -2192,6 +2193,8 @@ def render_authenticated_interface():
                 # Scanner Logs should be mapped before generic scan terms
                 nav_mapping['🔍 Scanner Logs'] = 'scanner_logs'
                 nav_mapping['Scanner Logs'] = 'scanner_logs'
+                nav_mapping['🤖 Predictive Analytics'] = 'predictive_analytics'
+                nav_mapping['Predictive Analytics'] = 'predictive_analytics'
                 
         except (FileNotFoundError, json.JSONDecodeError):
             continue
@@ -2232,6 +2235,8 @@ def render_authenticated_interface():
             current_lang_nav = _('admin.title', 'Admin')
         elif current_nav_key == 'scanner_logs':
             current_lang_nav = '🔍 Scanner Logs'
+        elif current_nav_key == 'predictive_analytics':
+            current_lang_nav = '🤖 Predictive Analytics'
         
         # Update session state to current language version
         if current_lang_nav and selected_nav != current_lang_nav:
@@ -2257,6 +2262,8 @@ def render_authenticated_interface():
         render_admin()
     elif current_nav_key == 'scanner_logs':
         render_log_dashboard()
+    elif current_nav_key == 'predictive_analytics':
+        render_predictive_analytics()
     elif selected_nav and "💰 Pricing & Plans" in selected_nav:
         render_pricing_page()
     elif selected_nav and "🚀 Upgrade License" in selected_nav:
@@ -2732,23 +2739,37 @@ def render_predictive_analytics():
         org_id = 'default_org'
         scan_metadata = aggregator.get_user_scans(username, limit=15, organization_id=org_id)
         
-        # Process scan data once
+        # Process scan data with realistic compliance scoring
         scan_history = []
         for scan in scan_metadata:
-            base_score = 85
-            pii_penalty = min(scan.get('total_pii_found', 0) * 0.5, 30)
-            risk_penalty = min(scan.get('high_risk_count', 0) * 2, 20)
-            calculated_score = max(base_score - pii_penalty - risk_penalty, 40)
+            total_pii = scan.get('total_pii_found', 0)
+            high_risk = scan.get('high_risk_count', 0)
+            file_count = max(scan.get('file_count', 1), 1)
+            
+            # Calculate compliance score based on PII density and risk ratio
+            # Lower PII per file = higher compliance, fewer high-risk items = higher compliance
+            pii_per_file = total_pii / file_count
+            high_risk_ratio = high_risk / max(total_pii, 1) if total_pii > 0 else 0
+            
+            # Scoring: Start at 100, deduct based on findings
+            # - PII density penalty: up to 40 points (more than 10 PII/file is concerning)
+            # - High risk ratio penalty: up to 35 points (more high-risk items is worse)
+            # - Base finding penalty: 5 points if any PII found
+            pii_density_penalty = min(pii_per_file * 4, 40)
+            risk_ratio_penalty = high_risk_ratio * 35
+            base_penalty = 5 if total_pii > 0 else 0
+            
+            calculated_score = max(100 - pii_density_penalty - risk_ratio_penalty - base_penalty, 20)
             
             scan_history.append({
                 'scan_id': scan['scan_id'],
                 'timestamp': scan['timestamp'],
                 'scan_type': scan['scan_type'],
                 'region': scan.get('region', 'Netherlands'),
-                'file_count': scan.get('file_count', 0),
-                'total_pii_found': scan.get('total_pii_found', 0),
-                'high_risk_count': scan.get('high_risk_count', 0),
-                'compliance_score': calculated_score,
+                'file_count': file_count,
+                'total_pii_found': total_pii,
+                'high_risk_count': high_risk,
+                'compliance_score': round(calculated_score, 1),
                 'findings': []
             })
         
@@ -2771,16 +2792,38 @@ def render_predictive_analytics():
         current_score = scan_history[-1].get('compliance_score', 75) if scan_history else 75
         score_delta = prediction.future_score - current_score
         
-        # Key Metrics Row - Clean 2x2 grid for mobile
+        # Show actual scan statistics first
+        if scan_history and not is_demo:
+            total_scans = len(scan_history)
+            total_pii_all = sum(s['total_pii_found'] for s in scan_history)
+            total_high_risk = sum(s['high_risk_count'] for s in scan_history)
+            total_files = sum(s['file_count'] for s in scan_history)
+            avg_score = sum(s['compliance_score'] for s in scan_history) / total_scans
+            
+            st.subheader("📊 Your Scan Summary")
+            stat_col1, stat_col2, stat_col3, stat_col4 = st.columns(4)
+            with stat_col1:
+                st.metric("Total Scans", total_scans)
+            with stat_col2:
+                st.metric("Files Scanned", f"{total_files:,}")
+            with stat_col3:
+                st.metric("PII Found", f"{total_pii_all:,}")
+            with stat_col4:
+                st.metric("High Risk Items", total_high_risk)
+            
+            st.markdown("---")
+        
+        # Key Metrics Row - Compliance Prediction
+        st.subheader("🔮 Compliance Prediction (30 Days)")
         col1, col2 = st.columns(2)
         with col1:
-            st.metric("Predicted Score", f"{prediction.future_score:.0f}%", f"{score_delta:+.1f}")
+            st.metric("Current Score", f"{current_score:.0f}%")
         with col2:
-            st.metric("Trend", prediction.trend.value)
+            st.metric("Predicted Score", f"{prediction.future_score:.0f}%", f"{score_delta:+.1f}")
         
         col3, col4 = st.columns(2)
         with col3:
-            st.metric("Priority", prediction.recommendation_priority)
+            st.metric("Trend", prediction.trend.value)
         with col4:
             st.metric("Action Window", prediction.time_to_action)
         
