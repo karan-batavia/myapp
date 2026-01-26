@@ -791,6 +791,32 @@ def show_checkout_form_page():
                 )
 
 
+def get_stripe_price_id(tier: PricingTier, billing_cycle: BillingCycle) -> Optional[str]:
+    """Get Stripe Price ID from environment variables based on tier and billing cycle"""
+    import os
+    
+    tier_map = {
+        PricingTier.STARTUP: "STARTUP",
+        PricingTier.PROFESSIONAL: "PROFESSIONAL",
+        PricingTier.GROWTH: "GROWTH",
+        PricingTier.SCALE: "SCALE",
+        PricingTier.SALESFORCE_PREMIUM: "SALESFORCE",
+        PricingTier.SAP_ENTERPRISE: "SAP",
+        PricingTier.ENTERPRISE: "ENTERPRISE",
+    }
+    
+    tier_key = tier_map.get(tier, tier.value.upper())
+    billing_key = "ANNUAL" if billing_cycle == BillingCycle.ANNUAL else "MONTHLY"
+    
+    env_key = f"STRIPE_PRICE_{tier_key}_{billing_key}"
+    price_id = os.getenv(env_key)
+    
+    if price_id and price_id.startswith('price_'):
+        return price_id
+    
+    return None
+
+
 def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, pricing: Dict[str, Any], customer_data: Dict[str, str]):
     """Create Stripe checkout session with proper error handling"""
     from utils.i18n import _
@@ -832,9 +858,16 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
         
         plan_name = str(pricing.get('name', tier.value.title()))
         
-        checkout_session = stripe.checkout.Session.create(
-            payment_method_types=payment_methods,  # type: ignore
-            line_items=[{
+        stripe_price_id = get_stripe_price_id(tier, billing_cycle)
+        
+        if stripe_price_id:
+            line_items = [{
+                "price": stripe_price_id,
+                "quantity": 1,
+            }]
+            logger.info(f"Using Stripe Price ID: {stripe_price_id} for {tier.value} {billing_cycle.value}")
+        else:
+            line_items = [{
                 "price_data": {
                     "currency": "eur",
                     "product_data": {
@@ -848,7 +881,12 @@ def create_stripe_checkout(tier: PricingTier, billing_cycle: BillingCycle, prici
                     }
                 },
                 "quantity": 1,
-            }],
+            }]
+            logger.info(f"Using inline price_data for {tier.value} {billing_cycle.value} (no Price ID configured)")
+        
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=payment_methods,  # type: ignore
+            line_items=line_items,
             mode="subscription",
             success_url=f"{base_url}?payment_success=true&session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{base_url}?payment_cancelled=true",
