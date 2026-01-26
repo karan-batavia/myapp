@@ -39,6 +39,17 @@ if 'page_configured' not in st.session_state:
     )
     st.session_state['page_configured'] = True
 
+# Capture HTTP referrer on first visit for traffic source tracking
+if 'http_referrer_captured' not in st.session_state:
+    st.session_state['http_referrer_captured'] = True
+    try:
+        if hasattr(st, 'context') and hasattr(st.context, 'headers'):
+            referrer = st.context.headers.get('Referer') or st.context.headers.get('Referrer')
+            if referrer:
+                st.session_state['http_referrer'] = referrer
+    except Exception:
+        pass
+
 # Apply SOC 2 compliant security headers
 try:
     from utils.security_headers import apply_security_headers

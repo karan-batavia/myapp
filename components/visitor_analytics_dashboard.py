@@ -243,24 +243,10 @@ def render_visitor_analytics_dashboard():
             'Visitors': [c['visitors'] for c in analytics['countries']]
         }
         
-        try:
-            import plotly.express as px
-            fig_countries = px.bar(
-                countries_df,
-                y='Country',
-                x='Visitors',
-                orientation='h',
-                title="Visitors by Country",
-                text='Visitors'
-            )
-            fig_countries.update_traces(textposition='outside')
-            fig_countries.update_layout(
-                yaxis={'categoryorder': 'total ascending'},
-                height=max(300, len(countries_df['Country']) * 50)
-            )
-            st.plotly_chart(fig_countries, use_container_width=True)
-        except Exception:
-            st.dataframe(pd.DataFrame(countries_df), use_container_width=True, hide_index=True)
+        # Display as clean table with country names and flags
+        df = pd.DataFrame(countries_df)
+        df = df.sort_values('Visitors', ascending=False)
+        st.dataframe(df, use_container_width=True, hide_index=True)
     
     # Visitor Sessions section
     st.markdown("### 👤 Visitor Sessions")
