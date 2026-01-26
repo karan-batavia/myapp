@@ -1863,21 +1863,24 @@ class UnifiedHTMLReportGenerator:
                 trend_text = "Stable"
                 trend_class = "trend-stable"
             
+            # Translate trend text
+            trend_text_translated = t_report('trend_improving', 'Improving') if trend_text == "Improving" else t_report('trend_declining', 'Declining') if trend_text == "Declining" else t_report('trend_stable', 'Stable')
+            
             return f"""
             <div class="compliance-forecast-section">
-                <h2>📈 Nalevingsscore Prognose</h2>
+                <h2>📈 {t_report('compliance_score_forecast', 'Compliance Score Forecast')}</h2>
                 <div class="forecast-summary">
                     <div class="forecast-metric">
                         <span class="metric-value">{prediction.future_score:.1f}%</span>
-                        <span class="metric-label">🔮 AI Predicted Score (30 days)</span>
+                        <span class="metric-label">🔮 {t_report('ai_predicted_score', 'AI Predicted Score (30 days)')}</span>
                     </div>
                     <div class="forecast-metric">
-                        <span class="metric-value {trend_class}">{trend_direction} {trend_text}</span>
-                        <span class="metric-label">📈 Trend Analysis</span>
+                        <span class="metric-value {trend_class}">{trend_direction} {trend_text_translated}</span>
+                        <span class="metric-label">📈 {t_report('trend_analysis', 'Trend Analysis')}</span>
                     </div>
                     <div class="forecast-metric">
                         <span class="metric-value">{prediction.confidence_interval[0]:.1f}% - {prediction.confidence_interval[1]:.1f}%</span>
-                        <span class="metric-label">📊 Confidence Range</span>
+                        <span class="metric-label">📊 {t_report('confidence_range', 'Confidence Range')}</span>
                     </div>
                 </div>
                 <div id="compliance-forecast-chart"></div>
@@ -1892,31 +1895,31 @@ class UnifiedHTMLReportGenerator:
                 </script>
                 
                 <div class="forecast-explanation">
-                    <h4>📊 Understanding Your Interactive Compliance Dashboard</h4>
+                    <h4>📊 {t_report('understanding_dashboard', 'Understanding Your Interactive Compliance Dashboard')}</h4>
                     <div class="explanation-grid">
                         <div class="explanation-item">
-                            <strong>📊 Weekly Compliance Bars:</strong> Color-coded weekly averages showing your compliance levels<br>
-                            <strong>📈 Trend Line:</strong> Smoothed trend analysis overlaid for pattern recognition (blue line)
+                            <strong>📊 {t_report('weekly_bars', 'Weekly Compliance Bars')}:</strong> {t_report('weekly_bars_desc', 'Color-coded weekly averages showing your compliance levels')}<br>
+                            <strong>📈 {t_report('trend_line', 'Trend Line')}:</strong> {t_report('trend_line_desc', 'Smoothed trend analysis overlaid for pattern recognition (blue line)')}
                         </div>
                         <div class="explanation-item">
-                            <strong>🔮 AI Forecast:</strong> Machine learning forecast with confidence bands (orange dashed line)<br>
-                            <strong>🎛️ Interactive Controls:</strong> Use buttons to switch views, drag timeline, hover for details
+                            <strong>🔮 {t_report('ai_forecast', 'AI Forecast')}:</strong> {t_report('ai_forecast_desc', 'Machine learning forecast with confidence bands (orange dashed line)')}<br>
+                            <strong>🎛️ {t_report('interactive_controls', 'Interactive Controls')}:</strong> {t_report('interactive_controls_desc', 'Use buttons to switch views, drag timeline, hover for details')}
                         </div>
                         <div class="explanation-item">
-                            <strong>🏢 Industry Benchmarks:</strong> Dotted lines showing average scores for Financial Services and Technology sectors
+                            <strong>🏢 {t_report('industry_benchmarks', 'Industry Benchmarks')}:</strong> {t_report('industry_benchmarks_desc', 'Dotted lines showing average scores for Financial Services and Technology sectors')}
                         </div>
                         <div class="explanation-item">
-                            <strong>🚨 Risk Zones:</strong> Color-coded background areas indicating compliance health levels
+                            <strong>🚨 {t_report('risk_zones', 'Risk Zones')}:</strong> {t_report('risk_zones_desc', 'Color-coded background areas indicating compliance health levels')}
                         </div>
                     </div>
                     
                     <div class="risk-zone-guide">
-                        <h5>Risk Zone Guide:</h5>
+                        <h5>{t_report('risk_zone_guide', 'Risk Zone Guide')}:</h5>
                         <ul>
-                            <li><span style="color: green;">🟢 Excellent (90%+):</span> Outstanding compliance posture</li>
-                            <li><span style="color: orange;">🟡 Good (80-89%):</span> Solid compliance with minor improvements needed</li>
-                            <li><span style="color: red;">🟠 Needs Attention (70-79%):</span> Moderate risk requiring focused action</li>
-                            <li><span style="color: darkred;">🔴 Critical (&lt;60%):</span> High risk requiring immediate intervention</li>
+                            <li><span style="color: green;">🟢 {t_report('excellent_90', 'Excellent (90%+)')}:</span> {t_report('outstanding_posture', 'Outstanding compliance posture')}</li>
+                            <li><span style="color: orange;">🟡 {t_report('good_80_89', 'Good (80-89%)')}:</span> {t_report('solid_compliance', 'Solid compliance with minor improvements needed')}</li>
+                            <li><span style="color: red;">🟠 {t_report('needs_attention_70_79', 'Needs Attention (70-79%)')}:</span> {t_report('moderate_risk', 'Moderate risk requiring focused action')}</li>
+                            <li><span style="color: darkred;">🔴 {t_report('critical_60', 'Critical (<60%)')}:</span> {t_report('high_risk', 'High risk requiring immediate intervention')}</li>
                         </ul>
                     </div>
                 </div>
@@ -1929,41 +1932,49 @@ class UnifiedHTMLReportGenerator:
     
     def _generate_fallback_forecast_section(self, current_score: float) -> str:
         """Generate a fallback forecast section when full prediction is unavailable."""
+        # Use translation function for consistent language
+        risk_level = t_report('risk_excellent', 'Excellent') if current_score >= 90 else t_report('risk_good', 'Good') if current_score >= 80 else t_report('risk_attention', 'Attention Needed') if current_score >= 70 else t_report('risk_critical', 'Critical')
+        risk_icon = '🟢' if current_score >= 90 else '🟡' if current_score >= 80 else '🟠' if current_score >= 70 else '🔴'
+        benchmark = f"{t_report('financial_services', 'Financial Services')}: 78.5%" if current_score < 78.5 else f"{t_report('technology', 'Technology')}: 81.2%"
+        status_text = t_report('excellent_position', 'excellent compliance position') if current_score >= 90 else t_report('good_position', 'good compliance position') if current_score >= 80 else t_report('moderate_position', 'moderate compliance position') if current_score >= 70 else t_report('critical_position', 'critical compliance position')
+        comparison = t_report('above_average', 'Above average') if current_score > 80 else t_report('below_average', 'Below average') if current_score < 75 else t_report('average', 'Average')
+        recommendation = t_report('continue_practices', 'Continue current practices') if current_score >= 85 else t_report('focus_critical', 'Focus on addressing critical findings') if current_score < 70 else t_report('implement_improvements', 'Implement systematic improvements')
+        
         return f"""
         <div class="compliance-forecast-section">
-            <h2>🎯 Nalevingsscore Analyse</h2>
+            <h2>🎯 {t_report('compliance_score_analysis', 'Compliance Score Analysis')}</h2>
             <div class="forecast-summary">
                 <div class="forecast-metric">
                     <span class="metric-value">{current_score:.1f}%</span>
-                    <span class="metric-label">📊 Huidige Nalevingsscore</span>
+                    <span class="metric-label">📊 {t_report('current_compliance_score', 'Current Compliance Score')}</span>
                 </div>
                 <div class="forecast-metric">
-                    <span class="metric-value">{'🟢 Uitstekend' if current_score >= 90 else '🟡 Goed' if current_score >= 80 else '🟠 Aandacht' if current_score >= 70 else '🔴 Kritiek'}</span>
-                    <span class="metric-label">🚨 Risiconiveau</span>
+                    <span class="metric-value">{risk_icon} {risk_level}</span>
+                    <span class="metric-label">🚨 {t_report('risk_level', 'Risk Level')}</span>
                 </div>
                 <div class="forecast-metric">
-                    <span class="metric-value">{'Financiële Diensten: 78.5%' if current_score < 78.5 else 'Technologie: 81.2%'}</span>
-                    <span class="metric-label">🏢 Sector Benchmark</span>
+                    <span class="metric-value">{benchmark}</span>
+                    <span class="metric-label">🏢 {t_report('sector_benchmark', 'Sector Benchmark')}</span>
                 </div>
             </div>
             
             <div class="forecast-explanation">
-                <h4>📊 Nalevingsscore Analyse</h4>
+                <h4>📊 {t_report('compliance_score_analysis', 'Compliance Score Analysis')}</h4>
                 <div class="explanation-grid">
                     <div class="explanation-item">
-                        <strong>📊 Huidige Status:</strong> Uw nalevingsscore van {current_score:.1f}% geeft een {'uitstekende' if current_score >= 90 else 'goede' if current_score >= 80 else 'matige' if current_score >= 70 else 'kritieke'} nalevingspositie aan.
+                        <strong>📊 {t_report('current_status', 'Current Status')}:</strong> {t_report('your_score_indicates', 'Your compliance score of')} {current_score:.1f}% {t_report('indicates_a', 'indicates a')} {status_text}.
                     </div>
                     <div class="explanation-item">
-                        <strong>🏢 Sectorvergelijking:</strong> {'Boven gemiddeld' if current_score > 80 else 'Onder gemiddeld' if current_score < 75 else 'Gemiddeld'} vergeleken met sector benchmarks.
+                        <strong>🏢 {t_report('sector_comparison', 'Sector Comparison')}:</strong> {comparison} {t_report('compared_to_benchmarks', 'compared to sector benchmarks')}.
                     </div>
                     <div class="explanation-item">
-                        <strong>📈 Aanbevelingen:</strong> {'Ga door met huidige praktijken' if current_score >= 85 else 'Focus op het aanpakken van kritieke bevindingen' if current_score < 70 else 'Implementeer systematische verbeteringen'}.
+                        <strong>📈 {t_report('recommendations', 'Recommendations')}:</strong> {recommendation}.
                     </div>
                 </div>
             </div>
             
             <p style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">
-                💡 <strong>Tip:</strong> Geavanceerde AI-gestuurde nalevingsvoorspelling is beschikbaar met volledige systeemafhankelijkheden.
+                💡 <strong>{t_report('tip', 'Tip')}:</strong> {t_report('advanced_ai_forecast', 'Advanced AI-powered compliance forecasting is available with full system dependencies')}.
             </p>
         </div>
         """
