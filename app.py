@@ -2829,63 +2829,104 @@ def render_predictive_analytics():
         
         st.markdown("---")
         
-        # Actionable Steps Section
-        st.subheader("Take Action Now")
+        # Data-Driven Recommendations Section
+        st.subheader("🎯 Recommendations Based on Your Scans")
         
-        # Build specific actionable items based on prediction data
+        # Build specific recommendations based on actual scan data
         action_items = []
         
-        # Map risk factors to specific actions
-        risk_action_map = {
-            'declining compliance scores': ('Run a full PII scan', 'Scanners', 'Identify new data exposure risks'),
-            'increasing pii exposure': ('Review data handling procedures', 'Settings > Compliance', 'Update data processing agreements'),
-            'high risk findings': ('Address critical findings first', 'Results', 'Prioritize high-severity items'),
-            'data breach risk': ('Conduct security assessment', 'DPIA Scanner', 'Document risk mitigation'),
-            'regulatory changes': ('Review GDPR Article updates', 'Compliance Reports', 'Update policies'),
-        }
-        
-        if prediction.risk_factors:
-            for factor in prediction.risk_factors[:2]:
-                factor_lower = factor.lower()
-                for key, (action, location, benefit) in risk_action_map.items():
-                    if key in factor_lower:
+        if scan_history and not is_demo:
+            # Analyze actual scan data for specific recommendations
+            total_pii = sum(s['total_pii_found'] for s in scan_history)
+            total_high_risk = sum(s['high_risk_count'] for s in scan_history)
+            scan_types_used = set(s['scan_type'] for s in scan_history)
+            latest_scan = scan_history[0] if scan_history else None
+            
+            # Recommendation 1: Based on high-risk findings
+            if total_high_risk > 0:
+                action_items.append({
+                    'icon': '🚨',
+                    'action': f'Address {total_high_risk} high-risk items found',
+                    'detail': f'Critical: {total_high_risk} items require immediate attention to prevent GDPR violations',
+                    'priority': 'Critical'
+                })
+            
+            # Recommendation 2: Based on PII volume
+            if total_pii > 100:
+                action_items.append({
+                    'icon': '📋',
+                    'action': f'Review {total_pii:,} PII records for data minimization',
+                    'detail': 'GDPR Article 5(1)(c): Only collect data that is necessary for your purpose',
+                    'priority': 'High'
+                })
+            elif total_pii > 0:
+                action_items.append({
+                    'icon': '✅',
+                    'action': f'Document legal basis for {total_pii:,} PII records',
+                    'detail': 'Ensure all personal data processing has a valid legal basis under GDPR Art. 6',
+                    'priority': 'Medium'
+                })
+            
+            # Recommendation 3: Based on scanner coverage
+            all_scanners = {'code', 'document', 'database', 'website', 'image', 'AI Model', 'repository'}
+            missing_scanners = all_scanners - scan_types_used
+            if missing_scanners and len(missing_scanners) < len(all_scanners):
+                missing_list = ', '.join(list(missing_scanners)[:2])
+                action_items.append({
+                    'icon': '🔍',
+                    'action': f'Expand coverage with {missing_list} scans',
+                    'detail': 'Run additional scanner types to discover PII in other data sources',
+                    'priority': 'Medium'
+                })
+            
+            # Recommendation 4: Based on compliance score trend
+            if len(scan_history) >= 2:
+                recent_scores = [s['compliance_score'] for s in scan_history[:5]]
+                if len(recent_scores) >= 2:
+                    score_trend = recent_scores[0] - recent_scores[-1]
+                    if score_trend < -5:
                         action_items.append({
-                            'action': action,
-                            'location': location,
-                            'benefit': benefit
+                            'icon': '📉',
+                            'action': 'Investigate declining compliance score',
+                            'detail': f'Your score dropped {abs(score_trend):.1f} points - identify root cause',
+                            'priority': 'High'
                         })
-                        break
-                else:
+                    elif score_trend > 5:
+                        action_items.append({
+                            'icon': '📈',
+                            'action': 'Document your compliance improvements',
+                            'detail': f'Score improved by {score_trend:.1f} points - maintain these practices',
+                            'priority': 'Low'
+                        })
+            
+            # Recommendation 5: Based on latest scan
+            if latest_scan:
+                if latest_scan['high_risk_count'] > 0:
                     action_items.append({
-                        'action': f"Investigate: {factor}",
-                        'location': 'Dashboard',
-                        'benefit': 'Prevent compliance degradation'
+                        'icon': '⚡',
+                        'action': f"Fix {latest_scan['high_risk_count']} issues from latest {latest_scan['scan_type']} scan",
+                        'detail': f"Recent scan on {latest_scan['timestamp'][:10]} found items needing attention",
+                        'priority': 'High'
                     })
         
-        if prediction.predicted_violations:
-            for v in prediction.predicted_violations[:1]:
-                action_items.append({
-                    'action': f"Prevent {v['type'].replace('_', ' ').title()}",
-                    'location': 'Scanners',
-                    'benefit': f"Reduce {v['probability']:.0%} violation risk"
-                })
-        
-        # Default actions if none found
+        # Fallback if no scan data
         if not action_items:
             action_items = [
-                {'action': 'Run weekly compliance scan', 'location': 'Scanners', 'benefit': 'Maintain visibility'},
-                {'action': 'Review scan history trends', 'location': 'History', 'benefit': 'Identify patterns'},
-                {'action': 'Update data inventory', 'location': 'Settings', 'benefit': 'Stay current'}
+                {'icon': '🔍', 'action': 'Run your first compliance scan', 'detail': 'Start with Code Scanner to find PII in your codebase', 'priority': 'Start'},
+                {'icon': '📊', 'action': 'Build your compliance baseline', 'detail': 'Regular scans help track your GDPR compliance progress', 'priority': 'Start'}
             ]
         
-        # Display as clear action cards
-        for i, item in enumerate(action_items[:3], 1):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                st.markdown(f"**{i}. {item['action']}**")
-                st.caption(f"{item['benefit']}")
-            with col2:
-                st.markdown(f"📍 *{item['location']}*")
+        # Display recommendations with priority badges
+        for item in action_items[:4]:
+            priority_colors = {'Critical': '🔴', 'High': '🟠', 'Medium': '🟡', 'Low': '🟢', 'Start': '🔵'}
+            priority_badge = priority_colors.get(item['priority'], '⚪')
+            
+            st.markdown(f"""
+            **{item['icon']} {item['action']}** {priority_badge} *{item['priority']}*
+            
+            {item['detail']}
+            """)
+            st.markdown("---")
         
         # Simplified Compliance Forecast Chart
         st.subheader("Compliance Forecast")
