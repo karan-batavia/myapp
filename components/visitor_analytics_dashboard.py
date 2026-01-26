@@ -9,11 +9,23 @@ GDPR-Compliant Display:
 """
 
 import streamlit as st
-import plotly.graph_objects as go
-import plotly.express as px
+import pandas as pd
 from datetime import datetime, timedelta
 from services.visitor_tracker import get_visitor_tracker, VisitorEventType
 from typing import Dict, Any
+
+def safe_plotly_chart(fig, use_container_width=True, fallback_data=None, fallback_title=""):
+    """Safely render Plotly chart with fallback to table on error"""
+    try:
+        import plotly.express as px
+        import plotly.graph_objects as go
+        st.plotly_chart(fig, use_container_width=use_container_width)
+    except Exception as e:
+        if fallback_data:
+            st.caption(f"📊 {fallback_title}")
+            st.dataframe(pd.DataFrame(fallback_data), use_container_width=True)
+        else:
+            st.warning(f"Chart unavailable: {str(e)[:50]}")
 
 def render_visitor_analytics_dashboard():
     """
@@ -92,16 +104,21 @@ def render_visitor_analytics_dashboard():
             'Count': [analytics['login_success'], analytics['login_failure']]
         }
         
-        fig_login = px.pie(
-            login_data,
-            values='Count',
-            names='Status',
-            title=f"Login Attempts ({login_total} total)",
-            color='Status',
-            color_discrete_map={'Success': '#00D26A', 'Failure': '#FF4B4B'}
-        )
-        fig_login.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_login, use_container_width=True)
+        try:
+            import plotly.express as px
+            fig_login = px.pie(
+                login_data,
+                values='Count',
+                names='Status',
+                title=f"Login Attempts ({login_total} total)",
+                color='Status',
+                color_discrete_map={'Success': '#00D26A', 'Failure': '#FF4B4B'}
+            )
+            fig_login.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_login, use_container_width=True)
+        except Exception:
+            st.caption(f"Login Attempts ({login_total} total)")
+            st.dataframe(pd.DataFrame(login_data), use_container_width=True, hide_index=True)
         
         # Registration attempts breakdown
         st.markdown("### 👥 User Registrations")
@@ -110,16 +127,21 @@ def render_visitor_analytics_dashboard():
             'Count': [analytics['registration_success'], analytics['registration_failure']]
         }
         
-        fig_reg = px.pie(
-            reg_data,
-            values='Count',
-            names='Status',
-            title=f"Registration Attempts ({reg_total} total)",
-            color='Status',
-            color_discrete_map={'Success': '#00D26A', 'Failure': '#FF4B4B'}
-        )
-        fig_reg.update_traces(textposition='inside', textinfo='percent+label')
-        st.plotly_chart(fig_reg, use_container_width=True)
+        try:
+            import plotly.express as px
+            fig_reg = px.pie(
+                reg_data,
+                values='Count',
+                names='Status',
+                title=f"Registration Attempts ({reg_total} total)",
+                color='Status',
+                color_discrete_map={'Success': '#00D26A', 'Failure': '#FF4B4B'}
+            )
+            fig_reg.update_traces(textposition='inside', textinfo='percent+label')
+            st.plotly_chart(fig_reg, use_container_width=True)
+        except Exception:
+            st.caption(f"Registration Attempts ({reg_total} total)")
+            st.dataframe(pd.DataFrame(reg_data), use_container_width=True, hide_index=True)
     
     with col2:
         st.markdown("### 📄 Top Pages Visited")
@@ -130,15 +152,19 @@ def render_visitor_analytics_dashboard():
                 'Views': [p['views'] for p in analytics['top_pages'][:10]]
             }
             
-            fig_pages = px.bar(
-                pages_df,
-                x='Views',
-                y='Page',
-                orientation='h',
-                title="Most Visited Pages"
-            )
-            fig_pages.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig_pages, use_container_width=True)
+            try:
+                import plotly.express as px
+                fig_pages = px.bar(
+                    pages_df,
+                    x='Views',
+                    y='Page',
+                    orientation='h',
+                    title="Most Visited Pages"
+                )
+                fig_pages.update_layout(yaxis={'categoryorder': 'total ascending'})
+                st.plotly_chart(fig_pages, use_container_width=True)
+            except Exception:
+                st.dataframe(pd.DataFrame(pages_df), use_container_width=True, hide_index=True)
         else:
             st.info("No page view data available yet")
         
@@ -150,15 +176,19 @@ def render_visitor_analytics_dashboard():
                 'Visits': [r['visits'] for r in analytics['top_referrers'][:10]]
             }
             
-            fig_refs = px.bar(
-                referrers_df,
-                x='Visits',
-                y='Source',
-                orientation='h',
-                title="Top Referrers"
-            )
-            fig_refs.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig_refs, use_container_width=True)
+            try:
+                import plotly.express as px
+                fig_refs = px.bar(
+                    referrers_df,
+                    x='Visits',
+                    y='Source',
+                    orientation='h',
+                    title="Top Referrers"
+                )
+                fig_refs.update_layout(yaxis={'categoryorder': 'total ascending'})
+                st.plotly_chart(fig_refs, use_container_width=True)
+            except Exception:
+                st.dataframe(pd.DataFrame(referrers_df), use_container_width=True, hide_index=True)
         else:
             st.info("No referrer data available yet")
     
@@ -171,13 +201,17 @@ def render_visitor_analytics_dashboard():
             'Visitors': [c['visitors'] for c in analytics['countries']]
         }
         
-        fig_countries = px.bar(
-            countries_df,
-            x='Country',
-            y='Visitors',
-            title="Visitors by Country"
-        )
-        st.plotly_chart(fig_countries, use_container_width=True)
+        try:
+            import plotly.express as px
+            fig_countries = px.bar(
+                countries_df,
+                x='Country',
+                y='Visitors',
+                title="Visitors by Country"
+            )
+            st.plotly_chart(fig_countries, use_container_width=True)
+        except Exception:
+            st.dataframe(pd.DataFrame(countries_df), use_container_width=True, hide_index=True)
     
     # Visitor Sessions section
     st.markdown("### 👤 Visitor Sessions")
