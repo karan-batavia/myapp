@@ -247,11 +247,17 @@ def render_visitor_analytics_dashboard():
             import plotly.express as px
             fig_countries = px.bar(
                 countries_df,
-                x='Country',
-                y='Visitors',
-                title="Visitors by Country"
+                y='Country',
+                x='Visitors',
+                orientation='h',
+                title="Visitors by Country",
+                text='Visitors'
             )
-            fig_countries.update_layout(xaxis_tickangle=-45)
+            fig_countries.update_traces(textposition='outside')
+            fig_countries.update_layout(
+                yaxis={'categoryorder': 'total ascending'},
+                height=max(300, len(countries_df['Country']) * 50)
+            )
             st.plotly_chart(fig_countries, use_container_width=True)
         except Exception:
             st.dataframe(pd.DataFrame(countries_df), use_container_width=True, hide_index=True)
