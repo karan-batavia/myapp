@@ -133,6 +133,23 @@ def get_remaining_free_scans() -> int:
         return -1  # Unlimited for paid users
     return max(0, FREE_USER_MAX_SCANS - get_free_user_scans_performed())
 
+
+def check_and_increment_scan() -> bool:
+    """
+    Check if user can perform scan and increment counter if allowed.
+    Returns True if scan can proceed, False if limit reached.
+    This is the ONLY function that should be called before executing a scan.
+    """
+    if not is_free_user():
+        return True  # Paid users always allowed
+    
+    if not can_perform_scan():
+        return False  # Limit reached
+    
+    increment_free_user_scans()
+    return True
+
+
 class BillingCycle(Enum):
     """Billing cycle options"""
     MONTHLY = "monthly"

@@ -421,10 +421,11 @@ def _render_sap_connector(region: str, username: str):
 
 def _execute_enterprise_scan(connector: str, region: str, username: str):
     """Execute an enterprise connector scan"""
-    # Increment free user scan count
-    from config.pricing_config import is_free_user, increment_free_user_scans
-    if is_free_user():
-        increment_free_user_scans()
+    from config.pricing_config import check_and_increment_scan
+    
+    if not check_and_increment_scan():
+        st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+        return
     
     connector_type_map = {
         "microsoft365": "microsoft365",
@@ -566,10 +567,12 @@ def _render_code_scanner(region: str, username: str):
 
 def _execute_code_scan(region: str, username: str, source_type: str, uploaded_files=None, repo_url=None, directory_path=None, branch=None, access_token=None):
     """Execute code scan"""
-    # Increment free user scan count
-    from config.pricing_config import is_free_user, increment_free_user_scans
-    if is_free_user():
-        increment_free_user_scans()
+    from config.pricing_config import check_and_increment_scan
+    
+    # Check limit and increment count atomically
+    if not check_and_increment_scan():
+        st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+        return
     
     try:
         from services.code_scanner import CodeScanner
@@ -718,10 +721,11 @@ def _render_document_scanner(region: str, username: str):
             st.error("Please upload at least one document.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
             
         try:
             from services.blob_scanner import BlobScanner
@@ -836,10 +840,11 @@ def _render_image_scanner(region: str, username: str):
             st.error("Please upload at least one image.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
             
         try:
             from services.image_scanner import ImageScanner
@@ -985,10 +990,11 @@ def _render_database_scanner(region: str, username: str):
             st.error("Please fill in all connection fields.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
             
         try:
             from services.db_scanner import DBScanner
@@ -1118,10 +1124,11 @@ def _render_website_scanner(region: str, username: str):
             if not url.startswith(('http://', 'https://')):
                 url = 'https://' + url
             
-            # Increment free user scan count
-            from config.pricing_config import is_free_user, increment_free_user_scans
-            if is_free_user():
-                increment_free_user_scans()
+            # Check and increment free user scan count
+            from config.pricing_config import check_and_increment_scan
+            if not check_and_increment_scan():
+                st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+                return
             
             try:
                 from services.website_scanner import WebsiteScanner
@@ -1260,10 +1267,11 @@ def _render_ai_model_scanner(region: str, username: str):
         st.file_uploader("Upload Model File", type=['h5', 'pkl', 'onnx', 'pt', 'pth'])
         
         if st.button("🔍 Start AI Model Scan", type="primary"):
-            # Increment free user scan count
-            from config.pricing_config import is_free_user, increment_free_user_scans
-            if is_free_user():
-                increment_free_user_scans()
+            # Check and increment free user scan count
+            from config.pricing_config import check_and_increment_scan
+            if not check_and_increment_scan():
+                st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+                return
             
             with st.spinner("Analyzing AI model for EU AI Act compliance..."):
                 import time
@@ -1318,10 +1326,11 @@ def _render_soc2_scanner(region: str, username: str):
             st.error("Please enter a repository URL.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
             
         try:
             from services.soc2_scanner import scan_github_repo_for_soc2
@@ -1406,10 +1415,11 @@ def _render_sustainability_scanner(region: str, username: str):
         config_file = st.file_uploader("Upload Infrastructure Config", type=['yaml', 'json', 'tf'], key="sustainability_config")
     
     if st.button("🔍 Start Sustainability Analysis", type="primary"):
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         try:
             from services.cloud_resources_scanner import CloudResourcesScanner
@@ -1503,10 +1513,11 @@ def _render_audio_video_scanner(region: str, username: str):
     
     if st.button("🔍 Start Deepfake Analysis", type="primary"):
         if uploaded_file:
-            # Increment free user scan count
-            from config.pricing_config import is_free_user, increment_free_user_scans
-            if is_free_user():
-                increment_free_user_scans()
+            # Check and increment free user scan count
+            from config.pricing_config import check_and_increment_scan
+            if not check_and_increment_scan():
+                st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+                return
             
             try:
                 from services.audio_video_scanner import AudioVideoScanner
@@ -1604,10 +1615,11 @@ def _render_advanced_ai_scanner(region: str, username: str):
     
     if st.button("🔍 Start Advanced AI Analysis", type="primary"):
         if content:
-            # Increment free user scan count
-            from config.pricing_config import is_free_user, increment_free_user_scans
-            if is_free_user():
-                increment_free_user_scans()
+            # Check and increment free user scan count
+            from config.pricing_config import check_and_increment_scan
+            if not check_and_increment_scan():
+                st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+                return
             
             with st.spinner("Running GPT-4 powered analysis..."):
                 import time
@@ -1657,10 +1669,11 @@ def render_document_scanner_interface(region: str, username: str):
 
 def execute_document_scan(region, username, uploaded_files):
     """Execute document scanning with comprehensive activity tracking"""
-    # Increment free user scan count
-    from config.pricing_config import is_free_user, increment_free_user_scans
-    if is_free_user():
-        increment_free_user_scans()
+    # Check and increment free user scan count
+    from config.pricing_config import check_and_increment_scan
+    if not check_and_increment_scan():
+        st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+        return
     
     # Initialize activity tracking variables
     session_id = get_session_id() 
@@ -1966,10 +1979,11 @@ def render_exact_online_repo_scanner(region: str, username: str):
             st.error(f"⚠️ {message}")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if not files_content and not repo_url:
             st.error("Please upload files, enter a repository URL, or paste code to scan")
@@ -2260,10 +2274,11 @@ def render_exact_online_api_scanner(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         try:
             # Check for resume from checkpoint
@@ -2398,10 +2413,11 @@ def render_google_workspace_connector(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         try:
             # Check for resume from checkpoint
@@ -2604,10 +2620,11 @@ def render_banking_repository_scanner(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if source_type == "Repository URL" and not repo_url:
             st.error("Please enter a repository URL")
@@ -2870,10 +2887,11 @@ def render_salesforce_repo_scanner(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if sf_source_type == "Repository URL" and not sf_repo_url:
             st.error("Please enter a repository URL")
@@ -3091,10 +3109,11 @@ def render_sap_connector(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if source_type == "Repository URL" and not repo_url:
             st.error("Please enter a repository URL")
@@ -3784,10 +3803,11 @@ def render_code_scanner_interface(region: str, username: str):
                 st.session_state['show_pricing'] = True
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if use_intelligent:
             # Use intelligent scanning wrapper
@@ -4863,10 +4883,11 @@ def render_image_scanner_interface(region: str, username: str):
                 st.info("💡 Upgrade your plan to continue scanning.")
                 return
             
-            # Increment free user scan count
-            from config.pricing_config import is_free_user, increment_free_user_scans
-            if is_free_user():
-                increment_free_user_scans()
+            # Check and increment free user scan count
+            from config.pricing_config import check_and_increment_scan
+            if not check_and_increment_scan():
+                st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+                return
             
             if use_intelligent:
                 # Use intelligent scanning wrapper
@@ -5391,10 +5412,11 @@ def render_database_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if connection_method == "Connection String (Cloud)":
             if not connection_string:
@@ -5788,10 +5810,11 @@ def render_api_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         execute_api_scan(region, username, base_url, endpoints, timeout)
 
@@ -6840,10 +6863,11 @@ def render_microsoft365_connector(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if not credentials.get('tenant_id') and not credentials.get('access_token'):
             st.error("Please provide authentication credentials or use demo mode")
@@ -7793,10 +7817,11 @@ def render_soc2_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if not repo_url:
             st.error("Please enter a repository URL for SOC2 analysis.")
@@ -8196,10 +8221,11 @@ def render_website_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         if use_intelligent:
             # Use intelligent scanning wrapper
@@ -9223,10 +9249,11 @@ def render_sustainability_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         # Pass all parameters to enhanced scan function
         scan_params = {
@@ -11221,10 +11248,11 @@ def render_audio_video_scanner_interface(region: str, username: str):
             st.info("💡 Upgrade your plan to continue scanning.")
             return
         
-        # Increment free user scan count
-        from config.pricing_config import is_free_user, increment_free_user_scans
-        if is_free_user():
-            increment_free_user_scans()
+        # Check and increment free user scan count
+        from config.pricing_config import check_and_increment_scan
+        if not check_and_increment_scan():
+            st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans. Please upgrade to continue.")
+            return
         
         has_files = uploaded_files and len(uploaded_files) > 0
         has_url = media_url and media_url.strip()
