@@ -3047,7 +3047,10 @@ def render_predictive_analytics():
         
         # Export - Simple button
         with st.expander("Export Report"):
-            if st.button("Download HTML Report", type="primary"):
+            from config.pricing_config import can_download_reports
+            if not can_download_reports():
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+            elif st.button("Download HTML Report", type="primary"):
                 html_report = generate_predictive_analytics_html_report(prediction, scan_history, username)
                 st.download_button(
                     label="Save Report",
@@ -4294,21 +4297,26 @@ def render_history_page():
             
             # Export options
             st.subheader("Export Options")
-            col1, col2 = st.columns(2)
             
-            with col1:
-                if st.button("📊 Export as CSV"):
-                    csv_data = df.to_csv(index=False)
-                    st.download_button(
-                        label="Download CSV",
-                        data=csv_data,
-                        file_name=f"scan_history_{username}_{datetime.now().strftime('%Y%m%d')}.csv",
-                        mime="text/csv"
-                    )
-                    
-            with col2:
-                if st.button("📋 Generate Report"):
-                    st.info("Detailed compliance report generation coming soon!")
+            from config.pricing_config import can_download_reports
+            if not can_download_reports():
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+            else:
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    if st.button("📊 Export as CSV"):
+                        csv_data = df.to_csv(index=False)
+                        st.download_button(
+                            label="Download CSV",
+                            data=csv_data,
+                            file_name=f"scan_history_{username}_{datetime.now().strftime('%Y%m%d')}.csv",
+                            mime="text/csv"
+                        )
+                        
+                with col2:
+                    if st.button("📋 Generate Report"):
+                        st.info("Detailed compliance report generation coming soon!")
                     
     except Exception as e:
         st.error(f"Error loading scan history: {str(e)}")
@@ -4405,23 +4413,28 @@ def render_detailed_scan_view(scan_data):
         
         # Export options for individual scan
         st.markdown("### 📊 Export This Scan")
-        col1, col2 = st.columns(2)
         
-        with col1:
-            if st.button("📄 Export as JSON", key=f"json_export_{scan_data.get('scan_id', 'unknown')}"):
-                import json
-                json_data = json.dumps(scan_data, indent=2, default=str)
-                st.download_button(
-                    label="Download JSON",
-                    data=json_data,
-                    file_name=f"scan_{scan_data.get('scan_id', 'unknown')}.json",
-                    mime="application/json",
-                    key=f"json_download_{scan_data.get('scan_id', 'unknown')}"
-                )
-                
-        with col2:
-            if st.button("📋 Generate PDF Report", key=f"pdf_export_{scan_data.get('scan_id', 'unknown')}"):
-                st.info("PDF report generation will be implemented soon!")
+        from config.pricing_config import can_download_reports
+        if not can_download_reports():
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+        else:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                if st.button("📄 Export as JSON", key=f"json_export_{scan_data.get('scan_id', 'unknown')}"):
+                    import json
+                    json_data = json.dumps(scan_data, indent=2, default=str)
+                    st.download_button(
+                        label="Download JSON",
+                        data=json_data,
+                        file_name=f"scan_{scan_data.get('scan_id', 'unknown')}.json",
+                        mime="application/json",
+                        key=f"json_download_{scan_data.get('scan_id', 'unknown')}"
+                    )
+                    
+            with col2:
+                if st.button("📋 Generate PDF Report", key=f"pdf_export_{scan_data.get('scan_id', 'unknown')}"):
+                    st.info("PDF report generation will be implemented soon!")
                 
     except Exception as e:
         st.error(f"Error displaying scan details: {str(e)}")

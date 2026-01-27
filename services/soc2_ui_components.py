@@ -182,25 +182,30 @@ def render_soc2_action_buttons(scan_results: Dict[str, Any], key_prefix: str = "
                      type="primary", 
                      key=f"{key_prefix}_soc2_pdf_button", 
                      use_container_width=True):
-            with st.spinner("Generating comprehensive SOC2 compliance report..."):
-                try:
-                    from services.soc2_display import generate_soc2_pdf_report
-                    from datetime import datetime
-                    
-                    pdf_bytes = generate_soc2_pdf_report(scan_results)
-                    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-                    pdf_filename = f"soc2_compliance_report_{timestamp}.pdf"
-                    
-                    st.download_button(
-                        label="📥 Download SOC2 Report",
-                        data=pdf_bytes,
-                        file_name=pdf_filename,
-                        mime="application/pdf",
-                        key=f"{key_prefix}_soc2_download_btn"
-                    )
-                    st.success("SOC2 compliance report generated successfully!")
-                except Exception as e:
-                    st.error(f"Failed to generate PDF report: {str(e)}")
+            # Check if user can download (paid users only)
+            from config.pricing_config import can_download_reports
+            if not can_download_reports():
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+            else:
+                with st.spinner("Generating comprehensive SOC2 compliance report..."):
+                    try:
+                        from services.soc2_display import generate_soc2_pdf_report
+                        from datetime import datetime
+                        
+                        pdf_bytes = generate_soc2_pdf_report(scan_results)
+                        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                        pdf_filename = f"soc2_compliance_report_{timestamp}.pdf"
+                        
+                        st.download_button(
+                            label="📥 Download SOC2 Report",
+                            data=pdf_bytes,
+                            file_name=pdf_filename,
+                            mime="application/pdf",
+                            key=f"{key_prefix}_soc2_download_btn"
+                        )
+                        st.success("SOC2 compliance report generated successfully!")
+                    except Exception as e:
+                        st.error(f"Failed to generate PDF report: {str(e)}")
     
     with action_col2:
         if st.button(f"🔄 {_('scan.soc2_new_scan', 'New SOC2 Scan')}", 

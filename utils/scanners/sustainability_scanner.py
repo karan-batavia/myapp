@@ -2721,71 +2721,76 @@ def display_sustainability_report(scan_results):
     st.divider()
     st.subheader("Export Options")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("Generate PDF Report", type="primary"):
-            st.session_state.generate_pdf = True
-            with st.spinner("Generating PDF report... This may take a moment."):
-                try:
-                    # Import report generator
-                    from services.report_generator import generate_report
-                    
-                    # Generate the actual PDF report
-                    pdf_bytes = generate_report(
-                        scan_data=scan_results,
-                        include_details=True,
-                        include_charts=True,
-                        include_metadata=True,
-                        include_recommendations=True,
-                        report_format="sustainability"
-                    )
-                    
-                    # Ensure we have valid PDF content
-                    if pdf_bytes and len(pdf_bytes) > 0:
-                        st.success("PDF report generated successfully!")
+    # Check if user can download (paid users only)
+    from config.pricing_config import can_download_reports
+    if not can_download_reports():
+        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+    else:
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("Generate PDF Report", type="primary"):
+                st.session_state.generate_pdf = True
+                with st.spinner("Generating PDF report... This may take a moment."):
+                    try:
+                        # Import report generator
+                        from services.report_generator import generate_report
                         
-                        # Offer download options with the actual PDF content
-                        st.download_button(
-                            "Download PDF Report",
-                            data=pdf_bytes,
-                            file_name=f"sustainability-report-{scan_results.get('scan_id', 'unknown')}.pdf",
-                            mime="application/pdf"
+                        # Generate the actual PDF report
+                        pdf_bytes = generate_report(
+                            scan_data=scan_results,
+                            include_details=True,
+                            include_charts=True,
+                            include_metadata=True,
+                            include_recommendations=True,
+                            report_format="sustainability"
                         )
-                    else:
-                        st.error("Failed to generate PDF report. Empty content returned.")
-                except Exception as e:
-                    st.error(f"Error generating PDF report: {str(e)}")
-                    import traceback
-                    st.error(traceback.format_exc())
-    
-    with col2:
-        if st.button("Generate HTML Report", type="secondary"):
-            st.session_state.generate_html = True
-            with st.spinner("Generating HTML report... This may take a moment."):
-                try:
-                    # Import HTML report generator
-                    from services.html_report_generator import generate_html_report
-                    
-                    # Generate the actual HTML report
-                    html_content = generate_html_report(scan_results)
-                    
-                    # Ensure we have valid HTML content
-                    if html_content and len(html_content) > 0:
-                        st.success("HTML report generated successfully!")
                         
-                        # Offer download options with the actual HTML content
-                        st.download_button(
-                            "Download HTML Report",
-                            data=html_content,
-                            file_name=f"sustainability-report-{scan_results.get('scan_id', 'unknown')}.html",
-                            mime="text/html"
-                        )
-                    else:
-                        st.error("Failed to generate HTML report. Empty content returned.")
-                except Exception as e:
-                    st.error(f"Error generating HTML report: {str(e)}")
-                    import traceback
-                    st.error(traceback.format_exc())
+                        # Ensure we have valid PDF content
+                        if pdf_bytes and len(pdf_bytes) > 0:
+                            st.success("PDF report generated successfully!")
+                            
+                            # Offer download options with the actual PDF content
+                            st.download_button(
+                                "Download PDF Report",
+                                data=pdf_bytes,
+                                file_name=f"sustainability-report-{scan_results.get('scan_id', 'unknown')}.pdf",
+                                mime="application/pdf"
+                            )
+                        else:
+                            st.error("Failed to generate PDF report. Empty content returned.")
+                    except Exception as e:
+                        st.error(f"Error generating PDF report: {str(e)}")
+                        import traceback
+                        st.error(traceback.format_exc())
+        
+        with col2:
+            if st.button("Generate HTML Report", type="secondary"):
+                st.session_state.generate_html = True
+                with st.spinner("Generating HTML report... This may take a moment."):
+                    try:
+                        # Import HTML report generator
+                        from services.html_report_generator import generate_html_report
+                        
+                        # Generate the actual HTML report
+                        html_content = generate_html_report(scan_results)
+                        
+                        # Ensure we have valid HTML content
+                        if html_content and len(html_content) > 0:
+                            st.success("HTML report generated successfully!")
+                            
+                            # Offer download options with the actual HTML content
+                            st.download_button(
+                                "Download HTML Report",
+                                data=html_content,
+                                file_name=f"sustainability-report-{scan_results.get('scan_id', 'unknown')}.html",
+                                mime="text/html"
+                            )
+                        else:
+                            st.error("Failed to generate HTML report. Empty content returned.")
+                    except Exception as e:
+                        st.error(f"Error generating HTML report: {str(e)}")
+                        import traceback
+                        st.error(traceback.format_exc())
     
     # Option to start a new scan
     st.divider()

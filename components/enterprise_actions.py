@@ -36,40 +36,45 @@ def show_enterprise_actions(scan_result: Dict[str, Any], scan_type: str = "code"
     with st.expander("🔧 Enterprise Actions", expanded=False):
         st.markdown("**Compliance & Risk Management Actions**")
         
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            dsar_content = _generate_dsar_html(scan_result, pii_findings, username)
-            st.download_button(
-                label="📝 Create DSAR",
-                data=dsar_content,
-                file_name=f"DSAR_Request_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
-                mime="text/html",
-                help="Download Data Subject Access Request document",
-                key=f"dsar_btn_{scan_result.get('scan_id', 'unknown')}"
-            )
-        
-        with col2:
-            report_content = _generate_report_html(scan_result, scan_type, username)
-            st.download_button(
-                label="📋 Generate Report",
-                data=report_content,
-                file_name=f"Compliance_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
-                mime="text/html",
-                help="Download compliance report",
-                key=f"report_btn_{scan_result.get('scan_id', 'unknown')}"
-            )
-        
-        with col3:
-            evidence_content = _generate_evidence_json(scan_result, scan_type, username)
-            st.download_button(
-                label="📊 Export Evidence",
-                data=evidence_content,
-                file_name=f"Evidence_Package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
-                mime="application/json",
-                help="Download compliance evidence package",
-                key=f"evidence_btn_{scan_result.get('scan_id', 'unknown')}"
-            )
+        # Check if user can download (paid users only)
+        from config.pricing_config import can_download_reports
+        if not can_download_reports():
+            st.info("🔒 Enterprise actions available for paid subscribers. Upgrade to access reports and exports.")
+        else:
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                dsar_content = _generate_dsar_html(scan_result, pii_findings, username)
+                st.download_button(
+                    label="📝 Create DSAR",
+                    data=dsar_content,
+                    file_name=f"DSAR_Request_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
+                    mime="text/html",
+                    help="Download Data Subject Access Request document",
+                    key=f"dsar_btn_{scan_result.get('scan_id', 'unknown')}"
+                )
+            
+            with col2:
+                report_content = _generate_report_html(scan_result, scan_type, username)
+                st.download_button(
+                    label="📋 Generate Report",
+                    data=report_content,
+                    file_name=f"Compliance_Report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html",
+                    mime="text/html",
+                    help="Download compliance report",
+                    key=f"report_btn_{scan_result.get('scan_id', 'unknown')}"
+                )
+            
+            with col3:
+                evidence_content = _generate_evidence_json(scan_result, scan_type, username)
+                st.download_button(
+                    label="📊 Export Evidence",
+                    data=evidence_content,
+                    file_name=f"Evidence_Package_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                    mime="application/json",
+                    help="Download compliance evidence package",
+                    key=f"evidence_btn_{scan_result.get('scan_id', 'unknown')}"
+                )
 
 
 def _generate_dsar_html(scan_result: Dict[str, Any], pii_findings: List[Dict], username: str) -> str:
