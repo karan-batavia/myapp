@@ -25,9 +25,28 @@ def is_free_user() -> bool:
     import streamlit as st
     user_tier = st.session_state.get('user_tier', 'free')
     subscription_id = st.session_state.get('subscription_id', None)
+    license_type = st.session_state.get('license_type', '')
     
-    # User is free if no subscription and tier is free/None
+    # User is NOT free if they have a subscription ID
     if subscription_id and subscription_id != '':
+        return False
+    
+    # User is NOT free if they have a paid license type
+    paid_license_types = [
+        'startup', 'Startup',
+        'professional', 'Professional', 
+        'growth', 'Growth',
+        'scale', 'Scale',
+        'salesforce_premium', 'Salesforce_Premium', 'Salesforce Premium',
+        'sap_enterprise', 'Sap_Enterprise', 'SAP Enterprise', 'SAP_Enterprise',
+        'enterprise', 'Enterprise',
+        'government', 'Government'
+    ]
+    if license_type and license_type in paid_license_types:
+        return False
+    
+    # Also check for any non-free license type pattern
+    if license_type and license_type.lower() not in ['free', 'trial', '']:
         return False
     
     return user_tier in ['free', 'Free', None, '']
