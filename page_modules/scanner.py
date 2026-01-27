@@ -535,7 +535,7 @@ def _render_code_scanner(region: str, username: str):
         st.checkbox("GDPR compliance check", value=True, key="code_gdpr_check")
     with col2:
         st.checkbox("Generate remediation", value=True, key="code_gen_remediation")
-        st.checkbox("Fast scan (skip deep analysis)", value=False, key="code_fast_mode", help="Faster scanning by skipping Git history analysis and comprehensive GDPR validation")
+        st.checkbox("Fast scan (skip deep analysis)", value=True, key="code_fast_mode", help="Faster scanning by skipping entropy analysis, code fraud detection, and advanced analyzers")
         st.checkbox("Fraud detection", value=True, key="code_fraud_detection")
     
     if st.button("🔍 Start Code Scan", type="primary"):

@@ -697,7 +697,7 @@ class CodeScanner:
                       ignore_patterns=None, max_file_size_mb=50, 
                       continue_from_checkpoint=False, 
                       smart_sampling=True, 
-                      max_files_to_scan=1000) -> Dict[str, Any]:
+                      max_files_to_scan=200) -> Dict[str, Any]:
         """
         Scan a directory of files with timeout protection, checkpoints and smart sampling.
         
@@ -1129,17 +1129,20 @@ class CodeScanner:
             print(f"Error scanning {file_path}: {str(e)}")
             return None
     
-    def _scan_file_with_timeout(self, file_path: str, timeout=30) -> Dict[str, Any]:
+    def _scan_file_with_timeout(self, file_path: str, timeout=None) -> Dict[str, Any]:
         """
         Scan a file with a timeout to prevent hanging.
         
         Args:
             file_path: Path to the file to scan
-            timeout: Timeout in seconds (reduced from 60 to 30 for faster scans)
+            timeout: Timeout in seconds (default: 10 for fast_mode, 20 otherwise)
             
         Returns:
             Scan result dictionary
         """
+        # Use shorter timeout in fast_mode for quicker scans
+        if timeout is None:
+            timeout = 10 if self.fast_mode else 20
         # Check elapsed time for overall scan timeout
         if self.start_time:
             elapsed_time = (datetime.now() - self.start_time).total_seconds()
@@ -1318,8 +1321,8 @@ class CodeScanner:
                     
                     all_pii.append(secret_finding)
         
-        # Apply high entropy detection if enabled
-        if self.use_entropy:
+        # Apply high entropy detection if enabled (skip in fast_mode for performance)
+        if self.use_entropy and not self.fast_mode:
             entropy_findings = self._detect_high_entropy_strings(content, file_path)
             all_pii.extend(entropy_findings)
         
@@ -1638,22 +1641,23 @@ class CodeScanner:
         except Exception as e:
             logger.warning(f"Netherlands GDPR/UAVG violation detection failed: {e}")
         
-        # Add code fraud detection
-        try:
-            # Read file content for fraud analysis
+        # Add code fraud detection (skip in fast_mode for performance)
+        if not self.fast_mode:
             try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    file_content = f.read()
-            except:
-                file_content = ""
-            
-            if file_content:
-                fraud_findings = self._detect_code_fraud(file_content, file_path)
-                all_pii.extend(fraud_findings)
-                if fraud_findings:
-                    logger.info(f"Code fraud detection completed for {file_path}: {len(fraud_findings)} indicators found")
-        except Exception as e:
-            logger.warning(f"Code fraud detection failed for {file_path}: {e}")
+                # Read file content for fraud analysis
+                try:
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        file_content = f.read()
+                except:
+                    file_content = ""
+                
+                if file_content:
+                    fraud_findings = self._detect_code_fraud(file_content, file_path)
+                    all_pii.extend(fraud_findings)
+                    if fraud_findings:
+                        logger.info(f"Code fraud detection completed for {file_path}: {len(fraud_findings)} indicators found")
+            except Exception as e:
+                logger.warning(f"Code fraud detection failed for {file_path}: {e}")
         
         # Calculate risk metrics
         risk_counts = {'Low': 0, 'Medium': 0, 'High': 0, 'Critical': 0}
