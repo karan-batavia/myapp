@@ -528,15 +528,15 @@ def _render_code_scanner(region: str, username: str):
     st.markdown("---")
     
     st.write("**Scan Options**")
+    st.checkbox("⚡ Fast scan (recommended for large repos)", value=True, key="code_fast_mode", help="3-5x faster by scanning up to 100 priority files and skipping deep analysis")
+    
     col1, col2 = st.columns(2)
     with col1:
         st.checkbox("Include comments", value=True, key="code_include_comments")
         st.checkbox("Detect secrets", value=True, key="code_detect_secrets")
-        st.checkbox("GDPR compliance check", value=True, key="code_gdpr_check")
     with col2:
+        st.checkbox("GDPR compliance check", value=True, key="code_gdpr_check")
         st.checkbox("Generate remediation", value=True, key="code_gen_remediation")
-        st.checkbox("Fast scan (skip deep analysis)", value=True, key="code_fast_mode", help="Faster scanning by skipping entropy analysis, code fraud detection, and advanced analyzers")
-        st.checkbox("Fraud detection", value=True, key="code_fraud_detection")
     
     if st.button("🔍 Start Code Scan", type="primary"):
         _execute_code_scan(region, username, source_type, uploaded_files=uploaded_files, repo_url=repo_url, directory_path=directory_path, branch=branch, access_token=access_token)
@@ -560,8 +560,11 @@ def _execute_code_scan(region: str, username: str, source_type: str, uploaded_fi
                 status_text.text(message)
         
         status_text.text("Initializing code scanner...")
-        fast_mode = st.session_state.get('code_fast_mode', False)
+        fast_mode = st.session_state.get('code_fast_mode', True)
         code_scanner = CodeScanner(region=region, fast_mode=fast_mode)
+        
+        # Use smaller file limits for fast mode (100 files) vs thorough scan (500 files)
+        max_files = 100 if fast_mode else 500
         
         scan_result = None
         
@@ -575,7 +578,7 @@ def _execute_code_scan(region: str, username: str, source_type: str, uploaded_fi
                     file_paths.append(file_path)
                 
                 status_text.text(f"Scanning {len(file_paths)} files...")
-                scan_result = code_scanner.scan_directory(temp_dir, progress_callback=progress_callback)
+                scan_result = code_scanner.scan_directory(temp_dir, progress_callback=progress_callback, max_files_to_scan=max_files)
         
         elif source_type == "Repository URL" and repo_url:
             try:
@@ -586,7 +589,8 @@ def _execute_code_scan(region: str, username: str, source_type: str, uploaded_fi
                     repo_url=repo_url,
                     branch=branch or 'main',
                     auth_token=access_token,
-                    progress_callback=progress_callback
+                    progress_callback=progress_callback,
+                    max_files=max_files
                 )
             except ImportError:
                 status_text.text(f"Repository scanning requires git. Using code scanner...")
@@ -595,7 +599,7 @@ def _execute_code_scan(region: str, username: str, source_type: str, uploaded_fi
         
         elif source_type == "Directory Path" and directory_path:
             status_text.text(f"Scanning directory: {directory_path}")
-            scan_result = code_scanner.scan_directory(directory_path, progress_callback=progress_callback)
+            scan_result = code_scanner.scan_directory(directory_path, progress_callback=progress_callback, max_files_to_scan=max_files)
         
         progress_bar.progress(1.0)
         

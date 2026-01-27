@@ -540,7 +540,8 @@ class RepoScanner:
     
     def scan_repository(self, repo_url: str, branch: Optional[str] = None, 
                         auth_token: Optional[str] = None,
-                        progress_callback: Optional[Callable] = None) -> Dict[str, Any]:
+                        progress_callback: Optional[Callable] = None,
+                        max_files: int = 100) -> Dict[str, Any]:
         """
         Clone a repository and scan it for PII and sensitive information.
         
@@ -549,10 +550,12 @@ class RepoScanner:
             branch: Branch to clone (default: repository default branch)
             auth_token: Authentication token for private repositories
             progress_callback: Optional callback function for progress updates
+            max_files: Maximum number of files to scan (default: 100 for fast scans)
             
         Returns:
             Dictionary with scan results
         """
+        self.max_files_to_scan = max_files
         start_time = time.time()
         
         # First, clone the repository
@@ -683,9 +686,10 @@ class RepoScanner:
             scan_results['total_files'] = len(all_files)
             
             # Limit files to scan for large repositories (prevent timeout)
-            MAX_FILES_TO_SCAN = 200
+            # Use the max_files parameter passed to scan_repository (default 100 for fast scans)
+            MAX_FILES_TO_SCAN = getattr(self, 'max_files_to_scan', 100)
             if len(all_files) > MAX_FILES_TO_SCAN:
-                logger.info(f"Large repository detected: {len(all_files)} files. Limiting to {MAX_FILES_TO_SCAN} files.")
+                logger.info(f"Large repository detected: {len(all_files)} files. Limiting to {MAX_FILES_TO_SCAN} priority files for fast scanning.")
                 # Prioritize important files: sort by extension priority
                 priority_extensions = ['.py', '.js', '.ts', '.jsx', '.tsx', '.java', '.go', '.rb', 
                                       '.php', '.cs', '.env', '.yml', '.yaml', '.json', '.sql', '.sh']
