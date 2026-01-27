@@ -19,12 +19,17 @@ def render_results_page():
     
     st.title(f"📊 {_('results.title', 'Scan Results')}")
     
-    # Check if free user has exceeded view limit
+    # Check if free user has exceeded view limit (track unique page visits, not reruns)
     if is_free_user():
+        # Only count once per page visit, not on every Streamlit rerun
+        if 'results_page_counted' not in st.session_state:
+            st.session_state['results_page_counted'] = True
+            increment_free_user_scan_view()
+        
         views_used = get_free_user_scan_count()
         remaining = max(0, 3 - views_used)
         
-        if remaining == 0:
+        if views_used > 3:
             st.error("⚠️ **Free trial limit reached!** You've viewed 3 scan results.")
             st.info("🔓 Upgrade to a paid plan for unlimited scan result views and report downloads.")
             
@@ -34,7 +39,6 @@ def render_results_page():
             return
         else:
             st.warning(f"📊 Free trial: {remaining} of 3 scan views remaining. Upgrade for unlimited access.")
-            increment_free_user_scan_view()
     
     try:
         aggregator = ResultsAggregator()

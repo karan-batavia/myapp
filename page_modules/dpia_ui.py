@@ -730,29 +730,34 @@ def display_enhanced_dpia_results(scan_results):
     st.markdown("---")
     st.subheader("📄 Professional Reports")
     
-    # Generate enhanced HTML report
-    html_report = generate_enhanced_dpia_report(scan_results)
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        st.download_button(
-            label="📥 Download DPIA Report (HTML)",
-            data=html_report,
-            file_name=f"dpia-report-{scan_results['scan_id']}.html",
-            mime="text/html",
-            use_container_width=True
-        )
-    
-    with col2:
-        # JSON report for technical users
-        json_report = json.dumps(scan_results, indent=2, default=str)
-        st.download_button(
-            label="📊 Download Assessment Data (JSON)",
-            data=json_report,
-            file_name=f"dpia-data-{scan_results['scan_id']}.json",
-            mime="application/json",
-            use_container_width=True
-        )
+    # Check if user can download (paid users only)
+    from config.pricing_config import can_download_reports
+    if not can_download_reports():
+        st.info("🔒 **Report downloads available for paid subscribers only.** Upgrade to download DPIA reports.")
+    else:
+        # Generate enhanced HTML report
+        html_report = generate_enhanced_dpia_report(scan_results)
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                label="📥 Download DPIA Report (HTML)",
+                data=html_report,
+                file_name=f"dpia-report-{scan_results['scan_id']}.html",
+                mime="text/html",
+                use_container_width=True
+            )
+        
+        with col2:
+            # JSON report for technical users
+            json_report = json.dumps(scan_results, indent=2, default=str)
+            st.download_button(
+                label="📊 Download Assessment Data (JSON)",
+                data=json_report,
+                file_name=f"dpia-data-{scan_results['scan_id']}.json",
+                mime="application/json",
+                use_container_width=True
+            )
     
     # Success message
     st.success("✅ Enhanced DPIA assessment completed successfully!")
