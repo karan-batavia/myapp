@@ -57,6 +57,36 @@ def can_view_scan_results() -> bool:
         return True  # Paid users have unlimited views
     return get_free_user_scan_count() < 3
 
+
+# ============ FREE USER SCAN LIMITS ============
+FREE_USER_MAX_SCANS = 3
+
+def get_free_user_scans_performed() -> int:
+    """Get number of scans performed by free user in current session"""
+    import streamlit as st
+    return st.session_state.get('free_user_scans_performed', 0)
+
+
+def increment_free_user_scans():
+    """Increment scan count after a scan is performed"""
+    import streamlit as st
+    current = st.session_state.get('free_user_scans_performed', 0)
+    st.session_state['free_user_scans_performed'] = current + 1
+
+
+def can_perform_scan() -> bool:
+    """Check if user can perform a scan (free users limited to 3 total)"""
+    if not is_free_user():
+        return True  # Paid users have unlimited scans
+    return get_free_user_scans_performed() < FREE_USER_MAX_SCANS
+
+
+def get_remaining_free_scans() -> int:
+    """Get remaining scans for free user"""
+    if not is_free_user():
+        return -1  # Unlimited for paid users
+    return max(0, FREE_USER_MAX_SCANS - get_free_user_scans_performed())
+
 class BillingCycle(Enum):
     """Billing cycle options"""
     MONTHLY = "monthly"
