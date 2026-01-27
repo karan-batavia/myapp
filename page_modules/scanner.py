@@ -637,18 +637,23 @@ def _execute_code_scan(region: str, username: str, source_type: str, uploaded_fi
                     severity_color = {'Critical': '🔴', 'High': '🟠', 'Medium': '🟡', 'Low': '🟢'}.get(severity, '⚪')
                     st.write(f"{severity_color} **{finding.get('type', 'Finding')}**: {finding.get('message', 'No description')}")
             
-            try:
-                from services.download_reports import generate_html_report
-                html_report = generate_html_report(scan_result)
-                if html_report:
-                    st.download_button(
-                        label="📥 Download Report (HTML)",
-                        data=html_report,
-                        file_name=f"code_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
-                        mime="text/html"
-                    )
-            except Exception as e:
-                logger.warning(f"Could not generate report: {e}")
+            # Check if user can download (paid users only)
+            from config.pricing_config import can_download_reports
+            if can_download_reports():
+                try:
+                    from services.download_reports import generate_html_report
+                    html_report = generate_html_report(scan_result)
+                    if html_report:
+                        st.download_button(
+                            label="📥 Download Report (HTML)",
+                            data=html_report,
+                            file_name=f"code_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
+                            mime="text/html"
+                        )
+                except Exception as e:
+                    logger.warning(f"Could not generate report: {e}")
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         else:
             st.warning("No files to scan. Please upload files or provide a valid path.")
             

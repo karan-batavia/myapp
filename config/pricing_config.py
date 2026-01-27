@@ -9,6 +9,7 @@ from enum import Enum
 
 class PricingTier(Enum):
     """Pricing tier levels"""
+    FREE = "free"  # Free tier - view only, no downloads, max 3 scans
     STARTUP = "startup"
     PROFESSIONAL = "professional"
     GROWTH = "growth" 
@@ -17,6 +18,44 @@ class PricingTier(Enum):
     SAP_ENTERPRISE = "sap_enterprise"          # NEW: Premium SAP ERP tier
     ENTERPRISE = "enterprise"
     GOVERNMENT = "government"
+
+
+def is_free_user() -> bool:
+    """Check if current user is on free tier (no active subscription)"""
+    import streamlit as st
+    user_tier = st.session_state.get('user_tier', 'free')
+    subscription_id = st.session_state.get('subscription_id', None)
+    
+    # User is free if no subscription and tier is free/None
+    if subscription_id and subscription_id != '':
+        return False
+    
+    return user_tier in ['free', 'Free', None, '']
+
+
+def can_download_reports() -> bool:
+    """Check if user can download reports (paid users only)"""
+    return not is_free_user()
+
+
+def get_free_user_scan_count() -> int:
+    """Get number of scans viewed by free user in current session"""
+    import streamlit as st
+    return st.session_state.get('free_user_scan_views', 0)
+
+
+def increment_free_user_scan_view():
+    """Increment scan view count for free users"""
+    import streamlit as st
+    current = st.session_state.get('free_user_scan_views', 0)
+    st.session_state['free_user_scan_views'] = current + 1
+
+
+def can_view_scan_results() -> bool:
+    """Check if free user can still view scan results (max 3)"""
+    if not is_free_user():
+        return True  # Paid users have unlimited views
+    return get_free_user_scan_count() < 3
 
 class BillingCycle(Enum):
     """Billing cycle options"""

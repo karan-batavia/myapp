@@ -120,21 +120,27 @@ def render_history_page():
             st.dataframe(df, use_container_width=True)
             
             st.subheader("Export Options")
-            col1, col2 = st.columns(2)
             
-            with col1:
-                csv_data = df.to_csv(index=False)
-                st.download_button(
-                    label="📊 Download CSV",
-                    data=csv_data,
-                    file_name=f"scan_history_{username}_{datetime.now().strftime('%Y%m%d')}.csv",
-                    mime="text/csv"
-                )
-                    
-            with col2:
-                if st.button("📋 Generate Compliance Report"):
-                    st.info("Generating comprehensive compliance report...")
-                    _generate_history_report(filtered_scans, username)
+            # Check if user can download (paid users only)
+            from config.pricing_config import can_download_reports
+            if not can_download_reports():
+                st.info("🔒 **Report downloads available for paid subscribers only.** Upgrade to export your scan history.")
+            else:
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    csv_data = df.to_csv(index=False)
+                    st.download_button(
+                        label="📊 Download CSV",
+                        data=csv_data,
+                        file_name=f"scan_history_{username}_{datetime.now().strftime('%Y%m%d')}.csv",
+                        mime="text/csv"
+                    )
+                        
+                with col2:
+                    if st.button("📋 Generate Compliance Report"):
+                        st.info("Generating comprehensive compliance report...")
+                        _generate_history_report(filtered_scans, username)
                     
     except Exception as e:
         logger.error(f"Error loading scan history: {e}")

@@ -15,8 +15,26 @@ def render_results_page():
     """Render results page with real scan data"""
     from utils.translations import _
     from services.results_aggregator import ResultsAggregator
+    from config.pricing_config import is_free_user, can_view_scan_results, increment_free_user_scan_view, get_free_user_scan_count
     
     st.title(f"📊 {_('results.title', 'Scan Results')}")
+    
+    # Check if free user has exceeded view limit
+    if is_free_user():
+        views_used = get_free_user_scan_count()
+        remaining = max(0, 3 - views_used)
+        
+        if remaining == 0:
+            st.error("⚠️ **Free trial limit reached!** You've viewed 3 scan results.")
+            st.info("🔓 Upgrade to a paid plan for unlimited scan result views and report downloads.")
+            
+            if st.button("🚀 View Pricing Plans", use_container_width=True):
+                st.session_state['show_pricing'] = True
+                st.rerun()
+            return
+        else:
+            st.warning(f"📊 Free trial: {remaining} of 3 scan views remaining. Upgrade for unlimited access.")
+            increment_free_user_scan_view()
     
     try:
         aggregator = ResultsAggregator()
@@ -159,8 +177,21 @@ def render_detailed_scan_view(scan_data):
 
 
 def _render_download_options(scan_data):
-    """Render report download options"""
+    """Render report download options - restricted for free users"""
+    from config.pricing_config import can_download_reports, is_free_user
+    
     st.subheader("📥 Download Report")
+    
+    # Check if user can download (paid users only)
+    if not can_download_reports():
+        st.warning("⚠️ **Report downloads are available for paid subscribers only.**")
+        st.info("🔓 Upgrade to any paid plan to download PDF, HTML, and JSON reports. You can still view scan results on screen.")
+        
+        # Show upgrade button
+        if st.button("🚀 View Pricing Plans", use_container_width=True):
+            st.session_state['show_pricing'] = True
+            st.rerun()
+        return
     
     col1, col2, col3 = st.columns(3)
     
