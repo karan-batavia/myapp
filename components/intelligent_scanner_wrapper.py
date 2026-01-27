@@ -946,11 +946,21 @@ class IntelligentScannerWrapper:
         if findings:
             st.subheader("🔍 Findings Summary")
             for i, finding in enumerate(findings[:10], 1):  # Show first 10 findings
-                with st.expander(f"Finding {i}: {finding.get('type', 'Unknown')} - {finding.get('severity', 'Medium')}"):
-                    st.write(f"**File:** {finding.get('file', 'N/A')}")
-                    st.write(f"**Description:** {finding.get('description', 'No description')}")
-                    if finding.get('line'):
-                        st.write(f"**Location:** {finding.get('line')}")
+                severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+                with st.expander(f"Finding {i}: {finding.get('type', 'Unknown')} - {severity}"):
+                    # Extract file path and line from 'location' field (format: "file_path:line_num")
+                    location_str = finding.get('location', '')
+                    if location_str and ':' in str(location_str):
+                        last_colon = str(location_str).rfind(':')
+                        file_loc = str(location_str)[:last_colon] if last_colon > 0 else str(location_str)
+                        line_loc = str(location_str)[last_colon+1:] if last_colon > 0 else 'N/A'
+                    else:
+                        file_loc = finding.get('file', finding.get('location', 'N/A'))
+                        line_loc = finding.get('line', 'N/A')
+                    
+                    st.write(f"**File:** {file_loc}")
+                    st.write(f"**Line:** {line_loc}")
+                    st.write(f"**Description:** {finding.get('description', finding.get('reason', 'PII detected in source code'))}")
                     if finding.get('privacy_risk'):
                         st.write(f"**Privacy Risk:** {finding.get('privacy_risk')}")
         else:
