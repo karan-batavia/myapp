@@ -26,30 +26,32 @@ def is_free_user() -> bool:
     user_tier = st.session_state.get('user_tier', 'free')
     subscription_id = st.session_state.get('subscription_id', None)
     license_type = st.session_state.get('license_type', '')
+    license_tier = st.session_state.get('license_tier', '')  # Also check license_tier
     
     # User is NOT free if they have a subscription ID
     if subscription_id and subscription_id != '':
         return False
     
-    # User is NOT free if they have a paid license type
-    paid_license_types = [
-        'startup', 'Startup',
-        'professional', 'Professional', 
-        'growth', 'Growth',
-        'scale', 'Scale',
-        'salesforce_premium', 'Salesforce_Premium', 'Salesforce Premium',
-        'sap_enterprise', 'Sap_Enterprise', 'SAP Enterprise', 'SAP_Enterprise',
-        'enterprise', 'Enterprise',
-        'government', 'Government'
-    ]
-    if license_type and license_type in paid_license_types:
-        return False
+    # Define paid tiers/types (case-insensitive check)
+    free_tiers = ['free', 'trial', '']
     
-    # Also check for any non-free license type pattern
-    if license_type and license_type.lower() not in ['free', 'trial', '']:
-        return False
+    # Check license_tier (used by sidebar display)
+    if license_tier:
+        if license_tier.lower() not in free_tiers:
+            return False
     
-    return user_tier in ['free', 'Free', None, '']
+    # Check license_type
+    if license_type:
+        if license_type.lower() not in free_tiers:
+            return False
+    
+    # Check user_tier
+    if user_tier:
+        if user_tier.lower() not in free_tiers:
+            return False
+    
+    # If we reach here, user is on free tier
+    return True
 
 
 def can_download_reports() -> bool:
