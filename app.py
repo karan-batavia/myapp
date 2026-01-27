@@ -358,7 +358,7 @@ def generate_html_report_fallback(scan_result: Dict[str, Any]) -> str:
         findings_html += f'''<div class="finding {severity_class}">
         <h4>{finding.get('type', 'Unknown Finding')} {article_display}</h4>
         <p><strong>Severity:</strong> {finding.get('severity', 'Unknown')}</p>
-        <p><strong>Description:</strong> {finding.get('description', 'No description available')}</p>
+        <p><strong>Description:</strong> {finding.get('description', finding.get('reason', 'No description available'))}</p>
         <p><strong>Location:</strong> {finding.get('location', 'Unknown')}</p>
         <p><strong>Impact:</strong> {finding.get('impact', 'Compliance impact assessment required')}</p>
         <p><strong>Recommendation:</strong> {finding.get('recommendation', 'Review and address this finding')}</p>
@@ -4347,13 +4347,26 @@ def render_detailed_scan_view(scan_data):
             
             for i, finding in enumerate(findings):
                 if isinstance(finding, dict):
-                    with st.expander(f"Finding {i+1}: {finding.get('file_name', 'Unknown file')}"):
+                    # Extract file path from various possible field names
+                    location_str = finding.get('location', '')
+                    if location_str and ':' in str(location_str):
+                        last_colon = str(location_str).rfind(':')
+                        file_path_display = str(location_str)[:last_colon] if last_colon > 0 else str(location_str)
+                        line_num_display = str(location_str)[last_colon+1:] if last_colon > 0 else 'N/A'
+                    else:
+                        file_path_display = finding.get('file_path', finding.get('file', finding.get('location', 'N/A')))
+                        line_num_display = finding.get('line_number', finding.get('line', 'N/A'))
+                    
+                    finding_type = finding.get('type', finding.get('file_name', 'Unknown'))
+                    severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+                    
+                    with st.expander(f"Finding {i+1}: {finding_type} - {severity}"):
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            st.write(f"**File Path:** {finding.get('file_path', 'N/A')}")
-                            st.write(f"**File Size:** {finding.get('file_size', 'N/A')} bytes")
-                            st.write(f"**PII Count:** {finding.get('pii_count', 0)}")
+                            st.write(f"**File Path:** {file_path_display}")
+                            st.write(f"**Line:** {line_num_display}")
+                            st.write(f"**PII Count:** {finding.get('pii_count', 1)}")
                             
                         with col2:
                             risk_summary = finding.get('risk_summary', {})

@@ -154,17 +154,29 @@ def render_detailed_scan_view(scan_data):
             
             for i, finding in enumerate(findings[:20]):
                 if isinstance(finding, dict):
-                    with st.expander(f"Finding {i+1}: {finding.get('file_name', finding.get('pii_type', 'Unknown'))}"):
+                    # Extract file path and line from 'location' field if available
+                    location_str = finding.get('location', '')
+                    if location_str and ':' in str(location_str):
+                        last_colon = str(location_str).rfind(':')
+                        file_path = str(location_str)[:last_colon] if last_colon > 0 else str(location_str)
+                        line_num = str(location_str)[last_colon+1:] if last_colon > 0 else 'N/A'
+                    else:
+                        file_path = finding.get('file_path', finding.get('file', finding.get('location', 'N/A')))
+                        line_num = finding.get('line_number', finding.get('line', 'N/A'))
+                    
+                    finding_type = finding.get('type', finding.get('pii_type', 'Unknown'))
+                    with st.expander(f"Finding {i+1}: {finding.get('file_name', finding_type)} - {finding.get('severity', finding.get('risk_level', 'Medium'))}"):
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            st.write(f"**File Path:** {finding.get('file_path', 'N/A')}")
-                            st.write(f"**PII Type:** {finding.get('pii_type', 'N/A')}")
-                            st.write(f"**Severity:** {finding.get('severity', 'N/A')}")
+                            st.write(f"**File Path:** {file_path}")
+                            st.write(f"**PII Type:** {finding_type}")
+                            st.write(f"**Severity:** {finding.get('severity', finding.get('risk_level', 'N/A'))}")
                         
                         with col2:
-                            st.write(f"**Line Number:** {finding.get('line_number', 'N/A')}")
-                            st.write(f"**Context:** {finding.get('context', 'N/A')[:100]}...")
+                            st.write(f"**Line Number:** {line_num}")
+                            context = finding.get('context', finding.get('value', finding.get('reason', 'N/A')))
+                            st.write(f"**Context:** {str(context)[:100]}...")
                             
                         if finding.get('remediation'):
                             st.info(f"**Remediation:** {finding.get('remediation')}")

@@ -4636,8 +4636,16 @@ def display_scan_results(scan_results):
                         else:
                             line_location = 'Page Content'
                 else:
-                    file_location = finding.get('file', 'N/A')
-                    line_location = finding.get('line', 'N/A')
+                    # Extract file and line from 'location' field (format: "file_path:line_num")
+                    location_str = finding.get('location', '')
+                    if location_str and ':' in location_str:
+                        # Split on last colon to handle file paths with colons
+                        last_colon = location_str.rfind(':')
+                        file_location = location_str[:last_colon] if last_colon > 0 else location_str
+                        line_location = location_str[last_colon+1:] if last_colon > 0 else 'N/A'
+                    else:
+                        file_location = finding.get('file', finding.get('location', 'N/A'))
+                        line_location = finding.get('line', 'N/A')
                 
                 # Handle AI Act compliance findings (not file-based)
                 finding_type_lower = finding_type.lower()
@@ -4719,9 +4727,20 @@ def display_scan_results(scan_results):
                 
                 displayed_severity = finding.get('severity') or finding.get('risk_level', 'Medium')
                 st.write(f"{severity_color} **{finding.get('type', 'Unknown')}** ({displayed_severity})")
-                st.write(f"   📁 **File:** {finding.get('file', 'N/A')}")
-                st.write(f"   📍 **Location:** {finding.get('line', 'N/A')}")
-                st.write(f"   📝 **Description:** {finding.get('description', 'No description')}")
+                
+                # Extract file and line from 'location' field (format: "file_path:line_num")
+                location_str = finding.get('location', '')
+                if location_str and ':' in location_str:
+                    last_colon = location_str.rfind(':')
+                    file_loc = location_str[:last_colon] if last_colon > 0 else location_str
+                    line_loc = location_str[last_colon+1:] if last_colon > 0 else 'N/A'
+                else:
+                    file_loc = finding.get('file', finding.get('location', 'N/A'))
+                    line_loc = finding.get('line', 'N/A')
+                
+                st.write(f"   📁 **File:** {file_loc}")
+                st.write(f"   📍 **Line:** {line_loc}")
+                st.write(f"   📝 **Description:** {finding.get('description', finding.get('reason', 'No description'))}")
                 if finding.get('impact'):
                     st.write(f"   💥 **Impact:** {finding['impact']}")
                 if finding.get('action_required'):
