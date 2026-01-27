@@ -576,37 +576,42 @@ def render_report_generation():
     # Generate reports
     st.markdown("### 📥 Download Reports")
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("📊 Generate Executive Summary", type="primary"):
-            executive_summary = generate_executive_summary(assessment)
+    # Check if user can download (paid users only)
+    from config.pricing_config import can_download_reports
+    if not can_download_reports():
+        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+    else:
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("📊 Generate Executive Summary", type="primary"):
+                executive_summary = generate_executive_summary(assessment)
+                st.download_button(
+                    label="📥 Download Executive Summary",
+                    data=executive_summary,
+                    file_name=f"ai_act_executive_summary_{datetime.now().strftime('%Y%m%d')}.html",
+                    mime="text/html"
+                )
+        
+        with col2:
+            if st.button("📋 Generate Technical Report", type="secondary"):
+                technical_report = generate_technical_report(assessment)
+                st.download_button(
+                    label="📥 Download Technical Report",
+                    data=technical_report,
+                    file_name=f"ai_act_technical_report_{datetime.now().strftime('%Y%m%d')}.html",
+                    mime="text/html"
+                )
+        
+        # Export assessment data
+        st.markdown("### 💾 Export Assessment Data")
+        
+        if st.button("📄 Export JSON Data"):
+            report_data = calculator.export_assessment_report(assessment)
             st.download_button(
-                label="📥 Download Executive Summary",
-                data=executive_summary,
-                file_name=f"ai_act_executive_summary_{datetime.now().strftime('%Y%m%d')}.html",
-                mime="text/html"
-            )
-    
-    with col2:
-        if st.button("📋 Generate Technical Report", type="secondary"):
-            technical_report = generate_technical_report(assessment)
-            st.download_button(
-                label="📥 Download Technical Report",
-                data=technical_report,
-                file_name=f"ai_act_technical_report_{datetime.now().strftime('%Y%m%d')}.html",
-                mime="text/html"
-            )
-    
-    # Export assessment data
-    st.markdown("### 💾 Export Assessment Data")
-    
-    if st.button("📄 Export JSON Data"):
-        report_data = calculator.export_assessment_report(assessment)
-        st.download_button(
-            label="📥 Download Assessment Data",
-            data=json.dumps(report_data, indent=2),
-            file_name=f"ai_act_assessment_{datetime.now().strftime('%Y%m%d')}.json",
+                label="📥 Download Assessment Data",
+                data=json.dumps(report_data, indent=2),
+                file_name=f"ai_act_assessment_{datetime.now().strftime('%Y%m%d')}.json",
             mime="application/json"
         )
 

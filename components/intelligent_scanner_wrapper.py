@@ -958,17 +958,23 @@ class IntelligentScannerWrapper:
         
         # Display HTML report download if available
         st.subheader("📄 Download Report")
-        try:
-            from page_modules.scanner import generate_html_report
-            html_content = generate_html_report(scan_result)
-            st.download_button(
-                label="📥 Download HTML Report",
-                data=html_content,
-                file_name=f"scan_report_{scan_result.get('scan_id', 'unknown')[:8]}.html",
-                mime="text/html"
-            )
-        except Exception as download_error:
-            st.info("Report download temporarily unavailable")
+        
+        # Check if user can download (paid users only)
+        from config.pricing_config import can_download_reports
+        if not can_download_reports():
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+        else:
+            try:
+                from page_modules.scanner import generate_html_report
+                html_content = generate_html_report(scan_result)
+                st.download_button(
+                    label="📥 Download HTML Report",
+                    data=html_content,
+                    file_name=f"scan_report_{scan_result.get('scan_id', 'unknown')[:8]}.html",
+                    mime="text/html"
+                )
+            except Exception as download_error:
+                st.info("Report download temporarily unavailable")
 
 # Global instance for use throughout the application
 intelligent_wrapper = IntelligentScannerWrapper()

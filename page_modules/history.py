@@ -261,12 +261,17 @@ def _generate_history_report(scans, username):
         </html>
         """
         
-        st.download_button(
-            label="📥 Download Report",
-            data=report_html,
-            file_name=f"history_report_{username}_{datetime.now().strftime('%Y%m%d')}.html",
-            mime="text/html"
-        )
+        # Check if user can download (paid users only)
+        from config.pricing_config import can_download_reports
+        if not can_download_reports():
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
+        else:
+            st.download_button(
+                label="📥 Download Report",
+                data=report_html,
+                file_name=f"history_report_{username}_{datetime.now().strftime('%Y%m%d')}.html",
+                mime="text/html"
+            )
         
     except Exception as e:
         logger.error(f"Report generation error: {e}")
