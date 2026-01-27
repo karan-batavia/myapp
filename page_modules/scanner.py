@@ -758,14 +758,18 @@ def _render_document_scanner(region: str, username: str):
                 
                 try:
                     from services.download_reports import generate_html_report
+                    from config.pricing_config import can_download_reports
                     html_report = generate_html_report(scan_result)
                     if html_report:
-                        st.download_button(
-                            label="📥 Download Report (HTML)",
-                            data=html_report,
-                            file_name=f"document_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
-                            mime="text/html"
-                        )
+                        if can_download_reports():
+                            st.download_button(
+                                label="📥 Download Report (HTML)",
+                                data=html_report,
+                                file_name=f"document_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
+                                mime="text/html"
+                            )
+                        else:
+                            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     logger.warning(f"Could not generate report: {e}")
             
@@ -867,14 +871,18 @@ def _render_image_scanner(region: str, username: str):
                 
                 try:
                     from services.download_reports import generate_html_report
+                    from config.pricing_config import can_download_reports
                     html_report = generate_html_report(scan_result)
                     if html_report:
-                        st.download_button(
-                            label="📥 Download Report (HTML)",
-                            data=html_report,
-                            file_name=f"image_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
-                            mime="text/html"
-                        )
+                        if can_download_reports():
+                            st.download_button(
+                                label="📥 Download Report (HTML)",
+                                data=html_report,
+                                file_name=f"image_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
+                                mime="text/html"
+                            )
+                        else:
+                            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     logger.warning(f"Could not generate report: {e}")
             
@@ -1011,14 +1019,18 @@ def _render_database_scanner(region: str, username: str):
                 
                 try:
                     from services.download_reports import generate_html_report
+                    from config.pricing_config import can_download_reports
                     html_report = generate_html_report(scan_result)
                     if html_report:
-                        st.download_button(
-                            label="📥 Download Report (HTML)",
-                            data=html_report,
-                            file_name=f"database_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
-                            mime="text/html"
-                        )
+                        if can_download_reports():
+                            st.download_button(
+                                label="📥 Download Report (HTML)",
+                                data=html_report,
+                                file_name=f"database_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
+                                mime="text/html"
+                            )
+                        else:
+                            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     logger.warning(f"Could not generate report: {e}")
             
@@ -1156,14 +1168,18 @@ def _render_website_scanner(region: str, username: str):
                 
                 try:
                     from services.download_reports import generate_html_report
+                    from config.pricing_config import can_download_reports
                     html_report = generate_html_report(scan_result)
                     if html_report:
-                        st.download_button(
-                            label="📥 Download Full Report (HTML)",
-                            data=html_report,
-                            file_name=f"website_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
-                            mime="text/html"
-                        )
+                        if can_download_reports():
+                            st.download_button(
+                                label="📥 Download Full Report (HTML)",
+                                data=html_report,
+                                file_name=f"website_scan_{scan_result.get('scan_id', 'report')[:8]}.html",
+                                mime="text/html"
+                            )
+                        else:
+                            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     logger.warning(f"Could not generate HTML report: {e}")
                 
@@ -2020,28 +2036,35 @@ def render_exact_online_repo_scanner(region: str, username: str):
             st.markdown("---")
             st.subheader("📥 Download Report")
             
+            from config.pricing_config import can_download_reports
             col1, col2 = st.columns(2)
             with col1:
                 try:
                     html_report = generate_unified_html_report(results)
-                    st.download_button(
-                        label="📄 Download HTML Report",
-                        data=html_report,
-                        file_name=f"exact_online_scan_{results.get('scan_id', 'report')}.html",
-                        mime="text/html"
-                    )
+                    if can_download_reports():
+                        st.download_button(
+                            label="📄 Download HTML Report",
+                            data=html_report,
+                            file_name=f"exact_online_scan_{results.get('scan_id', 'report')}.html",
+                            mime="text/html"
+                        )
+                    else:
+                        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     st.warning(f"HTML report generation failed: {e}")
             
             with col2:
                 import json
                 json_report = json.dumps(results, indent=2, default=str)
-                st.download_button(
-                    label="📋 Download JSON Data",
-                    data=json_report,
-                    file_name=f"exact_online_scan_{results.get('scan_id', 'report')}.json",
-                    mime="application/json"
-                )
+                if can_download_reports():
+                    st.download_button(
+                        label="📋 Download JSON Data",
+                        data=json_report,
+                        file_name=f"exact_online_scan_{results.get('scan_id', 'report')}.json",
+                        mime="application/json"
+                    )
+                else:
+                    st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
             
             st.session_state['last_exact_scan_results'] = results
             
@@ -2651,13 +2674,17 @@ api:
             
             html_report = scanner.generate_html_report(result)
             
-            st.download_button(
-                label="📥 Download HTML Report",
-                data=html_report,
-                file_name=f"repository_scan_{result.scan_id[:8]}_{datetime.now().strftime('%Y%m%d')}.html",
-                mime="text/html",
-                key="repo_download_btn"
-            )
+            from config.pricing_config import can_download_reports
+            if can_download_reports():
+                st.download_button(
+                    label="📥 Download HTML Report",
+                    data=html_report,
+                    file_name=f"repository_scan_{result.scan_id[:8]}_{datetime.now().strftime('%Y%m%d')}.html",
+                    mime="text/html",
+                    key="repo_download_btn"
+                )
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
             
         except Exception as e:
             st.error(f"Repository scan failed: {str(e)}")
@@ -2870,12 +2897,16 @@ def render_salesforce_repo_scanner(region: str, username: str):
                     report_generator = UnifiedHTMLReportGenerator()
                     html_report = report_generator.generate_html_report(scan_results)
                     
-                    st.download_button(
-                        label="📥 Download Full Compliance Report (HTML)",
-                        data=html_report,
-                        file_name=f"salesforce_compliance_report_{scan_results.get('scan_id', 'report')}.html",
-                        mime="text/html"
-                    )
+                    from config.pricing_config import can_download_reports
+                    if can_download_reports():
+                        st.download_button(
+                            label="📥 Download Full Compliance Report (HTML)",
+                            data=html_report,
+                            file_name=f"salesforce_compliance_report_{scan_results.get('scan_id', 'report')}.html",
+                            mime="text/html"
+                        )
+                    else:
+                        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as report_error:
                     st.warning(f"Report generation unavailable: {report_error}")
                 
@@ -3096,12 +3127,16 @@ def render_sap_connector(region: str, username: str):
                     report_generator = UnifiedHTMLReportGenerator()
                     html_report = report_generator.generate_html_report(scan_results)
                     
-                    st.download_button(
-                        label="📥 Download Full Compliance Report (HTML)",
-                        data=html_report,
-                        file_name=f"sap_compliance_report_{scan_results.get('scan_id', 'report')}.html",
-                        mime="text/html"
-                    )
+                    from config.pricing_config import can_download_reports
+                    if can_download_reports():
+                        st.download_button(
+                            label="📥 Download Full Compliance Report (HTML)",
+                            data=html_report,
+                            file_name=f"sap_compliance_report_{scan_results.get('scan_id', 'report')}.html",
+                            mime="text/html"
+                        )
+                    else:
+                        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as report_error:
                     st.warning(f"Report generation unavailable: {report_error}")
                 
@@ -3484,16 +3519,20 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
         """
 
     # Create download columns like other scanners
+    from config.pricing_config import can_download_reports
     col1, col2 = st.columns(2)
     
     with col1:
-        st.download_button(
-            label="📥 Download HTML Report",
-            data=html_report,
-            file_name=f"enterprise_connector_{connector_name.lower().replace(' ', '_')}_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
-            mime="text/html",
-            use_container_width=True
-        )
+        if can_download_reports():
+            st.download_button(
+                label="📥 Download HTML Report",
+                data=html_report,
+                file_name=f"enterprise_connector_{connector_name.lower().replace(' ', '_')}_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
+                mime="text/html",
+                use_container_width=True
+            )
+        else:
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
     
     # Add contextual enterprise actions
     if ENTERPRISE_ACTIONS_AVAILABLE and scan_results:
@@ -3672,12 +3711,16 @@ def render_code_scanner_interface(region: str, username: str):
                     html_report = f"<html><body><h1>Report for {scan_result.get('scan_id', 'unknown')}</h1></body></html>"
                 
                 # Offer download
-                st.download_button(
-                    label="📄 Download Intelligent Scan Report",
-                    data=html_report,
-                    file_name=f"intelligent_code_scan_report_{scan_result['scan_id'][:8]}.html",
-                    mime="text/html"
-                )
+                from config.pricing_config import can_download_reports
+                if can_download_reports():
+                    st.download_button(
+                        label="📄 Download Intelligent Scan Report",
+                        data=html_report,
+                        file_name=f"intelligent_code_scan_report_{scan_result['scan_id'][:8]}.html",
+                        mime="text/html"
+                    )
+                else:
+                    st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         else:
             # Use original scanning method
             execute_code_scan(region, username, uploaded_files, repo_url, directory_path, 
@@ -4235,12 +4278,16 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         
         # Generate enhanced HTML report
         html_report = generate_html_report(scan_results)
-        st.download_button(
-            label="📄 Download GDPR Compliance Report",
-            data=html_report,
-            file_name=f"gdpr_compliance_report_{scan_results['scan_id'][:8]}.html",
-            mime="text/html"
-        )
+        from config.pricing_config import can_download_reports
+        if can_download_reports():
+            st.download_button(
+                label="📄 Download GDPR Compliance Report",
+                data=html_report,
+                file_name=f"gdpr_compliance_report_{scan_results['scan_id'][:8]}.html",
+                mime="text/html"
+            )
+        else:
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         
         # Calculate scan metrics and track completion
         scan_duration = int((datetime.now() - scan_start_time).total_seconds() * 1000)
@@ -4580,14 +4627,18 @@ def display_scan_results(scan_results):
                     track_report_usage('pdf', success=True)
                     track_download_usage('pdf')
                     
-                    st.download_button(
-                        label="📥 Download PDF Report",
-                        data=pdf_content,
-                        file_name=f"gdpr_report_{datetime.now().strftime(FILENAME_DATE_FORMAT)}.pdf",
-                        mime="application/pdf",
-                        use_container_width=True,
-                        help="Download comprehensive PDF compliance report"
-                    )
+                    from config.pricing_config import can_download_reports
+                    if can_download_reports():
+                        st.download_button(
+                            label="📥 Download PDF Report",
+                            data=pdf_content,
+                            file_name=f"gdpr_report_{datetime.now().strftime(FILENAME_DATE_FORMAT)}.pdf",
+                            mime="application/pdf",
+                            use_container_width=True,
+                            help="Download comprehensive PDF compliance report"
+                        )
+                    else:
+                        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     st.error(f"Error generating PDF report: {str(e)}")
                     st.button("📥 PDF Report (Error)", disabled=True, use_container_width=True)
@@ -4596,6 +4647,7 @@ def display_scan_results(scan_results):
                 # Generate HTML report and provide download button
                 try:
                     from services.download_reports import generate_html_report
+                    from config.pricing_config import can_download_reports
                     try:
                         from config.report_config import FILENAME_DATE_FORMAT
                     except ImportError:
@@ -4607,14 +4659,17 @@ def display_scan_results(scan_results):
                     track_report_usage('html', success=True)
                     track_download_usage('html')
                     
-                    st.download_button(
-                        label="📥 Download HTML Report",
-                        data=html_content,
-                        file_name=f"gdpr_report_{datetime.now().strftime(FILENAME_DATE_FORMAT)}.html",
-                        mime="text/html",
-                        use_container_width=True,
-                        help="Download interactive HTML compliance report"
-                    )
+                    if can_download_reports():
+                        st.download_button(
+                            label="📥 Download HTML Report",
+                            data=html_content,
+                            file_name=f"gdpr_report_{datetime.now().strftime(FILENAME_DATE_FORMAT)}.html",
+                            mime="text/html",
+                            use_container_width=True,
+                            help="Download interactive HTML compliance report"
+                        )
+                    else:
+                        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     st.error(f"Error generating HTML report: {str(e)}")
                     st.button("📥 HTML Report (Error)", disabled=True, use_container_width=True)
@@ -4710,12 +4765,16 @@ def render_image_scanner_interface(region: str, username: str):
                         html_report = f"<html><body><h1>Report for {scan_result.get('scan_id', 'unknown')}</h1></body></html>"
                     
                     # Offer download
-                    st.download_button(
-                        label="📄 Download Intelligent Image Report",
-                        data=html_report,
-                        file_name=f"intelligent_image_scan_report_{scan_result['scan_id'][:8]}.html",
-                        mime="text/html"
-                    )
+                    from config.pricing_config import can_download_reports
+                    if can_download_reports():
+                        st.download_button(
+                            label="📄 Download Intelligent Image Report",
+                            data=html_report,
+                            file_name=f"intelligent_image_scan_report_{scan_result['scan_id'][:8]}.html",
+                            mime="text/html"
+                        )
+                    else:
+                        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
             else:
                 # Use original scanning method
                 execute_image_scan(region, username, uploaded_files)
@@ -6345,27 +6404,34 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
         html_report = generate_api_html_report(scan_results)
         
         # Create download columns
+        from config.pricing_config import can_download_reports
         col1, col2 = st.columns(2)
         
         with col1:
-            st.download_button(
-                label="📥 Download HTML Report",
-                data=html_report,
-                file_name=f"api-security-report-{scan_results['scan_id']}.html",
-                mime="text/html",
-                use_container_width=True
-            )
+            if can_download_reports():
+                st.download_button(
+                    label="📥 Download HTML Report",
+                    data=html_report,
+                    file_name=f"api-security-report-{scan_results['scan_id']}.html",
+                    mime="text/html",
+                    use_container_width=True
+                )
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         
         with col2:
             # Generate JSON report for API results
             json_report = json.dumps(scan_results, indent=2, default=str)
-            st.download_button(
-                label="📊 Download JSON Report",
-                data=json_report,
-                file_name=f"api-security-report-{scan_results['scan_id']}.json",
-                mime="application/json",
-                use_container_width=True
-            )
+            if can_download_reports():
+                st.download_button(
+                    label="📊 Download JSON Report",
+                    data=json_report,
+                    file_name=f"api-security-report-{scan_results['scan_id']}.json",
+                    mime="application/json",
+                    use_container_width=True
+                )
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         
         # Display report preview
         with st.expander("📋 Preview HTML Report"):
@@ -6839,13 +6905,17 @@ def render_model_analysis_interface(region: str, username: str):
     # Show persistent download button if report exists from previous scan
     if 'ai_model_html_report' in st.session_state and st.session_state.get('ai_model_html_report'):
         with st.expander("📥 Previous Report Available", expanded=False):
-            st.download_button(
-                label="📄 Download Previous AI Model Report",
-                data=st.session_state['ai_model_html_report'],
-                file_name=st.session_state.get('ai_model_report_filename', 'ai_model_report.html'),
-                mime="text/html",
-                key="download_previous_ai_report"
-            )
+            from config.pricing_config import can_download_reports
+            if can_download_reports():
+                st.download_button(
+                    label="📄 Download Previous AI Model Report",
+                    data=st.session_state['ai_model_html_report'],
+                    file_name=st.session_state.get('ai_model_report_filename', 'ai_model_report.html'),
+                    mime="text/html",
+                    key="download_previous_ai_report"
+                )
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
             if st.button("🗑️ Clear Previous Report", key="clear_ai_report"):
                 del st.session_state['ai_model_html_report']
                 del st.session_state['ai_model_report_filename']
@@ -7403,13 +7473,17 @@ def execute_ai_model_scan(region, username, model_source, uploaded_model, repo_u
             with open(report_path, 'w', encoding='utf-8') as f:
                 f.write(html_report)
             
-            st.download_button(
-                label="📄 Download AI Model Analysis Report",
-                data=html_report,
-                file_name=report_filename,
-                mime="text/html",
-                key=f"download_ai_report_{scan_results['scan_id'][:8]}"
-            )
+            from config.pricing_config import can_download_reports
+            if can_download_reports():
+                st.download_button(
+                    label="📄 Download AI Model Analysis Report",
+                    data=html_report,
+                    file_name=report_filename,
+                    mime="text/html",
+                    key=f"download_ai_report_{scan_results['scan_id'][:8]}"
+                )
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
             
             # STEP 4: Save FULLY enriched results to aggregator for dashboard integration
             try:
@@ -7784,12 +7858,16 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                 # Fallback to basic report generator
                 html_report = generate_html_report(scan_results)
             
-            st.download_button(
-                label="📄 Download SOC2 & NIS2 Compliance Report",
-                data=html_report,
-                file_name=f"soc2_nis2_compliance_report_{scan_results['scan_id'][:8]}.html",
-                mime="text/html"
-            )
+            from config.pricing_config import can_download_reports
+            if can_download_reports():
+                st.download_button(
+                    label="📄 Download SOC2 & NIS2 Compliance Report",
+                    data=html_report,
+                    file_name=f"soc2_nis2_compliance_report_{scan_results['scan_id'][:8]}.html",
+                    mime="text/html"
+                )
+            else:
+                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
             
             # Calculate scan metrics and track completion
             scan_duration = int((datetime.now() - scan_start_time).total_seconds() * 1000)
@@ -7990,12 +8068,16 @@ def render_website_scanner_interface(region: str, username: str):
                     html_report = f"<html><body><h1>Report for {scan_result.get('scan_id', 'unknown')}</h1></body></html>"
                 
                 # Offer download
-                st.download_button(
-                    label="📄 Download Intelligent Website Report",
-                    data=html_report,
-                    file_name=f"intelligent_website_scan_report_{scan_result['scan_id'][:8]}.html",
-                    mime="text/html"
-                )
+                from config.pricing_config import can_download_reports
+                if can_download_reports():
+                    st.download_button(
+                        label="📄 Download Intelligent Website Report",
+                        data=html_report,
+                        file_name=f"intelligent_website_scan_report_{scan_result['scan_id'][:8]}.html",
+                        mime="text/html"
+                    )
+                else:
+                    st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 
                 # CRITICAL: Save scan results to database for Results/History pages
                 try:
@@ -8483,12 +8565,16 @@ def execute_website_scan(region, username, url, scan_config):
         
         # Generate comprehensive HTML report
         html_report = generate_html_report(scan_results)
-        st.download_button(
-            label="📄 Download Multi-page GDPR Compliance Report",
-            data=html_report,
-            file_name=f"multipage_gdpr_report_{scan_results['scan_id'][:8]}.html",
-            mime="text/html"
-        )
+        from config.pricing_config import can_download_reports
+        if can_download_reports():
+            st.download_button(
+                label="📄 Download Multi-page GDPR Compliance Report",
+                data=html_report,
+                file_name=f"multipage_gdpr_report_{scan_results['scan_id'][:8]}.html",
+                mime="text/html"
+            )
+        else:
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         
         # Calculate scan metrics and track completion
         scan_duration = int((datetime.now() - scan_start_time).total_seconds() * 1000)
@@ -9392,12 +9478,16 @@ def execute_sustainability_scan(region, username, scan_params):
         
         # Generate and offer comprehensive HTML report
         html_report = generate_html_report(scan_results)
-        st.download_button(
-            label="📄 Download Comprehensive Sustainability Report",
-            data=html_report,
-            file_name=f"sustainability_report_{scan_results['scan_id'][:8]}.html",
-            mime="text/html"
-        )
+        from config.pricing_config import can_download_reports
+        if can_download_reports():
+            st.download_button(
+                label="📄 Download Comprehensive Sustainability Report",
+                data=html_report,
+                file_name=f"sustainability_report_{scan_results['scan_id'][:8]}.html",
+                mime="text/html"
+            )
+        else:
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
         
         # Calculate scan metrics and track completion
         scan_duration = int((datetime.now() - scan_start_time).total_seconds() * 1000)
@@ -11147,16 +11237,20 @@ def execute_audio_video_scan(region: str, username: str, uploaded_files, sensiti
     st.markdown("---")
     st.subheader("📥 Download Reports")
     
+    from config.pricing_config import can_download_reports
     for result in all_results:
         html_report = scanner.generate_html_report(result)
         safe_filename = result.file_name.replace(' ', '_').replace('.', '_')
-        st.download_button(
-            label=f"📄 Download Report: {result.file_name}",
-            data=html_report,
-            file_name=f"deepfake_report_{safe_filename}_{result.scan_id}.html",
-            mime="text/html",
-            key=f"download_{result.scan_id}"
-        )
+        if can_download_reports():
+            st.download_button(
+                label=f"📄 Download Report: {result.file_name}",
+                data=html_report,
+                file_name=f"deepfake_report_{safe_filename}_{result.scan_id}.html",
+                mime="text/html",
+                key=f"download_{result.scan_id}"
+            )
+        else:
+            st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
     
     combined_result = {
         'scan_id': str(uuid.uuid4())[:8],
@@ -11645,13 +11739,17 @@ def execute_audio_video_url_scan(region: str, username: str, media_url: str, sen
     )
     
     safe_title = (metadata.get('title', 'url_media')[:30]).replace(' ', '_').replace('/', '_').replace('\\', '_')
-    st.download_button(
-        label="📄 Download URL Analysis Report (HTML)",
-        data=html_report,
-        file_name=f"url_deepfake_analysis_{safe_title}_{scan_id}.html",
-        mime="text/html",
-        key=f"download_url_report_{scan_id}"
-    )
+    from config.pricing_config import can_download_reports
+    if can_download_reports():
+        st.download_button(
+            label="📄 Download URL Analysis Report (HTML)",
+            data=html_report,
+            file_name=f"url_deepfake_analysis_{safe_title}_{scan_id}.html",
+            mime="text/html",
+            key=f"download_url_report_{scan_id}"
+        )
+    else:
+        st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
     
     combined_result = {
         'scan_id': scan_id,

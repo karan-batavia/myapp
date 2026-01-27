@@ -915,8 +915,11 @@ def render_settings_page():
         with col2:
             st.markdown("#### 📊 Scan Reports") 
             
-            # Get recent scan results from session
-            if 'last_scan_results' in st.session_state:
+            # Check if user can download (paid users only)
+            from config.pricing_config import can_download_reports
+            if not can_download_reports():
+                st.info("🔒 **Scan report downloads available for paid subscribers only.** Upgrade to download reports.")
+            elif 'last_scan_results' in st.session_state:
                 scan_results = st.session_state['last_scan_results']
                 
                 st.write("**Latest Scan Report**")
