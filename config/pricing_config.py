@@ -62,16 +62,62 @@ def can_view_scan_results() -> bool:
 FREE_USER_MAX_SCANS = 3
 
 def get_free_user_scans_performed() -> int:
-    """Get number of scans performed by free user in current session"""
+    """Get number of scans performed by free user (persisted in database)"""
     import streamlit as st
+    import os
+    
+    username = st.session_state.get('username')
+    if not username:
+        return st.session_state.get('free_user_scans_performed', 0)
+    
+    # Try to get from database for persistence across sessions
+    try:
+        import psycopg2
+        database_url = os.environ.get('DATABASE_URL')
+        if database_url:
+            conn = psycopg2.connect(database_url)
+            cur = conn.cursor()
+            cur.execute("SELECT free_scans_used FROM platform_users WHERE username = %s", (username,))
+            result = cur.fetchone()
+            cur.close()
+            conn.close()
+            if result:
+                count = result[0] or 0
+                st.session_state['free_user_scans_performed'] = count
+                return count
+    except Exception:
+        pass
+    
     return st.session_state.get('free_user_scans_performed', 0)
 
 
 def increment_free_user_scans():
-    """Increment scan count after a scan is performed"""
+    """Increment scan count after a scan is performed (persisted in database)"""
     import streamlit as st
+    import os
+    
+    # Update session state
     current = st.session_state.get('free_user_scans_performed', 0)
     st.session_state['free_user_scans_performed'] = current + 1
+    
+    # Persist to database
+    username = st.session_state.get('username')
+    if username:
+        try:
+            import psycopg2
+            database_url = os.environ.get('DATABASE_URL')
+            if database_url:
+                conn = psycopg2.connect(database_url)
+                cur = conn.cursor()
+                cur.execute(
+                    "UPDATE platform_users SET free_scans_used = COALESCE(free_scans_used, 0) + 1 WHERE username = %s",
+                    (username,)
+                )
+                conn.commit()
+                cur.close()
+                conn.close()
+        except Exception:
+            pass
 
 
 def can_perform_scan() -> bool:
