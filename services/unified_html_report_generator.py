@@ -72,14 +72,33 @@ class UnifiedHTMLReportGenerator:
         # Format timestamp based on language
         formatted_timestamp = self._format_timestamp(timestamp)
         
-        # Extract metrics
-        metrics = self._extract_metrics(scan_result)
+        # Deduplicate findings first (prevents duplicate violations in reports)
+        original_findings = scan_result.get('findings', [])
+        seen_findings = set()
+        deduplicated_findings = []
+        for finding in original_findings:
+            # Create unique key from location and description
+            location = finding.get('location', finding.get('file', ''))
+            if not location and finding.get('file'):
+                line = finding.get('line', 0)
+                location = f"{finding.get('file')}:{line}" if line else finding.get('file')
+            description = finding.get('description', '')
+            key = (location, description)
+            if key not in seen_findings:
+                seen_findings.add(key)
+                deduplicated_findings.append(finding)
+        
+        # Create copy of scan_result with deduplicated findings for metrics
+        scan_result_deduped = scan_result.copy()
+        scan_result_deduped['findings'] = deduplicated_findings
+        
+        # Extract metrics using deduplicated findings
+        metrics = self._extract_metrics(scan_result_deduped)
         
         # Enhance findings with specific context and actionable recommendations
-        original_findings = scan_result.get('findings', [])
         enhanced_findings = enhance_findings_for_report(
             scanner_type=scan_type.lower().replace(' ', '_'),
-            findings=original_findings,
+            findings=deduplicated_findings,
             region=region
         )
         
