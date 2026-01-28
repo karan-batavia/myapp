@@ -7981,8 +7981,22 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                     line_num = finding.get('line', 0)
                     finding['location'] = f"{file_path}:{line_num}" if line_num else file_path
             
-            # Add findings to scan results
-            scan_results["findings"] = soc2_findings
+            # Deduplicate findings based on file+line+description
+            seen_findings = set()
+            unique_findings = []
+            for finding in soc2_findings:
+                key = (
+                    finding.get("file", finding.get("location", "")),
+                    finding.get("line", 0),
+                    finding.get("description", "")
+                )
+                if key not in seen_findings:
+                    seen_findings.add(key)
+                    unique_findings.append(finding)
+            
+            # Add deduplicated findings to scan results
+            scan_results["findings"] = unique_findings
+            soc2_findings = unique_findings  # Update reference for metrics calculation
             
             # Use metrics from the actual scan
             files_scanned = repo_analysis.get('total_files_scanned', 0)

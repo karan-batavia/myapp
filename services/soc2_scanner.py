@@ -1618,6 +1618,27 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
                 # Add findings
                 results["findings"].extend(file_findings)
         
+        # Deduplicate findings based on file+line+description
+        seen_findings = set()
+        unique_findings = []
+        for finding in results["findings"]:
+            # Create unique key from file, line, and description
+            key = (
+                finding.get("file", ""),
+                finding.get("line", 0),
+                finding.get("description", "")
+            )
+            if key not in seen_findings:
+                seen_findings.add(key)
+                unique_findings.append(finding)
+        
+        results["findings"] = unique_findings
+        
+        # Recalculate risk counts after deduplication
+        results["high_risk_count"] = len([f for f in unique_findings if f.get("risk_level", "").lower() == "high"])
+        results["medium_risk_count"] = len([f for f in unique_findings if f.get("risk_level", "").lower() == "medium"])
+        results["low_risk_count"] = len([f for f in unique_findings if f.get("risk_level", "").lower() == "low"])
+        
         # Convert technologies_detected from set to list for JSON serialization
         results["technologies_detected"] = list(results["technologies_detected"])
         
@@ -1810,6 +1831,26 @@ def scan_azure_repo_for_soc2(repo_url: str, project: str, branch: Optional[str] 
                             results["low_risk_count"] += 1
                 
                 results["findings"].extend(file_findings)
+            
+            # Deduplicate findings based on file+line+description
+            seen_findings = set()
+            unique_findings = []
+            for finding in results["findings"]:
+                key = (
+                    finding.get("file", ""),
+                    finding.get("line", 0),
+                    finding.get("description", "")
+                )
+                if key not in seen_findings:
+                    seen_findings.add(key)
+                    unique_findings.append(finding)
+            
+            results["findings"] = unique_findings
+            
+            # Recalculate risk counts after deduplication
+            results["high_risk_count"] = len([f for f in unique_findings if f.get("risk_level", "").lower() == "high"])
+            results["medium_risk_count"] = len([f for f in unique_findings if f.get("risk_level", "").lower() == "medium"])
+            results["low_risk_count"] = len([f for f in unique_findings if f.get("risk_level", "").lower() == "low"])
             
             # Calculate compliance score based on findings
             if results["high_risk_count"] > 0 or results["medium_risk_count"] > 0 or results["low_risk_count"] > 0:
