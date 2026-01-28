@@ -1240,6 +1240,45 @@ IaC_RISK_PATTERNS = {
     "javascript": JAVASCRIPT_RISK_PATTERNS,
 }
 
+DOCUMENTATION_FILES = [
+    'README.md', 'README.txt', 'README.rst', 'README',
+    'CHANGELOG.md', 'CHANGELOG.txt', 'CHANGELOG',
+    'CONTRIBUTING.md', 'CONTRIBUTING.txt',
+    'LICENSE.md', 'LICENSE.txt', 'LICENSE',
+    'CODE_OF_CONDUCT.md', 'SECURITY.md', 'SUPPORT.md',
+    'HISTORY.md', 'NEWS.md', 'AUTHORS.md', 'MAINTAINERS.md',
+    'INSTALL.md', 'INSTALL.txt', 'UPGRADE.md',
+    'FAQ.md', 'TROUBLESHOOTING.md', 'GUIDE.md',
+    'DEVELOPMENT.md', 'ARCHITECTURE.md', 'DESIGN.md'
+]
+
+DOCUMENTATION_PATTERNS = [
+    r'^README', r'^CHANGELOG', r'^CONTRIBUTING', r'^LICENSE',
+    r'^CODE_OF_CONDUCT', r'^SECURITY', r'^SUPPORT', r'^HISTORY',
+    r'^NEWS', r'^AUTHORS', r'^MAINTAINERS', r'^INSTALL', r'^UPGRADE',
+    r'^FAQ', r'^TROUBLESHOOTING', r'^GUIDE', r'^DEVELOPMENT',
+    r'^ARCHITECTURE', r'^DESIGN', r'.*\.md$', r'.*_guide\.',
+    r'.*_tutorial\.', r'.*_example\.', r'docs[/\\].*'
+]
+
+def is_documentation_file(file_path: str) -> bool:
+    """
+    Check if a file is a documentation file that should be excluded from security scanning.
+    Documentation files often contain code examples that would generate false positives.
+    """
+    file_name = os.path.basename(file_path).upper()
+    
+    if any(doc.upper() == file_name for doc in DOCUMENTATION_FILES):
+        return True
+    
+    lower_path = file_path.lower()
+    if '/docs/' in lower_path or '\\docs\\' in lower_path:
+        return True
+    if lower_path.endswith('.md') and any(kw in lower_path for kw in ['readme', 'example', 'guide', 'tutorial', 'demo']):
+        return True
+        
+    return False
+
 def identify_iac_technology(file_path: str) -> Optional[str]:
     """
     Identify the IaC technology used in the given file.
@@ -1251,6 +1290,10 @@ def identify_iac_technology(file_path: str) -> Optional[str]:
         String identifying the IaC technology or None if not identified
     """
     if not os.path.isfile(file_path):
+        return None
+    
+    if is_documentation_file(file_path):
+        logger.debug(f"Skipping documentation file: {file_path}")
         return None
         
     file_name = os.path.basename(file_path)
@@ -1344,6 +1387,11 @@ def scan_iac_file(file_path: str, tech: Optional[str] = None) -> List[Dict[str, 
         List of findings, each a dictionary with issue details
     """
     findings = []
+    
+    # Skip documentation files to avoid false positives from code examples
+    if is_documentation_file(file_path):
+        logger.debug(f"Skipping documentation file in scan: {file_path}")
+        return findings
     
     # Identify technology if not provided
     if tech is None:
