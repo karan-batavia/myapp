@@ -114,11 +114,17 @@ def check_and_decrement_trial_scans(scan_type: str = "document") -> tuple:
 
 def require_report_access(report_type: str = "standard") -> bool:
     """Check if user has access to report generation"""
-    license_tier = st.session_state.get('license_tier', 'free')
-    if license_tier in ['professional', 'enterprise', 'unlimited']:
+    from config.pricing_config import can_download_reports
+    
+    # Use centralized function for consistent access control
+    if can_download_reports():
         return True
-    if report_type == "basic" and license_tier in ['free', 'trial']:
+    
+    # Allow basic reports for free/trial users
+    license_tier = st.session_state.get('license_tier', 'free').lower()
+    if report_type == "basic" and license_tier in ['free', 'trial', '']:
         return True
+    
     return False
 
 def track_report_usage(report_type: str, user_id: int = None, success: bool = True, **kwargs):

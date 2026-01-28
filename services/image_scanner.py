@@ -509,21 +509,30 @@ class ImageScanner:
         """
         findings = []
         
-        # Check if filename suggests face content
+        # Check if filename strongly suggests face/biometric content
+        # Only flag explicit biometric indicators, not generic terms like 'photo'
         lower_filename = os.path.basename(image_path).lower()
-        face_keywords = ['face', 'person', 'people', 'portrait', 'selfie', 'profile', 'photo', 'headshot']
         
-        if any(term in lower_filename for term in face_keywords):
+        # Strong indicators of biometric/face data (more specific)
+        strong_face_keywords = ['face', 'selfie', 'headshot', 'portrait', 'mugshot', 'biometric', 'facial']
+        # Contextual indicators that need additional keywords
+        person_keywords = ['person', 'people', 'employee', 'staff', 'team']
+        
+        has_strong_indicator = any(term in lower_filename for term in strong_face_keywords)
+        has_person_indicator = any(term in lower_filename for term in person_keywords)
+        
+        # Only flag if strong indicator OR (person indicator AND photo-related)
+        if has_strong_indicator or (has_person_indicator and ('photo' in lower_filename or 'pic' in lower_filename)):
             finding = {
                 "type": "FACE_BIOMETRIC",
                 "source": image_path,
                 "source_type": "image_visual",
-                "confidence": 0.92,
-                "context": "Detected human face(s) in image based on filename analysis",
+                "confidence": 0.75 if has_strong_indicator else 0.55,
+                "context": "Potential human face(s) detected based on filename analysis - manual review recommended",
                 "extraction_method": "filename_pattern_analysis",
-                "risk_level": "Critical",
+                "risk_level": "High" if has_strong_indicator else "Medium",
                 "location": f"{image_path} > Visual Content",
-                "reason": "Biometric data like facial images is special category data under GDPR Article 9 requiring explicit consent"
+                "reason": "Biometric data like facial images is special category data under GDPR Article 9 requiring explicit consent. Manual verification recommended."
             }
             findings.append(finding)
         
