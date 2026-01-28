@@ -7998,13 +7998,16 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             scan_results["total_controls_assessed"] = len(soc2_findings)
             scan_results["technologies_detected"] = repo_analysis.get('technologies_detected', [])
             
-            # Calculate compliance score
-            high_risk = len([f for f in soc2_findings if f.get('severity') == 'High'])
-            medium_risk = len([f for f in soc2_findings if f.get('severity') == 'Medium'])
+            # Calculate compliance score (case-insensitive severity matching)
+            high_risk = len([f for f in soc2_findings if str(f.get('severity', '')).lower() in ['high', 'critical']])
+            medium_risk = len([f for f in soc2_findings if str(f.get('severity', '')).lower() == 'medium'])
+            low_risk = len([f for f in soc2_findings if str(f.get('severity', '')).lower() == 'low'])
             total_findings = len(soc2_findings)
             
             if total_findings > 0:
-                compliance_score = max(0, 100 - (high_risk * 15 + medium_risk * 8))
+                # Penalty: Critical/High = 15pts, Medium = 8pts, Low = 3pts
+                penalty = (high_risk * 15) + (medium_risk * 8) + (low_risk * 3)
+                compliance_score = max(0, 100 - penalty)
             else:
                 compliance_score = 100
             
@@ -8023,11 +8026,11 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
             with col1:
                 st.metric("Compliance Score", f"{compliance_score}%")
             with col2:
-                st.metric("Controls Assessed", total_findings)
+                st.metric("Total Findings", total_findings)
             with col3:
                 st.metric("High Risk", high_risk)
             with col4:
-                st.metric("TSC Criteria", len(criteria))
+                st.metric("Medium Risk", medium_risk)
             
             # Display findings
             display_scan_results(scan_results)
