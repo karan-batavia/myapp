@@ -2159,6 +2159,41 @@ class UnifiedHTMLReportGenerator:
         try:
             from services.advanced_ai_scanner import generate_enhanced_compliance_report
             
+            # Language-aware translations
+            is_dutch = self.current_language == 'nl'
+            t = {
+                'traceability_title': 'EU AI Act Artikel Traceerbaarheidsmatrix (Alle 113 Artikelen)' if is_dutch else 'EU AI Act Article Traceability Matrix (All 113 Articles)',
+                'total_compliance': 'Totale Naleving' if is_dutch else 'Total Compliance',
+                'articles_assessed': 'Artikelen Beoordeeld' if is_dutch else 'Articles Assessed',
+                'fully_compliant': 'Volledig Conform' if is_dutch else 'Fully Compliant',
+                'partially_compliant': 'Gedeeltelijk Conform' if is_dutch else 'Partially Compliant',
+                'non_compliant': 'Niet Conform' if is_dutch else 'Non-Compliant',
+                'compliance_by_chapter': 'Naleving per Hoofdstuk' if is_dutch else 'Compliance by Chapter',
+                'chapter': 'Hoofdstuk' if is_dutch else 'Chapter',
+                'articles': 'Artikelen' if is_dutch else 'Articles',
+                'compliant': 'Conform' if is_dutch else 'Compliant',
+                'partial': 'Gedeeltelijk' if is_dutch else 'Partial',
+                'score': 'Score' if is_dutch else 'Score',
+                'status': 'Status' if is_dutch else 'Status',
+                'remediation_plan': 'Geprioriteerd Herstelplan' if is_dutch else 'Prioritized Remediation Plan',
+                'article': 'Artikel' if is_dutch else 'Article',
+                'priority': 'Prioriteit' if is_dutch else 'Priority',
+                'deadline': 'Deadline' if is_dutch else 'Deadline',
+                'effort': 'Inspanning' if is_dutch else 'Effort',
+                'conformity_scorecard': 'Conformiteitsbeoordeling Gereedheidsscorekaart' if is_dutch else 'Conformity Assessment Readiness Scorecard',
+                'documentation': 'Documentatie' if is_dutch else 'Documentation',
+                'technical_measures': 'Technische Maatregelen' if is_dutch else 'Technical Measures',
+                'governance': 'Governance' if is_dutch else 'Governance',
+                'risk_management': 'Risicobeheer' if is_dutch else 'Risk Management',
+                'time_to_ready': 'Geschatte Tijd tot Gereedheid' if is_dutch else 'Estimated Time to Ready',
+                'key_recommendations': 'Belangrijke Aanbevelingen' if is_dutch else 'Key Recommendations',
+                'executive_summary': 'Toezichthouder-Klaar Managementsamenvatting' if is_dutch else 'Regulator-Ready Executive Summary',
+                'compliance_overview': 'Nalevingsoverzicht' if is_dutch else 'Compliance Overview',
+                'total_score': 'Totale Score' if is_dutch else 'Total Score',
+                'rating': 'Beoordeling' if is_dutch else 'Rating',
+                'regulatory_deadlines': 'Regelgevende Deadlines' if is_dutch else 'Regulatory Deadlines',
+            }
+            
             system_name = scan_result.get('model_name', scan_result.get('repository_url', 'AI System'))
             enhanced = generate_enhanced_compliance_report(
                 scan_result, 
@@ -2179,45 +2214,45 @@ class UnifiedHTMLReportGenerator:
             traceability_html = f"""
             <div style="margin-top: 30px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #1e293b; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    📋 EU AI Act Artikel Traceerbaarheidsmatrix (Alle 113 Artikelen)
+                    📋 {t['traceability_title']}
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #10b981;">{overall.get('overall_compliance_score', 0):.1f}%</div>
-                        <div style="font-size: 12px; color: #64748b;">Totale Naleving</div>
+                        <div style="font-size: 12px; color: #64748b;">{t['total_compliance']}</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">{overall.get('total_articles', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Artikelen Beoordeeld</div>
+                        <div style="font-size: 12px; color: #64748b;">{t['articles_assessed']}</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #22c55e;">{overall.get('compliant', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Volledig Conform</div>
+                        <div style="font-size: 12px; color: #64748b;">{t['fully_compliant']}</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">{overall.get('partially_compliant', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Gedeeltelijk Conform</div>
+                        <div style="font-size: 12px; color: #64748b;">{t['partially_compliant']}</div>
                     </div>
                     <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                         <div style="font-size: 28px; font-weight: bold; color: #ef4444;">{overall.get('non_compliant', 0)}</div>
-                        <div style="font-size: 12px; color: #64748b;">Niet Conform</div>
+                        <div style="font-size: 12px; color: #64748b;">{t['non_compliant']}</div>
                     </div>
                 </div>
             """
             
             # Chapter breakdown table
             if chapter_summary:
-                traceability_html += """
-                <h4 style="color: #475569; margin: 20px 0 15px 0;">Naleving per Hoofdstuk</h4>
+                traceability_html += f"""
+                <h4 style="color: #475569; margin: 20px 0 15px 0;">{t['compliance_by_chapter']}</h4>
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                     <thead>
                         <tr style="background: #1e293b; color: white;">
-                            <th style="padding: 10px; text-align: left; border-radius: 4px 0 0 0;">Hoofdstuk</th>
-                            <th style="padding: 10px; text-align: center;">Artikelen</th>
-                            <th style="padding: 10px; text-align: center;">Conform</th>
-                            <th style="padding: 10px; text-align: center;">Gedeeltelijk</th>
-                            <th style="padding: 10px; text-align: center;">Score</th>
-                            <th style="padding: 10px; text-align: center; border-radius: 0 4px 0 0;">Status</th>
+                            <th style="padding: 10px; text-align: left; border-radius: 4px 0 0 0;">{t['chapter']}</th>
+                            <th style="padding: 10px; text-align: center;">{t['articles']}</th>
+                            <th style="padding: 10px; text-align: center;">{t['compliant']}</th>
+                            <th style="padding: 10px; text-align: center;">{t['partial']}</th>
+                            <th style="padding: 10px; text-align: center;">{t['score']}</th>
+                            <th style="padding: 10px; text-align: center; border-radius: 0 4px 0 0;">{t['status']}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -2252,7 +2287,7 @@ class UnifiedHTMLReportGenerator:
                 remediation_html = f"""
                 <div style="margin-top: 30px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 25px;">
                     <h3 style="color: #92400e; margin-bottom: 20px; border-bottom: 2px solid #f59e0b; padding-bottom: 10px;">
-                        🎯 Geprioriteerd Herstelplan
+                        🎯 {t['remediation_plan']}
                     </h3>
                     <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
                         <thead>
@@ -2306,18 +2341,26 @@ class UnifiedHTMLReportGenerator:
             conformity_html = f"""
             <div style="margin-top: 30px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #3b82f6; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #1e40af; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    📊 Conformiteitsbeoordeling Gereedheidsscorekaart
+                    📊 {t['conformity_scorecard']}
                 </h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
             """
             
+            # Language-aware readiness labels
+            overall_label = "Algehele Gereedheid" if is_dutch else "Overall Readiness"
+            doc_label = "Documentatie" if is_dutch else "Documentation"
+            tech_label = "Technisch" if is_dutch else "Technical"
+            gov_label = "Bestuur" if is_dutch else "Governance"
+            oversight_label = "Menselijk Toezicht" if is_dutch else "Human Oversight"
+            risk_label = "Risicobeheer" if is_dutch else "Risk Management"
+            
             readiness_items = [
-                ("Algehele Gereedheid", readiness.get('overall', 0), "#3b82f6"),
-                ("Documentatie", readiness.get('documentation', 0), "#8b5cf6"),
-                ("Technisch", readiness.get('technical', 0), "#06b6d4"),
-                ("Bestuur", readiness.get('governance', 0), "#10b981"),
-                ("Menselijk Toezicht", readiness.get('human_oversight', 0), "#f59e0b"),
-                ("Risicobeheer", readiness.get('risk_management', 0), "#ef4444"),
+                (overall_label, readiness.get('overall', 0), "#3b82f6"),
+                (doc_label, readiness.get('documentation', 0), "#8b5cf6"),
+                (tech_label, readiness.get('technical', 0), "#06b6d4"),
+                (gov_label, readiness.get('governance', 0), "#10b981"),
+                (oversight_label, readiness.get('human_oversight', 0), "#f59e0b"),
+                (risk_label, readiness.get('risk_management', 0), "#ef4444"),
             ]
             
             for label, score, color in readiness_items:
@@ -2339,11 +2382,11 @@ class UnifiedHTMLReportGenerator:
             conformity_html += f"""
                 <div style="background: white; padding: 20px; border-radius: 8px; margin-top: 15px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-weight: bold; color: #1e40af;">⏱️ Geschatte Tijd tot Gereedheid:</span>
+                        <span style="font-weight: bold; color: #1e40af;">⏱️ {t['time_to_ready']}:</span>
                         <span style="background: #1e40af; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">{time_to_ready}</span>
                     </div>
                     <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                        <strong style="color: #1e40af;">Belangrijke Aanbevelingen:</strong>
+                        <strong style="color: #1e40af;">{t['key_recommendations']}:</strong>
                         <ul style="margin-top: 10px; padding-left: 20px;">
             """
             
@@ -2364,34 +2407,34 @@ class UnifiedHTMLReportGenerator:
             executive_html = f"""
             <div style="margin-top: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #16a34a; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #166534; margin-bottom: 20px; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">
-                    📄 Toezichthouder-Klaar Managementsamenvatting
+                    📄 {t['executive_summary']}
                 </h3>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div>
-                        <h4 style="color: #166534; margin-bottom: 10px;">Nalevingsoverzicht</h4>
+                        <h4 style="color: #166534; margin-bottom: 10px;">{t['compliance_overview']}</h4>
                         <table style="width: 100%; font-size: 13px;">
-                            <tr><td style="padding: 5px; color: #64748b;">Totale Score:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('overall_score', 'N/A')}</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">Beoordeling:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('rating', 'N/A')}</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">Artikelen Beoordeeld:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('articles_assessed', 0)}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{t['total_score']}:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('overall_score', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{t['rating']}:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('rating', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{t['articles_assessed']}:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('articles_assessed', 0)}</td></tr>
                         </table>
                     </div>
                     <div>
-                        <h4 style="color: #166534; margin-bottom: 10px;">Regelgevende Deadlines</h4>
+                        <h4 style="color: #166534; margin-bottom: 10px;">{t['regulatory_deadlines']}</h4>
                         <table style="width: 100%; font-size: 13px;">
-                            <tr><td style="padding: 5px; color: #64748b;">Verboden Praktijken:</td><td style="padding: 5px; font-weight: bold;">2 feb 2025</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">GPAI Modellen:</td><td style="padding: 5px; font-weight: bold;">2 aug 2025</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">Hoog-Risico Systemen:</td><td style="padding: 5px; font-weight: bold;">2 aug 2026</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{"Verboden Praktijken" if is_dutch else "Prohibited Practices"}:</td><td style="padding: 5px; font-weight: bold;">{"2 feb 2025" if is_dutch else "Feb 2, 2025"}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{"GPAI Modellen" if is_dutch else "GPAI Models"}:</td><td style="padding: 5px; font-weight: bold;">{"2 aug 2025" if is_dutch else "Aug 2, 2025"}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{"Hoog-Risico Systemen" if is_dutch else "High-Risk Systems"}:</td><td style="padding: 5px; font-weight: bold;">{"2 aug 2026" if is_dutch else "Aug 2, 2026"}</td></tr>
                         </table>
                     </div>
                 </div>
                 <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
-                    <strong style="color: #166534;">🇳🇱 Nederland Specifiek:</strong>
+                    <strong style="color: #166534;">🇳🇱 {"Nederland Specifiek" if is_dutch else "Netherlands Specific"}:</strong>
                     <p style="margin-top: 10px; font-size: 13px; color: #475569;">
-                        Autoriteit: Autoriteit Persoonsgegevens (AP) | UAVG naleving gewaarborgd | BSN verwerkingsprocedures geïmplementeerd waar van toepassing
+                        {"Autoriteit: Autoriteit Persoonsgegevens (AP) | UAVG naleving gewaarborgd | BSN verwerkingsprocedures geïmplementeerd waar van toepassing" if is_dutch else "Authority: Dutch Data Protection Authority (AP) | UAVG compliance ensured | BSN processing procedures implemented where applicable"}
                     </p>
                 </div>
                 <p style="margin-top: 15px; text-align: center; font-size: 11px; color: #64748b;">
-                    Beoordelingsdatum: {datetime.now().strftime('%d-%m-%Y')} | Beoordelaar: DataGuardian Pro AI Compliance Platform | Geldig tot materiële wijzigingen
+                    {"Beoordelingsdatum" if is_dutch else "Assessment Date"}: {datetime.now().strftime('%d-%m-%Y' if is_dutch else '%Y-%m-%d')} | {"Beoordelaar" if is_dutch else "Assessor"}: DataGuardian Pro AI Compliance Platform | {"Geldig tot materiële wijzigingen" if is_dutch else "Valid until material changes"}
                 </p>
             </div>
             """
