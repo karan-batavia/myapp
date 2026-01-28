@@ -1,0 +1,280 @@
+================================================================================
+STRIPE TEST WEBHOOK CONFIGURATION GUIDE - DataGuardian Pro
+================================================================================
+Date: January 28, 2026
+Purpose: Configure test webhooks before going live with production payments
+
+================================================================================
+OVERVIEW
+================================================================================
+
+You have two webhooks configured in Stripe:
+1. DataGuardianPro-Test-Webhook (for testing) - 0% error rate
+2. DataguardianproWebhook (for live) - 37% error rate
+
+This guide helps you configure the TEST webhook correctly.
+
+================================================================================
+STEP 1: VERIFY YOU ARE IN SANDBOX/TEST MODE
+================================================================================
+
+1. Go to https://dashboard.stripe.com
+2. Look at the top of the page - it should say "Sandbox" or show an orange banner
+3. If not in sandbox, click "Switch to live account" toggle to switch to TEST mode
+4. You should see your products:
+   - DataGuardian Pro - SAP Enterprise
+   - DataGuardian Pro - Salesforce Premium
+   - DataGuardian Pro - Scale
+   - DataGuardian Pro - Growth
+   - DataGuardian Pro - Starter
+   - DataGuardian Pro - Enterprise
+
+================================================================================
+STEP 2: GET YOUR TEST WEBHOOK SIGNING SECRET
+================================================================================
+
+1. In Stripe Dashboard (Sandbox mode), go to:
+   Developers > Webhooks
+
+2. Click on "DataGuardianPro-Test-Webhook"
+
+3. Look for "Signing secret" section at the bottom
+   - It shows: whsec_2BCs6AD0dcMs33dkZkLgRtmne4VzjGfm
+   - Click the copy button or reveal button to copy the full secret
+
+4. IMPORTANT: The test webhook secret is DIFFERENT from the live webhook secret
+   Your current env has: whsec_a9DNzq6yUbCI0Qb5ymeQy8LDORoG746F
+   
+   You need to UPDATE this to the test webhook secret:
+   whsec_2BCs6AD0dcMs33dkZkLgRtmne4VzjGfm
+
+================================================================================
+STEP 3: UPDATE YOUR ENVIRONMENT VARIABLES
+================================================================================
+
+On your Replit/production server, update these environment variables:
+
+FOR TESTING (use these now):
+-----------------------------
+STRIPE_SECRET_KEY=sk_test_51RArxTFWPKiu2G5RthXyvnpcbzOm2qMm3vKwbdsDTEVe38jF2PZzZn9t6PBXAgIP4lQnd0CaZB2Zwn8IqFZGDMZk00BSGrqGjm
+STRIPE_WEBHOOK_SECRET=whsec_2BCs6AD0dcMs33dkZkLgRtmne4VzjGfm
+
+The STRIPE_SECRET_KEY starting with "sk_test_" indicates TEST mode.
+
+================================================================================
+STEP 4: VERIFY WEBHOOK URL IS CORRECT
+================================================================================
+
+Your test webhook should point to:
+https://dataguardianpro.nl/webhook/stripe
+
+Verify in Stripe Dashboard:
+1. Go to Developers > Webhooks
+2. Click on "DataGuardianPro-Test-Webhook"
+3. Check the "Endpoint URL" matches: https://dataguardianpro.nl/webhook/stripe
+4. If different, click "Edit destination" to update
+
+================================================================================
+STEP 5: VERIFY WEBHOOK EVENTS
+================================================================================
+
+Ensure these 10 events are selected (from your screenshot):
+
+CHECKOUT EVENTS:
+  [ ] checkout.session.completed
+  [ ] checkout.session.async_payment_succeeded
+  [ ] checkout.session.async_payment_failed
+
+SUBSCRIPTION EVENTS:
+  [ ] customer.subscription.created
+  [ ] customer.subscription.updated
+  [ ] customer.subscription.deleted
+
+INVOICE EVENTS:
+  [ ] invoice.paid
+  [ ] invoice.payment_failed
+
+PAYMENT EVENTS:
+  [ ] payment_intent.succeeded
+  [ ] payment_intent.payment_failed
+
+To modify events:
+1. Click "DataGuardianPro-Test-Webhook"
+2. Click "Edit destination"
+3. Scroll down to "Select events"
+4. Check all events listed above
+5. Click "Update destination"
+
+================================================================================
+STEP 6: TEST THE WEBHOOK CONNECTION
+================================================================================
+
+Option A - Test from Stripe Dashboard:
+--------------------------------------
+1. Click on "DataGuardianPro-Test-Webhook"
+2. Click "Send test event" button (top right)
+3. Select event type: "checkout.session.completed"
+4. Click "Send test webhook"
+5. Check the "Event deliveries" tab
+6. Should show "Succeeded" status with 200 response
+
+Option B - Test with Health Endpoint:
+-------------------------------------
+Run this command:
+  curl https://dataguardianpro.nl/webhook/health
+
+Expected response:
+  {"status": "healthy", "service": "DataGuardian Pro Webhook Server", "version": "1.0.0"}
+
+================================================================================
+STEP 7: CREATE A TEST PAYMENT
+================================================================================
+
+1. Go to your DataGuardian Pro app pricing page
+2. Select any plan (e.g., Starter)
+3. You'll be redirected to Stripe Checkout
+
+4. Use these TEST card details:
+   
+   VISA (Success):
+   Card Number: 4242 4242 4242 4242
+   Expiry: Any future date (e.g., 12/28)
+   CVC: Any 3 digits (e.g., 123)
+   
+   iDEAL (Netherlands):
+   - Select iDEAL as payment method
+   - Select any test bank
+   - Click "Authorize test payment"
+   
+   SEPA (Direct Debit):
+   IBAN: NL39RABO0300065264 (test IBAN)
+
+5. Complete the payment
+6. Check Stripe Dashboard > Events to see webhook delivery
+7. Check your app - user should be upgraded to paid tier
+
+================================================================================
+STEP 8: VERIFY WEBHOOK PROCESSING
+================================================================================
+
+After test payment, check:
+
+1. Stripe Dashboard > Webhooks > DataGuardianPro-Test-Webhook > Event deliveries
+   - Should show recent delivery with "Succeeded" status
+   - Response should be 200
+
+2. Your server logs (Webhook Server workflow):
+   - Look for "Processing webhook event: checkout.session.completed"
+   - Should show successful processing
+
+3. Your database:
+   - User's license_tier should be updated
+   - Payment record should be created
+
+================================================================================
+STEP 9: TROUBLESHOOTING COMMON ISSUES
+================================================================================
+
+ISSUE: Webhook returns 400 or 500 error
+-----------------------------------------
+CAUSE: Wrong webhook signing secret
+FIX: 
+  1. Get the exact secret from Stripe > Webhooks > DataGuardianPro-Test-Webhook
+  2. Update STRIPE_WEBHOOK_SECRET in your environment
+  3. Restart webhook server
+
+ISSUE: Webhook not receiving events
+------------------------------------
+CAUSE: URL not accessible or firewall blocking
+FIX:
+  1. Test health endpoint: curl https://dataguardianpro.nl/webhook/health
+  2. Ensure port 5001 is open on firewall
+  3. Check nginx/reverse proxy configuration
+
+ISSUE: Payment succeeds but tier not updated
+---------------------------------------------
+CAUSE: Webhook processed but database update failed
+FIX:
+  1. Check server logs for database errors
+  2. Verify DATABASE_URL is correct
+  3. Check user exists in database
+
+ISSUE: 37% error rate on webhook
+---------------------------------
+This is for the LIVE webhook (DataguardianproWebhook), not the test one.
+The test webhook shows 0% error rate - this is correct.
+Live webhook errors are because you're using test mode keys with live webhook.
+
+================================================================================
+STEP 10: SWITCH TO LIVE MODE (WHEN READY)
+================================================================================
+
+ONLY do this when testing is complete!
+
+1. Switch Stripe Dashboard to Live mode (toggle off Sandbox)
+2. Get your LIVE API keys:
+   - Go to Developers > API keys
+   - Copy the Secret key (starts with sk_live_)
+
+3. Get LIVE webhook signing secret:
+   - Go to Developers > Webhooks
+   - Click on "DataguardianproWebhook" (the live one)
+   - Copy the Signing secret
+
+4. Update environment variables:
+   STRIPE_SECRET_KEY=sk_live_your_live_key
+   STRIPE_WEBHOOK_SECRET=whsec_live_webhook_secret
+
+5. Restart your servers
+
+================================================================================
+QUICK REFERENCE - ENVIRONMENT VARIABLES
+================================================================================
+
+FOR TESTING (current):
+----------------------
+STRIPE_SECRET_KEY=sk_test_51RArxTFWPKiu2G5RthXyvnpcbzOm2qMm3vKwbdsDTEVe38jF2PZzZn9t6PBXAgIP4lQnd0CaZB2Zwn8IqFZGDMZk00BSGrqGjm
+STRIPE_WEBHOOK_SECRET=whsec_2BCs6AD0dcMs33dkZkLgRtmne4VzjGfm
+
+FOR LIVE (future):
+------------------
+STRIPE_SECRET_KEY=sk_live_[your_live_key]
+STRIPE_WEBHOOK_SECRET=whsec_[your_live_webhook_secret]
+
+================================================================================
+TEST CARDS REFERENCE
+================================================================================
+
+SUCCESS CARDS:
+  Visa: 4242 4242 4242 4242
+  Mastercard: 5555 5555 5555 4444
+  
+DECLINE CARDS:
+  Generic Decline: 4000 0000 0000 0002
+  Insufficient Funds: 4000 0000 0000 9995
+  
+3D SECURE:
+  Requires Authentication: 4000 0025 0000 3155
+  
+IDEAL BANKS (Netherlands):
+  Select any bank in test mode - all succeed
+  
+SEPA TEST IBANS:
+  Success: NL39RABO0300065264
+  Success: DE89370400440532013000
+
+================================================================================
+SUPPORT & DOCUMENTATION
+================================================================================
+
+Stripe Webhooks: https://stripe.com/docs/webhooks
+Stripe Testing: https://stripe.com/docs/testing
+iDEAL Testing: https://stripe.com/docs/payments/ideal/accept-a-payment#testing
+
+DataGuardian Pro Webhook Endpoints:
+  POST /webhook/stripe - Main webhook endpoint
+  GET  /webhook/health - Health check
+
+================================================================================
+END OF GUIDE
+================================================================================
