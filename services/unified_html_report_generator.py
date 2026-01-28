@@ -1589,9 +1589,12 @@ class UnifiedHTMLReportGenerator:
             </div>
             """
         
+        # Use language-aware title
+        recommendations_title = "Praktische Aanbevelingen" if self.current_language == 'nl' else "Practical Recommendations"
+        
         return f"""
         <div class="recommendations-section">
-            <h4>💡 Praktische Aanbevelingen</h4>
+            <h4>💡 {recommendations_title}</h4>
             {recommendations_html}
         </div>
         """
