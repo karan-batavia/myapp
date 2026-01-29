@@ -943,6 +943,74 @@ class IntelligentScannerWrapper:
         
         # Display findings if available
         findings = scan_result.get('findings', [])
+        
+        # PRIORITY: For Image scans, show AUTHENTICITY CHECK prominently first
+        scan_type = scan_result.get('scan_type', '')
+        if 'image' in scan_type.lower() or 'Image' in scan_type:
+            # Find authenticity check finding (always the first priority finding)
+            authenticity_findings = [f for f in findings if f.get('type') == 'IMAGE_AUTHENTICITY_CHECK']
+            
+            if authenticity_findings:
+                st.subheader("🔐 Image Authenticity Check")
+                auth_finding = authenticity_findings[0]
+                analysis = auth_finding.get('analysis_details', {})
+                status = analysis.get('authenticity_status', 'UNKNOWN')
+                overall_score = analysis.get('overall_score', 0)
+                confidence = auth_finding.get('confidence', 0)
+                
+                if status == 'AUTHENTIC':
+                    st.success(f"""
+                    ✅ **IMAGE VERIFIED AS AUTHENTIC**
+                    
+                    **Authenticity Confidence:** {confidence:.0%}
+                    
+                    No significant deepfake or synthetic media indicators detected. This image appears to be genuine.
+                    """)
+                else:
+                    risk_level = auth_finding.get('risk_level', 'Medium')
+                    color = {'Critical': 'error', 'High': 'warning', 'Medium': 'warning'}.get(risk_level, 'info')
+                    
+                    if color == 'error':
+                        st.error(f"""
+                        ⚠️ **POTENTIAL DEEPFAKE/SYNTHETIC MEDIA DETECTED**
+                        
+                        **Status:** {status}  
+                        **Risk Level:** {risk_level}  
+                        **Detection Score:** {overall_score:.1%}
+                        
+                        This image shows indicators of AI generation or manipulation. Further review recommended.
+                        """)
+                    else:
+                        st.warning(f"""
+                        ⚠️ **AUTHENTICITY REVIEW RECOMMENDED**
+                        
+                        **Status:** {status}  
+                        **Risk Level:** {risk_level}  
+                        **Detection Score:** {overall_score:.1%}
+                        
+                        Some indicators of synthetic content detected. Consider additional verification.
+                        """)
+                
+                # Show detailed analysis scores
+                with st.expander("📊 Detailed Authenticity Analysis", expanded=False):
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        st.metric("Artifact Score", f"{analysis.get('artifact_score', 0):.1%}")
+                    with col2:
+                        st.metric("Noise Score", f"{analysis.get('noise_score', 0):.1%}")
+                    with col3:
+                        st.metric("Compression Score", f"{analysis.get('compression_score', 0):.1%}")
+                    with col4:
+                        st.metric("Facial Score", f"{analysis.get('facial_inconsistency_score', 0):.1%}")
+                    
+                    indicators = analysis.get('indicators', [])
+                    if indicators:
+                        st.markdown("**Detection Indicators:**")
+                        for indicator in indicators:
+                            st.markdown(f"- {indicator}")
+                
+                st.markdown("---")
+        
         if findings:
             st.subheader("🔍 Findings Summary")
             for i, finding in enumerate(findings[:10], 1):  # Show first 10 findings
