@@ -207,18 +207,25 @@ class ImageScanner:
         if file_ext not in self.supported_formats:
             return {"error": f"Unsupported format: {file_ext}", "findings": []}
             
-        # Extract text from image using OCR
-        extracted_text = self._perform_ocr(image_path)
-        
         # Initialize findings list
         findings = []
         
-        # Detect PII in extracted text
+        # PRIORITY 1: Deepfake/Synthetic Media Detection (PRIMARY finding for users)
+        # This is the FIRST thing users want to know about their images
+        deepfake_findings = []
+        if self.use_deepfake_detection:
+            deepfake_findings = self._detect_deepfake(image_path)
+            findings.extend(deepfake_findings)
+        
+        # PRIORITY 2: Extract text from image using OCR for PII detection
+        extracted_text = self._perform_ocr(image_path)
+        
+        # PRIORITY 2: Detect PII in extracted text (secondary finding)
         if extracted_text:
             text_findings = self._detect_pii_in_text(extracted_text, image_path)
             findings.extend(text_findings)
         
-        # Perform visual detection (faces, documents, cards)
+        # PRIORITY 3: Visual detection (faces, documents, cards)
         if self.use_face_detection:
             face_findings = self._detect_faces(image_path)
             findings.extend(face_findings)
@@ -230,12 +237,6 @@ class ImageScanner:
         if self.use_card_detection:
             card_findings = self._detect_payment_cards(image_path)
             findings.extend(card_findings)
-        
-        # NEW: Perform deepfake detection
-        deepfake_findings = []
-        if self.use_deepfake_detection:
-            deepfake_findings = self._detect_deepfake(image_path)
-            findings.extend(deepfake_findings)
         
         # ENHANCED: Advanced AI-powered fraud detection
         fraud_findings = self._advanced_fraud_detection(image_path)
@@ -1620,44 +1621,49 @@ class ImageScanner:
             # Calculate overall deepfake likelihood
             total_score = (artifact_score + noise_score + compression_score + facial_inconsistency_score) / 4
             
+            # Build detailed analysis indicators
+            indicators = []
+            if artifact_score >= 0.25:
+                indicators.append(f"Image artifacts detected (score: {artifact_score:.2f})")
+            if noise_score >= 0.25:
+                indicators.append(f"Unusual noise patterns (score: {noise_score:.2f})")
+            if compression_score >= 0.25:
+                indicators.append(f"Compression anomalies (score: {compression_score:.2f})")
+            if facial_inconsistency_score >= 0.25:
+                indicators.append(f"Facial inconsistencies detected (score: {facial_inconsistency_score:.2f})")
+            
+            # PRIMARY FINDING: Image Authenticity Check - ALWAYS show this as first finding
             # Threshold for flagging potential deepfakes
-            if total_score >= 0.20:  # 20% confidence threshold - optimized for deepfake detection
+            if total_score >= 0.20:  # 20% confidence threshold - potential deepfake
                 confidence = min(total_score, 0.95)  # Cap at 95%
                 
                 # Determine risk level based on score
                 if total_score >= 0.6:
                     risk_level = "Critical"
                     severity = "High likelihood"
+                    authenticity_status = "LIKELY DEEPFAKE/SYNTHETIC"
                 elif total_score >= 0.4:
                     risk_level = "High"
                     severity = "Moderate likelihood"
+                    authenticity_status = "POSSIBLE DEEPFAKE/SYNTHETIC"
                 else:
                     risk_level = "Medium"
                     severity = "Potential indicators"
-                
-                # Build detailed analysis
-                indicators = []
-                if artifact_score >= 0.25:
-                    indicators.append(f"Image artifacts detected (score: {artifact_score:.2f})")
-                if noise_score >= 0.25:
-                    indicators.append(f"Unusual noise patterns (score: {noise_score:.2f})")
-                if compression_score >= 0.25:
-                    indicators.append(f"Compression anomalies (score: {compression_score:.2f})")
-                if facial_inconsistency_score >= 0.25:
-                    indicators.append(f"Facial inconsistencies detected (score: {facial_inconsistency_score:.2f})")
+                    authenticity_status = "SUSPICIOUS - Further review recommended"
                 
                 finding = {
-                    "type": "DEEPFAKE_SYNTHETIC_MEDIA",
+                    "type": "IMAGE_AUTHENTICITY_CHECK",
                     "source": image_path,
                     "source_type": "image_deepfake_analysis",
                     "confidence": confidence,
-                    "context": f"{severity} of synthetic/deepfake content detected",
+                    "context": f"⚠️ AUTHENTICITY ALERT: {authenticity_status}. {severity} of synthetic/deepfake content detected.",
                     "extraction_method": "deepfake_detection_algorithm",
                     "risk_level": risk_level,
-                    "location": f"{image_path} > Image Content",
+                    "location": f"{image_path} > Image Authenticity Analysis",
                     "reason": self._get_deepfake_compliance_reason(),
                     "eu_ai_act_compliance": self._check_eu_ai_act_article_50(image_path, total_score),
                     "analysis_details": {
+                        "authenticity_status": authenticity_status,
                         "overall_score": round(total_score, 3),
                         "artifact_score": round(artifact_score, 3),
                         "noise_score": round(noise_score, 3),
@@ -1669,6 +1675,32 @@ class ImageScanner:
                 }
                 findings.append(finding)
                 logger.info(f"Deepfake detection: {severity} (score: {total_score:.2f}) in {image_path}")
+            else:
+                # Image appears authentic - still report as PRIMARY finding for user clarity
+                authenticity_confidence = max(0.70, 1.0 - total_score)  # Higher score = more likely authentic
+                finding = {
+                    "type": "IMAGE_AUTHENTICITY_CHECK",
+                    "source": image_path,
+                    "source_type": "image_deepfake_analysis",
+                    "confidence": authenticity_confidence,
+                    "context": f"✅ AUTHENTIC IMAGE: No significant deepfake or synthetic media indicators detected. Authenticity confidence: {authenticity_confidence:.0%}",
+                    "extraction_method": "deepfake_detection_algorithm",
+                    "risk_level": "Low",
+                    "location": f"{image_path} > Image Authenticity Analysis",
+                    "reason": "Image passed authenticity checks - no EU AI Act Article 50(2) disclosure required",
+                    "analysis_details": {
+                        "authenticity_status": "AUTHENTIC",
+                        "overall_score": round(total_score, 3),
+                        "artifact_score": round(artifact_score, 3),
+                        "noise_score": round(noise_score, 3),
+                        "compression_score": round(compression_score, 3),
+                        "facial_inconsistency_score": round(facial_inconsistency_score, 3),
+                        "indicators": indicators if indicators else ["No significant anomalies detected"],
+                        "detection_date": datetime.now().isoformat()
+                    }
+                }
+                findings.append(finding)
+                logger.info(f"Image authenticity verified (score: {total_score:.2f}) for {image_path}")
             
         except Exception as e:
             logger.error(f"Deepfake detection error for {image_path}: {e}")
