@@ -29,15 +29,12 @@ Netherlands jurisdiction applies. All disputes subject to Amsterdam courts.
 import streamlit as st
 
 # Configure page FIRST - must be the very first Streamlit command
-# Only configure if not already configured (prevents multiple calls during rerun)
-if 'page_configured' not in st.session_state:
-    st.set_page_config(
-        page_title="DataGuardian Pro",
-        page_icon="🛡️",
-        layout="wide",
-        initial_sidebar_state="collapsed"
-    )
-    st.session_state['page_configured'] = True
+st.set_page_config(
+    page_title="DataGuardian Pro",
+    page_icon="🛡️",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # Capture HTTP referrer on first visit for traffic source tracking
 if 'http_referrer_captured' not in st.session_state:
