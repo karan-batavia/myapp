@@ -133,6 +133,55 @@ if st.query_params.get("payment_success") == "true":
                 _payment_success = True
                 logging.info(f"[PAYMENT DEBUG] Payment VERIFIED as paid, tier: {_plan_tier}")
                 
+                # CRITICAL: Update the user's license tier in the database
+                # This is a fallback in case the webhook didn't process the upgrade
+                try:
+                    from services.database_service import database_service
+                    customer_email = checkout_session.customer_email
+                    user_id_from_metadata = checkout_session.metadata.get('user_id')
+                    
+                    tier_updated = False
+                    
+                    # Try by user_id first
+                    if user_id_from_metadata:
+                        try:
+                            with database_service.get_connection() as conn:
+                                with conn.cursor() as cursor:
+                                    cursor.execute(
+                                        "UPDATE platform_users SET license_tier = %s WHERE id = %s",
+                                        (_plan_tier, int(user_id_from_metadata))
+                                    )
+                                    if cursor.rowcount > 0:
+                                        tier_updated = True
+                                        logging.info(f"[PAYMENT DEBUG] Updated tier to {_plan_tier} for user_id {user_id_from_metadata}")
+                                    conn.commit()
+                        except Exception as uid_err:
+                            logging.warning(f"[PAYMENT DEBUG] Could not update by user_id: {uid_err}")
+                    
+                    # Fallback: update by email
+                    if not tier_updated and customer_email:
+                        try:
+                            with database_service.get_connection() as conn:
+                                with conn.cursor() as cursor:
+                                    cursor.execute(
+                                        "UPDATE platform_users SET license_tier = %s WHERE email = %s",
+                                        (_plan_tier, customer_email)
+                                    )
+                                    if cursor.rowcount > 0:
+                                        tier_updated = True
+                                        logging.info(f"[PAYMENT DEBUG] Updated tier to {_plan_tier} for email {customer_email}")
+                                    conn.commit()
+                        except Exception as email_err:
+                            logging.warning(f"[PAYMENT DEBUG] Could not update by email: {email_err}")
+                    
+                    if tier_updated:
+                        logging.info(f"[PAYMENT DEBUG] Successfully upgraded user to {_plan_tier} tier")
+                    else:
+                        logging.warning(f"[PAYMENT DEBUG] Could not find user to upgrade - user_id: {user_id_from_metadata}, email: {customer_email}")
+                        
+                except Exception as db_update_err:
+                    logging.error(f"[PAYMENT DEBUG] Database tier update failed: {db_update_err}")
+                
                 # Update session state if user is logged in
                 if 'user' in st.session_state:
                     st.session_state['user']['license_tier'] = _plan_tier
