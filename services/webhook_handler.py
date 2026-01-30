@@ -145,8 +145,11 @@ class WebhookHandler:
                     logger.error(f"Failed to upgrade user by email {customer_email} to {plan_tier}")
         
         # Extract scan details from metadata (for per-scan payments)
-        scan_type = metadata.get('scan_type', 'Unknown')
+        scan_type = metadata.get('scan_type')
         country_code = metadata.get('country_code', 'NL')
+        
+        # For subscription payments, use plan tier name; for scan payments, use scan type
+        display_type = plan_tier.title() if plan_tier else (scan_type or 'Service')
         
         # Log payment completion
         payment_record = {
@@ -154,7 +157,7 @@ class WebhookHandler:
             'customer_email': customer_email,
             'amount': amount_total / 100,  # Convert from cents
             'currency': session.get('currency', 'eur'),
-            'scan_type': scan_type,
+            'scan_type': display_type,
             'country_code': country_code,
             'plan_tier': plan_tier,
             'user_id': user_id,
