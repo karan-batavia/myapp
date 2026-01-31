@@ -172,71 +172,67 @@ EU_AI_ACT_ARTICLES = {
     62: {"title": "Measures for providers and deployers (SMEs)", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
     63: {"title": "Derogations for specific operators", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
     
-    # Chapter VII: Governance
+    # Chapter VII: Governance (Articles 64-68)
     64: {"title": "AI Office", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
     65: {"title": "European Artificial Intelligence Board", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
     66: {"title": "Composition of the Board", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
     67: {"title": "Tasks of the Board", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
     68: {"title": "Advisory forum", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
-    69: {"title": "Scientific panel of independent experts", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
-    70: {"title": "National competent authorities", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
-    71: {"title": "Powers of national competent authorities", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
-    72: {"title": "Market surveillance and control", "chapter": "VII - Governance", "category": "surveillance", "mandatory": True},
     
-    # Chapter VIII: EU database
-    73: {"title": "EU database for high-risk AI systems", "chapter": "VIII - EU Database", "category": "registration", "mandatory": True},
+    # Chapter VIII: Market Surveillance (Articles 69-75)
+    69: {"title": "Scientific panel of independent experts", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": False},
+    70: {"title": "National competent authorities", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": True},
+    71: {"title": "Powers of national competent authorities", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": True},
+    72: {"title": "Market surveillance and control", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": True},
+    73: {"title": "EU database for high-risk AI systems", "chapter": "VIII - Market Surveillance", "category": "registration", "mandatory": True},
+    74: {"title": "Post-market monitoring by providers", "chapter": "VIII - Market Surveillance", "category": "monitoring", "mandatory": True},
+    75: {"title": "Reporting of serious incidents", "chapter": "VIII - Market Surveillance", "category": "monitoring", "mandatory": True},
     
-    # Chapter IX: Post-market monitoring, information sharing, market surveillance
-    74: {"title": "Post-market monitoring by providers", "chapter": "IX - Post-Market", "category": "monitoring", "mandatory": True},
-    75: {"title": "Reporting of serious incidents", "chapter": "IX - Post-Market", "category": "monitoring", "mandatory": True},
-    76: {"title": "Market surveillance authorities", "chapter": "IX - Post-Market", "category": "surveillance", "mandatory": True},
-    77: {"title": "Powers of market surveillance authorities", "chapter": "IX - Post-Market", "category": "surveillance", "mandatory": True},
-    78: {"title": "Confidentiality", "chapter": "IX - Post-Market", "category": "governance", "mandatory": True},
-    79: {"title": "Procedure at national level concerning AI systems presenting risk", "chapter": "IX - Post-Market", "category": "surveillance", "mandatory": True},
-    80: {"title": "Union safeguard procedure", "chapter": "IX - Post-Market", "category": "surveillance", "mandatory": True},
-    81: {"title": "Compliant AI systems which present a risk", "chapter": "IX - Post-Market", "category": "surveillance", "mandatory": True},
-    82: {"title": "Formal non-compliance", "chapter": "IX - Post-Market", "category": "enforcement", "mandatory": True},
+    # Chapter IX: Penalties (Articles 76-85)
+    76: {"title": "Market surveillance authorities", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
+    77: {"title": "Powers of market surveillance authorities", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
+    78: {"title": "Confidentiality", "chapter": "IX - Penalties", "category": "governance", "mandatory": True},
+    79: {"title": "Procedure at national level concerning AI systems presenting risk", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
+    80: {"title": "Union safeguard procedure", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
+    81: {"title": "Compliant AI systems which present a risk", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
+    82: {"title": "Formal non-compliance", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
+    83: {"title": "Codes of conduct for voluntary application", "chapter": "IX - Penalties", "category": "governance", "mandatory": False},
+    84: {"title": "Guidelines from the Commission", "chapter": "IX - Penalties", "category": "governance", "mandatory": False},
+    85: {"title": "Penalties", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
     
-    # Chapter X: Codes of conduct and guidelines
-    83: {"title": "Codes of conduct for voluntary application", "chapter": "X - Codes of Conduct", "category": "governance", "mandatory": False},
-    84: {"title": "Guidelines from the Commission", "chapter": "X - Codes of Conduct", "category": "governance", "mandatory": False},
+    # Chapter X: Delegation (Articles 86-92)
+    86: {"title": "Administrative fines on Union institutions", "chapter": "X - Delegation", "category": "enforcement", "mandatory": True},
+    87: {"title": "Exercise of delegation", "chapter": "X - Delegation", "category": "governance", "mandatory": False},
+    88: {"title": "Committee procedure", "chapter": "X - Delegation", "category": "governance", "mandatory": False},
+    89: {"title": "Amendment to Regulation (EC) No 300/2008", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
+    90: {"title": "Amendment to Regulation (EU) No 167/2013", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
+    91: {"title": "Amendment to Regulation (EU) No 168/2013", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
+    92: {"title": "Amendment to Directive 2014/90/EU", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
     
-    # Chapter XI: Delegation and committee procedure
-    85: {"title": "Exercise of delegation", "chapter": "XI - Delegation", "category": "governance", "mandatory": False},
-    86: {"title": "Committee procedure", "chapter": "XI - Delegation", "category": "governance", "mandatory": False},
+    # Chapter XI: Committee (Articles 93-99)
+    93: {"title": "Amendment to Directive (EU) 2016/797", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
+    94: {"title": "Amendment to Regulation (EU) 2018/858", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
+    95: {"title": "Amendment to Regulation (EU) 2018/1139", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
+    96: {"title": "Amendment to Regulation (EU) 2019/2144", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
+    97: {"title": "Amendment to Directive (EU) 2020/1828", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
+    98: {"title": "Amendment to Directive (EU) 2022/2555", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
+    99: {"title": "AI systems already placed on market or in service", "chapter": "XI - Committee", "category": "transition", "mandatory": True},
     
-    # Chapter XII: Penalties
-    87: {"title": "Penalties", "chapter": "XII - Penalties", "category": "enforcement", "mandatory": True},
-    88: {"title": "Administrative fines on Union institutions", "chapter": "XII - Penalties", "category": "enforcement", "mandatory": True},
-    
-    # Chapter XIII: Final provisions
-    89: {"title": "Amendment to Regulation (EC) No 300/2008", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    90: {"title": "Amendment to Regulation (EU) No 167/2013", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    91: {"title": "Amendment to Regulation (EU) No 168/2013", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    92: {"title": "Amendment to Directive 2014/90/EU", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    93: {"title": "Amendment to Directive (EU) 2016/797", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    94: {"title": "Amendment to Regulation (EU) 2018/858", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    95: {"title": "Amendment to Regulation (EU) 2018/1139", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    96: {"title": "Amendment to Regulation (EU) 2019/2144", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    97: {"title": "Amendment to Directive (EU) 2020/1828", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    98: {"title": "Amendment to Directive (EU) 2022/2555", "chapter": "XIII - Final", "category": "amendments", "mandatory": False},
-    99: {"title": "AI systems already placed on market or in service", "chapter": "XIII - Final", "category": "transition", "mandatory": True},
-    100: {"title": "Evaluation and review", "chapter": "XIII - Final", "category": "governance", "mandatory": True},
-    101: {"title": "Entry into force", "chapter": "XIII - Final", "category": "transition", "mandatory": True},
-    102: {"title": "Application dates", "chapter": "XIII - Final", "category": "transition", "mandatory": True},
-    
-    # Additional Articles (extended provisions)
-    103: {"title": "Addressees", "chapter": "XIII - Final", "category": "scope", "mandatory": True},
-    104: {"title": "Annexes - Annex I (Harmonisation legislation)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    105: {"title": "Annexes - Annex II (List of Union harmonisation legislation)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    106: {"title": "Annexes - Annex III (High-risk AI systems)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    107: {"title": "Annexes - Annex IV (Technical documentation)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    108: {"title": "Annexes - Annex V (EU declaration of conformity)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    109: {"title": "Annexes - Annex VI (Conformity assessment procedure)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    110: {"title": "Annexes - Annex VII (Conformity based on QMS)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    111: {"title": "Annexes - Annex VIII (Information for registration)", "chapter": "Annexes", "category": "annexes", "mandatory": True},
-    112: {"title": "Annexes - Annex IX (Union legislation on large-scale IT)", "chapter": "Annexes", "category": "annexes", "mandatory": False},
-    113: {"title": "Annexes - Annex X (Union legislation on financial services)", "chapter": "Annexes", "category": "annexes", "mandatory": False},
+    # Chapter XII: Final Provisions (Articles 100-113)
+    100: {"title": "Evaluation and review", "chapter": "XII - Final Provisions", "category": "governance", "mandatory": True},
+    101: {"title": "Entry into force", "chapter": "XII - Final Provisions", "category": "transition", "mandatory": True},
+    102: {"title": "Application dates", "chapter": "XII - Final Provisions", "category": "transition", "mandatory": True},
+    103: {"title": "Addressees", "chapter": "XII - Final Provisions", "category": "scope", "mandatory": True},
+    104: {"title": "Annexes - Annex I (Harmonisation legislation)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    105: {"title": "Annexes - Annex II (List of Union harmonisation legislation)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    106: {"title": "Annexes - Annex III (High-risk AI systems)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    107: {"title": "Annexes - Annex IV (Technical documentation)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    108: {"title": "Annexes - Annex V (EU declaration of conformity)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    109: {"title": "Annexes - Annex VI (Conformity assessment procedure)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    110: {"title": "Annexes - Annex VII (Conformity based on QMS)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    111: {"title": "Annexes - Annex VIII (Information for registration)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
+    112: {"title": "Annexes - Annex IX (Union legislation on large-scale IT)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": False},
+    113: {"title": "Annexes - Annex X (Union legislation on financial services)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": False},
 }
 
 
@@ -582,6 +578,43 @@ class ConformityAssessmentScorecard:
         if category in self.requirements_status:
             if requirement in self.requirements_status[category]:
                 self.requirements_status[category][requirement] = met
+    
+    def populate_from_compliance_score(self, overall_compliance: float, findings: list = None):
+        """Populate readiness scores based on overall compliance percentage and findings."""
+        findings = findings or []
+        
+        doc_base = max(0, overall_compliance * 0.8)
+        tech_base = max(0, overall_compliance * 0.7)
+        gov_base = max(0, overall_compliance * 0.6)
+        
+        critical_count = sum(1 for f in findings if f.get('severity', '').lower() == 'critical')
+        high_count = sum(1 for f in findings if f.get('severity', '').lower() == 'high')
+        
+        penalty = min(50, critical_count * 15 + high_count * 5)
+        doc_score = max(0, doc_base - penalty * 0.3)
+        tech_score = max(0, tech_base - penalty * 0.4)
+        gov_score = max(0, gov_base - penalty * 0.5)
+        
+        self.requirements_status['documentation']['technical_documentation'] = doc_score >= 50
+        self.requirements_status['documentation']['risk_assessment'] = doc_score >= 40
+        self.requirements_status['documentation']['data_governance_docs'] = doc_score >= 60
+        self.requirements_status['documentation']['testing_documentation'] = doc_score >= 55
+        self.requirements_status['documentation']['instructions_for_use'] = doc_score >= 45
+        
+        self.requirements_status['technical']['accuracy_metrics'] = tech_score >= 50
+        self.requirements_status['technical']['robustness_testing'] = tech_score >= 55
+        self.requirements_status['technical']['cybersecurity_measures'] = tech_score >= 60
+        self.requirements_status['technical']['automatic_logging'] = tech_score >= 40
+        
+        self.requirements_status['governance']['quality_management_system'] = gov_score >= 50
+        self.requirements_status['governance']['human_oversight_procedures'] = gov_score >= 45
+        self.requirements_status['governance']['post_market_monitoring'] = gov_score >= 55
+        self.requirements_status['governance']['incident_response_plan'] = gov_score >= 40
+        
+        self.requirements_status['compliance']['eu_declaration'] = overall_compliance >= 70
+        self.requirements_status['compliance']['ce_marking_ready'] = overall_compliance >= 80
+        self.requirements_status['compliance']['eu_database_registration'] = overall_compliance >= 60
+        self.requirements_status['compliance']['authorized_representative'] = overall_compliance >= 50
     
     def calculate_readiness_score(self) -> ConformityAssessmentReadiness:
         """Calculate conformity assessment readiness"""

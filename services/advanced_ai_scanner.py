@@ -3511,22 +3511,23 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
                         base_score
                     )
     
-    # Update conformity scorecard based on findings
+    # Update conformity scorecard based on findings and compliance score
     eu_ai_act = scan_results.get('eu_ai_act_2025', {})
+    overall_compliance = scan_results.get('compliance_score', 0)
+    findings = scan_results.get('findings', [])
     
-    # Documentation
+    conformity.populate_from_compliance_score(overall_compliance, findings)
+    
     conformity.update_requirement('documentation', 'technical_documentation', 
                                   eu_ai_act.get('documentation', {}).get('has_documentation', False))
     conformity.update_requirement('documentation', 'risk_assessment',
                                   eu_ai_act.get('risk_management', {}).get('risk_assessment_done', False))
     
-    # Technical
     conformity.update_requirement('technical', 'accuracy_metrics',
                                   eu_ai_act.get('accuracy_robustness', {}).get('accuracy_measured', False))
     conformity.update_requirement('technical', 'automatic_logging',
                                   eu_ai_act.get('logging', {}).get('logging_enabled', False))
     
-    # Governance
     conformity.update_requirement('governance', 'human_oversight_procedures',
                                   eu_ai_act.get('human_oversight', {}).get('oversight_implemented', False))
     conformity.update_requirement('governance', 'quality_management_system',
