@@ -1,0 +1,3584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DataGuardian Pro - AI Model Scanner Report</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1f77b4, #2196F3);
+            color: white;
+            padding: 30px;
+            border-radius: 10px 10px 0 0;
+            margin-bottom: 0;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.2em;
+            font-weight: 300;
+        }
+        .header p {
+            margin: 5px 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        .summary {
+            margin: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #28a745;
+        }
+        .summary h2 {
+            margin-top: 0;
+            color: #2c5282;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1f77b4;
+            margin: 10px 0;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #6b7280;
+        }
+        .findings {
+            margin: 30px;
+        }
+        .findings h2 {
+            color: #2c5282;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .finding {
+            margin: 15px 0;
+            padding: 20px;
+            border-left: 4px solid #dc3545;
+            background: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .finding.critical {
+            border-left-color: #dc3545;
+            background: #fef2f2;
+        }
+        .finding.high {
+            border-left-color: #fd7e14;
+            background: #fef3e8;
+        }
+        .finding.medium {
+            border-left-color: #ffc107;
+            background: #fffbeb;
+        }
+        .finding.low {
+            border-left-color: #28a745;
+            background: #f0fdf4;
+        }
+        .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .finding-type {
+            font-weight: 600;
+            color: #374151;
+        }
+        .finding-severity {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .severity-critical {
+            background: #dc3545;
+            color: white;
+        }
+        .severity-high {
+            background: #fd7e14;
+            color: white;
+        }
+        .severity-medium {
+            background: #ffc107;
+            color: #000;
+        }
+        .severity-low {
+            background: #28a745;
+            color: white;
+        }
+        .finding-description {
+            color: #4b5563;
+            line-height: 1.6;
+        }
+        .finding-location {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .scanner-specific {
+            margin: 30px;
+            padding: 25px;
+            background: #e8f5e8;
+            border-radius: 10px;
+        }
+        .footer {
+            margin-top: 0;
+            padding: 20px 30px;
+            background: #6c757d;
+            color: white;
+            text-align: center;
+        }
+        .footer p {
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+        }
+        th {
+            background: #6c757d;
+            color: white;
+            font-weight: 600;
+        }
+        .compliance-score {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+        }
+        .score-excellent { color: #28a745; }
+        .score-good { color: #17a2b8; }
+        .score-warning { color: #ffc107; }
+        .score-danger { color: #dc3545; }
+        
+        /* Enhanced findings styles */
+        .enhanced-finding {
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .finding-content {
+            margin-top: 15px;
+        }
+        .finding-content > div {
+            margin: 10px 0;
+            padding: 8px 0;
+        }
+        .finding-context, .business-impact {
+            background: rgba(0,0,0,0.02);
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        .compliance-section {
+            background: #e3f2fd;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .compliance-section h4 {
+            margin: 0 0 10px 0;
+            color: #1565c0;
+        }
+        .compliance-list {
+            list-style: none;
+            padding: 0;
+        }
+        .compliance-list li {
+            padding: 4px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        .compliance-list li::before {
+            content: "⚖️";
+            position: absolute;
+            left: 0;
+        }
+        .recommendations-section {
+            background: #f3e5f5;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .recommendations-section h4 {
+            margin: 0 0 15px 0;
+            color: #7b1fa2;
+        }
+        .recommendation {
+            background: white;
+            border-radius: 4px;
+            padding: 12px;
+            margin: 10px 0;
+            border-left: 4px solid #9c27b0;
+        }
+        .recommendation-header {
+            font-weight: bold;
+            color: #4a148c;
+            margin-bottom: 8px;
+        }
+        .recommendation-details {
+            font-size: 0.9em;
+            color: #666;
+            margin: 6px 0;
+        }
+        .recommendation-priority {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .priority-critical {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .priority-high {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+        .priority-medium {
+            background: #fffde7;
+            color: #f57f17;
+        }
+        .priority-low {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        /* Compliance Forecast Section Styles */
+        .compliance-forecast-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #dee2e6;
+        }
+        .compliance-forecast-section h2 {
+            color: #1565c0;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        .forecast-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .forecast-metric {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .forecast-metric .metric-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .forecast-metric .metric-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .trend-improving {
+            color: #2e7d32 !important;
+        }
+        .trend-declining {
+            color: #d32f2f !important;
+        }
+        .trend-stable {
+            color: #1976d2 !important;
+        }
+        #compliance-forecast-chart {
+            background: white;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 20px 0;
+            border: 1px solid #e0e0e0;
+        }
+        .forecast-explanation {
+            background: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #e0e0e0;
+        }
+        .forecast-explanation h4 {
+            color: #1565c0;
+            margin-bottom: 15px;
+        }
+        .explanation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .explanation-item {
+            padding: 8px 0;
+            font-size: 0.9em;
+        }
+        .risk-zone-guide {
+            background: #f5f5f5;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 15px;
+        }
+        .risk-zone-guide h5 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .risk-zone-guide ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .risk-zone-guide li {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+    </style>
+        
+</head>
+<body>
+    <div class="container">
+        
+        <div class="header">
+            <h1>🛡️ DataGuardian Pro Report</h1>
+            <p><strong>Scan Type:</strong> AI Model Scanner</p>
+            <p><strong>Scan ID:</strong> 97ab33ae...</p>
+            <p><strong>Generated:</strong> 2026-01-31 13:09:00</p>
+            <p><strong>Region:</strong> Netherlands</p>
+        </div>
+        
+        
+        <div class="summary">
+            <h2>📊 Executive Summary</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">1</div>
+                    <div class="metric-label">Files Scanned</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">45</div>
+                    <div class="metric-label">Total Findings</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">4</div>
+                    <div class="metric-label">Critical Issues</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">30</div>
+                    <div class="metric-label">High Risk Issues</div>
+                </div>
+            </div>
+            <div class="compliance-score score-danger">
+                Compliance Score: 34%
+            </div>
+        </div>
+        
+        
+        <div class="compliance-forecast-section">
+            <h2>🎯 Compliance Score Analysis</h2>
+            <div class="forecast-summary">
+                <div class="forecast-metric">
+                    <span class="metric-value">34.0%</span>
+                    <span class="metric-label">📊 Current Compliance Score</span>
+                </div>
+                <div class="forecast-metric">
+                    <span class="metric-value">🔴 Critical</span>
+                    <span class="metric-label">🚨 Risk Level</span>
+                </div>
+                <div class="forecast-metric">
+                    <span class="metric-value">Financial Services: 78.5%</span>
+                    <span class="metric-label">🏢 Sector Benchmark</span>
+                </div>
+            </div>
+            
+            <div class="forecast-explanation">
+                <h4>📊 Compliance Score Analysis</h4>
+                <div class="explanation-grid">
+                    <div class="explanation-item">
+                        <strong>📊 Current Status:</strong> Your compliance score of 34.0% indicates a critical compliance position.
+                    </div>
+                    <div class="explanation-item">
+                        <strong>🏢 Sector Comparison:</strong> Below average compared to sector benchmarks.
+                    </div>
+                    <div class="explanation-item">
+                        <strong>📈 Recommendations:</strong> Focus on addressing critical findings.
+                    </div>
+                </div>
+            </div>
+            
+            <p style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">
+                💡 <strong>Tip:</strong> Advanced AI-powered compliance forecasting is available with full system dependencies.
+            </p>
+        </div>
+        
+        
+        <div class="scanner-specific">
+            <h2>🤖 AI Model Naleving</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">Unknown</div>
+                    <div class="metric-label">Model Framework</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">Minimal Risk AI System</div>
+                    <div class="metric-label">AI Act 2025 Status</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">34%</div>
+                    <div class="metric-label">Nalevingsscore</div>
+                </div>
+            </div>
+            
+            
+            <div style="margin-top: 30px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px;">
+                <h3 style="color: #1e293b; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    📋 EU AI Act Article Traceability Matrix (All 113 Articles)
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #10b981; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #10b981;">57.6%</div>
+                        <div style="font-size: 12px; color: #64748b;">Total Compliance</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #3b82f6; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #3b82f6;">102</div>
+                        <div style="font-size: 12px; color: #64748b;">Articles Assessed</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #22c55e; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #22c55e;">25</div>
+                        <div style="font-size: 12px; color: #64748b;">Fully Compliant</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #f59e0b; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">11</div>
+                        <div style="font-size: 12px; color: #64748b;">Partially Compliant</div>
+                    </div>
+                    <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 28px; font-weight: bold; color: #ef4444;">66</div>
+                        <div style="font-size: 12px; color: #64748b;">Non-Compliant</div>
+                    </div>
+                </div>
+            
+                <h4 style="color: #475569; margin: 20px 0 15px 0;">Compliance by Chapter</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                        <tr style="background: #1e293b; color: white;">
+                            <th style="padding: 10px; text-align: left; border-radius: 4px 0 0 0;">Chapter</th>
+                            <th style="padding: 10px; text-align: center;">Articles</th>
+                            <th style="padding: 10px; text-align: center;">Compliant</th>
+                            <th style="padding: 10px; text-align: center;">Partial</th>
+                            <th style="padding: 10px; text-align: center;">Score</th>
+                            <th style="padding: 10px; text-align: center; border-radius: 0 4px 0 0;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">I - General Provisions</td>
+                            <td style="padding: 10px; text-align: center;">4</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">1</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">44%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">II - Prohibited Practices</td>
+                            <td style="padding: 10px; text-align: center;">1</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">34%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">III - High-Risk AI</td>
+                            <td style="padding: 10px; text-align: center;">44</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">2</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">42%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">IV - Transparency</td>
+                            <td style="padding: 10px; text-align: center;">1</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">34%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">V - GPAI Models</td>
+                            <td style="padding: 10px; text-align: center;">6</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">5</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">68%</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">⚠️</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">VI - Innovation</td>
+                            <td style="padding: 10px; text-align: center;">7</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">7</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">100%</td>
+                            <td style="padding: 10px; text-align: center; color: #10b981;">✅</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">VII - Governance</td>
+                            <td style="padding: 10px; text-align: center;">9</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">1</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">39%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">VIII - EU Database</td>
+                            <td style="padding: 10px; text-align: center;">1</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">65%</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">⚠️</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">IX - Post-Market</td>
+                            <td style="padding: 10px; text-align: center;">9</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">2</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">43%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">X - Codes of Conduct</td>
+                            <td style="padding: 10px; text-align: center;">2</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">2</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">100%</td>
+                            <td style="padding: 10px; text-align: center; color: #10b981;">✅</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">XI - Delegation</td>
+                            <td style="padding: 10px; text-align: center;">2</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">2</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">100%</td>
+                            <td style="padding: 10px; text-align: center; color: #10b981;">✅</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px;">XII - Penalties</td>
+                            <td style="padding: 10px; text-align: center;">2</td>
+                            <td style="padding: 10px; text-align: center; color: #22c55e;">0</td>
+                            <td style="padding: 10px; text-align: center; color: #f59e0b;">0</td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">34%</td>
+                            <td style="padding: 10px; text-align: center; color: #ef4444;">❌</td>
+                        </tr>
+                    </tbody></table></div>
+                <div style="margin-top: 30px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #f59e0b; border-radius: 12px; padding: 25px;">
+                    <h3 style="color: #92400e; margin-bottom: 20px; border-bottom: 2px solid #f59e0b; padding-bottom: 10px;">
+                        🎯 Prioritized Remediation Plan
+                    </h3>
+                    <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                        <thead>
+                            <tr style="background: #92400e; color: white;">
+                                <th style="padding: 12px; text-align: left;">ID</th>
+                                <th style="padding: 12px; text-align: left;">Artikel</th>
+                                <th style="padding: 12px; text-align: left;">Bevinding</th>
+                                <th style="padding: 12px; text-align: center;">Prioriteit</th>
+                                <th style="padding: 12px; text-align: center;">Impact</th>
+                                <th style="padding: 12px; text-align: center;">Inspanning</th>
+                                <th style="padding: 12px; text-align: center;">Deadline</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0064</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 27</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Deployers must use system according to instru...</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0065</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 29</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Deployers must use system according to instru...</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0066</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 27</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Assign human oversight to competent persons</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0067</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 29</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Assign human oversight to competent persons</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0068</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 27</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Inform natural persons about AI decision maki...</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0069</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 29</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Inform natural persons about AI decision maki...</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0070</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 27</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Ensure accessibility for persons with disabil...</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 10px; font-family: monospace; font-size: 11px;">REM-0071</td>
+                            <td style="padding: 10px; font-weight: 600;">Article 29</td>
+                            <td style="padding: 10px; font-size: 12px;">Non-compliant: Ensure accessibility for persons with disabil...</td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: #ef4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">🔴 CRITICAL</span></td>
+                            <td style="padding: 10px; text-align: center; font-weight: bold;">95</td>
+                            <td style="padding: 10px; text-align: center;">8h</td>
+                            <td style="padding: 10px; text-align: center; font-size: 11px;">2026-08-02</td>
+                        </tr>
+                    
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 15px; font-size: 12px; color: #92400e; font-style: italic;">
+                        💡 Items gesorteerd op zakelijke impactscore. Focus eerst op kritieke en hoge prioriteit items.
+                    </p>
+                </div>
+                
+            <div style="margin-top: 30px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #3b82f6; border-radius: 12px; padding: 25px;">
+                <h3 style="color: #1e40af; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
+                    📊 Conformity Assessment Readiness Scorecard
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: #3b82f6;">0%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Overall Readiness</div>
+                        <div style="font-size: 16px; margin-top: 5px;">❌</div>
+                    </div>
+                
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: #8b5cf6;">0%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Documentation</div>
+                        <div style="font-size: 16px; margin-top: 5px;">❌</div>
+                    </div>
+                
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: #06b6d4;">0%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Technical</div>
+                        <div style="font-size: 16px; margin-top: 5px;">❌</div>
+                    </div>
+                
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: #10b981;">0%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Governance</div>
+                        <div style="font-size: 16px; margin-top: 5px;">❌</div>
+                    </div>
+                
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">0%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Human Oversight</div>
+                        <div style="font-size: 16px; margin-top: 5px;">❌</div>
+                    </div>
+                
+                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <div style="font-size: 24px; font-weight: bold; color: #ef4444;">0%</div>
+                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">Risk Management</div>
+                        <div style="font-size: 16px; margin-top: 5px;">❌</div>
+                    </div>
+                </div>
+                <div style="background: white; padding: 20px; border-radius: 8px; margin-top: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <span style="font-weight: bold; color: #1e40af;">⏱️ Estimated Time to Ready:</span>
+                        <span style="background: #1e40af; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">6+ months preparation</span>
+                    </div>
+                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
+                        <strong style="color: #1e40af;">Key Recommendations:</strong>
+                        <ul style="margin-top: 10px; padding-left: 20px;">
+            <li style="margin-bottom: 5px; color: #475569; font-size: 13px;">🚨 CRITICAL: Establish basic compliance framework before conformity assessment</li><li style="margin-bottom: 5px; color: #475569; font-size: 13px;">📋 Create technical documentation according to Annex IV requirements</li><li style="margin-bottom: 5px; color: #475569; font-size: 13px;">⚖️ Implement risk management system per Article 9</li><li style="margin-bottom: 5px; color: #475569; font-size: 13px;">📊 Develop quality management system per Article 16</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #16a34a; border-radius: 12px; padding: 25px;">
+                <h3 style="color: #166534; margin-bottom: 20px; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">
+                    📄 Regulator-Ready Executive Summary
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <h4 style="color: #166534; margin-bottom: 10px;">Compliance Overview</h4>
+                        <table style="width: 100%; font-size: 13px;">
+                            <tr><td style="padding: 5px; color: #64748b;">Total Score:</td><td style="padding: 5px; font-weight: bold;">57.6%</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Rating:</td><td style="padding: 5px; font-weight: bold;">PARTIALLY COMPLIANT</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">Articles Assessed:</td><td style="padding: 5px; font-weight: bold;">102</td></tr>
+                        </table>
+                    </div>
+                    <div>
+                        <h4 style="color: #166534; margin-bottom: 10px;">Regulatory Deadlines</h4>
+                        <table style="width: 100%; font-size: 13px;">
+                            <tr><td style="padding: 5px; color: #64748b;">Prohibited Practices:</td><td style="padding: 5px; font-weight: bold;">Feb 2, 2025</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">GPAI Models:</td><td style="padding: 5px; font-weight: bold;">Aug 2, 2025</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">High-Risk Systems:</td><td style="padding: 5px; font-weight: bold;">Aug 2, 2026</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px;">
+                    <strong style="color: #166534;">🇳🇱 Netherlands Specific:</strong>
+                    <p style="margin-top: 10px; font-size: 13px; color: #475569;">
+                        Authority: Dutch Data Protection Authority (AP) | UAVG compliance ensured | BSN processing procedures implemented where applicable
+                    </p>
+                </div>
+                <p style="margin-top: 15px; text-align: center; font-size: 11px; color: #64748b;">
+                    Assessment Date: 2026-01-31 | Assessor: DataGuardian Pro AI Compliance Platform | Valid until material changes
+                </p>
+            </div>
+            
+        </div>
+        
+        
+        <div class="findings">
+            <h2>🔍 Detailed Findings</h2>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Ai Governance Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> AI governance deficiencies identified: Risk management system not implemented, Human oversight not implemented, Inadequate data governance practices
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: AI governance deficiencies identified: Risk management system not implemented, Human oversight not implemented, Inadequate data governance practices. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI System Management
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Provider Obligations Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing 8 provider requirements
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Missing 8 provider requirements</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 16-25
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Missing 8 provider requirements
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Deployer Obligations Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing 6 deployer requirements
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Missing 6 deployer requirements</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 26-27
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Missing 6 deployer requirements
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Conformity Assessment Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> AI system lacks required conformity assessment, CE marking, or EU database registration
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> AI system lacks required conformity assessment, CE marking, or EU database registration</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 38-46
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: AI system lacks required conformity assessment, CE marking, or EU database registration
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Gpai Compliance Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> GPAI model compliance issues: Article 52: 100% non-compliant
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> EU AI Act compliance finding: GPAI model compliance issues: Article 52: 100% non-compliant</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 52-56
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> EU AI Act non-compliance can result in significant fines and market access restrictions</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act - General Requirements</li></ul>
+            <ul class='compliance-list'><li>Review specific EU AI Act article requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Address EU AI Act Requirement
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> GPAI model compliance issues: Article 52: 100% non-compliant
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Review applicable EU AI Act article and implement required controls
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 2-8 hours | 
+                    <strong>Verification:</strong> Compliance audit
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Post Market Monitoring Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing post-market monitoring plan, incident reporting system, or malfunction tracking
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Missing post-market monitoring plan, incident reporting system, or malfunction tracking</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 85-87
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Missing post-market monitoring plan, incident reporting system, or malfunction tracking
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding low">
+                <div class="finding-header">
+                    <span class="finding-type">Ai Literacy Finding</span>
+                    <span class="finding-severity severity-low">Low</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Staff training programs or user guidance insufficient for AI system deployment
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Staff training programs or user guidance insufficient for AI system deployment</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Article 4
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Low - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-low">Low</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Staff training programs or user guidance insufficient for AI system deployment
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Enforcement Readiness Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing explanation mechanisms or supervisory authority cooperation procedures
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Missing explanation mechanisms or supervisory authority cooperation procedures</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 88-94
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Missing explanation mechanisms or supervisory authority cooperation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding low">
+                <div class="finding-header">
+                    <span class="finding-type">Governance Structures Finding</span>
+                    <span class="finding-severity severity-low">Low</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Missing awareness of AI Office or national authority (Autoriteit Persoonsgegevens (AP))
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Missing awareness of AI Office or national authority (Autoriteit Persoonsgegevens (AP)). AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> EU AI Act Articles 60-75
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Low - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-low">Low</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Risk Management Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Establish and maintain risk management system
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Establish and maintain risk management system</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/risk-assessment.md or /RISK_MANAGEMENT.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Establish and maintain risk management system
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Risk Management Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Identify and analyze known and foreseeable risks
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Identify and analyze known and foreseeable risks</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/risk-assessment.md or /RISK_MANAGEMENT.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Identify and analyze known and foreseeable risks
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Risk Management Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Estimate and evaluate risks from intended use and misuse
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Estimate and evaluate risks from intended use and misuse</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/risk-assessment.md or /RISK_MANAGEMENT.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Estimate and evaluate risks from intended use and misuse
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Risk Management Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Evaluate emerging risks from post-market monitoring
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Evaluate emerging risks from post-market monitoring</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/risk-assessment.md or /RISK_MANAGEMENT.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Evaluate emerging risks from post-market monitoring
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Risk Management Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Adopt proportionate risk mitigation measures
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Adopt proportionate risk mitigation measures</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/risk-assessment.md or /RISK_MANAGEMENT.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Adopt proportionate risk mitigation measures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Risk Management Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Define appropriate testing and validation procedures
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Define appropriate testing and validation procedures</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/risk-assessment.md or /RISK_MANAGEMENT.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Define appropriate testing and validation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Data Governance Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Develop training data quality criteria
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Non-compliant: Develop training data quality criteria. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/data/ or /datasets/ or /training_data/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Training Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Data Governance Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Implement data governance measures
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Non-compliant: Implement data governance measures. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/data/ or /datasets/ or /training_data/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Training Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Data Governance Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Ensure data is relevant, representative, and error-free
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Non-compliant: Ensure data is relevant, representative, and error-free. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/data/ or /datasets/ or /training_data/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Training Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Data Governance Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Consider geographic/contextual deployment factors
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Non-compliant: Consider geographic/contextual deployment factors. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/data/ or /datasets/ or /training_data/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Training Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Data Governance Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Detect and mitigate possible biases
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Accountability finding: Non-compliant: Detect and mitigate possible biases. AI systems require clear governance and accountability frameworks.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/data/ or /datasets/ or /training_data/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> Training Data</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Lack of accountability framework creates compliance and liability risks</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Articles 14-15 - Human Oversight and Accountability</li><li>GDPR Article 5(2) - Accountability</li></ul>
+            <ul class='compliance-list'><li>Establish governance framework</li><li>Assign clear responsibilities</li><li>Implement audit mechanisms</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Establish Accountability Framework
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Implement AI governance structure
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Define roles, responsibilities, decision-making processes, and escalation procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 8-16 hours | 
+                    <strong>Verification:</strong> Governance framework review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Documentation Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Draw up technical documentation before market placement
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Documentation review: Non-compliant: Draw up technical documentation before market placement. Proper documentation supports transparency and accountability.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/ or /README.md or /MODEL_CARD.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Inadequate documentation hinders transparency and complicates regulatory compliance</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 11 - Technical Documentation</li><li>GDPR Article 30 - Records of Processing</li></ul>
+            <ul class='compliance-list'><li>Maintain comprehensive documentation</li><li>Document AI system design decisions</li><li>Keep records up to date</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Enhance Documentation
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Improve AI system documentation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document architecture, training data, testing results, and operational procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Documentation completeness review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Documentation Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Keep documentation up-to-date throughout lifecycle
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Documentation review: Non-compliant: Keep documentation up-to-date throughout lifecycle. Proper documentation supports transparency and accountability.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/ or /README.md or /MODEL_CARD.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Inadequate documentation hinders transparency and complicates regulatory compliance</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 11 - Technical Documentation</li><li>GDPR Article 30 - Records of Processing</li></ul>
+            <ul class='compliance-list'><li>Maintain comprehensive documentation</li><li>Document AI system design decisions</li><li>Keep records up to date</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Enhance Documentation
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Improve AI system documentation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document architecture, training data, testing results, and operational procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Documentation completeness review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Documentation Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Automatic recording of events (logs)
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Documentation review: Non-compliant: Automatic recording of events (logs). Proper documentation supports transparency and accountability.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/ or /README.md or /MODEL_CARD.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Inadequate documentation hinders transparency and complicates regulatory compliance</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 11 - Technical Documentation</li><li>GDPR Article 30 - Records of Processing</li></ul>
+            <ul class='compliance-list'><li>Maintain comprehensive documentation</li><li>Document AI system design decisions</li><li>Keep records up to date</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Enhance Documentation
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Improve AI system documentation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document architecture, training data, testing results, and operational procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Documentation completeness review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Documentation Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Enable traceability of AI system functioning
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Documentation review: Non-compliant: Enable traceability of AI system functioning. Proper documentation supports transparency and accountability.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/ or /README.md or /MODEL_CARD.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Inadequate documentation hinders transparency and complicates regulatory compliance</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 11 - Technical Documentation</li><li>GDPR Article 30 - Records of Processing</li></ul>
+            <ul class='compliance-list'><li>Maintain comprehensive documentation</li><li>Document AI system design decisions</li><li>Keep records up to date</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Enhance Documentation
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Improve AI system documentation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document architecture, training data, testing results, and operational procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Documentation completeness review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">Documentation Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Log granularity appropriate to intended purpose
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Documentation review: Non-compliant: Log granularity appropriate to intended purpose. Proper documentation supports transparency and accountability.</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/ or /README.md or /MODEL_CARD.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Inadequate documentation hinders transparency and complicates regulatory compliance</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>EU AI Act Article 11 - Technical Documentation</li><li>GDPR Article 30 - Records of Processing</li></ul>
+            <ul class='compliance-list'><li>Maintain comprehensive documentation</li><li>Document AI system design decisions</li><li>Keep records up to date</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Enhance Documentation
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Improve AI system documentation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Document architecture, training data, testing results, and operational procedures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Verification:</strong> Documentation completeness review
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Human Oversight Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Design system for effective human oversight
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Design system for effective human oversight</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/config/oversight.yaml or /deployment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Design system for effective human oversight
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Human Oversight Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Provide appropriate tools for overseers
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Provide appropriate tools for overseers</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/config/oversight.yaml or /deployment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Provide appropriate tools for overseers
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Human Oversight Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Enable understanding of system capabilities and limitations
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Enable understanding of system capabilities and limitations</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/config/oversight.yaml or /deployment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Enable understanding of system capabilities and limitations
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Human Oversight Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Enable override or interruption of system
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Enable override or interruption of system</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/config/oversight.yaml or /deployment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Enable override or interruption of system
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Accuracy Robustness Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Achieve appropriate level of accuracy
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Achieve appropriate level of accuracy</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/tests/ or /benchmarks/ or /evaluation/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Achieve appropriate level of accuracy
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Accuracy Robustness Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Resilient against errors, faults, inconsistencies
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Resilient against errors, faults, inconsistencies</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/tests/ or /benchmarks/ or /evaluation/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Resilient against errors, faults, inconsistencies
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Accuracy Robustness Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Technical redundancy and fail-safe measures
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Technical redundancy and fail-safe measures</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/tests/ or /benchmarks/ or /evaluation/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Technical redundancy and fail-safe measures
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Accuracy Robustness Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Protect against unauthorized access and manipulation
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Protect against unauthorized access and manipulation</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/tests/ or /benchmarks/ or /evaluation/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Protect against unauthorized access and manipulation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Accuracy Robustness Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Resilient against adversarial attacks
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Resilient against adversarial attacks</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/tests/ or /benchmarks/ or /evaluation/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Resilient against adversarial attacks
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding critical">
+                <div class="finding-header">
+                    <span class="finding-type">Fundamental Rights Gap Finding</span>
+                    <span class="finding-severity severity-critical">Critical</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Deployers must use system according to instructions
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Deployers must use system according to instructions</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/FRIA.md or /compliance/impact-assessment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Critical - Review within 24 hours</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-critical">Critical</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Deployers must use system according to instructions
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding critical">
+                <div class="finding-header">
+                    <span class="finding-type">Fundamental Rights Gap Finding</span>
+                    <span class="finding-severity severity-critical">Critical</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Assign human oversight to competent persons
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Assign human oversight to competent persons</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/FRIA.md or /compliance/impact-assessment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Critical - Review within 24 hours</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-critical">Critical</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Assign human oversight to competent persons
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding critical">
+                <div class="finding-header">
+                    <span class="finding-type">Fundamental Rights Gap Finding</span>
+                    <span class="finding-severity severity-critical">Critical</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Inform natural persons about AI decision making
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Inform natural persons about AI decision making</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/FRIA.md or /compliance/impact-assessment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Critical - Review within 24 hours</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-critical">Critical</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Inform natural persons about AI decision making
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding critical">
+                <div class="finding-header">
+                    <span class="finding-type">Fundamental Rights Gap Finding</span>
+                    <span class="finding-severity severity-critical">Critical</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Ensure accessibility for persons with disabilities
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Ensure accessibility for persons with disabilities</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/FRIA.md or /compliance/impact-assessment/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Critical - Review within 24 hours</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-critical">Critical</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Ensure accessibility for persons with disabilities
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Incident Reporting Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Report serious incidents to market surveillance authority
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Report serious incidents to market surveillance authority</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/incident-response.md or /.github/INCIDENT_TEMPLATE.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Report serious incidents to market surveillance authority
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Incident Reporting Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Immediate notification for death or serious harm
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Immediate notification for death or serious harm</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/incident-response.md or /.github/INCIDENT_TEMPLATE.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Immediate notification for death or serious harm
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Incident Reporting Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Report within 15 days of establishing causal link
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Report within 15 days of establishing causal link</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/incident-response.md or /.github/INCIDENT_TEMPLATE.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Report within 15 days of establishing causal link
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding high">
+                <div class="finding-header">
+                    <span class="finding-type">Incident Reporting Gap Finding</span>
+                    <span class="finding-severity severity-high">High</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Notify of corrective actions taken
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Notify of corrective actions taken</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/docs/incident-response.md or /.github/INCIDENT_TEMPLATE.md
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> High - Review within 3 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-high">High</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Notify of corrective actions taken
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">National Authority Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Identify relevant national competent authority
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Identify relevant national competent authority</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/compliance/ or /docs/regulatory/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Identify relevant national competent authority
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">National Authority Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Cooperate with market surveillance authorities
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Cooperate with market surveillance authorities</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/compliance/ or /docs/regulatory/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Cooperate with market surveillance authorities
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+            <div class="finding enhanced-finding medium">
+                <div class="finding-header">
+                    <span class="finding-type">National Authority Gap Finding</span>
+                    <span class="finding-severity severity-medium">Medium</span>
+                </div>
+                
+                <div class="finding-content">
+                    
+                    
+                    <div class="finding-description">
+                        <strong>Description:</strong> Non-compliant: Provide access to documentation and source code
+                    </div>
+                    
+                    <div class="finding-context"><strong>Context:</strong> Non-compliant: Provide access to documentation and source code</div>
+                    
+                    <div class="finding-location">
+                        <strong>Location:</strong> AI Model Repository/compliance/ or /docs/regulatory/
+                    </div>
+                    
+                    <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
+                    
+                    <div class="business-impact"><strong>Business Impact:</strong> Potential security or compliance impact requiring investigation</div>
+                    
+                    <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
+                    
+                    <div class="estimated-effort"><strong>Estimated Effort:</strong> 1-4 hours - Investigation and remediation</div>
+                    
+                    
+        <div class="compliance-section">
+            <h4>⚖️ Compliance Requirements</h4>
+            <ul class='compliance-list'><li>Article 32 - Security of processing</li></ul>
+            <ul class='compliance-list'><li>Review specific requirements</li><li>Implement appropriate controls</li></ul>
+        </div>
+        
+                    
+                    
+        <div class="recommendations-section">
+            <h4>💡 Practical Recommendations</h4>
+            
+            <div class="recommendation">
+                <div class="recommendation-header">
+                    Review and Remediate
+                    <span class="recommendation-priority priority-medium">Medium</span>
+                </div>
+                <div class="recommendation-details">
+                    <strong>Description:</strong> Address: Non-compliant: Provide access to documentation and source code
+                </div>
+                <div class="recommendation-details">
+                    <strong>Implementation:</strong> Investigate the finding and implement appropriate remediation
+                </div>
+                <div class="recommendation-details">
+                    <strong>Effort:</strong> 1-4 hours | 
+                    <strong>Verification:</strong> Confirm remediation complete
+                </div>
+            </div>
+            
+        </div>
+        
+                </div>
+            </div>
+            
+        </div>
+        
+        
+        <div class="footer">
+            <p>Generated by DataGuardian Pro - Enterprise Privacy & Sustainability Compliance Platform</p>
+            <p>Report ID: 97ab33ae3f | Generated: 2026-01-31 13:09:00</p>
+        </div>
+        
+    </div>
+</body>
+</html>
