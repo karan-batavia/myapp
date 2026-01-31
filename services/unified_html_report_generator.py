@@ -2388,71 +2388,6 @@ class UnifiedHTMLReportGenerator:
                 </div>
                 """
             
-            # Conformity Assessment Readiness Scorecard
-            conformity = enhanced.get('conformity_scorecard', {})
-            readiness = conformity.get('readiness_scores', {})
-            
-            conformity_html = f"""
-            <div style="margin-top: 30px; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border: 1px solid #3b82f6; border-radius: 12px; padding: 25px;">
-                <h3 style="color: #1e40af; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px;">
-                    📊 {t['conformity_scorecard']}
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
-            """
-            
-            # Language-aware readiness labels
-            overall_label = "Algehele Gereedheid" if is_dutch else "Overall Readiness"
-            doc_label = "Documentatie" if is_dutch else "Documentation"
-            tech_label = "Technisch" if is_dutch else "Technical"
-            gov_label = "Bestuur" if is_dutch else "Governance"
-            oversight_label = "Menselijk Toezicht" if is_dutch else "Human Oversight"
-            risk_label = "Risicobeheer" if is_dutch else "Risk Management"
-            
-            readiness_items = [
-                (overall_label, readiness.get('overall', 0), "#3b82f6"),
-                (doc_label, readiness.get('documentation', 0), "#8b5cf6"),
-                (tech_label, readiness.get('technical', 0), "#06b6d4"),
-                (gov_label, readiness.get('governance', 0), "#10b981"),
-                (oversight_label, readiness.get('human_oversight', 0), "#f59e0b"),
-                (risk_label, readiness.get('risk_management', 0), "#ef4444"),
-            ]
-            
-            for label, score, color in readiness_items:
-                status_icon = "✅" if score >= 80 else "⚠️" if score >= 50 else "❌"
-                conformity_html += f"""
-                    <div style="background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <div style="font-size: 24px; font-weight: bold; color: {color};">{score:.0f}%</div>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 5px;">{label}</div>
-                        <div style="font-size: 16px; margin-top: 5px;">{status_icon}</div>
-                    </div>
-                """
-            
-            conformity_html += "</div>"
-            
-            # Time to ready estimate
-            time_to_ready = conformity.get('estimated_time_to_ready', 'Unknown')
-            recommendations = conformity.get('recommendations', [])[:4]
-            
-            conformity_html += f"""
-                <div style="background: white; padding: 20px; border-radius: 8px; margin-top: 15px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <span style="font-weight: bold; color: #1e40af;">⏱️ {t['time_to_ready']}:</span>
-                        <span style="background: #1e40af; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold;">{time_to_ready}</span>
-                    </div>
-                    <div style="border-top: 1px solid #e2e8f0; padding-top: 15px;">
-                        <strong style="color: #1e40af;">{t['key_recommendations']}:</strong>
-                        <ul style="margin-top: 10px; padding-left: 20px;">
-            """
-            
-            for rec in recommendations:
-                conformity_html += f'<li style="margin-bottom: 5px; color: #475569; font-size: 13px;">{rec}</li>'
-            
-            conformity_html += """
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            """
             
             # Executive Summary for Regulators
             exec_summary = enhanced.get('executive_summary', {})
@@ -2493,7 +2428,7 @@ class UnifiedHTMLReportGenerator:
             </div>
             """
             
-            return traceability_html + remediation_html + conformity_html + executive_html
+            return traceability_html + remediation_html + executive_html
             
         except Exception as e:
             logger.warning(f"Could not generate enhanced AI Act sections: {e}")
