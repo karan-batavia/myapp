@@ -225,7 +225,7 @@ class AdvancedAIScanner:
         # Phase 5: Articles 38-46 - Conformity Assessment & CE Marking
         conformity_assessment = self._assess_conformity_assessment(model_metadata)
         
-        # Phase 6: Articles 52-56 - Complete GPAI Requirements
+        # Phase 6: Articles 51-55 - Complete GPAI Requirements
         complete_gpai_compliance = self._assess_complete_gpai_requirements(basic_analysis, model_metadata)
         
         # Phase 7: Articles 85-87 - Post-Market Monitoring
@@ -1344,7 +1344,7 @@ class AdvancedAIScanner:
                     'severity': 'High' if gpai.get('systemic_risk_model') else 'Medium',
                     'title': 'General Purpose AI Model Non-Compliance',
                     'description': f"GPAI model compliance issues: {'; '.join(issues)}",
-                    'location': 'EU AI Act Articles 52-56',
+                    'location': 'EU AI Act Articles 51-55',
                     'impact': 'Up to €15M or 3% of annual turnover (systemic risk models face enhanced penalties)',
                     'recommendation': 'Complete technical documentation (Annex XI/XII), publish training data summary, ensure copyright compliance, conduct systemic risk evaluations'
                 })
@@ -1642,7 +1642,7 @@ class AdvancedAIScanner:
             recommendations.append({
                 'priority': severity,
                 'category': 'General Purpose AI',
-                'action': 'Complete GPAI Requirements (Articles 52-56)',
+                'action': 'Complete GPAI Requirements (Articles 51-55)',
                 'description': 'Implement technical documentation (Annex XI/XII), training data summaries, copyright compliance, and systemic risk evaluations' if gpai.get('systemic_risk_model') else 'Complete GPAI documentation and transparency requirements',
                 'effort_estimate': '3-8 months',
                 'cost_estimate': '€50,000-€200,000'
@@ -3124,18 +3124,25 @@ class AdvancedAIScanner:
                 'articles': list(range(61, 69)),
                 'covered': [a for a in all_covered if 61 <= a <= 68]
             },
-            'Chapter VIII - Market Surveillance (Art. 69-84)': {
-                'articles': list(range(69, 85)),
-                'covered': [a for a in all_covered if 69 <= a <= 84]
+            'Chapter VIII - Market Surveillance (Art. 69-75)': {
+                'articles': list(range(69, 76)),
+                'covered': [a for a in all_covered if 69 <= a <= 75]
             },
-            'Chapter IX - Post-Market Monitoring (Art. 85-87)': {'articles': [85, 86, 87], 'covered': [85, 86, 87]},
-            'Chapter X - Enforcement (Art. 88-94)': {
-                'articles': list(range(88, 95)),
-                'covered': [a for a in all_covered if 88 <= a <= 94]
+            'Chapter IX - Penalties (Art. 76-85)': {
+                'articles': list(range(76, 86)),
+                'covered': [a for a in all_covered if 76 <= a <= 85]
             },
-            'Chapter XI - Delegation & Final (Art. 95-113)': {
-                'articles': list(range(95, 114)),
-                'covered': [a for a in all_covered if 95 <= a <= 113]
+            'Chapter X - Delegation (Art. 86-92)': {
+                'articles': list(range(86, 93)),
+                'covered': [a for a in all_covered if 86 <= a <= 92]
+            },
+            'Chapter XI - Committee (Art. 93-99)': {
+                'articles': list(range(93, 100)),
+                'covered': [a for a in all_covered if 93 <= a <= 99]
+            },
+            'Chapter XII - Final Provisions (Art. 100-113)': {
+                'articles': list(range(100, 114)),
+                'covered': [a for a in all_covered if 100 <= a <= 113]
             }
         }
         

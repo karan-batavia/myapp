@@ -712,13 +712,45 @@ class EnhancedFindingGenerator:
         
         # Default fallback with description-based context
         else:
+            compliance_ref = self._get_ai_act_article_for_finding(finding_type, description)
             return (
                 description if len(description) > 30 else f"Compliance finding requiring review: {description}",
-                ['Article 32 - Security of processing'],
+                [compliance_ref],
                 ['Review specific requirements', 'Implement appropriate controls'],
                 "Potential security or compliance impact requiring investigation",
                 [ActionableRecommendation(action="Review and Remediate", description=f"Address: {description}", implementation="Investigate the finding and implement appropriate remediation", effort_estimate="1-4 hours", priority=severity, verification="Confirm remediation complete")]
             )
+    
+    def _get_ai_act_article_for_finding(self, finding_type: str, description: str) -> str:
+        """Map finding type to appropriate EU AI Act article instead of generic GDPR reference."""
+        finding_lower = finding_type.lower() + ' ' + description.lower()
+        
+        if 'prohibited' in finding_lower or 'social_scoring' in finding_lower or 'subliminal' in finding_lower:
+            return 'EU AI Act Article 5 - Prohibited AI Practices (Penalty: €35M or 7% turnover)'
+        elif 'high_risk' in finding_lower or 'biometric' in finding_lower:
+            return 'EU AI Act Articles 6-15 - High-Risk AI Requirements (Penalty: €15M or 3% turnover)'
+        elif 'transparency' in finding_lower:
+            return 'EU AI Act Article 50 - Transparency Obligations (Penalty: €15M or 3% turnover)'
+        elif 'gpai' in finding_lower or 'foundation' in finding_lower or 'general_purpose' in finding_lower:
+            return 'EU AI Act Articles 51-55 - GPAI Model Obligations (Penalty: €15M or 3% turnover)'
+        elif 'human_oversight' in finding_lower:
+            return 'EU AI Act Article 14 - Human Oversight (Penalty: €15M or 3% turnover)'
+        elif 'data_governance' in finding_lower or 'training_data' in finding_lower:
+            return 'EU AI Act Article 10 - Data Governance (Penalty: €15M or 3% turnover)'
+        elif 'risk_management' in finding_lower:
+            return 'EU AI Act Article 9 - Risk Management (Penalty: €15M or 3% turnover)'
+        elif 'documentation' in finding_lower or 'technical_doc' in finding_lower:
+            return 'EU AI Act Article 11 - Technical Documentation (Penalty: €15M or 3% turnover)'
+        elif 'deployer' in finding_lower:
+            return 'EU AI Act Articles 26-27 - Deployer Obligations (Penalty: €15M or 3% turnover)'
+        elif 'conformity' in finding_lower or 'ce_marking' in finding_lower:
+            return 'EU AI Act Articles 43-49 - Conformity Assessment (Penalty: €15M or 3% turnover)'
+        elif 'post_market' in finding_lower or 'monitoring' in finding_lower:
+            return 'EU AI Act Articles 61-68 - Post-Market Monitoring (Penalty: €15M or 3% turnover)'
+        elif 'ai_act' in finding_lower:
+            return 'EU AI Act - General Requirements (Penalty: €7.5M or 1.5% turnover)'
+        else:
+            return 'EU AI Act Article 9 - Risk Management System (Penalty: €15M or 3% turnover)'
     
     def _infer_affected_systems(self, finding_type: str) -> List[str]:
         """Infer affected systems from finding type"""

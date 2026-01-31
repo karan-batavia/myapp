@@ -715,10 +715,30 @@ class UnifiedHTMLReportGenerator:
         </div>
         """
     
+    def _deduplicate_findings(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Remove duplicate findings based on article reference and description."""
+        seen = set()
+        deduplicated = []
+        
+        for finding in findings:
+            article_ref = finding.get('article_reference', finding.get('location', ''))
+            description = finding.get('description', finding.get('title', ''))
+            finding_type = finding.get('type', '')
+            
+            key = f"{article_ref}|{description[:100]}|{finding_type}"
+            
+            if key not in seen:
+                seen.add(key)
+                deduplicated.append(finding)
+        
+        return deduplicated
+    
     def _generate_findings_html(self, findings: List[Dict[str, Any]]) -> str:
         """Generate HTML for enhanced findings list with actionable recommendations."""
         if not findings:
             return f"<p>✅ {t_report('no_issues_found', 'No issues found in the analysis.')}</p>"
+        
+        findings = self._deduplicate_findings(findings)
         
         # Separate deepfake findings from other findings
         deepfake_findings = [f for f in findings if f.get('type') == 'DEEPFAKE_SYNTHETIC_MEDIA']
@@ -785,6 +805,8 @@ class UnifiedHTMLReportGenerator:
                     {f'<div class="remediation-priority"><strong>Priority:</strong> {remediation_priority}</div>' if remediation_priority else ''}
                     
                     {f'<div class="estimated-effort"><strong>Estimated Effort:</strong> {estimated_effort}</div>' if estimated_effort else ''}
+                    
+                    {self._generate_penalty_info(finding)}
                     
                     {self._generate_compliance_section(gdpr_articles, compliance_requirements, tsc_criteria, nis2_articles)}
                     
@@ -921,6 +943,38 @@ class UnifiedHTMLReportGenerator:
         
         section_html += "</div>"
         return section_html
+    
+    def _generate_penalty_info(self, finding: Dict[str, Any]) -> str:
+        """Generate HTML for EU AI Act penalty information based on finding severity and type."""
+        finding_type = finding.get('type', '').lower()
+        severity = finding.get('severity', 'Medium').lower()
+        article_ref = finding.get('article_reference', finding.get('location', '')).lower()
+        
+        penalty_html = ""
+        
+        if 'prohibited' in finding_type or 'article 5' in article_ref or severity == 'critical':
+            penalty_html = """
+            <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #991b1b;">⚠️ Penalty Risk - Tier 1 (Prohibited Practices):</strong>
+                <span style="color: #b91c1c; font-weight: 600;">Up to €35 million or 7% of global annual turnover</span>
+            </div>
+            """
+        elif 'high_risk' in finding_type or 'gpai' in finding_type or severity == 'high' or any(x in article_ref for x in ['article 6', 'article 9', 'article 10', 'article 51', 'article 52']):
+            penalty_html = """
+            <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #92400e;">⚠️ Penalty Risk - Tier 2 (High-Risk/GPAI Requirements):</strong>
+                <span style="color: #b45309; font-weight: 600;">Up to €15 million or 3% of global annual turnover</span>
+            </div>
+            """
+        elif 'ai_act' in finding_type or 'eu ai' in article_ref.lower():
+            penalty_html = """
+            <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #1e40af;">ℹ️ Penalty Risk - Tier 3 (Other Violations):</strong>
+                <span style="color: #1d4ed8; font-weight: 600;">Up to €7.5 million or 1.5% of global annual turnover</span>
+            </div>
+            """
+        
+        return penalty_html
     
     def _generate_deepfake_indicators_html(self, indicators: List[str]) -> str:
         """Generate HTML for deepfake detection indicators."""
@@ -2039,7 +2093,7 @@ class UnifiedHTMLReportGenerator:
                 ("Transparency (Art. 50)", transparency),
                 ("Provider/Deployer Obligations", provider_deployer),
                 ("Conformity Assessment", conformity),
-                ("GPAI Compliance (Art. 52-56)", gpai),
+                ("GPAI Compliance (Art. 51-55)", gpai),
                 ("Post-Market Monitoring", post_market),
                 ("AI Literacy (Art. 4)", ai_literacy),
                 ("Enforcement & Rights", enforcement),
