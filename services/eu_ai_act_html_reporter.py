@@ -358,6 +358,12 @@ def _calculate_articles_covered(findings: List[Dict[str, Any]]) -> int:
         for prefix, articles in type_article_map.items():
             if finding_type.startswith(prefix):
                 covered_articles.update(articles)
+        
+        if 'ARTICLE_' in finding_type:
+            import re
+            article_match = re.search(r'ARTICLE_(\d+)', finding_type)
+            if article_match:
+                covered_articles.add(int(article_match.group(1)))
     
     covered_articles.update([1, 2, 3, 4])
     
@@ -384,6 +390,7 @@ def _get_chapter_coverage(findings: List[Dict[str, Any]]) -> Dict[str, Dict[str,
     covered_articles = set()
     for finding in findings:
         article_ref = finding.get('article_reference', '')
+        finding_type = finding.get('type', '')
         import re
         articles = re.findall(r'Article[s]?\s*(\d+)(?:-(\d+))?', article_ref, re.IGNORECASE)
         for match in articles:
@@ -391,6 +398,11 @@ def _get_chapter_coverage(findings: List[Dict[str, Any]]) -> Dict[str, Dict[str,
             end = int(match[1]) if match[1] else start
             for i in range(start, end + 1):
                 covered_articles.add(i)
+        
+        if 'ARTICLE_' in finding_type:
+            article_match = re.search(r'ARTICLE_(\d+)', finding_type)
+            if article_match:
+                covered_articles.add(int(article_match.group(1)))
     
     for chapter, data in chapters.items():
         data['covered'] = len(set(data['articles']) & covered_articles)

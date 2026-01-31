@@ -145,7 +145,7 @@ class AIModelScanner:
         combined = priority_files + other_files
         return combined[:MAX_FILES_PER_SCAN]
 
-    def _parallel_compliance_check(self, content: str, metadata: Dict[str, Any] = None) -> List[Dict[str, Any]]:
+    def _parallel_compliance_check(self, content: str, metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
         Run EU AI Act compliance checks in parallel batches for faster processing.
         Groups related article checks to reduce overhead on large content.
