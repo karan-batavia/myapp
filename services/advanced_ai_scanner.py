@@ -3518,20 +3518,18 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
     
     conformity.populate_from_compliance_score(overall_compliance, findings)
     
-    conformity.update_requirement('documentation', 'technical_documentation', 
-                                  eu_ai_act.get('documentation', {}).get('has_documentation', False))
-    conformity.update_requirement('documentation', 'risk_assessment',
-                                  eu_ai_act.get('risk_management', {}).get('risk_assessment_done', False))
-    
-    conformity.update_requirement('technical', 'accuracy_metrics',
-                                  eu_ai_act.get('accuracy_robustness', {}).get('accuracy_measured', False))
-    conformity.update_requirement('technical', 'automatic_logging',
-                                  eu_ai_act.get('logging', {}).get('logging_enabled', False))
-    
-    conformity.update_requirement('governance', 'human_oversight_procedures',
-                                  eu_ai_act.get('human_oversight', {}).get('oversight_implemented', False))
-    conformity.update_requirement('governance', 'quality_management_system',
-                                  eu_ai_act.get('quality_management', {}).get('qms_exists', False))
+    if eu_ai_act.get('documentation', {}).get('has_documentation', False):
+        conformity.update_requirement('documentation', 'technical_documentation', True)
+    if eu_ai_act.get('risk_management', {}).get('risk_assessment_done', False):
+        conformity.update_requirement('documentation', 'risk_assessment', True)
+    if eu_ai_act.get('accuracy_robustness', {}).get('accuracy_measured', False):
+        conformity.update_requirement('technical', 'accuracy_metrics', True)
+    if eu_ai_act.get('logging', {}).get('logging_enabled', False):
+        conformity.update_requirement('technical', 'automatic_logging', True)
+    if eu_ai_act.get('human_oversight', {}).get('oversight_implemented', False):
+        conformity.update_requirement('governance', 'human_oversight_procedures', True)
+    if eu_ai_act.get('quality_management', {}).get('qms_exists', False):
+        conformity.update_requirement('governance', 'quality_management_system', True)
     
     # Generate comprehensive report
     enhanced_report = {
