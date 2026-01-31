@@ -945,13 +945,42 @@ class UnifiedHTMLReportGenerator:
         return section_html
     
     def _generate_penalty_info(self, finding: Dict[str, Any]) -> str:
-        """Generate HTML for EU AI Act penalty information based on finding severity and type."""
+        """Generate HTML for penalty information based on finding severity, type, and regulation."""
         finding_type = finding.get('type', '').lower()
         severity = finding.get('severity', 'Medium').lower()
         article_ref = finding.get('article_reference', finding.get('location', '')).lower()
         
         penalty_html = ""
         
+        # Check for GDPR penalty_risk field first (from complete_gdpr_99_validator)
+        gdpr_penalty_risk = finding.get('penalty_risk', '')
+        gdpr_penalty_tier = finding.get('penalty_tier', '')
+        
+        if gdpr_penalty_risk and 'gdpr' in article_ref.lower():
+            if gdpr_penalty_tier == 'higher':
+                penalty_html = f"""
+                <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                    <strong style="color: #991b1b;">⚖️ GDPR Penalty Risk - Higher Tier (Article 83(5)):</strong>
+                    <span style="color: #b91c1c; font-weight: 600;">{gdpr_penalty_risk}</span>
+                </div>
+                """
+            elif gdpr_penalty_tier == 'lower':
+                penalty_html = f"""
+                <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                    <strong style="color: #92400e;">⚖️ GDPR Penalty Risk - Lower Tier (Article 83(4)):</strong>
+                    <span style="color: #b45309; font-weight: 600;">{gdpr_penalty_risk}</span>
+                </div>
+                """
+            else:
+                penalty_html = f"""
+                <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                    <strong style="color: #1e40af;">ℹ️ GDPR Compliance Note:</strong>
+                    <span style="color: #1d4ed8; font-weight: 600;">{gdpr_penalty_risk}</span>
+                </div>
+                """
+            return penalty_html
+        
+        # EU AI Act penalties
         if 'prohibited' in finding_type or 'article 5' in article_ref or severity == 'critical':
             penalty_html = """
             <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">

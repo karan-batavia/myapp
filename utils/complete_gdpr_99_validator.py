@@ -10,6 +10,81 @@ import re
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
+# GDPR Article 83 Penalty Tiers
+# Higher tier: €20M or 4% of global annual turnover (whichever is greater)
+# Lower tier: €10M or 2% of global annual turnover (whichever is greater)
+GDPR_PENALTY_TIERS = {
+    # Higher tier (€20M / 4%) - Core principles and data subject rights
+    "higher": {
+        "articles": [5, 6, 7, 9, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 44, 45, 46, 47, 48, 49],
+        "max_fine": "€20M or 4% global annual turnover",
+        "fine_display": "€20M / 4%"
+    },
+    # Lower tier (€10M / 2%) - Technical and organizational obligations
+    "lower": {
+        "articles": [8, 11, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43],
+        "max_fine": "€10M or 2% global annual turnover",
+        "fine_display": "€10M / 2%"
+    },
+    # No direct fines - General, institutional, procedural articles
+    "no_direct_fine": {
+        "articles": [1, 2, 3, 4, 10, 23, 24, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 
+                     60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+                     77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
+        "max_fine": "Indirect liability - fines determined by supervisory authority",
+        "fine_display": "Indirect"
+    }
+}
+
+def get_gdpr_penalty_for_article(article_num: int) -> Dict[str, str]:
+    """
+    Get the penalty tier and fine amount for a specific GDPR article.
+    
+    Args:
+        article_num: The GDPR article number (1-99)
+        
+    Returns:
+        Dictionary with penalty_tier, max_fine, and fine_display
+    """
+    for tier_name, tier_info in GDPR_PENALTY_TIERS.items():
+        if article_num in tier_info["articles"]:
+            return {
+                "penalty_tier": tier_name,
+                "max_fine": tier_info["max_fine"],
+                "fine_display": tier_info["fine_display"]
+            }
+    return {
+        "penalty_tier": "no_direct_fine",
+        "max_fine": "Indirect liability",
+        "fine_display": "Indirect"
+    }
+
+def _add_penalty_to_finding(finding: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Add penalty information to a finding based on its article reference.
+    
+    Args:
+        finding: The finding dictionary
+        
+    Returns:
+        Finding with penalty_risk added
+    """
+    article_ref = finding.get('article_reference', '')
+    article_match = re.search(r'Article\s+(\d+)', article_ref)
+    
+    if article_match:
+        article_num = int(article_match.group(1))
+        penalty_info = get_gdpr_penalty_for_article(article_num)
+        finding['penalty_risk'] = penalty_info['max_fine']
+        finding['fine_display'] = penalty_info['fine_display']
+        finding['penalty_tier'] = penalty_info['penalty_tier']
+    else:
+        finding['penalty_risk'] = 'Up to €20M or 4% global turnover'
+        finding['fine_display'] = '€20M / 4%'
+        finding['penalty_tier'] = 'higher'
+    
+    return finding
+
 # Complete GDPR Articles Structure (1-99)
 GDPR_COMPLETE_STRUCTURE = {
     "chapter_1_general": {
@@ -110,7 +185,9 @@ def validate_complete_gdpr_compliance(content: str, region: str = "Netherlands")
         elif chapter_key == "chapter_11_final":
             chapter_findings.extend(_validate_chapter_11_final(content))
         
-        findings.extend(chapter_findings)
+        # Add penalty information to each finding
+        chapter_findings_with_penalties = [_add_penalty_to_finding(f) for f in chapter_findings]
+        findings.extend(chapter_findings_with_penalties)
         
         # Calculate chapter score
         critical_count = len([f for f in chapter_findings if f.get('severity') == 'Critical'])
