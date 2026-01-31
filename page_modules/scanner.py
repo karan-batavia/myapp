@@ -7128,8 +7128,8 @@ def render_model_analysis_interface(region: str, username: str):
     # Always show file uploader to catch uploaded files regardless of radio selection
     uploaded_model = st.file_uploader(
         "Upload AI Model (Optional - overrides other selections)",
-        type=['pkl', 'joblib', 'h5', 'pb', 'onnx', 'pt', 'pth', 'bin', 'safetensors'],
-        help="Supported formats: Pickle, JobLib, HDF5, Protocol Buffers, ONNX, PyTorch, SafeTensors"
+        type=['pkl', 'joblib', 'h5', 'pb', 'onnx', 'pt', 'pth', 'bin', 'safetensors', 'py', 'ipynb'],
+        help="Supported formats: Pickle, JobLib, HDF5, Protocol Buffers, ONNX, PyTorch, SafeTensors, Python (.py), Jupyter Notebooks (.ipynb)"
     )
     
     # Store uploaded file in session state to persist across reruns
