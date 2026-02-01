@@ -1003,27 +1003,61 @@ Respond in JSON format with:
                     temp_path = f"/tmp/frame_analysis_{idx}.jpg"
                     cv2.imwrite(temp_path, frame)
                     
-                    # Analyze with DeepFace Anti-Spoofing
-                    analysis = deepface.analyze_image(temp_path)
+                    # Try comprehensive analysis first, fall back to individual methods
+                    analysis = None
+                    try:
+                        analysis = deepface.analyze_comprehensive(temp_path)
+                    except Exception:
+                        try:
+                            analysis = deepface.analyze_deepface(temp_path)
+                        except Exception:
+                            analysis = deepface.analyze_image(temp_path)
                     
-                    if analysis:
+                    if analysis and not analysis.get('error'):
                         result['analyzed_frames'] += 1
                         
-                        # Check for spoof detection
+                        # Check for spoof/anti-spoofing detection - handle multiple response formats
+                        # Format 1: is_real/confidence
                         if 'is_real' in analysis:
                             is_real = analysis.get('is_real', True)
                             confidence = analysis.get('confidence', 0.5)
-                            
                             if not is_real:
                                 spoof_scores.append(confidence)
                                 result['detections'].append({
                                     'frame': idx,
                                     'type': 'spoof',
                                     'confidence': confidence,
-                                    'spoof_type': analysis.get('spoof_type', 'unknown')
+                                    'spoof_type': analysis.get('spoof_type', 'presentation_attack')
                                 })
                         
-                        # Check for AI-generated face
+                        # Format 2: anti_spoofing result
+                        if 'anti_spoofing' in analysis:
+                            anti_spoof = analysis['anti_spoofing']
+                            if isinstance(anti_spoof, dict):
+                                if anti_spoof.get('is_spoof') or not anti_spoof.get('is_real', True):
+                                    score = anti_spoof.get('score', anti_spoof.get('confidence', 0.7))
+                                    spoof_scores.append(score)
+                                    result['detections'].append({
+                                        'frame': idx,
+                                        'type': 'spoof',
+                                        'confidence': score,
+                                        'spoof_type': anti_spoof.get('type', 'presentation_attack')
+                                    })
+                        
+                        # Format 3: printed_detection (for printed photo attacks)
+                        if 'printed_detection' in analysis:
+                            printed = analysis['printed_detection']
+                            if isinstance(printed, dict) and printed.get('is_printed'):
+                                score = printed.get('confidence', 0.8)
+                                spoof_scores.append(score)
+                                result['detections'].append({
+                                    'frame': idx,
+                                    'type': 'spoof',
+                                    'confidence': score,
+                                    'spoof_type': 'printed_photo'
+                                })
+                        
+                        # Check for AI-generated/deepfake detection
                         if 'deepfake_probability' in analysis:
                             df_prob = analysis.get('deepfake_probability', 0)
                             if df_prob > 0.5:
@@ -1033,13 +1067,26 @@ Respond in JSON format with:
                                     'type': 'ai_generated',
                                     'confidence': df_prob
                                 })
+                        
+                        # Format: deepfake result
+                        if 'deepfake' in analysis:
+                            df_result = analysis['deepfake']
+                            if isinstance(df_result, dict):
+                                if df_result.get('is_deepfake') or df_result.get('is_fake'):
+                                    score = df_result.get('confidence', df_result.get('probability', 0.7))
+                                    ai_generated_scores.append(score)
+                                    result['detections'].append({
+                                        'frame': idx,
+                                        'type': 'ai_generated',
+                                        'confidence': score
+                                    })
                     
                     # Cleanup temp file
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
                         
                 except Exception as frame_error:
-                    logger.debug(f"Frame {idx} analysis error: {frame_error}")
+                    logger.debug(f"Frame {idx} DeepFace analysis: {frame_error}")
                     continue
             
             # Aggregate results
