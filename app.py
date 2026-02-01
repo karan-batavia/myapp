@@ -36,6 +36,29 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Show loading screen immediately on first load to prevent blank page
+_loading_placeholder = st.empty()
+if 'app_initialized' not in st.session_state:
+    with _loading_placeholder.container():
+        st.markdown("""
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh;">
+            <div style="font-size: 64px; margin-bottom: 20px;">🛡️</div>
+            <h1 style="color: #1e3a5f; margin-bottom: 10px;">DataGuardian Pro</h1>
+            <p style="color: #666; font-size: 18px;">Enterprise Privacy & Compliance Platform</p>
+            <div style="margin-top: 30px;">
+                <div style="width: 50px; height: 50px; border: 4px solid #f3f3f3; border-top: 4px solid #1e3a5f; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+            <p style="color: #888; margin-top: 20px; font-size: 14px;">Loading application...</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+        """, unsafe_allow_html=True)
+    st.session_state.app_initialized = True
+
 # Capture HTTP referrer on first visit for traffic source tracking
 if 'http_referrer_captured' not in st.session_state:
     st.session_state['http_referrer_captured'] = True
@@ -910,6 +933,11 @@ def _(key, default=None):
 @profile_function("main_application")
 def main():
     """Main application entry point"""
+    
+    # Clear the loading screen now that app is ready
+    global _loading_placeholder
+    if _loading_placeholder is not None:
+        _loading_placeholder.empty()
     
     # FIRST: Hide sidebar navigation immediately to prevent flash
     # This must be the very first thing rendered to avoid showing menu before auth
