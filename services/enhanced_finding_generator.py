@@ -67,6 +67,80 @@ class EnhancedFindingGenerator:
             'accountability': 'Article 5(2) - Principles relating to processing'
         }
     
+    def _get_eu_ai_act_specific_recommendation(self, article_num: int, description: str, severity: str) -> Tuple[str, List[str], List[str], str, List['ActionableRecommendation']]:
+        """Get specific recommendation based on EU AI Act article number."""
+        article_recommendations = {
+            5: ("Implement Prohibited Practice Controls", "Verify AI system does not engage in prohibited practices under Article 5", 
+                "Review subliminal manipulation, exploitation of vulnerabilities, social scoring, real-time biometric ID", "2-4 hours"),
+            6: ("Complete High-Risk Classification", "Document AI system risk classification per Article 6/Annex III",
+                "Evaluate use cases against 8 high-risk categories, document rationale with legal review", "4-8 hours"),
+            9: ("Implement Risk Management System", "Establish risk management per Article 9 requirements",
+                "Create risk identification, analysis, evaluation cycle; document residual risks and mitigation", "8-16 hours"),
+            10: ("Establish Data Governance Framework", "Implement training data governance per Article 10",
+                 "Document data sources, quality measures, bias detection, representativeness assessment", "8-16 hours"),
+            11: ("Create Technical Documentation", "Prepare technical documentation per Article 11/Annex IV",
+                 "Document system description, design specs, monitoring, testing results, instructions for use", "16-40 hours"),
+            12: ("Implement Record-Keeping System", "Set up automatic logging per Article 12 requirements",
+                 "Enable audit logging, ensure traceability, implement log retention policy", "4-8 hours"),
+            13: ("Develop Transparency Information", "Create user-facing transparency documentation per Article 13",
+                 "Document intended purpose, accuracy levels, known limitations, human oversight measures", "4-8 hours"),
+            14: ("Establish Human Oversight Mechanisms", "Implement human oversight per Article 14",
+                 "Define oversight roles, implement intervention capabilities, document decision authority", "8-16 hours"),
+            15: ("Ensure Accuracy and Robustness", "Validate system accuracy and robustness per Article 15",
+                 "Conduct accuracy testing, adversarial testing, document performance metrics", "8-16 hours"),
+            16: ("Define Provider Obligations", "Document provider responsibilities per Article 16",
+                 "Establish quality management, maintain technical documentation, ensure CE marking compliance", "4-8 hours"),
+            17: ("Implement Quality Management System", "Establish QMS per Article 17 requirements",
+                 "Create policies, design controls, risk management procedures, post-market monitoring", "16-40 hours"),
+            26: ("Register AI System", "Complete EU database registration per Article 26",
+                 "Prepare registration data, submit to EU AI database before market placement", "2-4 hours"),
+            27: ("Document Deployer Obligations", "Implement deployer requirements per Article 27",
+                 "Assign human oversight, ensure appropriate use, maintain input data records", "4-8 hours"),
+            29: ("Assign Human Oversight", "Designate competent oversight personnel per Article 29",
+                 "Train oversight personnel, document competencies, establish intervention procedures", "4-8 hours"),
+            50: ("Prepare Model Documentation", "Create GPAI model documentation per Article 50",
+                 "Document training methodology, compute resources, copyright policy, capabilities summary", "8-16 hours"),
+            51: ("Implement Copyright Compliance", "Establish training data copyright policy per Article 51",
+                 "Document data sources, implement opt-out mechanisms, maintain training data records", "4-8 hours"),
+            52: ("Ensure Transparency for GPAI", "Implement GPAI transparency measures per Article 52",
+                 "Create model cards, document limitations, provide integration guidelines", "4-8 hours"),
+            53: ("Prepare Systemic Risk Assessment", "Document systemic risk evaluation per Article 53",
+                 "Assess systemic risks, implement mitigation measures, prepare for stress testing", "16-40 hours"),
+        }
+        
+        if article_num in article_recommendations:
+            action, desc, impl, effort = article_recommendations[article_num]
+            return (
+                f"EU AI Act Article {article_num} requirement: {description}",
+                [f'EU AI Act Article {article_num}'],
+                [impl.split(', ')[0], 'Document compliance evidence', 'Conduct verification review'],
+                f"Non-compliance with Article {article_num} may result in significant fines",
+                [ActionableRecommendation(
+                    action=action, 
+                    description=desc, 
+                    implementation=impl, 
+                    effort_estimate=effort, 
+                    priority=severity, 
+                    verification="Compliance audit and legal review"
+                )]
+            )
+        
+        # Default for articles without specific mapping
+        return (
+            f"EU AI Act Article {article_num}: {description}",
+            [f'EU AI Act Article {article_num}'],
+            ['Review article requirements', 'Implement required controls', 'Document compliance'],
+            "Ensure compliance with applicable EU AI Act requirements",
+            [ActionableRecommendation(
+                action=f"Review Article {article_num} Requirements",
+                description=f"Assess compliance with EU AI Act Article {article_num}",
+                implementation=f"Review Article {article_num} text, identify applicable requirements, implement controls",
+                effort_estimate="2-8 hours",
+                priority=severity,
+                verification="Compliance review"
+            )]
+        )
+    
     def _load_finding_templates(self) -> Dict[str, Dict[str, Any]]:
         """Load finding templates for different scanner types"""
         return {
@@ -579,12 +653,19 @@ class EnhancedFindingGenerator:
                     [ActionableRecommendation(action="Define AI Act Applicability", description="Document AI system scope and role definitions", implementation="Identify if you are provider, deployer, or distributor; document AI system boundaries", effort_estimate="2-4 hours", priority=severity, verification="Legal review of applicability")]
                 )
             else:
+                # Try to extract article number for specific recommendation
+                article_match = re.search(r'article\s*(\d+)', finding_type + ' ' + description.lower())
+                if article_match:
+                    article_num = int(article_match.group(1))
+                    return self._get_eu_ai_act_specific_recommendation(article_num, description, severity)
+                
+                # Fallback for truly generic findings
                 return (
                     f"EU AI Act compliance finding: {description}",
                     ['EU AI Act - General Requirements'],
-                    ['Review specific EU AI Act article requirements', 'Implement appropriate controls'],
+                    ['Review applicable article requirements', 'Implement required controls', 'Document compliance evidence'],
                     "EU AI Act non-compliance can result in significant fines and market access restrictions",
-                    [ActionableRecommendation(action="Address EU AI Act Requirement", description=description, implementation="Review applicable EU AI Act article and implement required controls", effort_estimate="2-8 hours", priority=severity, verification="Compliance audit")]
+                    [ActionableRecommendation(action="Review and Remediate", description=f"Address: {description}", implementation="Investigate the finding and implement appropriate remediation", effort_estimate="1-4 hours", priority=severity, verification="Confirm remediation complete")]
                 )
         
         # License detection
