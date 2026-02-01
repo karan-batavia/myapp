@@ -376,22 +376,82 @@ class AdvancedAIScanner:
         }
         
         try:
-            # Determine model framework and type
+            # First check file extension from metadata
+            filename = metadata.get('filename', metadata.get('file_name', metadata.get('name', '')))
+            if filename:
+                filename_lower = filename.lower()
+                # Detect framework from file extension
+                if filename_lower.endswith('.h5') or filename_lower.endswith('.keras'):
+                    analysis['framework'] = 'TensorFlow/Keras'
+                elif filename_lower.endswith('.pt') or filename_lower.endswith('.pth'):
+                    analysis['framework'] = 'PyTorch'
+                elif filename_lower.endswith('.onnx'):
+                    analysis['framework'] = 'ONNX'
+                elif filename_lower.endswith('.pkl') or filename_lower.endswith('.joblib'):
+                    analysis['framework'] = 'scikit-learn'
+                elif filename_lower.endswith('.pb') or filename_lower.endswith('.tflite'):
+                    analysis['framework'] = 'TensorFlow'
+                elif filename_lower.endswith('.safetensors'):
+                    analysis['framework'] = 'Hugging Face/SafeTensors'
+                elif filename_lower.endswith('.bin'):
+                    analysis['framework'] = 'Hugging Face Transformers'
+                elif filename_lower.endswith('.gguf') or filename_lower.endswith('.ggml'):
+                    analysis['framework'] = 'llama.cpp/GGML'
+                elif filename_lower.endswith('.mlmodel'):
+                    analysis['framework'] = 'Apple CoreML'
+            
+            # Determine model framework and type from content if not detected from extension
             if hasattr(model_file, 'read'):
                 model_content = model_file.read()
                 model_file.seek(0)  # Reset file pointer
                 
-                # Check for common ML frameworks
-                if b'tensorflow' in model_content or b'keras' in model_content:
-                    analysis['framework'] = 'TensorFlow/Keras'
-                elif b'pytorch' in model_content or b'torch' in model_content:
-                    analysis['framework'] = 'PyTorch'
-                elif b'onnx' in model_content:
-                    analysis['framework'] = 'ONNX'
-                elif b'sklearn' in model_content or b'joblib' in model_content:
-                    analysis['framework'] = 'scikit-learn'
+                # Only check content if framework not yet detected
+                if analysis['framework'] == 'Unknown':
+                    content_lower = model_content.lower() if isinstance(model_content, bytes) else model_content.encode().lower()
+                    # Check for common ML frameworks (case insensitive)
+                    if b'tensorflow' in content_lower or b'keras' in content_lower:
+                        analysis['framework'] = 'TensorFlow/Keras'
+                    elif b'pytorch' in content_lower or b'torch' in content_lower:
+                        analysis['framework'] = 'PyTorch'
+                    elif b'onnx' in content_lower:
+                        analysis['framework'] = 'ONNX'
+                    elif b'sklearn' in content_lower or b'joblib' in content_lower:
+                        analysis['framework'] = 'scikit-learn'
+                    elif b'huggingface' in content_lower or b'transformers' in content_lower:
+                        analysis['framework'] = 'Hugging Face Transformers'
+                    elif b'xgboost' in content_lower:
+                        analysis['framework'] = 'XGBoost'
+                    elif b'lightgbm' in content_lower:
+                        analysis['framework'] = 'LightGBM'
+                    elif b'catboost' in content_lower:
+                        analysis['framework'] = 'CatBoost'
+                    # Check for Python import statements (for code files)
+                    elif b'import tensorflow' in content_lower or b'from tensorflow' in content_lower:
+                        analysis['framework'] = 'TensorFlow/Keras'
+                    elif b'import torch' in content_lower or b'from torch' in content_lower:
+                        analysis['framework'] = 'PyTorch'
+                    elif b'import keras' in content_lower or b'from keras' in content_lower:
+                        analysis['framework'] = 'TensorFlow/Keras'
+                    elif b'import sklearn' in content_lower or b'from sklearn' in content_lower:
+                        analysis['framework'] = 'scikit-learn'
+                    elif b'import transformers' in content_lower or b'from transformers' in content_lower:
+                        analysis['framework'] = 'Hugging Face Transformers'
+                    elif b'import openai' in content_lower or b'from openai' in content_lower:
+                        analysis['framework'] = 'OpenAI API'
+                    elif b'import anthropic' in content_lower or b'from anthropic' in content_lower:
+                        analysis['framework'] = 'Anthropic Claude API'
                 
                 analysis['model_size_mb'] = len(model_content) / (1024 * 1024)
+            
+            # Check metadata for framework hints
+            if analysis['framework'] == 'Unknown':
+                meta_framework = metadata.get('framework', metadata.get('ml_framework', metadata.get('detected_framework', '')))
+                if meta_framework:
+                    analysis['framework'] = meta_framework
+            
+            # Default to generic framework if still unknown but we have a model file
+            if analysis['framework'] == 'Unknown' and (hasattr(model_file, 'read') or metadata.get('file_size', 0) > 0):
+                analysis['framework'] = 'Python ML Application'
             
             # Try to load and analyze the model
             if analysis['framework'] == 'scikit-learn':
