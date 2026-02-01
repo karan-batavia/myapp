@@ -1233,7 +1233,13 @@ Respond in JSON format with:
         # Add DeepFace Anti-Spoofing findings
         if video_analysis and video_analysis.face_analysis:
             face_data = video_analysis.face_analysis
-            if face_data.get('spoof_detected'):
+            # DeepFace results are nested under 'deepface_analysis' key
+            deepface_data = face_data.get('deepface_analysis', {})
+            deepface_available = deepface_data.get('available', False)
+            analyzed_frames = deepface_data.get('analyzed_frames', 0)
+            face_count = face_data.get('count', 0)
+            
+            if deepface_data.get('spoof_detected') or face_data.get('spoof_detected'):
                 findings.append({
                     'type': 'deepface_spoof_detection',
                     'category': 'AI-Powered Deepfake Detection',
@@ -1246,7 +1252,7 @@ Respond in JSON format with:
                     'recommendation': 'Verify identity through alternative means before relying on this media'
                 })
             
-            if face_data.get('ai_generated_detected'):
+            if deepface_data.get('ai_generated_detected') or face_data.get('ai_generated_detected'):
                 findings.append({
                     'type': 'deepface_ai_generated',
                     'category': 'AI-Powered Deepfake Detection',
@@ -1257,6 +1263,36 @@ Respond in JSON format with:
                     'gdpr_relevance': 'Processing synthetic data as real violates GDPR accuracy principles',
                     'eu_ai_act_relevance': 'EU AI Act Article 52(3) requires disclosure of AI-generated content',
                     'recommendation': 'Flag content as potentially AI-generated; require human verification'
+                })
+            
+            # Check if any DeepFace issues were detected
+            spoof_found = deepface_data.get('spoof_detected') or face_data.get('spoof_detected')
+            ai_gen_found = deepface_data.get('ai_generated_detected') or face_data.get('ai_generated_detected')
+            
+            # Always add DeepFace assessment when faces were analyzed (even if authentic)
+            if deepface_available and analyzed_frames > 0 and not spoof_found and not ai_gen_found:
+                findings.append({
+                    'type': 'deepface_authentic',
+                    'category': 'AI-Powered Deepfake Detection',
+                    'severity': 'info',
+                    'title': 'DeepFace ML Assessment: Faces Appear Authentic',
+                    'description': f'DeepFace Anti-Spoofing ML model analyzed {analyzed_frames} frames with detected faces. No spoofing, presentation attacks, or AI-generated content detected.',
+                    'detection_method': 'DeepFace Anti-Spoofing trained model',
+                    'gdpr_relevance': 'Facial data verified as authentic per GDPR Article 5(1)(d)',
+                    'eu_ai_act_relevance': 'Content passed EU AI Act synthetic media checks',
+                    'recommendation': 'Faces appear authentic; continue standard processing'
+                })
+            elif deepface_available and analyzed_frames == 0 and face_count > 0:
+                # Faces detected by OpenCV but DeepFace couldn't analyze them
+                findings.append({
+                    'type': 'deepface_inconclusive',
+                    'category': 'AI-Powered Deepfake Detection',
+                    'severity': 'low',
+                    'title': 'DeepFace ML Assessment: Inconclusive',
+                    'description': f'OpenCV detected {face_count} faces but DeepFace Anti-Spoofing could not extract analyzable facial features from sampled frames. This may occur with low-resolution, partially visible, or obscured faces.',
+                    'detection_method': 'DeepFace Anti-Spoofing trained model',
+                    'gdpr_relevance': 'Facial authenticity could not be verified',
+                    'recommendation': 'Consider higher resolution video for conclusive DeepFace analysis'
                 })
         
         if not findings:
