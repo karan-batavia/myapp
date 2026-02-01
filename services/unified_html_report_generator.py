@@ -2217,7 +2217,7 @@ class UnifiedHTMLReportGenerator:
         
         return f"""
         <div class="scanner-specific">
-            <h2>🤖 {t_report('ai_model_compliance', 'AI Model Naleving')}</h2>
+            <h2>🤖 {t_report('ai_model_compliance', 'AI Model Compliance')}</h2>
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{model_framework}</div>
@@ -2229,7 +2229,7 @@ class UnifiedHTMLReportGenerator:
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{compliance_score}%</div>
-                    <div class="metric-label">Nalevingsscore</div>
+                    <div class="metric-label">Compliance Score</div>
                 </div>
             </div>
             {comprehensive_html}
