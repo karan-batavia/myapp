@@ -70,6 +70,14 @@ try:
 except ImportError:
     WAVE_AVAILABLE = False
 
+DEEPFACE_ANTISPOOFING_AVAILABLE = False
+try:
+    from deepface_antispoofing import DeepFaceAntiSpoofing
+    DEEPFACE_ANTISPOOFING_AVAILABLE = True
+    logger.info("DeepFace Anti-Spoofing library loaded for enhanced deepfake detection")
+except ImportError:
+    logger.warning("deepface-antispoofing not available - install with: pip install deepface-antispoofing")
+
 
 class MediaFraudType(Enum):
     """Types of media fraud that can be detected."""
@@ -899,12 +907,15 @@ Respond in JSON format with:
         }
     
     def _face_deepfake_detection(self, frames: List[Tuple[int, np.ndarray]]) -> Dict[str, Any]:
-        """Detect face swaps and deepfakes using face analysis."""
+        """Detect face swaps and deepfakes using face analysis with DeepFace Anti-Spoofing."""
         analysis = {
             'detected': False,
             'count': 0,
             'consistency': 0.0,
-            'landmarks_stable': True
+            'landmarks_stable': True,
+            'deepface_analysis': None,
+            'spoof_detected': False,
+            'ai_generated_detected': False
         }
         score = 0.0
         
@@ -938,6 +949,19 @@ Respond in JSON format with:
                     size_variance = np.var(face_sizes) / (np.mean(face_sizes) + 1)
                     if size_variance > 0.3:
                         score = max(score, 0.35)
+            
+            # Enhanced detection with DeepFace Anti-Spoofing
+            if DEEPFACE_ANTISPOOFING_AVAILABLE and analysis['detected']:
+                deepface_result = self._deepface_antispoofing_analysis(frames)
+                analysis['deepface_analysis'] = deepface_result
+                
+                if deepface_result.get('spoof_detected'):
+                    analysis['spoof_detected'] = True
+                    score = max(score, deepface_result.get('spoof_score', 0.7))
+                
+                if deepface_result.get('ai_generated_detected'):
+                    analysis['ai_generated_detected'] = True
+                    score = max(score, deepface_result.get('ai_score', 0.8))
                         
         except Exception as e:
             logger.warning(f"Face detection error: {e}")
@@ -947,6 +971,94 @@ Respond in JSON format with:
             'score': score,
             'analysis': analysis
         }
+    
+    def _deepface_antispoofing_analysis(self, frames: List[Tuple[int, np.ndarray]]) -> Dict[str, Any]:
+        """Use DeepFace Anti-Spoofing library for enhanced deepfake detection."""
+        result = {
+            'available': DEEPFACE_ANTISPOOFING_AVAILABLE,
+            'spoof_detected': False,
+            'ai_generated_detected': False,
+            'spoof_score': 0.0,
+            'ai_score': 0.0,
+            'analyzed_frames': 0,
+            'detections': []
+        }
+        
+        if not DEEPFACE_ANTISPOOFING_AVAILABLE:
+            return result
+        
+        try:
+            deepface = DeepFaceAntiSpoofing()
+            
+            # Analyze key frames (first, middle, last)
+            frame_indices = [0, len(frames)//2, len(frames)-1] if len(frames) >= 3 else list(range(len(frames)))
+            selected_frames = [frames[i] for i in frame_indices if i < len(frames)]
+            
+            spoof_scores = []
+            ai_generated_scores = []
+            
+            for idx, frame in selected_frames:
+                try:
+                    # Save frame temporarily for analysis
+                    temp_path = f"/tmp/frame_analysis_{idx}.jpg"
+                    cv2.imwrite(temp_path, frame)
+                    
+                    # Analyze with DeepFace Anti-Spoofing
+                    analysis = deepface.analyze_image(temp_path)
+                    
+                    if analysis:
+                        result['analyzed_frames'] += 1
+                        
+                        # Check for spoof detection
+                        if 'is_real' in analysis:
+                            is_real = analysis.get('is_real', True)
+                            confidence = analysis.get('confidence', 0.5)
+                            
+                            if not is_real:
+                                spoof_scores.append(confidence)
+                                result['detections'].append({
+                                    'frame': idx,
+                                    'type': 'spoof',
+                                    'confidence': confidence,
+                                    'spoof_type': analysis.get('spoof_type', 'unknown')
+                                })
+                        
+                        # Check for AI-generated face
+                        if 'deepfake_probability' in analysis:
+                            df_prob = analysis.get('deepfake_probability', 0)
+                            if df_prob > 0.5:
+                                ai_generated_scores.append(df_prob)
+                                result['detections'].append({
+                                    'frame': idx,
+                                    'type': 'ai_generated',
+                                    'confidence': df_prob
+                                })
+                    
+                    # Cleanup temp file
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                        
+                except Exception as frame_error:
+                    logger.debug(f"Frame {idx} analysis error: {frame_error}")
+                    continue
+            
+            # Aggregate results
+            if spoof_scores:
+                result['spoof_detected'] = True
+                result['spoof_score'] = max(spoof_scores)
+            
+            if ai_generated_scores:
+                result['ai_generated_detected'] = True
+                result['ai_score'] = max(ai_generated_scores)
+            
+            logger.info(f"DeepFace analysis complete: {result['analyzed_frames']} frames, "
+                       f"spoof={result['spoof_detected']}, ai_gen={result['ai_generated_detected']}")
+            
+        except Exception as e:
+            logger.warning(f"DeepFace Anti-Spoofing analysis error: {e}")
+            result['error'] = str(e)
+        
+        return result
     
     def _temporal_consistency_analysis(self, frames: List[Tuple[int, np.ndarray]]) -> Dict[str, Any]:
         """Analyze temporal consistency for frame insertion detection."""
@@ -1069,6 +1181,35 @@ Respond in JSON format with:
                     'frame_indices': anomaly.get('frame_indices', []),
                     'gdpr_relevance': 'Video manipulation affects data integrity',
                     'recommendation': 'Review flagged frames manually'
+                })
+        
+        # Add DeepFace Anti-Spoofing findings
+        if video_analysis and video_analysis.face_analysis:
+            face_data = video_analysis.face_analysis
+            if face_data.get('spoof_detected'):
+                findings.append({
+                    'type': 'deepface_spoof_detection',
+                    'category': 'AI-Powered Deepfake Detection',
+                    'severity': 'critical',
+                    'title': 'Face Spoofing Detected (DeepFace ML)',
+                    'description': 'DeepFace Anti-Spoofing ML model detected potential face spoofing, including printed photos, replay attacks, or presentation attacks.',
+                    'detection_method': 'DeepFace Anti-Spoofing trained model',
+                    'gdpr_relevance': 'GDPR Article 5(1)(d) requires personal data to be accurate',
+                    'eu_ai_act_relevance': 'EU AI Act Article 52 requires transparency for synthetic content',
+                    'recommendation': 'Verify identity through alternative means before relying on this media'
+                })
+            
+            if face_data.get('ai_generated_detected'):
+                findings.append({
+                    'type': 'deepface_ai_generated',
+                    'category': 'AI-Powered Deepfake Detection',
+                    'severity': 'critical',
+                    'title': 'AI-Generated Face Detected (DeepFace ML)',
+                    'description': 'DeepFace Anti-Spoofing ML model detected AI-generated or synthetic face content with high probability.',
+                    'detection_method': 'DeepFace Anti-Spoofing deepfake classifier',
+                    'gdpr_relevance': 'Processing synthetic data as real violates GDPR accuracy principles',
+                    'eu_ai_act_relevance': 'EU AI Act Article 52(3) requires disclosure of AI-generated content',
+                    'recommendation': 'Flag content as potentially AI-generated; require human verification'
                 })
         
         if not findings:
