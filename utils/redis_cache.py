@@ -65,7 +65,8 @@ class RedisCache:
             os.getenv('REDIS_URL', ''),
             'redis://localhost:6379/0',
             'redis://127.0.0.1:6379/0',
-            'redis://redis:6379/0'  # Docker container name
+            'redis://redis:6379/0',  # Docker container name
+            'redis://redis-cache:6379/0'  # Docker network hostname (dataguardian-network)
         ]
         
         # Filter out empty URLs
@@ -445,8 +446,9 @@ class PerformanceCache:
         """Increment scan counter for analytics"""
         return self.cache.increment(f"scan_count:{scanner_type}", 1, self.namespace)
 
-# Global cache instances
-redis_cache = RedisCache()
+# Global cache instances - use non-strict mode at import time to avoid blocking startup
+# The startup_validator will handle strict mode validation separately
+redis_cache = RedisCache(strict_mode=False)
 scan_cache = ScanResultsCache(redis_cache)
 session_cache = SessionCache(redis_cache)
 performance_cache = PerformanceCache(redis_cache)
