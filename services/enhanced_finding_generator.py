@@ -831,6 +831,46 @@ class EnhancedFindingGenerator:
                 [ActionableRecommendation(action="Review Privacy Information", description="Ensure privacy policy meets GDPR Article 13 requirements", implementation="Audit privacy policy for completeness, accessibility, and clarity", effort_estimate="1-2 hours", priority=severity, verification="Compare policy against Article 13 checklist")]
             )
         
+        # Tracking pixel findings (website scanner)
+        elif 'pixel' in finding_type or 'beacon' in finding_type:
+            return (
+                f"Tracking pixel detected: {description}. Tracking pixels collect user data without visible notice.",
+                ['GDPR Article 6(1)(a) - Consent for Processing (Penalty: €20M or 4% turnover)', 'GDPR Article 5(1)(a) - Lawfulness, Fairness, Transparency'],
+                ['Obtain consent before loading tracking pixels', 'Disclose pixel tracking in privacy policy', 'Provide opt-out mechanism'],
+                "Hidden tracking pixels violate GDPR transparency principle and require explicit consent",
+                [ActionableRecommendation(action="Block Tracking Pixels Until Consent", description="Implement consent-based pixel loading", implementation="Block all tracking pixels by default, load only after user consent, document in privacy policy", effort_estimate="2-4 hours", priority=severity, verification="Verify pixels only load after consent")]
+            )
+        
+        # PII exposure findings (website scanner)
+        elif 'pii' in finding_type or 'exposure' in finding_type or 'bsn' in finding_type:
+            return (
+                f"Personal data exposure detected: {description}. PII must be protected and processed lawfully.",
+                ['GDPR Article 5(1)(f) - Integrity and Confidentiality (Penalty: €20M or 4% turnover)', 'GDPR Article 32 - Security of Processing'],
+                ['Remove or mask exposed PII immediately', 'Implement access controls', 'Review data handling procedures'],
+                "Exposed PII creates significant breach risk and violates GDPR security requirements",
+                [ActionableRecommendation(action="Remediate PII Exposure", description="Remove or protect exposed personal data", implementation="Mask/remove exposed PII, implement proper access controls, review source code for hardcoded data", effort_estimate="1-4 hours", priority="High", verification="Rescan to confirm PII no longer exposed")]
+            )
+        
+        # Third-party/external script findings (website scanner)
+        elif 'external' in finding_type or 'third' in finding_type or 'script' in finding_type:
+            return (
+                f"Third-party script detected: {description}. External scripts may process personal data.",
+                ['GDPR Article 28 - Processor Requirements (Penalty: €10M or 2% turnover)', 'GDPR Article 44 - Data Transfers'],
+                ['Ensure Data Processing Agreement in place', 'Verify third-party GDPR compliance', 'Assess data transfer implications'],
+                "Third-party scripts require proper processor agreements and may trigger cross-border transfer rules",
+                [ActionableRecommendation(action="Audit Third-Party Scripts", description="Review all external scripts for GDPR compliance", implementation="Inventory all third-party scripts, verify DPAs exist, assess data transfers to non-EU countries", effort_estimate="4-8 hours", priority=severity, verification="Document processor agreements for all third parties")]
+            )
+        
+        # Form data collection findings (website scanner)
+        elif 'form' in finding_type or 'input' in finding_type:
+            return (
+                f"Data collection form detected: {description}. Forms collecting personal data require proper legal basis.",
+                ['GDPR Article 6 - Lawfulness of Processing (Penalty: €20M or 4% turnover)', 'GDPR Article 13 - Information at Collection'],
+                ['Display privacy notice at point of collection', 'Specify purpose and legal basis', 'Implement data minimization'],
+                "Data collection without proper information violates GDPR transparency requirements",
+                [ActionableRecommendation(action="Review Form Compliance", description="Ensure forms meet GDPR requirements", implementation="Add privacy notice, link to policy, collect only necessary data, implement proper validation", effort_estimate="1-2 hours", priority=severity, verification="Test form submission flow for GDPR compliance")]
+            )
+        
         # Default fallback with description-based context
         else:
             compliance_ref = self._get_compliance_reference_for_finding(finding_type, description)
@@ -847,12 +887,24 @@ class EnhancedFindingGenerator:
         finding_lower = finding_type.lower() + ' ' + description.lower()
         
         # Website/privacy/tracking related - use GDPR
-        if any(term in finding_lower for term in ['tracker', 'tracking', 'cookie', 'consent', 'privacy', 'website', 'web', 'script', 'analytics', 'cmp', 'banner']):
+        if any(term in finding_lower for term in ['tracker', 'tracking', 'cookie', 'consent', 'privacy', 'website', 'web', 'script', 'analytics', 'cmp', 'banner', 'pixel', 'beacon']):
             return 'GDPR Article 6(1)(a) - Consent for Processing (Penalty: €20M or 4% turnover)'
         
+        # PII exposure - use GDPR security articles
+        elif any(term in finding_lower for term in ['pii', 'exposure', 'bsn', 'personal data', 'email address', 'phone number', 'iban']):
+            return 'GDPR Article 32 - Security of Processing (Penalty: €10M or 2% turnover)'
+        
         # Data protection related - use GDPR
-        elif any(term in finding_lower for term in ['pii', 'personal', 'data subject', 'processing', 'retention', 'erasure']):
+        elif any(term in finding_lower for term in ['personal', 'data subject', 'processing', 'retention', 'erasure']):
             return 'GDPR Article 5 - Principles of Processing (Penalty: €20M or 4% turnover)'
+        
+        # Third-party/external services - use GDPR processor requirements
+        elif any(term in finding_lower for term in ['external', 'third party', 'third-party', 'vendor', 'processor']):
+            return 'GDPR Article 28 - Processor Requirements (Penalty: €10M or 2% turnover)'
+        
+        # Form/data collection - use GDPR transparency
+        elif any(term in finding_lower for term in ['form', 'input', 'collection', 'submit']):
+            return 'GDPR Article 13 - Information at Collection (Penalty: €20M or 4% turnover)'
         
         # Security related - use GDPR
         elif any(term in finding_lower for term in ['security', 'breach', 'vulnerability', 'encryption', 'access control']):
