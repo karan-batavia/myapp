@@ -791,9 +791,49 @@ class EnhancedFindingGenerator:
                 [ActionableRecommendation(action="Verify Content Authenticity", description="Confirm if content is AI-generated", implementation="Cross-reference sources, check provenance, add disclosure if synthetic", effort_estimate="1-2 hours", priority=severity, verification="Document authenticity verification")]
             )
         
+        # Tracker findings (website scanner)
+        elif 'tracker' in finding_type or 'tracking' in finding_type:
+            return (
+                f"Website tracking technology detected: {description}. Trackers collect user behavior data and require proper consent.",
+                ['GDPR Article 6(1)(a) - Consent for Processing (Penalty: €20M or 4% turnover)', 'ePrivacy Directive Article 5(3) - Cookie Consent'],
+                ['Obtain valid user consent before activating trackers', 'Provide clear opt-out mechanism', 'Document legal basis for tracking'],
+                "Non-consensual tracking violates GDPR and ePrivacy Directive, risking significant fines and user trust",
+                [ActionableRecommendation(action="Implement Consent Management", description="Ensure valid consent before activating trackers", implementation="Add cookie banner, block trackers until consent, provide granular controls", effort_estimate="4-8 hours", priority=severity, verification="Test that trackers only load after consent")]
+            )
+        
+        # Cookie findings (website scanner)
+        elif 'cookie' in finding_type:
+            return (
+                f"Cookie detected on website: {description}. Cookies require user consent under GDPR and ePrivacy.",
+                ['GDPR Article 6(1)(a) - Consent for Processing (Penalty: €20M or 4% turnover)', 'ePrivacy Directive Article 5(3) - Cookie Consent'],
+                ['Classify cookies by purpose', 'Obtain consent for non-essential cookies', 'Provide cookie policy'],
+                "Setting non-essential cookies without consent violates GDPR/ePrivacy, with potential fines up to €20M",
+                [ActionableRecommendation(action="Audit Cookie Compliance", description="Review all cookies and ensure proper consent", implementation="Categorize cookies, implement consent banner, block non-essential until consent", effort_estimate="2-4 hours", priority=severity, verification="Verify cookies blocked until consent given")]
+            )
+        
+        # Consent management findings (website scanner)
+        elif 'consent' in finding_type or 'cmp' in finding_type:
+            return (
+                f"Consent management finding: {description}. Proper consent mechanisms are required for GDPR compliance.",
+                ['GDPR Article 7 - Conditions for Consent (Penalty: €20M or 4% turnover)', 'GDPR Article 6(1)(a) - Lawfulness of Processing'],
+                ['Ensure consent is freely given', 'Provide clear information before consent', 'Allow easy withdrawal of consent'],
+                "Invalid consent mechanisms can invalidate all data processing, creating significant legal exposure",
+                [ActionableRecommendation(action="Review Consent Implementation", description="Ensure consent mechanisms meet GDPR requirements", implementation="Verify consent is specific, informed, unambiguous, and withdrawable", effort_estimate="2-4 hours", priority=severity, verification="Test consent flow against GDPR requirements")]
+            )
+        
+        # Privacy policy findings (website scanner)
+        elif 'privacy' in finding_type or 'policy' in finding_type:
+            return (
+                f"Privacy-related finding: {description}. Websites must provide transparent privacy information.",
+                ['GDPR Article 13 - Information to be Provided (Penalty: €20M or 4% turnover)', 'GDPR Article 12 - Transparent Communication'],
+                ['Provide clear privacy policy', 'Explain data processing purposes', 'List data subject rights'],
+                "Missing or inadequate privacy information violates GDPR transparency requirements",
+                [ActionableRecommendation(action="Review Privacy Information", description="Ensure privacy policy meets GDPR Article 13 requirements", implementation="Audit privacy policy for completeness, accessibility, and clarity", effort_estimate="1-2 hours", priority=severity, verification="Compare policy against Article 13 checklist")]
+            )
+        
         # Default fallback with description-based context
         else:
-            compliance_ref = self._get_ai_act_article_for_finding(finding_type, description)
+            compliance_ref = self._get_compliance_reference_for_finding(finding_type, description)
             return (
                 description if len(description) > 30 else f"Compliance finding requiring review: {description}",
                 [compliance_ref],
@@ -802,36 +842,41 @@ class EnhancedFindingGenerator:
                 [ActionableRecommendation(action="Review and Remediate", description=f"Address: {description}", implementation="Investigate the finding and implement appropriate remediation", effort_estimate="1-4 hours", priority=severity, verification="Confirm remediation complete")]
             )
     
-    def _get_ai_act_article_for_finding(self, finding_type: str, description: str) -> str:
-        """Map finding type to appropriate EU AI Act article instead of generic GDPR reference."""
+    def _get_compliance_reference_for_finding(self, finding_type: str, description: str) -> str:
+        """Map finding type to appropriate compliance reference (GDPR for web/data, EU AI Act for AI)."""
         finding_lower = finding_type.lower() + ' ' + description.lower()
         
-        if 'prohibited' in finding_lower or 'social_scoring' in finding_lower or 'subliminal' in finding_lower:
+        # Website/privacy/tracking related - use GDPR
+        if any(term in finding_lower for term in ['tracker', 'tracking', 'cookie', 'consent', 'privacy', 'website', 'web', 'script', 'analytics', 'cmp', 'banner']):
+            return 'GDPR Article 6(1)(a) - Consent for Processing (Penalty: €20M or 4% turnover)'
+        
+        # Data protection related - use GDPR
+        elif any(term in finding_lower for term in ['pii', 'personal', 'data subject', 'processing', 'retention', 'erasure']):
+            return 'GDPR Article 5 - Principles of Processing (Penalty: €20M or 4% turnover)'
+        
+        # Security related - use GDPR
+        elif any(term in finding_lower for term in ['security', 'breach', 'vulnerability', 'encryption', 'access control']):
+            return 'GDPR Article 32 - Security of Processing (Penalty: €10M or 2% turnover)'
+        
+        # AI-specific - use EU AI Act
+        elif 'prohibited' in finding_lower or 'social_scoring' in finding_lower or 'subliminal' in finding_lower:
             return 'EU AI Act Article 5 - Prohibited AI Practices (Penalty: €35M or 7% turnover)'
         elif 'high_risk' in finding_lower or 'biometric' in finding_lower:
             return 'EU AI Act Articles 6-15 - High-Risk AI Requirements (Penalty: €15M or 3% turnover)'
-        elif 'transparency' in finding_lower:
-            return 'EU AI Act Article 50 - Transparency Obligations (Penalty: €15M or 3% turnover)'
         elif 'gpai' in finding_lower or 'foundation' in finding_lower or 'general_purpose' in finding_lower:
             return 'EU AI Act Articles 51-55 - GPAI Model Obligations (Penalty: €15M or 3% turnover)'
         elif 'human_oversight' in finding_lower:
             return 'EU AI Act Article 14 - Human Oversight (Penalty: €15M or 3% turnover)'
         elif 'data_governance' in finding_lower or 'training_data' in finding_lower:
             return 'EU AI Act Article 10 - Data Governance (Penalty: €15M or 3% turnover)'
-        elif 'risk_management' in finding_lower:
+        elif 'risk_management' in finding_lower and 'ai' in finding_lower:
             return 'EU AI Act Article 9 - Risk Management (Penalty: €15M or 3% turnover)'
-        elif 'documentation' in finding_lower or 'technical_doc' in finding_lower:
-            return 'EU AI Act Article 11 - Technical Documentation (Penalty: €15M or 3% turnover)'
-        elif 'deployer' in finding_lower:
-            return 'EU AI Act Articles 26-27 - Deployer Obligations (Penalty: €15M or 3% turnover)'
-        elif 'conformity' in finding_lower or 'ce_marking' in finding_lower:
-            return 'EU AI Act Articles 43-49 - Conformity Assessment (Penalty: €15M or 3% turnover)'
-        elif 'post_market' in finding_lower or 'monitoring' in finding_lower:
-            return 'EU AI Act Articles 61-68 - Post-Market Monitoring (Penalty: €15M or 3% turnover)'
-        elif 'ai_act' in finding_lower:
+        elif 'ai_act' in finding_lower or 'ai model' in finding_lower:
             return 'EU AI Act - General Requirements (Penalty: €7.5M or 1.5% turnover)'
+        
+        # Default to GDPR for general findings (not AI-specific)
         else:
-            return 'EU AI Act Article 9 - Risk Management System (Penalty: €15M or 3% turnover)'
+            return 'GDPR Article 5 - Principles of Data Processing (Penalty: €20M or 4% turnover)'
     
     def _infer_affected_systems(self, finding_type: str) -> List[str]:
         """Infer affected systems from finding type"""
