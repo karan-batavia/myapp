@@ -53,6 +53,25 @@ server {
         proxy_buffering off;
     }
 
+    # Streamlit WebSocket stream (critical for first load)
+    location /_stcore {
+        proxy_pass http://dataguardian_app/_stcore;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_set_header Host $host;
+        proxy_read_timeout 86400;
+        proxy_buffering off;
+    }
+
+    # Static files
+    location /static {
+        proxy_pass http://dataguardian_app/static;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+
     # Main application
     location / {
         proxy_pass http://dataguardian_app;
@@ -64,5 +83,6 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_read_timeout 86400;
+        proxy_buffering off;
     }
 }
