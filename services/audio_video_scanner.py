@@ -336,46 +336,59 @@ class AudioVideoScanner:
         audio_analysis = None
         video_analysis = None
         duration_seconds = 0.0
+        media_type = "audio" if is_audio else "video"
         
-        use_bounded_processing = (
-            self._bounded_analyzer is not None and 
-            file_size > self.MAX_MEMORY_MB * 1024 * 1024
-        )
-        
-        if is_audio:
-            media_type = "audio"
-            if use_bounded_processing:
-                logger.info(f"Using bounded audio analysis for large file ({file_size / 1024 / 1024:.1f}MB)")
-                bounded_result = self._bounded_analyzer.analyze_audio_bounded(file_path)
-                audio_analysis = self._convert_bounded_audio_result(bounded_result)
+        try:
+            use_bounded_processing = (
+                self._bounded_analyzer is not None and 
+                file_size > self.MAX_MEMORY_MB * 1024 * 1024
+            )
+            
+            if is_audio:
+                media_type = "audio"
+                if use_bounded_processing:
+                    logger.info(f"Using bounded audio analysis for large file ({file_size / 1024 / 1024:.1f}MB)")
+                    bounded_result = self._bounded_analyzer.analyze_audio_bounded(file_path)
+                    if bounded_result:
+                        audio_analysis = self._convert_bounded_audio_result(bounded_result)
+                    else:
+                        audio_analysis = self._analyze_audio(file_path)
+                else:
+                    audio_analysis = self._analyze_audio(file_path)
+                duration_seconds = audio_analysis.details.get('duration', 0) if audio_analysis and audio_analysis.details else 0
             else:
-                audio_analysis = self._analyze_audio(file_path)
-            duration_seconds = audio_analysis.details.get('duration', 0)
-        else:
-            media_type = "video"
-            if use_bounded_processing:
-                logger.info(f"Using bounded video analysis for large file ({file_size / 1024 / 1024:.1f}MB)")
-                bounded_result = self._bounded_analyzer.analyze_video_bounded(file_path)
-                video_analysis = self._convert_bounded_video_result(bounded_result)
-            else:
-                video_analysis = self._analyze_video(file_path)
-            duration_seconds = video_analysis.details.get('duration', 0)
-            audio_analysis = self._extract_and_analyze_audio(file_path)
+                media_type = "video"
+                if use_bounded_processing:
+                    logger.info(f"Using bounded video analysis for large file ({file_size / 1024 / 1024:.1f}MB)")
+                    bounded_result = self._bounded_analyzer.analyze_video_bounded(file_path)
+                    if bounded_result:
+                        video_analysis = self._convert_bounded_video_result(bounded_result)
+                    else:
+                        video_analysis = self._analyze_video(file_path)
+                else:
+                    video_analysis = self._analyze_video(file_path)
+                duration_seconds = video_analysis.details.get('duration', 0) if video_analysis and video_analysis.details else 0
+                audio_analysis = self._extract_and_analyze_audio(file_path)
+        except Exception as analysis_error:
+            logger.error(f"Media analysis error for {file_name}: {analysis_error}")
+            return self._create_error_result(scan_id, file_name, str(analysis_error))
         
         metadata_analysis = self._analyze_metadata(file_path, media_type)
+        if metadata_analysis is None:
+            metadata_analysis = {'is_suspicious': False, 'anomalies': []}
         
         fraud_types = []
         fraud_score = 0.0
         
         if audio_analysis:
-            fraud_types.extend(audio_analysis.fraud_types)
-            fraud_score = max(fraud_score, audio_analysis.fraud_score)
+            fraud_types.extend(audio_analysis.fraud_types if audio_analysis.fraud_types else [])
+            fraud_score = max(fraud_score, audio_analysis.fraud_score if audio_analysis.fraud_score else 0.0)
         
         if video_analysis:
-            fraud_types.extend(video_analysis.fraud_types)
-            fraud_score = max(fraud_score, video_analysis.fraud_score)
+            fraud_types.extend(video_analysis.fraud_types if video_analysis.fraud_types else [])
+            fraud_score = max(fraud_score, video_analysis.fraud_score if video_analysis.fraud_score else 0.0)
         
-        if metadata_analysis.get('is_suspicious', False):
+        if metadata_analysis and metadata_analysis.get('is_suspicious', False):
             fraud_types.append(MediaFraudType.METADATA_TAMPERING)
             fraud_score = max(fraud_score, 0.5)
         
