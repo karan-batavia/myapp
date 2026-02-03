@@ -1220,34 +1220,36 @@ Respond in JSON format with:
         
         if audio_analysis and audio_analysis.spectral_anomalies:
             for anomaly in audio_analysis.spectral_anomalies:
-                findings.append({
-                    'type': 'spectral_anomaly',
-                    'category': 'Audio Analysis',
-                    'severity': anomaly.get('severity', 'medium'),
-                    'title': f"Audio Anomaly: {anomaly.get('type', 'Unknown')}",
-                    'description': anomaly.get('description', ''),
-                    'gdpr_relevance': 'Audio authenticity affects data accuracy requirements',
-                    'recommendation': 'Verify audio source and authenticity'
-                })
+                if isinstance(anomaly, dict):
+                    findings.append({
+                        'type': 'spectral_anomaly',
+                        'category': 'Audio Analysis',
+                        'severity': anomaly.get('severity', 'medium'),
+                        'title': f"Audio Anomaly: {anomaly.get('type', 'Unknown')}",
+                        'description': anomaly.get('description', ''),
+                        'gdpr_relevance': 'Audio authenticity affects data accuracy requirements',
+                        'recommendation': 'Verify audio source and authenticity'
+                    })
         
         if video_analysis and video_analysis.frame_anomalies:
             for anomaly in video_analysis.frame_anomalies:
-                findings.append({
-                    'type': 'frame_anomaly',
-                    'category': 'Video Analysis',
-                    'severity': anomaly.get('severity', 'medium'),
-                    'title': f"Video Anomaly: {anomaly.get('type', 'Unknown')}",
-                    'description': anomaly.get('description', ''),
-                    'frame_indices': anomaly.get('frame_indices', []),
-                    'gdpr_relevance': 'Video manipulation affects data integrity',
-                    'recommendation': 'Review flagged frames manually'
-                })
+                if isinstance(anomaly, dict):
+                    findings.append({
+                        'type': 'frame_anomaly',
+                        'category': 'Video Analysis',
+                        'severity': anomaly.get('severity', 'medium'),
+                        'title': f"Video Anomaly: {anomaly.get('type', 'Unknown')}",
+                        'description': anomaly.get('description', ''),
+                        'frame_indices': anomaly.get('frame_indices', []),
+                        'gdpr_relevance': 'Video manipulation affects data integrity',
+                        'recommendation': 'Review flagged frames manually'
+                    })
         
         # Add DeepFace Anti-Spoofing findings
-        if video_analysis and video_analysis.face_analysis:
+        if video_analysis and video_analysis.face_analysis and isinstance(video_analysis.face_analysis, dict):
             face_data = video_analysis.face_analysis
             # DeepFace results are nested under 'deepface_analysis' key
-            deepface_data = face_data.get('deepface_analysis', {})
+            deepface_data = face_data.get('deepface_analysis', {}) if face_data else {}
             deepface_available = deepface_data.get('available', False)
             analyzed_frames = deepface_data.get('analyzed_frames', 0)
             face_count = face_data.get('count', 0)
