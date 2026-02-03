@@ -662,7 +662,27 @@
     "needs_attention_70_79": "Aandacht Nodig (70-79%)",
     "moderate_risk": "Matig risico dat gerichte actie vereist",
     "critical_60": "Kritiek (<60%)",
-    "high_risk": "Hoog risico dat onmiddellijke interventie vereist"
+    "high_risk": "Hoog risico dat onmiddellijke interventie vereist",
+    "cookies_found": "Cookies Gevonden",
+    "trackers_detected": "Trackers Gedetecteerd",
+    "tracker_details": "Tracker Details",
+    "name": "Naam",
+    "purpose": "Doel",
+    "privacy_risk": "Privacyrisico",
+    "compliance_requirements": "Nalevingsvereisten",
+    "description": "Beschrijving",
+    "context": "Context",
+    "data_classification": "Gegevensclassificatie",
+    "business_impact": "Zakelijke Impact",
+    "priority": "Prioriteit",
+    "estimated_effort": "Geschatte Inspanning",
+    "implementation": "Implementatie",
+    "effort": "Inspanning",
+    "verification": "Verificatie",
+    "not_specified": "Niet gespecificeerd",
+    "not_estimated": "Niet ingeschat",
+    "no_description": "Geen beschrijving beschikbaar",
+    "verification_not_specified": "Verificatiemethode niet gespecificeerd"
   },
   "admin": {
     "title": "Admin"

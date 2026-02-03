@@ -789,22 +789,22 @@ class UnifiedHTMLReportGenerator:
                     {f'<div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">{source_file}</code></div>' if source_file else ''}
                     
                     <div class="finding-description">
-                        <strong>Description:</strong> {description}
+                        <strong>{t_report('description', 'Description')}:</strong> {description}
                     </div>
                     
-                    {f'<div class="finding-context"><strong>Context:</strong> {context}</div>' if context else ''}
+                    {f'<div class="finding-context"><strong>{t_report("context", "Context")}:</strong> {context}</div>' if context else ''}
                     
                     <div class="finding-location">
                         <strong>{t_report('location_details', 'Location')}:</strong> {location}
                     </div>
                     
-                    {f'<div class="finding-classification"><strong>Data Classification:</strong> {data_classification}</div>' if data_classification else ''}
+                    {f'<div class="finding-classification"><strong>{t_report("data_classification", "Data Classification")}:</strong> {data_classification}</div>' if data_classification else ''}
                     
-                    {f'<div class="business-impact"><strong>Business Impact:</strong> {business_impact}</div>' if business_impact else ''}
+                    {f'<div class="business-impact"><strong>{t_report("business_impact", "Business Impact")}:</strong> {business_impact}</div>' if business_impact else ''}
                     
-                    {f'<div class="remediation-priority"><strong>Priority:</strong> {remediation_priority}</div>' if remediation_priority else ''}
+                    {f'<div class="remediation-priority"><strong>{t_report("priority", "Priority")}:</strong> {remediation_priority}</div>' if remediation_priority else ''}
                     
-                    {f'<div class="estimated-effort"><strong>Estimated Effort:</strong> {estimated_effort}</div>' if estimated_effort else ''}
+                    {f'<div class="estimated-effort"><strong>{t_report("estimated_effort", "Estimated Effort")}:</strong> {estimated_effort}</div>' if estimated_effort else ''}
                     
                     {self._generate_penalty_info(finding)}
                     
@@ -1556,7 +1556,7 @@ class UnifiedHTMLReportGenerator:
         
         trackers_details = ""
         if isinstance(trackers_raw, list) and trackers_raw:
-            trackers_details = "<div class='details-section'><h3>📡 Tracker Details</h3><table class='findings-table'><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Privacy Risk</th></tr>"
+            trackers_details = f"<div class='details-section'><h3>📡 {t_report('tracker_details', 'Tracker Details')}</h3><table class='findings-table'><tr><th>{t_report('name', 'Name')}</th><th>{t_report('type', 'Type')}</th><th>{t_report('purpose', 'Purpose')}</th><th>{t_report('privacy_risk', 'Privacy Risk')}</th></tr>"
             for tracker in trackers_raw[:10]:  # Limit to first 10
                 name = tracker.get('name', 'Unknown')
                 tracker_type = tracker.get('type', 'Unknown')
@@ -1572,11 +1572,11 @@ class UnifiedHTMLReportGenerator:
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{cookies_count}</div>
-                    <div class="metric-label">Cookies Found</div>
+                    <div class="metric-label">{t_report('cookies_found', 'Cookies Found')}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{trackers_count}</div>
-                    <div class="metric-label">Trackers Detected</div>
+                    <div class="metric-label">{t_report('trackers_detected', 'Trackers Detected')}</div>
                 </div>
             </div>
             {cookies_details}
@@ -1637,7 +1637,7 @@ class UnifiedHTMLReportGenerator:
         
         return f"""
         <div class="compliance-section">
-            <h4>⚖️ Compliance Requirements</h4>
+            <h4>⚖️ {t_report('compliance_requirements', 'Compliance Requirements')}</h4>
             {articles_html}
             {requirements_html}
         </div>
@@ -1656,18 +1656,18 @@ class UnifiedHTMLReportGenerator:
             recommendations_html += f"""
             <div class="recommendation">
                 <div class="recommendation-header">
-                    {rec.get('action', 'Action Required')}
+                    {rec.get('action', t_report('action_required', 'Action Required'))}
                     <span class="recommendation-priority {priority_class}">{rec.get('priority', 'Medium')}</span>
                 </div>
                 <div class="recommendation-details">
-                    <strong>Description:</strong> {rec.get('description', 'No description available')}
+                    <strong>{t_report('description', 'Description')}:</strong> {rec.get('description', t_report('no_description', 'No description available'))}
                 </div>
                 <div class="recommendation-details">
-                    <strong>Implementation:</strong> {rec.get('implementation', 'Implementation details not specified')}
+                    <strong>{t_report('implementation', 'Implementation')}:</strong> {rec.get('implementation', t_report('not_specified', 'Not specified'))}
                 </div>
                 <div class="recommendation-details">
-                    <strong>Effort:</strong> {rec.get('effort_estimate', 'Not estimated')} | 
-                    <strong>Verification:</strong> {rec.get('verification', 'Verification method not specified')}
+                    <strong>{t_report('effort', 'Effort')}:</strong> {rec.get('effort_estimate', t_report('not_estimated', 'Not estimated'))} | 
+                    <strong>{t_report('verification', 'Verification')}:</strong> {rec.get('verification', t_report('verification_not_specified', 'Verification method not specified'))}
                 </div>
             </div>
             """
