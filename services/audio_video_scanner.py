@@ -299,6 +299,17 @@ class AudioVideoScanner:
         if file_name is None:
             file_name = os.path.basename(file_path)
         
+        try:
+            return self._scan_file_internal(file_path, file_name, scan_id, start_time)
+        except Exception as e:
+            logger.error(f"Unexpected error in scan_file for {file_name}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            return self._create_error_result(scan_id, file_name, str(e))
+    
+    def _scan_file_internal(self, file_path: str, file_name: str, scan_id: str, start_time) -> MediaScanResult:
+        """Internal implementation of scan_file with comprehensive analysis."""
+        
         extension = file_name.lower().split('.')[-1] if '.' in file_name else ''
         
         try:
@@ -1253,10 +1264,12 @@ Respond in JSON format with:
         if video_analysis and video_analysis.face_analysis and isinstance(video_analysis.face_analysis, dict):
             face_data = video_analysis.face_analysis
             # DeepFace results are nested under 'deepface_analysis' key
-            deepface_data = face_data.get('deepface_analysis', {}) if face_data else {}
+            deepface_data = face_data.get('deepface_analysis') if face_data else None
+            if deepface_data is None or not isinstance(deepface_data, dict):
+                deepface_data = {}
             deepface_available = deepface_data.get('available', False)
             analyzed_frames = deepface_data.get('analyzed_frames', 0)
-            face_count = face_data.get('count', 0)
+            face_count = face_data.get('count', 0) if face_data else 0
             
             if deepface_data.get('spoof_detected') or face_data.get('spoof_detected'):
                 findings.append({
