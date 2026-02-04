@@ -55,6 +55,18 @@ if 'app_initialized' not in st.session_state:
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
             }
+            /* Hide material icon ligature text until font loads */
+            [data-testid="stSidebarCollapseButton"] span,
+            [data-testid="collapsedControl"] span {
+                font-size: 0;
+                visibility: hidden;
+            }
+            [data-testid="stSidebarCollapseButton"] span::before,
+            [data-testid="collapsedControl"] span::before {
+                font-size: 24px;
+                visibility: visible;
+                content: "≡";
+            }
         </style>
         """, unsafe_allow_html=True)
     st.session_state.app_initialized = True
