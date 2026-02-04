@@ -759,6 +759,10 @@ Respond in JSON format with:
                     logger.warning(f"Could not parse AI response: {response_text[:200]}")
                     return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
             
+            if analysis is None or not isinstance(analysis, dict):
+                logger.warning(f"AI returned invalid analysis: {type(analysis)}")
+                return {'is_suspicious': False, 'score': 0.0, 'anomalies': []}
+            
             is_deepfake = analysis.get('is_deepfake', False)
             confidence = float(analysis.get('confidence', 0.0))
             deepfake_type = analysis.get('deepfake_type', 'unknown')
@@ -1428,8 +1432,11 @@ Respond in JSON format with:
         }
         return recommendations.get(fraud_type, "Review and verify through independent means.")
     
-    def _convert_bounded_audio_result(self, bounded_result: Dict[str, Any]) -> AudioAnalysisResult:
+    def _convert_bounded_audio_result(self, bounded_result: Dict[str, Any]) -> Optional[AudioAnalysisResult]:
         """Convert bounded analyzer audio result to AudioAnalysisResult."""
+        if bounded_result is None:
+            return None
+        
         fraud_types = []
         fraud_score = 0.0
         spectral_anomalies = []
@@ -1461,8 +1468,11 @@ Respond in JSON format with:
             recommendations=["Large file analyzed with bounded memory processing"]
         )
     
-    def _convert_bounded_video_result(self, bounded_result: Dict[str, Any]) -> VideoAnalysisResult:
+    def _convert_bounded_video_result(self, bounded_result: Dict[str, Any]) -> Optional[VideoAnalysisResult]:
         """Convert bounded analyzer video result to VideoAnalysisResult."""
+        if bounded_result is None:
+            return None
+        
         fraud_types = []
         fraud_score = 0.0
         frame_anomalies = []
