@@ -351,7 +351,7 @@ class AudioVideoScanner:
                     bounded_result = self._bounded_analyzer.analyze_audio_bounded(file_path)
                     if bounded_result:
                         audio_analysis = self._convert_bounded_audio_result(bounded_result)
-                    else:
+                    if not audio_analysis:
                         audio_analysis = self._analyze_audio(file_path)
                 else:
                     audio_analysis = self._analyze_audio(file_path)
@@ -363,7 +363,7 @@ class AudioVideoScanner:
                     bounded_result = self._bounded_analyzer.analyze_video_bounded(file_path)
                     if bounded_result:
                         video_analysis = self._convert_bounded_video_result(bounded_result)
-                    else:
+                    if not video_analysis:
                         video_analysis = self._analyze_video(file_path)
                 else:
                     video_analysis = self._analyze_video(file_path)
