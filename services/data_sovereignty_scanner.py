@@ -508,6 +508,9 @@ class DataSovereigntyScanner:
     def _parse_terraform_locations(self, content: str) -> List[DataLocation]:
         """Parse Terraform content for data locations"""
         locations = []
+        seen_regions = set()
+        
+        provider = self._detect_terraform_provider(content)
         
         region_patterns = [
             r'region\s*=\s*["\']([^"\']+)["\']',
@@ -515,25 +518,56 @@ class DataSovereigntyScanner:
             r'zone\s*=\s*["\']([^"\']+)["\']'
         ]
         
+        service_patterns = [
+            (r'resource\s+"aws_s3_bucket"', 'S3 Object Storage'),
+            (r'resource\s+"aws_rds_', 'RDS Database'),
+            (r'resource\s+"aws_dynamodb_', 'DynamoDB'),
+            (r'resource\s+"aws_lambda_', 'Lambda Function'),
+            (r'resource\s+"aws_ec2_', 'EC2 Compute'),
+            (r'resource\s+"aws_instance"', 'EC2 Instance'),
+            (r'resource\s+"aws_ecs_', 'ECS Container'),
+            (r'resource\s+"aws_eks_', 'EKS Kubernetes'),
+            (r'resource\s+"aws_sqs_', 'SQS Queue'),
+            (r'resource\s+"aws_sns_', 'SNS Notification'),
+            (r'resource\s+"aws_kinesis_', 'Kinesis Stream'),
+            (r'resource\s+"aws_elasticsearch_', 'Elasticsearch'),
+            (r'resource\s+"aws_opensearch_', 'OpenSearch'),
+            (r'resource\s+"aws_redshift_', 'Redshift Data Warehouse'),
+            (r'resource\s+"aws_elasticache_', 'ElastiCache'),
+            (r'resource\s+"azurerm_storage_', 'Azure Storage'),
+            (r'resource\s+"azurerm_sql_', 'Azure SQL'),
+            (r'resource\s+"azurerm_cosmosdb_', 'Cosmos DB'),
+            (r'resource\s+"google_storage_', 'Cloud Storage'),
+            (r'resource\s+"google_bigquery_', 'BigQuery'),
+            (r'resource\s+"google_sql_', 'Cloud SQL'),
+        ]
+        
+        detected_services = []
+        for pattern, service_name in service_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                detected_services.append(service_name)
+        
         for pattern in region_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for region in matches:
+                if region.lower() in seen_regions:
+                    continue
+                
                 region_info = self.CLOUD_REGIONS.get(region.lower(), {})
                 country = region_info.get('country', self._detect_country_from_region(region))
                 
-                provider = 'unknown'
-                if 'aws_' in content.lower():
-                    provider = 'AWS'
-                elif 'azurerm_' in content.lower():
-                    provider = 'Azure'
-                elif 'google_' in content.lower():
-                    provider = 'GCP'
+                if country == 'unknown':
+                    continue
+                
+                seen_regions.add(region.lower())
+                
+                service_desc = ', '.join(detected_services[:3]) if detected_services else 'Infrastructure'
                 
                 location = DataLocation(
                     region=region,
                     country=country,
                     cloud_provider=provider,
-                    service_type='terraform_resource',
+                    service_type=service_desc,
                     is_eu=country in self.EU_COUNTRIES,
                     is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
                     legal_jurisdiction=self._get_jurisdiction(country)
@@ -542,9 +576,27 @@ class DataSovereigntyScanner:
                 
         return locations
     
+    def _detect_terraform_provider(self, content: str) -> str:
+        """Detect cloud provider from Terraform content"""
+        content_lower = content.lower()
+        if re.search(r'provider\s+["\']?aws', content_lower) or 'aws_' in content_lower:
+            return 'AWS'
+        elif re.search(r'provider\s+["\']?azurerm', content_lower) or 'azurerm_' in content_lower:
+            return 'Azure'
+        elif re.search(r'provider\s+["\']?google', content_lower) or 'google_' in content_lower:
+            return 'GCP'
+        elif 'aws' in content_lower:
+            return 'AWS'
+        elif 'azure' in content_lower:
+            return 'Azure'
+        elif 'gcp' in content_lower or 'google' in content_lower:
+            return 'GCP'
+        return 'Unknown'
+    
     def _detect_terraform_flows(self, content: str) -> List[DataFlow]:
         """Detect data flows from Terraform configuration"""
         flows = []
+        base_country = self._get_country_from_region(self.region)
         
         replication_patterns = [
             r'replica.*region\s*=\s*["\']([^"\']+)["\']',
@@ -560,13 +612,68 @@ class DataSovereigntyScanner:
                 flow = DataFlow(
                     source="primary",
                     destination=region,
-                    source_country="NL",
+                    source_country=base_country,
                     destination_country=dest_country,
-                    is_cross_border=dest_country != "NL",
-                    is_eu_to_third_country=dest_country not in self.EU_COUNTRIES and dest_country not in self.ADEQUACY_COUNTRIES,
+                    is_cross_border=dest_country != base_country,
+                    is_eu_to_third_country=(base_country in self.EU_COUNTRIES and 
+                                           dest_country not in self.EU_COUNTRIES and 
+                                           dest_country not in self.ADEQUACY_COUNTRIES),
                     flow_type="replication"
                 )
                 flows.append(flow)
+        
+        region_patterns = [
+            r'region\s*=\s*["\']([^"\']+)["\']',
+            r'location\s*=\s*["\']([^"\']+)["\']',
+        ]
+        
+        seen_regions = set()
+        for pattern in region_patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            for region in matches:
+                region_lower = region.lower()
+                if region_lower in seen_regions:
+                    continue
+                    
+                dest_country = self._detect_country_from_region(region)
+                if dest_country == 'unknown':
+                    continue
+                    
+                if dest_country != base_country:
+                    seen_regions.add(region_lower)
+                    is_eu_to_third = (base_country in self.EU_COUNTRIES and 
+                                     dest_country not in self.EU_COUNTRIES and 
+                                     dest_country not in self.ADEQUACY_COUNTRIES)
+                    
+                    region_info = self.CLOUD_REGIONS.get(region_lower, {})
+                    dest_name = region_info.get('name', region)
+                    
+                    flow = DataFlow(
+                        source=f"{self.region} (Organization)",
+                        destination=f"{dest_name} ({region})",
+                        source_country=base_country,
+                        destination_country=dest_country,
+                        is_cross_border=True,
+                        is_eu_to_third_country=is_eu_to_third,
+                        flow_type="infrastructure_deployment",
+                        data_types=["infrastructure_data", "application_data"]
+                    )
+                    flows.append(flow)
+        
+        provider = self._detect_terraform_provider(content)
+        if provider in ['AWS', 'Azure', 'GCP']:
+            provider_country = 'US'
+            if provider_country != base_country:
+                flows.append(DataFlow(
+                    source=f"{self.region} (Data Controller)",
+                    destination=f"{provider} (Cloud Provider - US HQ)",
+                    source_country=base_country,
+                    destination_country=provider_country,
+                    is_cross_border=True,
+                    is_eu_to_third_country=(base_country in self.EU_COUNTRIES),
+                    flow_type="cloud_provider_processing",
+                    data_types=["metadata", "telemetry", "billing_data"]
+                ))
                 
         return flows
     
