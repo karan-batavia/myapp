@@ -413,7 +413,18 @@ def show_pricing_cards(billing_cycle: BillingCycle):
         st.markdown("• Organizations requiring on-premises")
         st.markdown("• Custom compliance requirements")
         
-        if st.button("📞 Contact Sales", key="contact_government", type="primary"):
+        # Check if user already has Government tier
+        current_tier = st.session_state.get('pricing_tier', PricingTier.FREE)
+        is_current = current_tier == PricingTier.GOVERNMENT
+        
+        if is_current:
+            st.success("✅ Current Plan")
+        else:
+            if st.button("Select Government & Enterprise", key="select_government_enterprise", type="primary"):
+                handle_tier_selection(PricingTier.GOVERNMENT, 'yearly')
+        
+        st.markdown("")
+        if st.button("📞 Contact Sales", key="contact_government", type="secondary"):
             st.session_state['contact_sales'] = True
             st.rerun()
 
