@@ -445,7 +445,7 @@ class DataSovereigntyScanner:
         
         Args:
             config_content: Configuration file content
-            config_type: Type of configuration (aws, azure, gcp, kubernetes)
+            config_type: Type of configuration (aws, azure, gcp, kubernetes, generic)
             
         Returns:
             SovereigntyScanResult with analysis
@@ -454,27 +454,42 @@ class DataSovereigntyScanner:
         self.scan_id = str(uuid.uuid4())[:8]
         self.start_time = datetime.now()
         
+        detected_provider = self._detect_terraform_provider(config_content)
+        if config_type == "generic" and detected_provider != 'Unknown':
+            config_type = detected_provider.lower()
+        
         result = SovereigntyScanResult(
             scan_id=self.scan_id,
             timestamp=datetime.now().isoformat(),
-            target_name=f"{config_type.upper()} Configuration",
+            target_name=f"{detected_provider if detected_provider != 'Unknown' else config_type.upper()} Configuration",
             region=self.region
         )
         
         try:
-            if config_type == "aws":
+            if config_type in ("aws", "AWS"):
                 result.data_locations = self._parse_aws_config(config_content)
-            elif config_type == "azure":
+            elif config_type in ("azure", "Azure"):
                 result.data_locations = self._parse_azure_config(config_content)
-            elif config_type == "gcp":
+            elif config_type in ("gcp", "GCP"):
                 result.data_locations = self._parse_gcp_config(config_content)
             elif config_type == "kubernetes":
                 result.data_locations = self._parse_kubernetes_config(config_content)
             else:
                 result.data_locations = self._parse_generic_config(config_content)
             
-            result.data_flows = self._detect_config_flows(config_content, config_type)
-            result.access_paths = self._detect_config_access(config_content, config_type)
+            if not result.data_locations:
+                result.data_locations = self._parse_terraform_locations(config_content)
+            
+            result.data_flows = self._detect_terraform_flows(config_content)
+            result.access_paths = self._detect_terraform_access(config_content)
+            result.data_origins = self._analyze_terraform_origins(config_content)
+            result.legal_jurisdictions = self._analyze_legal_jurisdictions(result.data_locations)
+            result.compliance_checks = self._run_terraform_compliance_checks(config_content, result)
+            
+            result.encryption_at_rest = self._detect_terraform_encryption(config_content, "at_rest")
+            result.encryption_in_transit = self._detect_terraform_encryption(config_content, "in_transit")
+            result.data_retention_policy = self._detect_terraform_retention(config_content)
+            result.backup_locations = self._detect_terraform_backups(config_content)
             
             result.findings = self._generate_findings(result)
             result.recommendations = self._generate_recommendations(result)
@@ -491,6 +506,14 @@ class DataSovereigntyScanner:
             
         except Exception as e:
             logger.error(f"Error parsing {config_type} config: {e}")
+            result.findings.append({
+                'type': 'parse_error',
+                'severity': 'medium',
+                'title': 'Configuration Parse Error',
+                'description': f'Could not fully parse configuration: {str(e)}',
+                'legal_reference': 'N/A',
+                'recommendation': 'Ensure valid configuration syntax'
+            })
             
         return result
     
@@ -902,66 +925,178 @@ class DataSovereigntyScanner:
     def _parse_aws_config(self, content: str) -> List[DataLocation]:
         """Parse AWS CloudFormation configuration"""
         locations = []
+        seen_regions = set()
         
-        region_matches = re.findall(r'Region["\']?\s*[:=]\s*["\']?([a-z]{2}-[a-z]+-\d)["\']?', content, re.IGNORECASE)
+        region_patterns = [
+            r'Region["\']?\s*[:=]\s*["\']?([a-z]{2}-[a-z]+-\d)["\']?',
+            r'region\s*[:=]\s*["\']([a-z]{2}-[a-z]+-\d)["\']',
+            r'"AWS::Region"\s*[:=]\s*["\']([^"\']+)["\']'
+        ]
         
-        for region in region_matches:
-            region_info = self.CLOUD_REGIONS.get(region.lower(), {})
-            country = region_info.get('country', 'US')
-            
-            locations.append(DataLocation(
-                region=region,
-                country=country,
-                cloud_provider='AWS',
-                service_type='cloudformation',
-                is_eu=country in self.EU_COUNTRIES,
-                is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
-                legal_jurisdiction=self._get_jurisdiction(country)
-            ))
+        service_patterns = [
+            (r'AWS::S3::Bucket|aws_s3_bucket', 'S3 Object Storage'),
+            (r'AWS::RDS::DBInstance|aws_rds_|aws_db_instance', 'RDS Database'),
+            (r'AWS::DynamoDB::Table|aws_dynamodb', 'DynamoDB'),
+            (r'AWS::Lambda::Function|aws_lambda', 'Lambda Function'),
+            (r'AWS::EC2::Instance|aws_instance', 'EC2 Compute'),
+            (r'AWS::ECS|aws_ecs_', 'ECS Container'),
+            (r'AWS::EKS|aws_eks_', 'EKS Kubernetes'),
+            (r'AWS::SQS|aws_sqs_', 'SQS Queue'),
+            (r'AWS::SNS|aws_sns_', 'SNS Notification'),
+            (r'AWS::Kinesis|aws_kinesis', 'Kinesis Stream'),
+            (r'AWS::Elasticsearch|aws_elasticsearch|aws_opensearch', 'OpenSearch'),
+            (r'AWS::Redshift|aws_redshift', 'Redshift Data Warehouse'),
+            (r'AWS::ElastiCache|aws_elasticache', 'ElastiCache'),
+            (r'AWS::ApiGateway|aws_api_gateway|aws_apigateway', 'API Gateway'),
+            (r'AWS::Cognito|aws_cognito', 'Cognito Identity'),
+        ]
+        
+        detected_services = []
+        for pattern, service_name in service_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                detected_services.append(service_name)
+        
+        for rp in region_patterns:
+            matches = re.findall(rp, content, re.IGNORECASE)
+            for region in matches:
+                if region.lower() in seen_regions:
+                    continue
+                seen_regions.add(region.lower())
+                
+                region_info = self.CLOUD_REGIONS.get(region.lower(), {})
+                country = region_info.get('country', 'US')
+                service_desc = ', '.join(detected_services[:3]) if detected_services else 'AWS Infrastructure'
+                
+                locations.append(DataLocation(
+                    region=region,
+                    country=country,
+                    cloud_provider='AWS',
+                    service_type=service_desc,
+                    is_eu=country in self.EU_COUNTRIES,
+                    is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
+                    legal_jurisdiction=self._get_jurisdiction(country)
+                ))
             
         return locations
     
     def _parse_azure_config(self, content: str) -> List[DataLocation]:
         """Parse Azure ARM/Bicep configuration"""
         locations = []
+        seen_regions = set()
         
-        location_matches = re.findall(r'location["\']?\s*[:=]\s*["\']?([a-z]+)["\']?', content, re.IGNORECASE)
+        location_patterns = [
+            r'location["\']?\s*[:=]\s*["\']([a-zA-Z]+)["\']',
+            r'"location"\s*:\s*"([^"]+)"',
+            r'location\s*=\s*["\']([^"\']+)["\']'
+        ]
         
-        for location in location_matches:
-            region_info = self.CLOUD_REGIONS.get(location.lower(), {})
-            country = region_info.get('country', 'NL')
-            
-            locations.append(DataLocation(
-                region=location,
-                country=country,
-                cloud_provider='Azure',
-                service_type='arm_template',
-                is_eu=country in self.EU_COUNTRIES,
-                is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
-                legal_jurisdiction=self._get_jurisdiction(country)
-            ))
+        service_patterns = [
+            (r'Microsoft\.Storage|azurerm_storage', 'Azure Storage'),
+            (r'Microsoft\.Sql|azurerm_mssql|azurerm_sql', 'Azure SQL Database'),
+            (r'Microsoft\.DocumentDB|azurerm_cosmosdb', 'Cosmos DB'),
+            (r'Microsoft\.DBforPostgreSQL|azurerm_postgresql', 'Azure PostgreSQL'),
+            (r'Microsoft\.DBforMySQL|azurerm_mysql', 'Azure MySQL'),
+            (r'Microsoft\.ContainerService|azurerm_kubernetes', 'AKS Kubernetes'),
+            (r'Microsoft\.Web|azurerm_function_app|azurerm_app_service|azurerm_linux_web_app', 'Azure App Service/Functions'),
+            (r'Microsoft\.Compute|azurerm_virtual_machine|azurerm_linux_virtual_machine', 'Azure Virtual Machine'),
+            (r'Microsoft\.KeyVault|azurerm_key_vault', 'Azure Key Vault'),
+            (r'Microsoft\.CognitiveServices|azurerm_cognitive', 'Azure Cognitive Services'),
+            (r'Microsoft\.ServiceBus|azurerm_servicebus', 'Azure Service Bus'),
+            (r'Microsoft\.EventHub|azurerm_eventhub', 'Azure Event Hub'),
+            (r'Microsoft\.Cache|azurerm_redis_cache', 'Azure Redis Cache'),
+        ]
+        
+        detected_services = []
+        for pattern, service_name in service_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                detected_services.append(service_name)
+        
+        for lp in location_patterns:
+            matches = re.findall(lp, content, re.IGNORECASE)
+            for location in matches:
+                loc_lower = location.lower().strip()
+                if loc_lower in seen_regions or len(loc_lower) < 3:
+                    continue
+                
+                region_info = self.CLOUD_REGIONS.get(loc_lower, {})
+                if not region_info:
+                    continue
+                    
+                seen_regions.add(loc_lower)
+                country = region_info.get('country', 'NL')
+                service_desc = ', '.join(detected_services[:3]) if detected_services else 'Azure Infrastructure'
+                
+                locations.append(DataLocation(
+                    region=location,
+                    country=country,
+                    cloud_provider='Azure',
+                    service_type=service_desc,
+                    is_eu=country in self.EU_COUNTRIES,
+                    is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
+                    legal_jurisdiction=self._get_jurisdiction(country)
+                ))
             
         return locations
     
     def _parse_gcp_config(self, content: str) -> List[DataLocation]:
         """Parse GCP Deployment Manager configuration"""
         locations = []
+        seen_regions = set()
         
-        region_matches = re.findall(r'region["\']?\s*[:=]\s*["\']?([a-z]+-[a-z]+\d?)["\']?', content, re.IGNORECASE)
+        region_patterns = [
+            r'region["\']?\s*[:=]\s*["\']([a-z]+-[a-z]+\d*)["\']',
+            r'location["\']?\s*[:=]\s*["\']([a-z]+-[a-z]+\d*)["\']',
+            r'zone["\']?\s*[:=]\s*["\']([a-z]+-[a-z]+\d+-[a-z])["\']'
+        ]
         
-        for region in region_matches:
-            region_info = self.CLOUD_REGIONS.get(region.lower(), {})
-            country = region_info.get('country', 'US')
-            
-            locations.append(DataLocation(
-                region=region,
-                country=country,
-                cloud_provider='GCP',
-                service_type='deployment_manager',
-                is_eu=country in self.EU_COUNTRIES,
-                is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
-                legal_jurisdiction=self._get_jurisdiction(country)
-            ))
+        service_patterns = [
+            (r'google_storage_bucket|compute\.googleapis\.com/Disk', 'Cloud Storage'),
+            (r'google_sql_database|sqladmin\.googleapis\.com', 'Cloud SQL'),
+            (r'google_bigquery|bigquery\.googleapis\.com', 'BigQuery'),
+            (r'google_compute_instance|compute\.googleapis\.com', 'GCE Compute'),
+            (r'google_container_cluster|container\.googleapis\.com', 'GKE Kubernetes'),
+            (r'google_cloud_run|run\.googleapis\.com', 'Cloud Run'),
+            (r'google_cloudfunctions|cloudfunctions\.googleapis\.com', 'Cloud Functions'),
+            (r'google_pubsub|pubsub\.googleapis\.com', 'Cloud Pub/Sub'),
+            (r'google_spanner|spanner\.googleapis\.com', 'Cloud Spanner'),
+            (r'google_firestore|firestore\.googleapis\.com', 'Cloud Firestore'),
+            (r'google_redis_instance|redis\.googleapis\.com', 'Cloud Memorystore'),
+            (r'google_vertex_ai|aiplatform\.googleapis\.com', 'Vertex AI'),
+            (r'google_kms|cloudkms\.googleapis\.com', 'Cloud KMS'),
+        ]
+        
+        detected_services = []
+        for pattern, service_name in service_patterns:
+            if re.search(pattern, content, re.IGNORECASE):
+                detected_services.append(service_name)
+        
+        for rp in region_patterns:
+            matches = re.findall(rp, content, re.IGNORECASE)
+            for region in matches:
+                region_base = re.sub(r'-[a-z]$', '', region.lower())
+                if region_base in seen_regions:
+                    continue
+                    
+                region_info = self.CLOUD_REGIONS.get(region_base, self.CLOUD_REGIONS.get(region.lower(), {}))
+                if not region_info:
+                    country = self._detect_country_from_region(region)
+                    if country == 'unknown':
+                        continue
+                else:
+                    country = region_info.get('country', 'US')
+                
+                seen_regions.add(region_base)
+                service_desc = ', '.join(detected_services[:3]) if detected_services else 'GCP Infrastructure'
+                
+                locations.append(DataLocation(
+                    region=region_base,
+                    country=country,
+                    cloud_provider='GCP',
+                    service_type=service_desc,
+                    is_eu=country in self.EU_COUNTRIES,
+                    is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
+                    legal_jurisdiction=self._get_jurisdiction(country)
+                ))
             
         return locations
     
@@ -988,24 +1123,47 @@ class DataSovereigntyScanner:
         return locations
     
     def _parse_generic_config(self, content: str) -> List[DataLocation]:
-        """Parse generic configuration for locations"""
+        """Parse generic configuration for locations with auto-detection"""
         locations = []
+        seen_regions = set()
+        
+        provider = self._detect_terraform_provider(content)
+        if provider != 'Unknown':
+            if provider == 'AWS':
+                return self._parse_aws_config(content)
+            elif provider == 'Azure':
+                return self._parse_azure_config(content)
+            elif provider == 'GCP':
+                return self._parse_gcp_config(content)
         
         generic_patterns = [
-            r'region\s*[:=]\s*["\']?([a-zA-Z0-9-]+)["\']?',
-            r'location\s*[:=]\s*["\']?([a-zA-Z0-9-]+)["\']?',
-            r'datacenter\s*[:=]\s*["\']?([a-zA-Z0-9-]+)["\']?'
+            r'region\s*[:=]\s*["\']([a-zA-Z0-9-]+)["\']',
+            r'location\s*[:=]\s*["\']([a-zA-Z0-9-]+)["\']',
+            r'datacenter\s*[:=]\s*["\']([a-zA-Z0-9-]+)["\']',
+            r'zone\s*[:=]\s*["\']([a-zA-Z0-9-]+)["\']'
         ]
         
         for pattern in generic_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
-                country = self._detect_country_from_region(match)
+                match_lower = match.lower().strip()
+                if match_lower in seen_regions or len(match_lower) < 3:
+                    continue
+                    
+                region_info = self.CLOUD_REGIONS.get(match_lower, {})
+                if region_info:
+                    country = region_info['country']
+                else:
+                    country = self._detect_country_from_region(match)
+                    if country == 'unknown':
+                        continue
+                
+                seen_regions.add(match_lower)
                 locations.append(DataLocation(
                     region=match,
                     country=country,
-                    cloud_provider='unknown',
-                    service_type='generic',
+                    cloud_provider=provider if provider != 'Unknown' else 'Cloud',
+                    service_type='Cloud Infrastructure',
                     is_eu=country in self.EU_COUNTRIES,
                     is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
                     legal_jurisdiction=self._get_jurisdiction(country)
