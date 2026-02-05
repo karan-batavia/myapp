@@ -680,23 +680,97 @@ class DataSovereigntyScanner:
     def _detect_terraform_access(self, content: str) -> List[AccessPath]:
         """Detect access patterns from Terraform configuration"""
         paths = []
+        content_lower = content.lower()
+        provider = self._detect_terraform_provider(content)
         
-        if re.search(r'allowed_ip_ranges|ip_whitelist|source_ranges', content, re.IGNORECASE):
+        primary_region = "Unknown"
+        region_match = re.search(r'region\s*=\s*["\']([^"\']+)["\']', content, re.IGNORECASE)
+        if region_match:
+            primary_region = region_match.group(1)
+        primary_country = self._detect_country_from_region(primary_region)
+        is_eu = primary_country in self.EU_COUNTRIES
+        
+        access_patterns = [
+            {
+                'patterns': [r'aws_iam_role', r'iam_role', r'azurerm_role_assignment', r'google_project_iam'],
+                'type': 'IAM Role',
+                'name': f'{provider} IAM Service Role',
+                'privilege': 'service_role',
+                'monitored': True
+            },
+            {
+                'patterns': [r'aws_iam_user', r'azurerm_user_assigned_identity', r'google_service_account'],
+                'type': 'IAM User/Identity',
+                'name': f'{provider} IAM User',
+                'privilege': 'user_access',
+                'monitored': True
+            },
+            {
+                'patterns': [r'aws_iam_policy', r'iam_policy_document', r'azurerm_role_definition'],
+                'type': 'IAM Policy',
+                'name': f'{provider} Access Policy',
+                'privilege': 'policy_based',
+                'monitored': True
+            },
+            {
+                'patterns': [r'aws_security_group', r'azurerm_network_security_group', r'google_compute_firewall'],
+                'type': 'Network Security',
+                'name': 'Network Security Group / Firewall',
+                'privilege': 'network_level',
+                'monitored': True
+            },
+            {
+                'patterns': [r'allowed_ip_ranges', r'ip_whitelist', r'source_ranges', r'cidr_blocks.*0\.0\.0\.0'],
+                'type': 'IP-Based Access',
+                'name': 'IP Allowlist / CIDR Range',
+                'privilege': 'network',
+                'monitored': False
+            },
+            {
+                'patterns': [r'service_account', r'managed_identity', r'workload_identity'],
+                'type': 'Service Account',
+                'name': f'{provider} Service Account',
+                'privilege': 'automated',
+                'monitored': True
+            }
+        ]
+        
+        public_access = re.search(r'cidr_blocks\s*=\s*\[\s*["\']0\.0\.0\.0/0["\']', content_lower)
+        if public_access or re.search(r'publicly_accessible\s*=\s*true', content_lower):
             paths.append(AccessPath(
-                accessor_type="ip_based",
-                accessor_country="unknown",
-                privilege_level="network",
-                is_eu_access=True,
-                is_monitored=True
+                accessor_type="Public Internet Access",
+                accessor_country="Global (Any Country)",
+                privilege_level="public_endpoint",
+                is_eu_access=False,
+                is_monitored=False,
+                accessor_name="Open Internet Access (0.0.0.0/0)"
             ))
+        
+        for access_def in access_patterns:
+            matched = False
+            for pattern in access_def['patterns']:
+                if re.search(pattern, content_lower):
+                    matched = True
+                    break
             
-        if re.search(r'service_account|iam_role|managed_identity', content, re.IGNORECASE):
+            if matched:
+                paths.append(AccessPath(
+                    accessor_type=access_def['type'],
+                    accessor_country=primary_country if primary_country != 'unknown' else 'Unknown',
+                    privilege_level=access_def['privilege'],
+                    is_eu_access=is_eu,
+                    is_monitored=access_def['monitored'],
+                    accessor_name=access_def['name']
+                ))
+        
+        if provider in ['AWS', 'Azure', 'GCP']:
             paths.append(AccessPath(
-                accessor_type="service_account",
-                accessor_country="unknown",
-                privilege_level="automated",
-                is_eu_access=True,
-                is_monitored=True
+                accessor_type="Cloud Provider Admin",
+                accessor_country="US",
+                privilege_level="provider_admin",
+                is_eu_access=False,
+                is_monitored=True,
+                accessor_name=f"{provider} Support/Operations (US-headquartered)"
             ))
             
         return paths
@@ -933,41 +1007,111 @@ class DataSovereigntyScanner:
     def _analyze_terraform_origins(self, content: str) -> List[DataOrigin]:
         """Analyze data origins from Terraform configuration"""
         origins = []
+        content_lower = content.lower()
+        provider = self._detect_terraform_provider(content)
         
-        api_patterns = re.findall(r'api[_\-]?gateway|lambda|function|endpoint', content.lower())
-        if api_patterns:
-            origins.append(DataOrigin(
-                source_name="API Gateway",
-                source_type="api",
-                country="Unknown",
-                collection_method="REST API",
-                legal_basis="Contract (Art. 6(1)(b))",
-                data_categories=["personal_data"],
-                is_eu_origin=True
-            ))
+        primary_region = "Unknown"
+        region_match = re.search(r'region\s*=\s*["\']([^"\']+)["\']', content, re.IGNORECASE)
+        if region_match:
+            primary_region = region_match.group(1)
         
-        db_patterns = re.findall(r'rds|dynamodb|database|postgres|mysql|aurora', content.lower())
-        if db_patterns:
-            origins.append(DataOrigin(
-                source_name="Database Storage",
-                source_type="database",
-                country="Detected from region",
-                collection_method="Database Storage",
-                legal_basis="Contract (Art. 6(1)(b))",
-                data_categories=["personal_data", "operational_data"],
-                is_eu_origin=True
-            ))
+        primary_country = self._detect_country_from_region(primary_region)
+        is_eu = primary_country in self.EU_COUNTRIES
         
-        s3_patterns = re.findall(r's3[_\-]?bucket|blob|storage', content.lower())
-        if s3_patterns:
+        origin_patterns = [
+            {
+                'patterns': [r'api[_\-]?gateway', r'aws_apigateway', r'azurerm_api_management', r'google_api_gateway'],
+                'name': f'{provider} API Gateway',
+                'type': 'api',
+                'method': 'REST/HTTP API',
+                'legal_basis': 'Contract (Art. 6(1)(b))',
+                'categories': ['personal_data', 'request_data']
+            },
+            {
+                'patterns': [r'aws_rds_', r'aws_db_instance', r'dynamodb', r'aurora', r'postgres', r'mysql', r'azurerm_sql_', r'azurerm_cosmosdb', r'google_sql_'],
+                'name': f'{provider} Database Service',
+                'type': 'database',
+                'method': 'Database Storage & Processing',
+                'legal_basis': 'Contract (Art. 6(1)(b))',
+                'categories': ['personal_data', 'operational_data', 'transactional_data']
+            },
+            {
+                'patterns': [r'aws_s3_bucket', r's3_bucket', r'azurerm_storage_', r'google_storage_bucket', r'blob_storage'],
+                'name': f'{provider} Object Storage',
+                'type': 'file_upload',
+                'method': 'File Upload / Object Storage',
+                'legal_basis': 'Consent (Art. 6(1)(a))',
+                'categories': ['personal_data', 'documents', 'media']
+            },
+            {
+                'patterns': [r'aws_lambda', r'azurerm_function_app', r'google_cloudfunctions'],
+                'name': f'{provider} Serverless Functions',
+                'type': 'compute',
+                'method': 'Serverless Processing',
+                'legal_basis': 'Contract (Art. 6(1)(b))',
+                'categories': ['personal_data', 'processed_data']
+            },
+            {
+                'patterns': [r'aws_sqs_', r'aws_sns_', r'aws_kinesis', r'azurerm_servicebus', r'google_pubsub'],
+                'name': f'{provider} Message Queue/Stream',
+                'type': 'messaging',
+                'method': 'Event Streaming',
+                'legal_basis': 'Legitimate Interest (Art. 6(1)(f))',
+                'categories': ['event_data', 'operational_data']
+            },
+            {
+                'patterns': [r'aws_cognito', r'azurerm_active_directory', r'google_identity'],
+                'name': f'{provider} Identity Service',
+                'type': 'authentication',
+                'method': 'User Authentication',
+                'legal_basis': 'Contract (Art. 6(1)(b))',
+                'categories': ['personal_data', 'identity_data', 'credentials']
+            },
+            {
+                'patterns': [r'aws_cloudwatch', r'aws_cloudtrail', r'azurerm_monitor_', r'google_logging'],
+                'name': f'{provider} Logging/Monitoring',
+                'type': 'monitoring',
+                'method': 'System Monitoring',
+                'legal_basis': 'Legitimate Interest (Art. 6(1)(f))',
+                'categories': ['log_data', 'telemetry', 'operational_data']
+            },
+            {
+                'patterns': [r'aws_instance', r'aws_ec2_', r'aws_ecs_', r'aws_eks_', r'azurerm_virtual_machine', r'azurerm_kubernetes_', r'google_compute_'],
+                'name': f'{provider} Compute Service',
+                'type': 'compute',
+                'method': 'Server/Container Processing',
+                'legal_basis': 'Contract (Art. 6(1)(b))',
+                'categories': ['application_data', 'operational_data']
+            }
+        ]
+        
+        for origin_def in origin_patterns:
+            matched = False
+            for pattern in origin_def['patterns']:
+                if re.search(pattern, content_lower):
+                    matched = True
+                    break
+            
+            if matched:
+                origins.append(DataOrigin(
+                    source_name=origin_def['name'],
+                    source_type=origin_def['type'],
+                    country=primary_country if primary_country != 'unknown' else 'Configured Region',
+                    collection_method=origin_def['method'],
+                    legal_basis=origin_def['legal_basis'],
+                    data_categories=origin_def['categories'],
+                    is_eu_origin=is_eu
+                ))
+        
+        if not origins:
             origins.append(DataOrigin(
-                source_name="Object Storage",
-                source_type="file_upload",
-                country="Detected from region",
-                collection_method="File Upload",
-                legal_basis="Consent (Art. 6(1)(a))",
-                data_categories=["personal_data", "documents"],
-                is_eu_origin=True
+                source_name=f"{provider} Infrastructure",
+                source_type="cloud_infrastructure",
+                country=primary_country if primary_country != 'unknown' else 'Configured Region',
+                collection_method="Cloud Infrastructure",
+                legal_basis="Legitimate Interest (Art. 6(1)(f))",
+                data_categories=["operational_data", "infrastructure_data"],
+                is_eu_origin=is_eu
             ))
         
         return origins
@@ -1106,78 +1250,125 @@ class DataSovereigntyScanner:
     def _run_terraform_compliance_checks(self, content: str, result: SovereigntyScanResult) -> List[ComplianceCheck]:
         """Run compliance checks on Terraform configuration"""
         checks = []
+        content_lower = content.lower()
+        provider = self._detect_terraform_provider(content)
         
         has_third_country = any(not loc.is_eu and not loc.is_adequacy_decision for loc in result.data_locations)
+        has_us_storage = any(loc.country == 'US' for loc in result.data_locations)
         
         checks.append(ComplianceCheck(
             check_name="Standard Contractual Clauses (SCCs)",
             check_category="sccs",
             status="fail" if has_third_country else "pass",
-            description="Third country storage detected - SCCs required" if has_third_country else "All storage in EU/EEA - no SCCs needed",
+            description=f"Third country storage detected ({', '.join(set(l.country for l in result.data_locations if not l.is_eu))}) - EU Commission 2021 SCCs required for lawful transfers" if has_third_country else "All storage in EU/EEA - no SCCs needed",
             legal_reference="GDPR Article 46(2)(c)",
-            recommendation="Implement EU Commission's 2021 SCCs" if has_third_country else ""
+            recommendation="Execute EU Commission's 2021 Standard Contractual Clauses with all third-country processors" if has_third_country else ""
         ))
         
         checks.append(ComplianceCheck(
             check_name="Transfer Impact Assessment (TIA)",
             check_category="tia",
             status="fail" if has_third_country else "not_applicable",
-            description="TIA required for US/third country data processing" if has_third_country else "No TIA required",
-            legal_reference="CJEU Schrems II (Case C-311/18)",
-            recommendation="Complete TIA before deployment" if has_third_country else ""
+            description=f"TIA mandatory per Schrems II for {provider} processing in third countries. Must assess local surveillance laws." if has_third_country else "No third country transfers requiring TIA",
+            legal_reference="CJEU Schrems II (Case C-311/18), EDPB Recommendations 01/2020",
+            recommendation="Complete TIA documenting: (1) legal framework assessment, (2) supplementary technical measures, (3) ongoing monitoring plan" if has_third_country else ""
         ))
         
-        encryption_patterns = re.findall(r'encrypt|kms|key_id|server_side_encryption|sse', content.lower())
+        encryption_patterns = re.findall(r'encrypt|kms|key_id|server_side_encryption|sse|cmk|customer_managed_key', content_lower)
         has_encryption = len(encryption_patterns) > 0
+        has_customer_key = bool(re.search(r'kms|cmk|customer_managed_key|key_id', content_lower))
         checks.append(ComplianceCheck(
             check_name="Encryption at Rest",
             check_category="encryption",
             status="pass" if has_encryption else "fail",
-            description="Encryption configuration detected" if has_encryption else "No encryption configuration found",
-            legal_reference="GDPR Article 32",
-            recommendation="" if has_encryption else "Add encryption to all storage resources"
+            description=f"Encryption detected{' with customer-managed keys' if has_customer_key else ' (provider-managed keys)'}" if has_encryption else "No encryption configuration found - data at rest is unprotected",
+            legal_reference="GDPR Article 32 (Security of Processing)",
+            recommendation="" if has_encryption else "Enable AES-256 encryption with customer-managed keys for all storage resources"
         ))
         
-        tls_patterns = re.findall(r'https|tls|ssl|certificate', content.lower())
+        tls_patterns = re.findall(r'https|tls|ssl|certificate|acm_certificate', content_lower)
         has_tls = len(tls_patterns) > 0
         checks.append(ComplianceCheck(
             check_name="Encryption in Transit (TLS)",
             check_category="encryption",
             status="pass" if has_tls else "warning",
-            description="TLS/HTTPS configuration found" if has_tls else "No explicit TLS configuration",
-            legal_reference="GDPR Article 32",
-            recommendation="" if has_tls else "Ensure TLS 1.2+ for all endpoints"
+            description="TLS/HTTPS configuration found for data in transit" if has_tls else "No explicit TLS configuration - verify all endpoints enforce HTTPS",
+            legal_reference="GDPR Article 32 (Security of Processing)",
+            recommendation="" if has_tls else "Enforce TLS 1.2+ for all endpoints and inter-service communication"
         ))
         
-        retention_patterns = re.findall(r'retention|lifecycle|expiration|days', content.lower())
+        dpa_check = "warning" if has_third_country else "pass"
+        checks.append(ComplianceCheck(
+            check_name="Data Processing Agreement (DPA)",
+            check_category="dpa",
+            status=dpa_check,
+            description=f"DPA with {provider} required under GDPR Art. 28. Verify DPA covers all deployed services and regions." if has_third_country else f"DPA with {provider} should be in place for EU processing",
+            legal_reference="GDPR Article 28 (Processor Obligations)",
+            recommendation=f"Verify signed DPA with {provider} covers: data categories, processing purposes, sub-processor controls, and audit rights" if has_third_country else ""
+        ))
+        
+        bcr_check = "warning" if has_third_country else "not_applicable"
+        checks.append(ComplianceCheck(
+            check_name="Binding Corporate Rules (BCRs)",
+            check_category="bcr",
+            status=bcr_check,
+            description="BCRs may be required as additional transfer mechanism for intra-group transfers to third countries" if has_third_country else "No BCRs needed - all processing within EU/EEA",
+            legal_reference="GDPR Article 47 (Binding Corporate Rules)",
+            recommendation="Consider BCRs for systematic intra-group transfers alongside SCCs" if has_third_country else ""
+        ))
+        
+        retention_patterns = re.findall(r'retention|lifecycle|expiration|ttl|days\s*=', content_lower)
         has_retention = len(retention_patterns) > 0
         checks.append(ComplianceCheck(
             check_name="Data Retention Policy",
             check_category="retention",
             status="pass" if has_retention else "warning",
-            description="Lifecycle/retention policy found" if has_retention else "No retention policy defined",
-            legal_reference="GDPR Article 5(1)(e)",
-            recommendation="" if has_retention else "Define data retention policies"
+            description="Lifecycle/retention policy found in infrastructure configuration" if has_retention else "No data retention or lifecycle policy defined in configuration",
+            legal_reference="GDPR Article 5(1)(e) (Storage Limitation Principle)",
+            recommendation="" if has_retention else "Define retention periods and implement automatic data lifecycle management"
         ))
         
-        backup_patterns = re.findall(r'backup|replicat|snapshot|dr_|disaster', content.lower())
+        backup_patterns = re.findall(r'backup|replicat|snapshot|dr_|disaster|recovery', content_lower)
         has_backups = len(backup_patterns) > 0
+        backup_in_third = has_backups and has_third_country
         checks.append(ComplianceCheck(
-            check_name="Backup Configuration",
+            check_name="Backup Location Compliance",
             check_category="backup",
-            status="warning" if has_backups else "fail",
-            description="Backup configuration detected - verify locations" if has_backups else "No backup configuration found",
-            legal_reference="GDPR Article 32",
-            recommendation="Ensure backups in EU/EEA regions" if has_backups else "Implement backup strategy in EU regions"
+            status="warning" if backup_in_third else ("pass" if has_backups else "fail"),
+            description="Backup configuration detected - verify backup storage stays within EU/EEA" if has_backups else "No backup/disaster recovery configuration found",
+            legal_reference="GDPR Article 32 + Chapter V (International Transfers)",
+            recommendation="Ensure all backup and DR storage locations are within EU/EEA jurisdictions" if backup_in_third else ("Implement backup strategy with EU/EEA-only storage" if not has_backups else "")
         ))
         
+        logging_patterns = re.findall(r'cloudwatch|cloudtrail|logging|audit|monitor', content_lower)
+        has_logging = len(logging_patterns) > 0
+        checks.append(ComplianceCheck(
+            check_name="Audit Logging & Monitoring",
+            check_category="monitoring",
+            status="pass" if has_logging else "warning",
+            description="Logging/monitoring configuration detected" if has_logging else "No audit logging or monitoring configuration found",
+            legal_reference="GDPR Article 5(2) (Accountability), Article 30 (Records of Processing)",
+            recommendation="" if has_logging else "Enable CloudTrail/audit logging for all data access and processing activities"
+        ))
+        
+        if has_us_storage:
+            checks.append(ComplianceCheck(
+                check_name="US CLOUD Act Risk Assessment",
+                check_category="cloud_act",
+                status="warning",
+                description=f"US-based storage with {provider} (US-headquartered) - subject to CLOUD Act disclosure orders. Supplementary measures required.",
+                legal_reference="US CLOUD Act (2018), CJEU Schrems II, EDPB Recommendations 01/2020",
+                recommendation="Implement supplementary measures: customer-managed encryption keys, pseudonymization, and contractual restrictions on government access"
+            ))
+        
+        uavg_status = "pass" if self.region == "Netherlands" else "not_applicable"
         checks.append(ComplianceCheck(
             check_name="Netherlands UAVG Compliance",
             check_category="uavg",
-            status="pass" if self.region == "Netherlands" else "not_applicable",
-            description="Netherlands processing - UAVG applies" if self.region == "Netherlands" else "Not applicable",
-            legal_reference="UAVG (Dutch GDPR Implementation)",
-            recommendation=""
+            status=uavg_status,
+            description="Netherlands UAVG (Uitvoeringswet AVG) applies as data controller is Netherlands-based. Ensure BSN/special categories processing complies." if self.region == "Netherlands" else "Not applicable outside Netherlands",
+            legal_reference="UAVG (Uitvoeringswet AVG), Articles 22-31 (Special Categories), Article 46 (BSN Processing)",
+            recommendation="Verify BSN processing follows UAVG Article 46; report to Autoriteit Persoonsgegevens within 72 hours of any breach" if self.region == "Netherlands" else ""
         ))
         
         return checks
@@ -1334,30 +1525,48 @@ class DataSovereigntyScanner:
         
         non_eu_locations = [l for l in result.data_locations if not l.is_eu]
         if non_eu_locations:
-            recommendations.append("Consider migrating data storage to EU regions to simplify GDPR compliance")
+            regions = ', '.join(set(f"{l.region} ({l.country})" for l in non_eu_locations))
+            recommendations.append(f"CRITICAL: Migrate data storage from non-EU regions ({regions}) to EU regions (e.g., eu-central-1 Frankfurt, eu-west-1 Ireland) to simplify GDPR compliance")
         
         eu_to_third = [f for f in result.data_flows if f.is_eu_to_third_country]
         if eu_to_third:
-            recommendations.append("Implement Standard Contractual Clauses (SCCs) for all EU to third country transfers")
-            recommendations.append("Conduct Transfer Impact Assessments (TIAs) for each third country transfer")
+            recommendations.append("Execute EU Commission's 2021 Standard Contractual Clauses (SCCs) for all EU-to-third-country transfers before go-live")
+            recommendations.append("Complete Transfer Impact Assessments (TIAs) documenting: legal framework analysis, supplementary technical measures, and ongoing monitoring plan")
+        
+        us_locations = [l for l in result.data_locations if l.country == 'US']
+        if us_locations:
+            recommendations.append("Implement customer-managed encryption keys (BYOK/CMK) to mitigate US CLOUD Act disclosure risks")
+            recommendations.append("Document supplementary technical measures per EDPB Recommendations 01/2020 (pseudonymization, split processing, encryption)")
         
         us_providers = [l for l in result.data_locations 
-                       if l.cloud_provider and l.cloud_provider.lower() in self.CLOUD_ACT_RISK_PROVIDERS]
+                       if l.cloud_provider and l.cloud_provider.lower() in ['aws', 'azure', 'gcp']]
         if us_providers:
-            recommendations.append("Implement encryption with customer-managed keys to mitigate CLOUD Act risks")
-            recommendations.append("Document supplementary measures per EDPB Recommendations 01/2020")
+            provider_names = ', '.join(set(l.cloud_provider for l in us_providers))
+            recommendations.append(f"Verify signed Data Processing Agreement (DPA) with {provider_names} covers all deployed regions and services (GDPR Art. 28)")
         
         non_eu_access = [a for a in result.access_paths if not a.is_eu_access]
         if non_eu_access:
-            recommendations.append("Implement geo-fencing to restrict administrative access to EU locations")
-            recommendations.append("Review and document all third-party vendor access from non-EU countries")
+            recommendations.append("Implement geo-fencing to restrict administrative access to EU locations only")
+            recommendations.append("Review and document all third-party vendor access from non-EU countries with appropriate legal basis")
         
         unmonitored = [a for a in result.access_paths if not a.is_monitored]
         if unmonitored:
-            recommendations.append("Enable comprehensive logging and monitoring for all data access paths")
+            recommendations.append("Enable comprehensive audit logging and real-time monitoring for all data access paths (GDPR Art. 5(2) Accountability)")
+        
+        failed_checks = [c for c in result.compliance_checks if c.status == 'fail']
+        if failed_checks:
+            for check in failed_checks:
+                if check.recommendation and check.recommendation not in recommendations:
+                    recommendations.append(f"{check.check_name}: {check.recommendation}")
+        
+        if not result.encryption_at_rest:
+            recommendations.append("Enable encryption at rest (AES-256) for all data stores to comply with GDPR Article 32")
+        
+        if self.region == "Netherlands":
+            recommendations.append("Ensure all data breach notifications are filed with Autoriteit Persoonsgegevens (Dutch DPA) within 72 hours as required by GDPR Art. 33 and UAVG")
         
         if not recommendations:
-            recommendations.append("Current configuration demonstrates good sovereignty practices - continue monitoring")
+            recommendations.append("Current configuration demonstrates good data sovereignty practices - maintain ongoing compliance monitoring")
         
         return recommendations
     

@@ -1688,36 +1688,58 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                         owner, repo = match.groups()
                         repo = repo.replace('.git', '')
                         
-                        api_url = f"https://api.github.com/repos/{owner}/{repo}/contents"
-                        if target_dir:
-                            api_url += f"/{target_dir}"
-                        if branch != "main":
-                            api_url += f"?ref={branch}"
+                        infra_extensions = ['.tf', '.json', '.yaml', '.yml', '.bicep', '.template']
+                        max_depth = {'Quick Scan': 1, 'Standard Scan': 2, 'Deep Scan': 3}.get(scan_depth, 2)
                         
-                        response = requests.get(api_url, timeout=30)
-                        progress_bar.progress(0.2)
-                        
-                        if response.status_code == 200:
-                            files_data = response.json()
-                            infra_files = []
-                            infra_extensions = ['.tf', '.json', '.yaml', '.yml', '.bicep', '.template']
+                        def fetch_github_dir(dir_path, current_depth=0):
+                            """Recursively fetch infrastructure files from GitHub"""
+                            found_files = []
+                            if current_depth >= max_depth:
+                                return found_files
                             
-                            if isinstance(files_data, list):
-                                for file in files_data:
-                                    if file.get('type') == 'file':
-                                        name = file.get('name', '')
+                            url = f"https://api.github.com/repos/{owner}/{repo}/contents/{dir_path}" if dir_path else f"https://api.github.com/repos/{owner}/{repo}/contents"
+                            if branch != "main":
+                                url += f"?ref={branch}" if '?' not in url else f"&ref={branch}"
+                            
+                            try:
+                                resp = requests.get(url, timeout=15)
+                                if resp.status_code != 200:
+                                    return found_files
+                                
+                                items = resp.json()
+                                if not isinstance(items, list):
+                                    return found_files
+                                
+                                for item in items:
+                                    if item.get('type') == 'file':
+                                        name = item.get('name', '')
                                         if any(name.endswith(ext) for ext in infra_extensions):
-                                            file_url = file.get('download_url')
+                                            file_url = item.get('download_url')
                                             if file_url:
                                                 try:
-                                                    file_response = requests.get(file_url, timeout=10)
-                                                    if file_response.status_code == 200:
-                                                        infra_files.append({
-                                                            'name': name,
-                                                            'content': file_response.text
+                                                    file_resp = requests.get(file_url, timeout=10)
+                                                    if file_resp.status_code == 200:
+                                                        rel_path = item.get('path', name)
+                                                        found_files.append({
+                                                            'name': rel_path,
+                                                            'content': file_resp.text
                                                         })
                                                 except:
                                                     pass
+                                    elif item.get('type') == 'dir' and current_depth + 1 < max_depth:
+                                        skip_dirs = {'node_modules', '.git', 'vendor', '__pycache__', '.terraform', 'dist', 'build'}
+                                        dir_name = item.get('name', '')
+                                        if dir_name not in skip_dirs and not dir_name.startswith('.'):
+                                            found_files.extend(fetch_github_dir(item.get('path', ''), current_depth + 1))
+                            except:
+                                pass
+                            return found_files
+                        
+                        start_path = target_dir if target_dir else ""
+                        infra_files = fetch_github_dir(start_path)
+                        progress_bar.progress(0.2)
+                        
+                        if True:
                             
                             progress_bar.progress(0.5)
                             status_text.text(_('scan.data_sovereignty.analyzing', 'Analyzing configuration for sovereignty issues...'))
@@ -1800,12 +1822,6 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                 st.warning("No infrastructure files found in the repository. Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
                                 progress_bar.empty()
                                 status_text.empty()
-                        else:
-                            st.error(f"Could not access repository. Status: {response.status_code}")
-                            if response.status_code == 404:
-                                st.info("The repository may be private or the URL may be incorrect.")
-                            progress_bar.empty()
-                            status_text.empty()
                             
                 except ImportError as e:
                     logger.error(f"Data Sovereignty Scanner import error: {e}")
