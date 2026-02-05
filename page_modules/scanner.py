@@ -1635,11 +1635,189 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
     
     scan_mode = st.radio(
         _('scan.data_sovereignty.mode', 'Select Analysis Mode'),
-        ["Upload Configuration", "Manual Input"],
+        ["Upload Configuration", "GitHub Repository", "Manual Input"],
         horizontal=True
     )
     
-    if scan_mode == "Upload Configuration":
+    if scan_mode == "GitHub Repository":
+        st.info("🔗 " + _('scan.data_sovereignty.github_info', 
+            'Scan a GitHub repository for infrastructure configuration files (Terraform, CloudFormation, Kubernetes, etc.)'))
+        
+        github_url = st.text_input(
+            _('scan.data_sovereignty.github_url', 'GitHub Repository URL'),
+            placeholder="https://github.com/organization/repo",
+            help=_('scan.data_sovereignty.github_help', 'Enter the full URL to a public GitHub repository')
+        )
+        
+        branch = st.text_input(
+            _('scan.data_sovereignty.branch', 'Branch'),
+            value="main",
+            help=_('scan.data_sovereignty.branch_help', 'Branch to scan (default: main)')
+        )
+        
+        scan_depth = st.selectbox(
+            _('scan.data_sovereignty.scan_depth', 'Scan Depth'),
+            ["Full Repository", "Root Only", "Specific Directory"],
+            help=_('scan.data_sovereignty.depth_help', 'Choose how deep to scan the repository')
+        )
+        
+        target_dir = ""
+        if scan_depth == "Specific Directory":
+            target_dir = st.text_input(
+                _('scan.data_sovereignty.target_dir', 'Directory Path'),
+                placeholder="infrastructure/",
+                help=_('scan.data_sovereignty.target_dir_help', 'Path to the directory containing infrastructure files')
+            )
+        
+        if st.button("🔍 " + _('scan.data_sovereignty.analyze', 'Analyze Sovereignty'), 
+                     use_container_width=True, type="primary", key="run_sovereignty_github"):
+            if github_url and github_url.startswith("https://github.com"):
+                try:
+                    import requests
+                    import re
+                    from services.data_sovereignty_scanner import DataSovereigntyScanner
+                    
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    status_text.text(_('scan.data_sovereignty.fetching', 'Fetching repository files...'))
+                    
+                    match = re.match(r'https://github\.com/([^/]+)/([^/]+)', github_url)
+                    if not match:
+                        st.error("Invalid GitHub URL format. Please use: https://github.com/owner/repo")
+                    else:
+                        owner, repo = match.groups()
+                        repo = repo.replace('.git', '')
+                        
+                        api_url = f"https://api.github.com/repos/{owner}/{repo}/contents"
+                        if target_dir:
+                            api_url += f"/{target_dir}"
+                        if branch != "main":
+                            api_url += f"?ref={branch}"
+                        
+                        response = requests.get(api_url, timeout=30)
+                        progress_bar.progress(0.2)
+                        
+                        if response.status_code == 200:
+                            files_data = response.json()
+                            infra_files = []
+                            infra_extensions = ['.tf', '.json', '.yaml', '.yml', '.bicep', '.template']
+                            
+                            if isinstance(files_data, list):
+                                for file in files_data:
+                                    if file.get('type') == 'file':
+                                        name = file.get('name', '')
+                                        if any(name.endswith(ext) for ext in infra_extensions):
+                                            file_url = file.get('download_url')
+                                            if file_url:
+                                                try:
+                                                    file_response = requests.get(file_url, timeout=10)
+                                                    if file_response.status_code == 200:
+                                                        infra_files.append({
+                                                            'name': name,
+                                                            'content': file_response.text
+                                                        })
+                                                except:
+                                                    pass
+                            
+                            progress_bar.progress(0.5)
+                            status_text.text(_('scan.data_sovereignty.analyzing', 'Analyzing configuration for sovereignty issues...'))
+                            
+                            if infra_files:
+                                scanner = DataSovereigntyScanner(region=region)
+                                
+                                all_content = "\n\n".join([f"# File: {f['name']}\n{f['content']}" for f in infra_files])
+                                
+                                if any(f['name'].endswith('.tf') for f in infra_files):
+                                    scan_result = scanner.scan_terraform(all_content, f"{owner}/{repo}")
+                                else:
+                                    scan_result = scanner.scan_cloud_config(all_content, "generic")
+                                
+                                progress_bar.progress(0.8)
+                                
+                                html_report = scanner.generate_html_report(scan_result)
+                                
+                                progress_bar.progress(1.0)
+                                status_text.empty()
+                                progress_bar.empty()
+                                
+                                st.success("✅ " + _('scan.data_sovereignty.complete', 'Sovereignty analysis completed!'))
+                                st.info(f"📁 Analyzed {len(infra_files)} infrastructure files from {owner}/{repo}")
+                                
+                                col1, col2, col3, col4 = st.columns(4)
+                                with col1:
+                                    risk_color = {"green": "🟢", "amber": "🟡", "red": "🔴"}.get(scan_result.risk_level.value, "⚪")
+                                    st.metric(_('scan.data_sovereignty.risk', 'Sovereignty Risk'), 
+                                              f"{risk_color} {scan_result.risk_level.value.upper()}")
+                                with col2:
+                                    st.metric(_('scan.data_sovereignty.transfers', 'Cross-Border Transfers'), 
+                                              scan_result.cross_border_transfers)
+                                with col3:
+                                    st.metric(_('scan.data_sovereignty.non_eu_access', 'Non-EU Access'), 
+                                              scan_result.non_eu_access_count)
+                                with col4:
+                                    st.metric(_('scan.data_sovereignty.third_country', 'Third Country Processors'), 
+                                              scan_result.third_country_processors)
+                                
+                                if scan_result.findings:
+                                    st.subheader("⚠️ " + _('scan.data_sovereignty.findings', 'Sovereignty Findings'))
+                                    for finding in scan_result.findings[:5]:
+                                        severity = finding.get('severity', 'medium')
+                                        icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
+                                        st.write(f"{icon} **{finding.get('title', 'Finding')}**")
+                                        st.write(f"   {finding.get('description', '')}")
+                                
+                                if scan_result.recommendations:
+                                    st.subheader("📋 " + _('scan.data_sovereignty.recommendations', 'Recommendations'))
+                                    for i, rec in enumerate(scan_result.recommendations[:5], 1):
+                                        st.write(f"{i}. {rec}")
+                                
+                                st.download_button(
+                                    label="📥 " + _('scan.data_sovereignty.download', 'Download HTML Report'),
+                                    data=html_report,
+                                    file_name=f"sovereignty_report_{owner}_{repo}.html",
+                                    mime="text/html",
+                                    use_container_width=True,
+                                    key="download_sovereignty_github"
+                                )
+                                
+                                result_dict = {
+                                    'scan_type': 'Data Sovereignty Scanner',
+                                    'scan_id': scan_result.scan_id,
+                                    'target_name': f"{owner}/{repo}",
+                                    'risk_level': scan_result.risk_level.value,
+                                    'sovereignty_risk_score': scan_result.sovereignty_risk_score,
+                                    'cross_border_transfers': scan_result.cross_border_transfers,
+                                    'non_eu_access_count': scan_result.non_eu_access_count,
+                                    'third_country_processors': scan_result.third_country_processors,
+                                    'findings': scan_result.findings,
+                                    'recommendations': scan_result.recommendations,
+                                    'region': region,
+                                    'timestamp': scan_result.timestamp
+                                }
+                                st.session_state['last_scan_results'] = result_dict
+                                st.session_state['latest_scan_type'] = 'data_sovereignty'
+                            else:
+                                st.warning("No infrastructure files found in the repository. Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
+                                progress_bar.empty()
+                                status_text.empty()
+                        else:
+                            st.error(f"Could not access repository. Status: {response.status_code}")
+                            if response.status_code == 404:
+                                st.info("The repository may be private or the URL may be incorrect.")
+                            progress_bar.empty()
+                            status_text.empty()
+                            
+                except ImportError as e:
+                    logger.error(f"Data Sovereignty Scanner import error: {e}")
+                    st.warning(_('scan.data_sovereignty.import_error', 
+                        'Data Sovereignty Scanner module requires additional setup.'))
+                except Exception as e:
+                    logger.error(f"GitHub sovereignty scan error: {e}")
+                    st.error(f"{_('scan.data_sovereignty.error', 'Analysis error')}: {str(e)}")
+            else:
+                st.warning("Please enter a valid GitHub URL (https://github.com/owner/repo)")
+    
+    elif scan_mode == "Upload Configuration":
         config_type = st.selectbox(
             _('scan.data_sovereignty.config_type', 'Configuration Type'),
             ["Terraform (.tf)", "AWS CloudFormation", "Azure ARM/Bicep", "GCP Deployment Manager", "Kubernetes YAML", "Generic JSON/YAML"]
