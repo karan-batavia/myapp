@@ -6,9 +6,9 @@
     "password_hash": "$2b$12$AG22lqVq5g9A7OhrBDcvseslFC8vfaGQbwsFl32jcW0M0At/quHuC",
     "role": "admin",
     "active": true,
-    "license_tier": "sap_enterprise",
+    "license_tier": "government",
     "created_at": null,
-    "last_login": "2026-02-05T21:13:44.863069",
+    "last_login": "2026-02-05T21:22:04.576094",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -71,9 +71,9 @@
     "password_hash": "$2b$12$AG22lqVq5g9A7OhrBDcvseslFC8vfaGQbwsFl32jcW0M0At/quHuC",
     "role": "admin",
     "active": true,
-    "license_tier": "sap_enterprise",
+    "license_tier": "government",
     "created_at": null,
-    "last_login": "2026-02-05T21:13:44.863069",
+    "last_login": "2026-02-05T21:22:04.576094",
     "failed_attempts": 0,
     "locked_until": null
   },
