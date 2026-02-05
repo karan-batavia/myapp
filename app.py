@@ -4029,7 +4029,8 @@ def render_scanner_interface_safe():
         f"🛡️ {_('scan.soc2', 'SOC2 & NIS2')}": _('scan.soc2_description', 'SOC2 + NIS2 EU Directive compliance with TSC mapping'),
         f"📋 {_('scan.dpia', 'DPIA')}": _('scan.dpia_description', 'Data Protection Impact Assessment workflow'),
         f"🌱 {_('scan.sustainability', 'Sustainability')}": _('scan.sustainability_description', 'Environmental impact and green coding analysis'),
-        f"🎬 {_('scan.audio_video', 'Audio/Video')}": _('scan.audio_video_description', 'Deepfake detection and media authenticity analysis')
+        f"🎬 {_('scan.audio_video', 'Audio/Video')}": _('scan.audio_video_description', 'Deepfake detection and media authenticity analysis'),
+        f"🌍 {_('scan.data_sovereignty', 'Data Sovereignty')}": _('scan.data_sovereignty_description', 'Cross-border transfer and jurisdictional compliance analysis')
     }
     
     selected_scanner = st.selectbox(
@@ -4071,6 +4072,8 @@ def render_scanner_interface_safe():
         scanner_type = 'sustainability'
     elif _('scan.audio_video', 'Audio/Video') in selected_scanner:
         scanner_type = 'audio_video'
+    elif _('scan.data_sovereignty', 'Data Sovereignty') in selected_scanner:
+        scanner_type = 'data_sovereignty'
     
     # Check specific scanner permissions
     if scanner_type and not require_scanner_access(scanner_type, region):
@@ -4083,7 +4086,7 @@ def render_scanner_interface_safe():
         render_api_scanner_interface, render_enterprise_connector_interface, 
         render_ai_model_scanner_interface, render_soc2_scanner_interface, 
         render_website_scanner_interface, render_sustainability_scanner_interface,
-        render_audio_video_scanner_interface
+        render_audio_video_scanner_interface, render_data_sovereignty_scanner_interface
     )
     
     if _('scan.code', 'Code') in selected_scanner:
@@ -4111,6 +4114,8 @@ def render_scanner_interface_safe():
         render_sustainability_scanner_interface(region, username)
     elif _('scan.audio_video', 'Audio/Video') in selected_scanner:
         render_audio_video_scanner_interface(region, username)
+    elif _('scan.data_sovereignty', 'Data Sovereignty') in selected_scanner:
+        render_data_sovereignty_scanner_interface(region, username)
 
 def render_code_scanner_config():
     """Code scanner configuration"""

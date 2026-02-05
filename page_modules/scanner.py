@@ -266,7 +266,7 @@ def render_scanner_interface():
     elif "Audio/Video Scanner" in scan_type:
         _render_audio_video_scanner(region, username)
     elif "Data Sovereignty Scanner" in scan_type:
-        _render_data_sovereignty_scanner(region, username)
+        render_data_sovereignty_scanner_interface(region, username)
     elif "Advanced AI Scanner" in scan_type:
         _render_advanced_ai_scanner(region, username)
 
@@ -1603,7 +1603,7 @@ def _render_audio_video_scanner(region: str, username: str):
             st.warning("Please upload a media file to analyze.")
 
 
-def _render_data_sovereignty_scanner(region: str, username: str):
+def render_data_sovereignty_scanner_interface(region: str, username: str):
     """Render data sovereignty scanner interface - Enterprise/Government only"""
     from utils.i18n import get_text as _
     
