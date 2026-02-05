@@ -1018,9 +1018,14 @@ def show_pricing_in_sidebar():
     
     if current_tier:
         config = get_pricing_config()
-        tier_data = config.pricing_data["tiers"][current_tier.value]
-        st.sidebar.markdown(f"**Current Plan**: {tier_data['name']}")
+        # Handle both string and enum values
+        tier_key = current_tier.value if hasattr(current_tier, 'value') else str(current_tier)
+        tier_data = config.pricing_data["tiers"].get(tier_key, {})
+        plan_name = tier_data.get('name', tier_key.title() if tier_key else 'Unknown')
+        st.sidebar.markdown(f"**Current Plan**: {plan_name}")
         
-        if current_tier != PricingTier.ENTERPRISE:
+        # Check if enterprise tier
+        is_enterprise = (current_tier == PricingTier.ENTERPRISE) if hasattr(current_tier, 'value') else (str(current_tier).lower() == 'enterprise')
+        if not is_enterprise:
             # Enterprise license detected - no upgrade needed
             pass
