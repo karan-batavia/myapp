@@ -415,7 +415,11 @@ def show_pricing_cards(billing_cycle: BillingCycle):
         
         # Check if user already has Government tier
         current_tier = st.session_state.get('pricing_tier', PricingTier.FREE)
-        is_current = current_tier == PricingTier.GOVERNMENT
+        # Handle both string and enum values
+        if isinstance(current_tier, str):
+            is_current = current_tier.lower() == 'government'
+        else:
+            is_current = current_tier == PricingTier.GOVERNMENT
         
         if is_current:
             st.success("✅ Current Plan")
