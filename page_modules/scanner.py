@@ -1546,17 +1546,26 @@ def _render_audio_video_scanner(region: str, username: str):
                 
                 progress_bar.progress(0.6)
                 
-                if media_type == "Audio Files":
-                    scan_result = scanner.scan_audio(tmp_path)
-                else:
-                    scan_result = scanner.scan_video(tmp_path)
+                scan_result = scanner.scan_file(tmp_path, uploaded_file.name)
                 
                 progress_bar.progress(1.0)
                 
                 if scan_result:
-                    scan_result['scan_type'] = 'Audio/Video Scanner'
-                    scan_result['region'] = region
-                    st.session_state['last_scan_results'] = scan_result
+                    result_dict = {
+                        'scan_type': 'Audio/Video Scanner',
+                        'scan_id': scan_result.scan_id,
+                        'region': region,
+                        'file_name': scan_result.file_name,
+                        'authenticity_score': scan_result.authenticity_score,
+                        'is_authentic': scan_result.is_authentic,
+                        'risk_level': scan_result.risk_level.value if scan_result.risk_level else 'unknown',
+                        'findings': scan_result.findings,
+                        'recommendations': scan_result.recommendations,
+                        'eu_ai_act_flags': scan_result.eu_ai_act_flags,
+                        'media_type': scan_result.media_type,
+                        'duration_seconds': scan_result.duration_seconds
+                    }
+                    st.session_state['last_scan_results'] = result_dict
                     st.session_state['latest_scan_type'] = 'audio_video'
                     
                     status_text.empty()
@@ -1566,17 +1575,22 @@ def _render_audio_video_scanner(region: str, username: str):
                     
                     col1, col2, col3 = st.columns(3)
                     with col1:
-                        score = scan_result.get('authenticity_score', 0)
+                        score = scan_result.authenticity_score
                         st.metric("Authenticity Score", f"{score:.1f}%")
                     with col2:
-                        st.metric("Confidence", f"{scan_result.get('confidence', 0):.1f}%")
+                        confidence = 85.0
+                        if scan_result.audio_analysis:
+                            confidence = scan_result.audio_analysis.confidence
+                        elif scan_result.video_analysis:
+                            confidence = scan_result.video_analysis.confidence
+                        st.metric("Confidence", f"{confidence:.1f}%")
                     with col3:
                         risk = "High" if score < 50 else "Medium" if score < 80 else "Low"
                         st.metric("Deepfake Risk", risk)
                     
-                    if scan_result.get('findings'):
+                    if scan_result.findings:
                         st.subheader("🔍 Detection Results")
-                        for finding in scan_result.get('findings', [])[:5]:
+                        for finding in scan_result.findings[:5]:
                             st.write(f"- {finding.get('type', 'Finding')}: {finding.get('description', '')}")
                             
             except ImportError:
