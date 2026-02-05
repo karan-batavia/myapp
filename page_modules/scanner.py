@@ -1739,89 +1739,87 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                         infra_files = fetch_github_dir(start_path)
                         progress_bar.progress(0.2)
                         
-                        if True:
+                        progress_bar.progress(0.5)
+                        status_text.text(_('scan.data_sovereignty.analyzing', 'Analyzing configuration for sovereignty issues...'))
+                        
+                        if infra_files:
+                            scanner = DataSovereigntyScanner(region=region)
                             
-                            progress_bar.progress(0.5)
-                            status_text.text(_('scan.data_sovereignty.analyzing', 'Analyzing configuration for sovereignty issues...'))
+                            all_content = "\n\n".join([f"# File: {f['name']}\n{f['content']}" for f in infra_files])
                             
-                            if infra_files:
-                                scanner = DataSovereigntyScanner(region=region)
-                                
-                                all_content = "\n\n".join([f"# File: {f['name']}\n{f['content']}" for f in infra_files])
-                                
-                                if any(f['name'].endswith('.tf') for f in infra_files):
-                                    scan_result = scanner.scan_terraform(all_content, f"{owner}/{repo}")
-                                else:
-                                    scan_result = scanner.scan_cloud_config(all_content, "generic")
-                                
-                                progress_bar.progress(0.8)
-                                
-                                html_report = scanner.generate_html_report(scan_result)
-                                
-                                progress_bar.progress(1.0)
-                                status_text.empty()
-                                progress_bar.empty()
-                                
-                                st.success("✅ " + _('scan.data_sovereignty.complete', 'Sovereignty analysis completed!'))
-                                st.info(f"📁 Analyzed {len(infra_files)} infrastructure files from {owner}/{repo}")
-                                
-                                col1, col2, col3, col4 = st.columns(4)
-                                with col1:
-                                    risk_color = {"green": "🟢", "amber": "🟡", "red": "🔴"}.get(scan_result.risk_level.value, "⚪")
-                                    st.metric(_('scan.data_sovereignty.risk', 'Sovereignty Risk'), 
-                                              f"{risk_color} {scan_result.risk_level.value.upper()}")
-                                with col2:
-                                    st.metric(_('scan.data_sovereignty.transfers', 'Cross-Border Transfers'), 
-                                              scan_result.cross_border_transfers)
-                                with col3:
-                                    st.metric(_('scan.data_sovereignty.non_eu_access', 'Non-EU Access'), 
-                                              scan_result.non_eu_access_count)
-                                with col4:
-                                    st.metric(_('scan.data_sovereignty.third_country', 'Third Country Processors'), 
-                                              scan_result.third_country_processors)
-                                
-                                if scan_result.findings:
-                                    st.subheader("⚠️ " + _('scan.data_sovereignty.findings', 'Sovereignty Findings'))
-                                    for finding in scan_result.findings[:5]:
-                                        severity = finding.get('severity', 'medium')
-                                        icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
-                                        st.write(f"{icon} **{finding.get('title', 'Finding')}**")
-                                        st.write(f"   {finding.get('description', '')}")
-                                
-                                if scan_result.recommendations:
-                                    st.subheader("📋 " + _('scan.data_sovereignty.recommendations', 'Recommendations'))
-                                    for i, rec in enumerate(scan_result.recommendations[:5], 1):
-                                        st.write(f"{i}. {rec}")
-                                
-                                st.download_button(
-                                    label="📥 " + _('scan.data_sovereignty.download', 'Download HTML Report'),
-                                    data=html_report,
-                                    file_name=f"sovereignty_report_{owner}_{repo}.html",
-                                    mime="text/html",
-                                    use_container_width=True,
-                                    key="download_sovereignty_github"
-                                )
-                                
-                                result_dict = {
-                                    'scan_type': 'Data Sovereignty Scanner',
-                                    'scan_id': scan_result.scan_id,
-                                    'target_name': f"{owner}/{repo}",
-                                    'risk_level': scan_result.risk_level.value,
-                                    'sovereignty_risk_score': scan_result.sovereignty_risk_score,
-                                    'cross_border_transfers': scan_result.cross_border_transfers,
-                                    'non_eu_access_count': scan_result.non_eu_access_count,
-                                    'third_country_processors': scan_result.third_country_processors,
-                                    'findings': scan_result.findings,
-                                    'recommendations': scan_result.recommendations,
-                                    'region': region,
-                                    'timestamp': scan_result.timestamp
-                                }
-                                st.session_state['last_scan_results'] = result_dict
-                                st.session_state['latest_scan_type'] = 'data_sovereignty'
+                            if any(f['name'].endswith('.tf') for f in infra_files):
+                                scan_result = scanner.scan_terraform(all_content, f"{owner}/{repo}")
                             else:
-                                st.warning("No infrastructure files found in the repository. Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
-                                progress_bar.empty()
-                                status_text.empty()
+                                scan_result = scanner.scan_cloud_config(all_content, "generic")
+                            
+                            progress_bar.progress(0.8)
+                            
+                            html_report = scanner.generate_html_report(scan_result)
+                            
+                            progress_bar.progress(1.0)
+                            status_text.empty()
+                            progress_bar.empty()
+                            
+                            st.success("✅ " + _('scan.data_sovereignty.complete', 'Sovereignty analysis completed!'))
+                            st.info(f"📁 Analyzed {len(infra_files)} infrastructure files from {owner}/{repo}")
+                            
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                risk_color = {"green": "🟢", "amber": "🟡", "red": "🔴"}.get(scan_result.risk_level.value, "⚪")
+                                st.metric(_('scan.data_sovereignty.risk', 'Sovereignty Risk'), 
+                                          f"{risk_color} {scan_result.risk_level.value.upper()}")
+                            with col2:
+                                st.metric(_('scan.data_sovereignty.transfers', 'Cross-Border Transfers'), 
+                                          scan_result.cross_border_transfers)
+                            with col3:
+                                st.metric(_('scan.data_sovereignty.non_eu_access', 'Non-EU Access'), 
+                                          scan_result.non_eu_access_count)
+                            with col4:
+                                st.metric(_('scan.data_sovereignty.third_country', 'Third Country Processors'), 
+                                          scan_result.third_country_processors)
+                            
+                            if scan_result.findings:
+                                st.subheader("⚠️ " + _('scan.data_sovereignty.findings', 'Sovereignty Findings'))
+                                for finding in scan_result.findings[:10]:
+                                    severity = finding.get('severity', 'medium')
+                                    icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
+                                    st.write(f"{icon} **{finding.get('title', 'Finding')}**")
+                                    st.write(f"   {finding.get('description', '')}")
+                            
+                            if scan_result.recommendations:
+                                st.subheader("📋 " + _('scan.data_sovereignty.recommendations', 'Recommendations'))
+                                for i, rec in enumerate(scan_result.recommendations[:10], 1):
+                                    st.write(f"{i}. {rec}")
+                            
+                            st.download_button(
+                                label="📥 " + _('scan.data_sovereignty.download', 'Download HTML Report'),
+                                data=html_report,
+                                file_name=f"sovereignty_report_{owner}_{repo}.html",
+                                mime="text/html",
+                                use_container_width=True,
+                                key="download_sovereignty_github"
+                            )
+                            
+                            result_dict = {
+                                'scan_type': 'Data Sovereignty Scanner',
+                                'scan_id': scan_result.scan_id,
+                                'target_name': f"{owner}/{repo}",
+                                'risk_level': scan_result.risk_level.value,
+                                'sovereignty_risk_score': scan_result.sovereignty_risk_score,
+                                'cross_border_transfers': scan_result.cross_border_transfers,
+                                'non_eu_access_count': scan_result.non_eu_access_count,
+                                'third_country_processors': scan_result.third_country_processors,
+                                'findings': scan_result.findings,
+                                'recommendations': scan_result.recommendations,
+                                'region': region,
+                                'timestamp': scan_result.timestamp
+                            }
+                            st.session_state['last_scan_results'] = result_dict
+                            st.session_state['latest_scan_type'] = 'data_sovereignty'
+                        else:
+                            st.warning("No infrastructure files found in the repository. Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
+                            progress_bar.empty()
+                            status_text.empty()
                             
                 except ImportError as e:
                     logger.error(f"Data Sovereignty Scanner import error: {e}")

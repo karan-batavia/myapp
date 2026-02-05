@@ -1541,7 +1541,7 @@ class DataSovereigntyScanner:
         us_providers = [l for l in result.data_locations 
                        if l.cloud_provider and l.cloud_provider.lower() in ['aws', 'azure', 'gcp']]
         if us_providers:
-            provider_names = ', '.join(set(l.cloud_provider for l in us_providers))
+            provider_names = ', '.join(set(str(l.cloud_provider) for l in us_providers if l.cloud_provider))
             recommendations.append(f"Verify signed Data Processing Agreement (DPA) with {provider_names} covers all deployed regions and services (GDPR Art. 28)")
         
         non_eu_access = [a for a in result.access_paths if not a.is_eu_access]
