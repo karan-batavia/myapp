@@ -102,6 +102,42 @@ if st.query_params.get("health") == "check":
 
 # Handle payment success callback - update user session after successful payment
 if st.query_params.get("payment_success") == "true":
+    # Show loading message while processing payment
+    st.markdown("""
+    <style>
+    .payment-processing {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+    }
+    .payment-processing h2 {
+        color: #1e88e5;
+        margin-bottom: 20px;
+    }
+    .payment-processing .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #1e88e5;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+    <div class="payment-processing">
+        <h2>Processing Your Payment...</h2>
+        <div class="spinner"></div>
+        <p>Please wait while we confirm your payment and activate your account.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     session_id = st.query_params.get("session_id")
     _payment_success = False
     _plan_tier = "professional"
@@ -259,35 +295,117 @@ if st.query_params.get("payment_success") == "true":
 if st.session_state.get('payment_just_completed'):
     _tier = st.session_state.pop('payment_new_tier', 'professional')
     st.session_state.pop('payment_just_completed', None)
-    st.success(f"Payment successful! Your account has been upgraded to {_tier.title()}.")
-    st.info("Please log in to access your upgraded account.")
-    if st.button("Go to Login", key="payment_success_login"):
-        st.session_state['show_login'] = True
-        st.rerun()
+    
+    st.markdown("""
+    <style>
+    .payment-success-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+        padding: 40px;
+    }
+    .success-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+    .payment-success-container h1 {
+        color: #2e7d32;
+        margin-bottom: 15px;
+    }
+    .payment-success-container .tier-badge {
+        background: linear-gradient(135deg, #1e88e5, #1565c0);
+        color: white;
+        padding: 10px 25px;
+        border-radius: 25px;
+        font-size: 1.2em;
+        font-weight: bold;
+        margin: 20px 0;
+        display: inline-block;
+    }
+    .payment-success-container p {
+        color: #666;
+        font-size: 1.1em;
+        margin-bottom: 30px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown(f"""
+    <div class="payment-success-container">
+        <div class="success-icon">✅</div>
+        <h1>Payment Successful!</h1>
+        <div class="tier-badge">{_tier.title()} Plan Activated</div>
+        <p>Your account has been upgraded. Please log in to access all your new features.</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔐 Go to Login", key="payment_success_login", type="primary", use_container_width=True):
+            st.session_state['show_login'] = True
+            st.rerun()
+    
+    st.stop()
 
 # Show payment pending message for async payments (iDEAL, SEPA)
 if st.session_state.get('payment_pending'):
-    st.warning("⏳ Your iDEAL payment is being processed. This may take a few moments.")
-    st.info("Your account will be upgraded automatically once payment is confirmed. You can safely close this page.")
+    st.markdown("""
+    <style>
+    .payment-pending-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        text-align: center;
+        padding: 40px;
+    }
+    .pending-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+    }
+    .payment-pending-container h1 {
+        color: #ed6c02;
+        margin-bottom: 15px;
+    }
+    .payment-pending-container p {
+        color: #666;
+        font-size: 1.1em;
+        margin-bottom: 20px;
+    }
+    </style>
+    <div class="payment-pending-container">
+        <div class="pending-icon">⏳</div>
+        <h1>Payment Processing</h1>
+        <p>Your iDEAL/SEPA payment is being processed. This may take a few moments.</p>
+        <p>Your account will be upgraded automatically once payment is confirmed.</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Add refresh button
-    if st.button("🔄 Check Payment Status", key="check_payment_status"):
-        _pending_session_id = st.session_state.get('payment_session_id')
-        if _pending_session_id:
-            try:
-                import stripe
-                stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-                _session = stripe.checkout.Session.retrieve(_pending_session_id)
-                if _session.payment_status == "paid":
-                    st.session_state.pop('payment_pending', None)
-                    st.session_state.pop('payment_session_id', None)
-                    st.session_state['payment_just_completed'] = True
-                    st.session_state['payment_new_tier'] = _session.metadata.get('plan_tier', 'professional')
-                    st.rerun()
-                else:
-                    st.info(f"Payment status: {_session.payment_status}. Please wait a moment and try again.")
-            except Exception as e:
-                st.error(f"Could not check payment status: {e}")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🔄 Check Payment Status", key="check_payment_status", type="primary", use_container_width=True):
+            _pending_session_id = st.session_state.get('payment_session_id')
+            if _pending_session_id:
+                try:
+                    import stripe
+                    stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
+                    _session = stripe.checkout.Session.retrieve(_pending_session_id)
+                    if _session.payment_status == "paid":
+                        st.session_state.pop('payment_pending', None)
+                        st.session_state.pop('payment_session_id', None)
+                        st.session_state['payment_just_completed'] = True
+                        st.session_state['payment_new_tier'] = _session.metadata.get('plan_tier', 'professional')
+                        st.rerun()
+                    else:
+                        st.info(f"Payment status: {_session.payment_status}. Please wait a moment and try again.")
+                except Exception as e:
+                    st.error(f"Could not check payment status: {e}")
+    
+    st.stop()
 
 # Core imports - keep essential imports minimal
 import logging
