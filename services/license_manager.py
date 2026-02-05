@@ -583,10 +583,11 @@ class LicenseManager:
         if not is_valid:
             return False
         
-        # All 12 scanners available for valid active licenses
+        # All 13 scanners available for valid active licenses
         all_scanners = [
             "code", "document", "database", "image", "website", "ai_model",
-            "dpia", "soc2", "enterprise", "sustainability", "audio_video", "advanced_ai"
+            "dpia", "soc2", "enterprise", "sustainability", "audio_video", 
+            "data_sovereignty", "advanced_ai"
         ]
         return scanner_type in all_scanners
     
