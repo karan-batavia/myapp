@@ -437,8 +437,8 @@ def get_tier_scanner_count(tier: PricingTier) -> tuple:
         PricingTier.SCALE: (15, ["All 15 Scanners", "Audio/Video Deepfake", "Cookie Scanner", "Advanced AI"]),
         PricingTier.SALESFORCE_PREMIUM: (15, ["All 15 Scanners", "Salesforce CRM", "Advanced AI"]),
         PricingTier.SAP_ENTERPRISE: (15, ["All 15 Scanners", "SAP ERP", "Advanced AI"]),
-        PricingTier.ENTERPRISE: (15, ["All 15 Scanners", "Salesforce + SAP", "Banking PSD2"]),
-        PricingTier.GOVERNMENT: (15, ["All 15 Scanners", "On-Premises", "Custom Dev"]),
+        PricingTier.ENTERPRISE: (15, ["All 15 Scanners", "Data Sovereignty", "Salesforce + SAP", "Banking PSD2"]),
+        PricingTier.GOVERNMENT: (15, ["All 15 Scanners", "Data Sovereignty", "On-Premises", "Custom Dev"]),
     }
     return scanner_mapping.get(tier, (6, ["Basic scanners"]))
 
@@ -551,7 +551,7 @@ def show_scanner_availability():
     st.markdown("## 🔍 Scanner Availability by Plan")
     st.markdown("**DataGuardian Pro includes 15 specialized compliance scanners**")
     
-    # Scanner definitions with icons - Complete list of all 15 scanners
+    # Scanner definitions with icons - Complete list of all 15 scanners + Data Sovereignty
     scanners = [
         ("Code Scanner", "Detects PII in source code & repositories"),
         ("Document Scanner", "PDF, Word, Excel file scanning"),
@@ -568,15 +568,16 @@ def show_scanner_availability():
         ("Repository Scanner", "Git repo scanning for PCI-DSS & GDPR"),
         ("Cookie Scanner", "Cookie & tracking compliance"),
         ("Advanced AI Analysis", "GPT-4 powered deep analysis"),
+        ("Data Sovereignty Scanner", "Cross-border transfer & jurisdictional compliance"),
     ]
     
-    # Tier availability - Updated counts
+    # Tier availability - Updated counts (Data Sovereignty only for Enterprise/Government)
     tier_scanners = {
         "Startup": 6,
         "Professional": 9,
         "Growth": 12,
         "Scale": 15,
-        "Enterprise": 15,
+        "Enterprise": 16,  # Includes Data Sovereignty
     }
     
     with st.expander("📋 View Full Scanner Comparison", expanded=False):
@@ -593,12 +594,20 @@ def show_scanner_availability():
             cols[0].markdown(f"**{scanner_name}**")
             cols[0].caption(scanner_desc)
             
-            # Check availability per tier (updated for 15 scanners)
-            cols[1].markdown("✅" if idx < 6 else "❌")   # Startup: 6
-            cols[2].markdown("✅" if idx < 9 else "❌")   # Professional: 9
-            cols[3].markdown("✅" if idx < 12 else "❌")  # Growth: 12
-            cols[4].markdown("✅")  # Scale has all 15
-            cols[5].markdown("✅")  # Enterprise has all 15
+            # Data Sovereignty Scanner (index 15) only for Enterprise/Government
+            if scanner_name == "Data Sovereignty Scanner":
+                cols[1].markdown("❌")  # Startup: No
+                cols[2].markdown("❌")  # Professional: No
+                cols[3].markdown("❌")  # Growth: No
+                cols[4].markdown("❌")  # Scale: No
+                cols[5].markdown("✅")  # Enterprise/Government: Yes
+            else:
+                # Check availability per tier (updated for 15 scanners)
+                cols[1].markdown("✅" if idx < 6 else "❌")   # Startup: 6
+                cols[2].markdown("✅" if idx < 9 else "❌")   # Professional: 9
+                cols[3].markdown("✅" if idx < 12 else "❌")  # Growth: 12
+                cols[4].markdown("✅")  # Scale has all 15
+                cols[5].markdown("✅")  # Enterprise has all 15
         
         st.markdown("---")
         st.markdown("**Total Scanners:**")
@@ -608,7 +617,7 @@ def show_scanner_availability():
         cols[2].markdown("**9**")
         cols[3].markdown("**12**")
         cols[4].markdown("**15**")
-        cols[5].markdown("**15**")
+        cols[5].markdown("**16**")  # Enterprise includes Data Sovereignty
 
 
 def show_competitive_comparison():
