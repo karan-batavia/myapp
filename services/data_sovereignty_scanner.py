@@ -106,6 +106,43 @@ class SovereigntyFinding:
 
 
 @dataclass
+class DataOrigin:
+    """Tracks where data originates from"""
+    source_name: str
+    source_type: str  # "user_input", "api", "database", "file_upload", "external_service"
+    country: str
+    collection_method: str
+    legal_basis: str = ""
+    data_categories: List[str] = field(default_factory=list)
+    is_eu_origin: bool = True
+
+
+@dataclass
+class LegalJurisdiction:
+    """Legal jurisdiction analysis"""
+    location: str
+    country: str
+    applicable_laws: List[str] = field(default_factory=list)
+    adequacy_status: str = ""  # "EU", "Adequacy Decision", "SCCs Required", "No Basis"
+    sccs_in_place: bool = False
+    bcrs_in_place: bool = False
+    tia_completed: bool = False
+    dpa_in_place: bool = False
+    risk_level: str = "low"
+
+
+@dataclass
+class ComplianceCheck:
+    """Individual compliance check result"""
+    check_name: str
+    check_category: str  # "sccs", "tia", "encryption", "retention", "backup", "dpa", "bcr", "uavg"
+    status: str  # "pass", "fail", "warning", "not_applicable"
+    description: str
+    legal_reference: str
+    recommendation: str = ""
+
+
+@dataclass
 class SovereigntyScanResult:
     """Complete scan result"""
     scan_id: str
@@ -115,6 +152,9 @@ class SovereigntyScanResult:
     data_locations: List[DataLocation] = field(default_factory=list)
     data_flows: List[DataFlow] = field(default_factory=list)
     access_paths: List[AccessPath] = field(default_factory=list)
+    data_origins: List[DataOrigin] = field(default_factory=list)
+    legal_jurisdictions: List[LegalJurisdiction] = field(default_factory=list)
+    compliance_checks: List[ComplianceCheck] = field(default_factory=list)
     findings: List[Dict[str, Any]] = field(default_factory=list)
     sovereignty_risk_score: float = 0.0
     risk_level: SovereigntyRiskLevel = SovereigntyRiskLevel.GREEN
@@ -124,6 +164,10 @@ class SovereigntyScanResult:
     third_country_processors: int = 0
     processing_time_ms: int = 0
     region: str = "Netherlands"
+    encryption_at_rest: bool = False
+    encryption_in_transit: bool = False
+    data_retention_policy: str = ""
+    backup_locations: List[str] = field(default_factory=list)
 
 
 class DataSovereigntyScanner:
@@ -218,6 +262,14 @@ class DataSovereigntyScanner:
             result.data_locations = self._analyze_data_locations(config)
             result.data_flows = self._analyze_data_flows(config)
             result.access_paths = self._analyze_access_paths(config)
+            result.data_origins = self._analyze_data_origins(config)
+            result.legal_jurisdictions = self._analyze_legal_jurisdictions(result.data_locations)
+            result.compliance_checks = self._run_compliance_checks(config, result)
+            
+            result.encryption_at_rest = self._detect_encryption_at_rest(config)
+            result.encryption_in_transit = self._detect_encryption_in_transit(config)
+            result.data_retention_policy = self._detect_retention_policy(config)
+            result.backup_locations = self._detect_backup_locations(config)
             
             result.findings = self._generate_findings(result)
             result.recommendations = self._generate_recommendations(result)
@@ -271,6 +323,14 @@ class DataSovereigntyScanner:
             result.data_locations = self._parse_terraform_locations(terraform_content)
             result.data_flows = self._detect_terraform_flows(terraform_content)
             result.access_paths = self._detect_terraform_access(terraform_content)
+            result.data_origins = self._analyze_terraform_origins(terraform_content)
+            result.legal_jurisdictions = self._analyze_legal_jurisdictions(result.data_locations)
+            result.compliance_checks = self._run_terraform_compliance_checks(terraform_content, result)
+            
+            result.encryption_at_rest = self._detect_terraform_encryption(terraform_content, "at_rest")
+            result.encryption_in_transit = self._detect_terraform_encryption(terraform_content, "in_transit")
+            result.data_retention_policy = self._detect_terraform_retention(terraform_content)
+            result.backup_locations = self._detect_terraform_backups(terraform_content)
             
             result.findings = self._generate_findings(result)
             result.recommendations = self._generate_recommendations(result)
@@ -733,6 +793,354 @@ class DataSovereigntyScanner:
         else:
             return f"Third Country ({country})"
     
+    def _analyze_data_origins(self, config: Dict[str, Any]) -> List[DataOrigin]:
+        """Analyze where data originates from"""
+        origins = []
+        data_sources = config.get('data_sources', [])
+        
+        for source in data_sources:
+            country = source.get('country', 'Unknown')
+            origins.append(DataOrigin(
+                source_name=source.get('name', 'Unknown Source'),
+                source_type=source.get('type', 'external_service'),
+                country=country,
+                collection_method=source.get('collection_method', 'API'),
+                legal_basis=source.get('legal_basis', 'Consent'),
+                data_categories=source.get('categories', ['personal_data']),
+                is_eu_origin=country in self.EU_COUNTRIES or country in self.EEA_COUNTRIES
+            ))
+        
+        if not origins:
+            origins.append(DataOrigin(
+                source_name="Primary Application",
+                source_type="user_input",
+                country=self._get_country_from_region(self.region),
+                collection_method="Direct Collection",
+                legal_basis="Consent (Art. 6(1)(a))",
+                data_categories=["personal_data"],
+                is_eu_origin=True
+            ))
+        
+        return origins
+    
+    def _analyze_terraform_origins(self, content: str) -> List[DataOrigin]:
+        """Analyze data origins from Terraform configuration"""
+        origins = []
+        
+        api_patterns = re.findall(r'api[_\-]?gateway|lambda|function|endpoint', content.lower())
+        if api_patterns:
+            origins.append(DataOrigin(
+                source_name="API Gateway",
+                source_type="api",
+                country="Unknown",
+                collection_method="REST API",
+                legal_basis="Contract (Art. 6(1)(b))",
+                data_categories=["personal_data"],
+                is_eu_origin=True
+            ))
+        
+        db_patterns = re.findall(r'rds|dynamodb|database|postgres|mysql|aurora', content.lower())
+        if db_patterns:
+            origins.append(DataOrigin(
+                source_name="Database Storage",
+                source_type="database",
+                country="Detected from region",
+                collection_method="Database Storage",
+                legal_basis="Contract (Art. 6(1)(b))",
+                data_categories=["personal_data", "operational_data"],
+                is_eu_origin=True
+            ))
+        
+        s3_patterns = re.findall(r's3[_\-]?bucket|blob|storage', content.lower())
+        if s3_patterns:
+            origins.append(DataOrigin(
+                source_name="Object Storage",
+                source_type="file_upload",
+                country="Detected from region",
+                collection_method="File Upload",
+                legal_basis="Consent (Art. 6(1)(a))",
+                data_categories=["personal_data", "documents"],
+                is_eu_origin=True
+            ))
+        
+        return origins
+    
+    def _analyze_legal_jurisdictions(self, locations: List[DataLocation]) -> List[LegalJurisdiction]:
+        """Map data locations to legal jurisdictions"""
+        jurisdictions = []
+        
+        for loc in locations:
+            applicable_laws = []
+            adequacy_status = "No Basis"
+            risk_level = "high"
+            
+            if loc.country in self.EU_COUNTRIES:
+                applicable_laws = ["GDPR", "ePrivacy Directive"]
+                if loc.country == 'NL':
+                    applicable_laws.append("UAVG (Netherlands)")
+                elif loc.country == 'DE':
+                    applicable_laws.append("BDSG (Germany)")
+                elif loc.country == 'FR':
+                    applicable_laws.append("Loi Informatique (France)")
+                adequacy_status = "EU Member State"
+                risk_level = "low"
+            elif loc.country in self.EEA_COUNTRIES:
+                applicable_laws = ["GDPR (via EEA)", "Local Data Protection"]
+                adequacy_status = "EEA Member State"
+                risk_level = "low"
+            elif loc.country in self.ADEQUACY_COUNTRIES:
+                applicable_laws = ["Local Data Protection Law"]
+                adequacy_status = f"EU Adequacy Decision"
+                risk_level = "medium"
+            elif loc.country == 'US':
+                applicable_laws = ["US CLOUD Act", "CCPA/CPRA", "State Laws"]
+                adequacy_status = "SCCs Required (post-Schrems II)"
+                risk_level = "high"
+            else:
+                applicable_laws = ["Local Data Protection Law (if any)"]
+                adequacy_status = "No Adequacy - SCCs/BCRs Required"
+                risk_level = "high"
+            
+            jurisdictions.append(LegalJurisdiction(
+                location=loc.region,
+                country=loc.country,
+                applicable_laws=applicable_laws,
+                adequacy_status=adequacy_status,
+                sccs_in_place=False,
+                bcrs_in_place=False,
+                tia_completed=False,
+                dpa_in_place=loc.country in self.EU_COUNTRIES,
+                risk_level=risk_level
+            ))
+        
+        return jurisdictions
+    
+    def _run_compliance_checks(self, config: Dict[str, Any], result: SovereigntyScanResult) -> List[ComplianceCheck]:
+        """Run comprehensive compliance checks"""
+        checks = []
+        
+        has_third_country = any(not loc.is_eu and not loc.is_adequacy_decision for loc in result.data_locations)
+        
+        checks.append(ComplianceCheck(
+            check_name="Standard Contractual Clauses (SCCs)",
+            check_category="sccs",
+            status="fail" if has_third_country else "pass",
+            description="SCCs are required for transfers to third countries without adequacy decisions" if has_third_country else "No third country transfers detected requiring SCCs",
+            legal_reference="GDPR Article 46(2)(c)",
+            recommendation="Implement EU Commission's 2021 SCCs for all third-country transfers" if has_third_country else ""
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Transfer Impact Assessment (TIA)",
+            check_category="tia",
+            status="warning" if has_third_country else "not_applicable",
+            description="TIA required per Schrems II for third country transfers" if has_third_country else "No third country transfers requiring TIA",
+            legal_reference="CJEU Schrems II Judgment (Case C-311/18)",
+            recommendation="Complete TIA documenting legal framework and supplementary measures" if has_third_country else ""
+        ))
+        
+        encryption_detected = config.get('encryption_enabled', False)
+        checks.append(ComplianceCheck(
+            check_name="Encryption at Rest",
+            check_category="encryption",
+            status="pass" if encryption_detected else "warning",
+            description="Data encryption at rest detected" if encryption_detected else "No explicit encryption configuration found",
+            legal_reference="GDPR Article 32 (Security of Processing)",
+            recommendation="" if encryption_detected else "Enable encryption for all data stores"
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Encryption in Transit",
+            check_category="encryption",
+            status="warning",
+            description="TLS/SSL configuration should be verified",
+            legal_reference="GDPR Article 32 (Security of Processing)",
+            recommendation="Ensure TLS 1.2+ for all data transfers"
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Data Processing Agreement (DPA)",
+            check_category="dpa",
+            status="warning",
+            description="DPA status with cloud providers needs verification",
+            legal_reference="GDPR Article 28 (Processor)",
+            recommendation="Verify DPA is in place with all data processors"
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Data Retention Policy",
+            check_category="retention",
+            status="warning",
+            description="No explicit retention policy detected in configuration",
+            legal_reference="GDPR Article 5(1)(e) (Storage Limitation)",
+            recommendation="Define and implement data retention policies"
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Backup Location Compliance",
+            check_category="backup",
+            status="warning" if has_third_country else "pass",
+            description="Verify backup storage locations are GDPR compliant",
+            legal_reference="GDPR Article 32 + Chapter V",
+            recommendation="Ensure backups are stored in EU/EEA or adequacy countries"
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Netherlands UAVG Compliance",
+            check_category="uavg",
+            status="pass" if self.region == "Netherlands" else "not_applicable",
+            description="Netherlands-specific requirements apply" if self.region == "Netherlands" else "UAVG applies only to Netherlands operations",
+            legal_reference="UAVG (Uitvoeringswet AVG)",
+            recommendation="Ensure BSN processing follows UAVG Article 46" if self.region == "Netherlands" else ""
+        ))
+        
+        return checks
+    
+    def _run_terraform_compliance_checks(self, content: str, result: SovereigntyScanResult) -> List[ComplianceCheck]:
+        """Run compliance checks on Terraform configuration"""
+        checks = []
+        
+        has_third_country = any(not loc.is_eu and not loc.is_adequacy_decision for loc in result.data_locations)
+        
+        checks.append(ComplianceCheck(
+            check_name="Standard Contractual Clauses (SCCs)",
+            check_category="sccs",
+            status="fail" if has_third_country else "pass",
+            description="Third country storage detected - SCCs required" if has_third_country else "All storage in EU/EEA - no SCCs needed",
+            legal_reference="GDPR Article 46(2)(c)",
+            recommendation="Implement EU Commission's 2021 SCCs" if has_third_country else ""
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Transfer Impact Assessment (TIA)",
+            check_category="tia",
+            status="fail" if has_third_country else "not_applicable",
+            description="TIA required for US/third country data processing" if has_third_country else "No TIA required",
+            legal_reference="CJEU Schrems II (Case C-311/18)",
+            recommendation="Complete TIA before deployment" if has_third_country else ""
+        ))
+        
+        encryption_patterns = re.findall(r'encrypt|kms|key_id|server_side_encryption|sse', content.lower())
+        has_encryption = len(encryption_patterns) > 0
+        checks.append(ComplianceCheck(
+            check_name="Encryption at Rest",
+            check_category="encryption",
+            status="pass" if has_encryption else "fail",
+            description="Encryption configuration detected" if has_encryption else "No encryption configuration found",
+            legal_reference="GDPR Article 32",
+            recommendation="" if has_encryption else "Add encryption to all storage resources"
+        ))
+        
+        tls_patterns = re.findall(r'https|tls|ssl|certificate', content.lower())
+        has_tls = len(tls_patterns) > 0
+        checks.append(ComplianceCheck(
+            check_name="Encryption in Transit (TLS)",
+            check_category="encryption",
+            status="pass" if has_tls else "warning",
+            description="TLS/HTTPS configuration found" if has_tls else "No explicit TLS configuration",
+            legal_reference="GDPR Article 32",
+            recommendation="" if has_tls else "Ensure TLS 1.2+ for all endpoints"
+        ))
+        
+        retention_patterns = re.findall(r'retention|lifecycle|expiration|days', content.lower())
+        has_retention = len(retention_patterns) > 0
+        checks.append(ComplianceCheck(
+            check_name="Data Retention Policy",
+            check_category="retention",
+            status="pass" if has_retention else "warning",
+            description="Lifecycle/retention policy found" if has_retention else "No retention policy defined",
+            legal_reference="GDPR Article 5(1)(e)",
+            recommendation="" if has_retention else "Define data retention policies"
+        ))
+        
+        backup_patterns = re.findall(r'backup|replicat|snapshot|dr_|disaster', content.lower())
+        has_backups = len(backup_patterns) > 0
+        checks.append(ComplianceCheck(
+            check_name="Backup Configuration",
+            check_category="backup",
+            status="warning" if has_backups else "fail",
+            description="Backup configuration detected - verify locations" if has_backups else "No backup configuration found",
+            legal_reference="GDPR Article 32",
+            recommendation="Ensure backups in EU/EEA regions" if has_backups else "Implement backup strategy in EU regions"
+        ))
+        
+        checks.append(ComplianceCheck(
+            check_name="Netherlands UAVG Compliance",
+            check_category="uavg",
+            status="pass" if self.region == "Netherlands" else "not_applicable",
+            description="Netherlands processing - UAVG applies" if self.region == "Netherlands" else "Not applicable",
+            legal_reference="UAVG (Dutch GDPR Implementation)",
+            recommendation=""
+        ))
+        
+        return checks
+    
+    def _detect_encryption_at_rest(self, config: Dict[str, Any]) -> bool:
+        """Detect if encryption at rest is configured"""
+        return config.get('encryption_at_rest', False)
+    
+    def _detect_encryption_in_transit(self, config: Dict[str, Any]) -> bool:
+        """Detect if encryption in transit is configured"""
+        return config.get('encryption_in_transit', config.get('tls_enabled', False))
+    
+    def _detect_retention_policy(self, config: Dict[str, Any]) -> str:
+        """Detect data retention policy"""
+        return config.get('retention_policy', 'Not specified')
+    
+    def _detect_backup_locations(self, config: Dict[str, Any]) -> List[str]:
+        """Detect backup storage locations"""
+        return config.get('backup_locations', [])
+    
+    def _detect_terraform_encryption(self, content: str, enc_type: str) -> bool:
+        """Detect encryption settings in Terraform"""
+        if enc_type == "at_rest":
+            patterns = ['encrypt', 'kms', 'server_side_encryption', 'sse-s3', 'sse-kms']
+        else:
+            patterns = ['https', 'tls', 'ssl', 'certificate_arn']
+        
+        for pattern in patterns:
+            if pattern in content.lower():
+                return True
+        return False
+    
+    def _detect_terraform_retention(self, content: str) -> str:
+        """Detect retention policies in Terraform"""
+        retention_match = re.search(r'(?:retention|expiration)[_\-]?(?:days|period)?\s*[=:]\s*(\d+)', content.lower())
+        if retention_match:
+            return f"{retention_match.group(1)} days"
+        
+        lifecycle_match = re.search(r'lifecycle[_\s]*\{[^}]*expiration', content.lower())
+        if lifecycle_match:
+            return "Lifecycle policy defined"
+        
+        return "Not specified"
+    
+    def _detect_terraform_backups(self, content: str) -> List[str]:
+        """Detect backup locations in Terraform"""
+        backups = []
+        
+        for region, info in self.CLOUD_REGIONS.items():
+            if f'backup' in content.lower() and region in content.lower():
+                backups.append(f"{region} ({info['country']})")
+        
+        replica_match = re.findall(r'replica[_\-]?region\s*=\s*["\']([^"\']+)["\']', content)
+        backups.extend(replica_match)
+        
+        return backups
+    
+    def _get_country_from_region(self, region: str) -> str:
+        """Get country code from region name"""
+        region_map = {
+            'Netherlands': 'NL',
+            'Germany': 'DE',
+            'France': 'FR',
+            'Belgium': 'BE',
+            'United Kingdom': 'GB',
+            'Ireland': 'IE',
+            'United States': 'US'
+        }
+        return region_map.get(region, 'NL')
+    
     def _generate_findings(self, result: SovereigntyScanResult) -> List[Dict[str, Any]]:
         """Generate sovereignty findings from analysis"""
         findings = []
@@ -941,6 +1349,90 @@ class DataSovereigntyScanner:
             </div>
             """
         
+        origins_html = ""
+        for origin in result.data_origins:
+            eu_badge = '<span class="badge success">EU Origin</span>' if origin.is_eu_origin else '<span class="badge danger">Non-EU Origin</span>'
+            origins_html += f"""
+            <div class="origin-card">
+                <div class="origin-header">
+                    <strong>{origin.source_name}</strong> {eu_badge}
+                </div>
+                <div class="origin-details">
+                    <p><strong>Source Type:</strong> {origin.source_type.replace('_', ' ').title()}</p>
+                    <p><strong>Country:</strong> {origin.country}</p>
+                    <p><strong>Collection Method:</strong> {origin.collection_method}</p>
+                    <p><strong>Legal Basis:</strong> {origin.legal_basis}</p>
+                    <p><strong>Data Categories:</strong> {', '.join(origin.data_categories)}</p>
+                </div>
+            </div>
+            """
+        
+        jurisdictions_html = ""
+        for jur in result.legal_jurisdictions:
+            risk_badge = {
+                'low': '<span class="badge success">Low Risk</span>',
+                'medium': '<span class="badge warning">Medium Risk</span>',
+                'high': '<span class="badge danger">High Risk</span>'
+            }.get(jur.risk_level, '<span class="badge info">Unknown</span>')
+            
+            safeguards = []
+            if jur.sccs_in_place:
+                safeguards.append("✓ SCCs")
+            if jur.bcrs_in_place:
+                safeguards.append("✓ BCRs")
+            if jur.tia_completed:
+                safeguards.append("✓ TIA")
+            if jur.dpa_in_place:
+                safeguards.append("✓ DPA")
+            
+            jurisdictions_html += f"""
+            <div class="jurisdiction-card" style="border-left-color: {'#28a745' if jur.risk_level == 'low' else ('#fd7e14' if jur.risk_level == 'medium' else '#dc3545')};">
+                <div class="jurisdiction-header">
+                    <strong>{jur.location}</strong> ({jur.country}) {risk_badge}
+                </div>
+                <div class="jurisdiction-details">
+                    <p><strong>Applicable Laws:</strong> {', '.join(jur.applicable_laws)}</p>
+                    <p><strong>Adequacy Status:</strong> {jur.adequacy_status}</p>
+                    <p><strong>Safeguards:</strong> {', '.join(safeguards) if safeguards else '❌ None documented'}</p>
+                </div>
+            </div>
+            """
+        
+        access_html = ""
+        for access in result.access_paths:
+            access_badge = '<span class="badge success">EU</span>' if access.is_eu_access else '<span class="badge danger">Non-EU</span>'
+            monitor_badge = '<span class="badge info">Monitored</span>' if access.is_monitored else '<span class="badge warning">Unmonitored</span>'
+            access_html += f"""
+            <div class="access-card">
+                <div class="access-header">
+                    <strong>{access.accessor_name or access.accessor_type}</strong> {access_badge} {monitor_badge}
+                </div>
+                <div class="access-details">
+                    <p><strong>Type:</strong> {access.accessor_type}</p>
+                    <p><strong>Country:</strong> {access.accessor_country}</p>
+                    <p><strong>Privilege Level:</strong> {access.privilege_level}</p>
+                </div>
+            </div>
+            """
+        
+        compliance_html = ""
+        for check in result.compliance_checks:
+            status_badge = {
+                'pass': '<span class="status-badge pass">✓ PASS</span>',
+                'fail': '<span class="status-badge fail">✗ FAIL</span>',
+                'warning': '<span class="status-badge warning">⚠ WARNING</span>',
+                'not_applicable': '<span class="status-badge na">N/A</span>'
+            }.get(check.status, '<span class="status-badge">Unknown</span>')
+            
+            compliance_html += f"""
+            <tr>
+                <td><strong>{check.check_name}</strong></td>
+                <td>{status_badge}</td>
+                <td>{check.description}</td>
+                <td><small>{check.legal_reference}</small></td>
+            </tr>
+            """
+        
         html = f"""
 <!DOCTYPE html>
 <html lang="en">
@@ -1086,6 +1578,71 @@ class DataSovereigntyScanner:
         .badge.danger {{ background: #dc3545; color: white; }}
         .badge.warning {{ background: #fd7e14; color: white; }}
         .badge.info {{ background: #17a2b8; color: white; }}
+        .badge.success {{ background: #28a745; color: white; }}
+        .origin-card, .jurisdiction-card, .access-card {{
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary);
+        }}
+        .origin-header, .jurisdiction-header, .access-header {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }}
+        .origin-details p, .jurisdiction-details p, .access-details p {{
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+        }}
+        .compliance-table {{
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }}
+        .compliance-table th, .compliance-table td {{
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }}
+        .compliance-table th {{
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #1a237e;
+        }}
+        .status-badge {{
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }}
+        .status-badge.pass {{ background: #28a745; color: white; }}
+        .status-badge.fail {{ background: #dc3545; color: white; }}
+        .status-badge.warning {{ background: #fd7e14; color: white; }}
+        .status-badge.na {{ background: #6c757d; color: white; }}
+        .key-questions {{
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }}
+        .key-questions h4 {{
+            color: #1b5e20;
+            margin-bottom: 1rem;
+        }}
+        .key-questions ul {{
+            list-style: none;
+        }}
+        .key-questions li {{
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }}
+        .key-questions li:last-child {{
+            border-bottom: none;
+        }}
         .finding-card {{
             background: white;
             border-radius: 10px;
@@ -1220,15 +1777,63 @@ class DataSovereigntyScanner:
         </div>
         
         <div class="section">
+            <div class="key-questions">
+                <h4>🔑 Key Sovereignty Questions Answered</h4>
+                <ul>
+                    <li><strong>Where did this data originate?</strong> {len(result.data_origins)} data source(s) identified - See Data Origins section below</li>
+                    <li><strong>Where does it actually travel?</strong> {result.cross_border_transfers} cross-border transfer(s) detected - See Data Flows section</li>
+                    <li><strong>Who can access it — and from which country?</strong> {len(result.access_paths)} access path(s) mapped ({result.non_eu_access_count} from non-EU) - See Access Control Matrix</li>
+                    <li><strong>Under which legal jurisdiction is it processed?</strong> {len(result.legal_jurisdictions)} jurisdiction(s) analyzed - See Legal Jurisdictions section</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>🌐 Data Origins</h3>
+            <p style="color:#666;margin-bottom:1rem;">Where your data originates and how it is collected</p>
+            {origins_html if origins_html else '<p style="color:#888;">No specific data origins detected</p>'}
+        </div>
+        
+        <div class="section">
             <h3>📍 Data Locations</h3>
             <p style="color:#666;margin-bottom:1rem;">Detected storage locations and their jurisdictional classification</p>
             {locations_html if locations_html else '<p style="color:#888;">No specific locations detected in configuration</p>'}
         </div>
         
         <div class="section">
-            <h3>🔄 Data Flows</h3>
-            <p style="color:#666;margin-bottom:1rem;">Detected data transfer paths between systems and regions</p>
+            <h3>🔄 Data Flows & Journey</h3>
+            <p style="color:#666;margin-bottom:1rem;">Where data travels between systems and regions</p>
             {flows_html if flows_html else '<p style="color:#888;">No cross-border flows detected</p>'}
+        </div>
+        
+        <div class="section">
+            <h3>👥 Access Control Matrix</h3>
+            <p style="color:#666;margin-bottom:1rem;">Who can access your data and from which country</p>
+            {access_html if access_html else '<p style="color:#888;">No specific access paths detected in configuration</p>'}
+        </div>
+        
+        <div class="section">
+            <h3>⚖️ Legal Jurisdictions</h3>
+            <p style="color:#666;margin-bottom:1rem;">Applicable laws and adequacy status for each processing location</p>
+            {jurisdictions_html if jurisdictions_html else '<p style="color:#888;">No jurisdictional analysis available</p>'}
+        </div>
+        
+        <div class="section">
+            <h3>✅ Compliance Checks</h3>
+            <p style="color:#666;margin-bottom:1rem;">SCCs, TIA, Encryption, Retention, and other compliance requirements</p>
+            <table class="compliance-table">
+                <thead>
+                    <tr>
+                        <th>Check</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                        <th>Legal Reference</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {compliance_html if compliance_html else '<tr><td colspan="4">No compliance checks performed</td></tr>'}
+                </tbody>
+            </table>
         </div>
         
         <div class="section">
