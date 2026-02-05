@@ -125,36 +125,11 @@ def show_pricing_page():
     
     billing = BillingCycle.ANNUAL if "Annual" in billing_cycle else BillingCycle.MONTHLY
     
-    try:
-        show_pricing_cards(billing)
-    except Exception as e:
-        st.error(f"Error in pricing cards: {e}")
-        import traceback
-        st.code(traceback.format_exc())
-    
-    try:
-        show_scanner_availability()
-    except Exception as e:
-        st.error(f"Error in scanner availability: {e}")
-        import traceback
-        st.code(traceback.format_exc())
-    
-    try:
-        show_competitive_comparison()
-    except Exception as e:
-        st.error(f"Error in competitive comparison: {e}")
-    
-    try:
-        show_features_comparison()
-    except Exception as e:
-        st.error(f"Error in features comparison: {e}")
-        import traceback
-        st.code(traceback.format_exc())
-    
-    try:
-        show_contact_section()
-    except Exception as e:
-        st.error(f"Error in contact section: {e}")
+    show_pricing_cards(billing)
+    show_scanner_availability()
+    show_competitive_comparison()
+    show_features_comparison()
+    show_contact_section()
 
 
 def render_breadcrumb(current_step: str):
@@ -450,7 +425,7 @@ def show_pricing_cards(billing_cycle: BillingCycle):
             st.success("✅ Current Plan")
         else:
             if st.button("Select Government & Enterprise", key="select_government_enterprise", type="primary"):
-                handle_tier_selection(PricingTier.GOVERNMENT, 'yearly')
+                handle_tier_selection(PricingTier.GOVERNMENT, BillingCycle.ANNUAL)
         
         st.markdown("")
         if st.button("📞 Contact Sales", key="contact_government", type="secondary"):
