@@ -174,6 +174,7 @@ def get_available_scanners_for_tier(license_tier: str) -> list:
         ("enterprise", "Enterprise Connector - Microsoft 365, Exact Online, Google Workspace integration for automated PII scanning"),
         ("sustainability", "Sustainability Scanner - Environmental impact and sustainability analysis"),
         ("audio_video", "Audio/Video Scanner - Deepfake detection and media authentication"),
+        ("data_sovereignty", "Data Sovereignty Scanner - Cross-border transfer and jurisdictional compliance analysis"),
         ("advanced_ai", "Advanced AI Scanner - GPT-4 powered deep analysis")
     ]
     
@@ -184,9 +185,9 @@ def get_available_scanners_for_tier(license_tier: str) -> list:
         'professional': 8,
         'growth': 10,
         'scale': 12,
-        'enterprise': 12,
-        'unlimited': 12,
-        'government': 12
+        'enterprise': 13,
+        'unlimited': 13,
+        'government': 13
     }
     
     limit = tier_limits.get(license_tier.lower(), 6)
@@ -264,6 +265,8 @@ def render_scanner_interface():
         _render_sustainability_scanner(region, username)
     elif "Audio/Video Scanner" in scan_type:
         _render_audio_video_scanner(region, username)
+    elif "Data Sovereignty Scanner" in scan_type:
+        _render_data_sovereignty_scanner(region, username)
     elif "Advanced AI Scanner" in scan_type:
         _render_advanced_ai_scanner(region, username)
 
@@ -1584,6 +1587,239 @@ def _render_audio_video_scanner(region: str, username: str):
                 st.error(f"Analysis error: {str(e)}")
         else:
             st.warning("Please upload a media file to analyze.")
+
+
+def _render_data_sovereignty_scanner(region: str, username: str):
+    """Render data sovereignty scanner interface - Enterprise/Government only"""
+    from utils.i18n import get_text as _
+    
+    st.subheader("🌍 " + _('scan.data_sovereignty.title', 'Data Sovereignty Scanner'))
+    
+    st.markdown(_(
+        'scan.data_sovereignty.description',
+        """**Enterprise-grade data sovereignty and cross-border transfer analysis.**
+        
+        Analyze your infrastructure for:
+        - Cross-border data transfers and GDPR Chapter V compliance
+        - Data location and jurisdictional mapping
+        - Access rights from non-EU countries
+        - US CLOUD Act risk assessment
+        - Sovereignty risk scoring with actionable recommendations
+        """
+    ))
+    
+    license_tier = st.session_state.get('license_tier', 'trial').lower()
+    if license_tier not in ['enterprise', 'government', 'unlimited']:
+        st.warning("⚠️ " + _('scan.data_sovereignty.enterprise_only', 
+            'Data Sovereignty Scanner is available for Enterprise and Government license tiers only.'))
+        st.info("🔓 " + _('scan.data_sovereignty.upgrade', 
+            'Upgrade to Enterprise or Government tier to access cross-border transfer analysis.'))
+        if st.button("🚀 View Enterprise Plans", use_container_width=True, key="upgrade_sovereignty"):
+            st.session_state['show_pricing'] = True
+            st.rerun()
+        return
+    
+    scan_mode = st.radio(
+        _('scan.data_sovereignty.mode', 'Select Analysis Mode'),
+        ["Upload Configuration", "Manual Input"],
+        horizontal=True
+    )
+    
+    if scan_mode == "Upload Configuration":
+        config_type = st.selectbox(
+            _('scan.data_sovereignty.config_type', 'Configuration Type'),
+            ["Terraform (.tf)", "AWS CloudFormation", "Azure ARM/Bicep", "GCP Deployment Manager", "Kubernetes YAML", "Generic JSON/YAML"]
+        )
+        
+        uploaded_file = st.file_uploader(
+            _('scan.data_sovereignty.upload', 'Upload configuration file'),
+            type=['tf', 'json', 'yaml', 'yml', 'bicep', 'template'],
+            help=_('scan.data_sovereignty.upload_help', 'Upload infrastructure configuration files for sovereignty analysis')
+        )
+        
+        if st.button("🔍 " + _('scan.data_sovereignty.analyze', 'Analyze Sovereignty'), 
+                     use_container_width=True, type="primary", key="run_sovereignty_scan"):
+            if uploaded_file:
+                try:
+                    from services.data_sovereignty_scanner import DataSovereigntyScanner
+                    
+                    progress_bar = st.progress(0)
+                    status_text = st.empty()
+                    status_text.text(_('scan.data_sovereignty.analyzing', 'Analyzing configuration for sovereignty issues...'))
+                    
+                    content = uploaded_file.read().decode('utf-8')
+                    progress_bar.progress(0.3)
+                    
+                    scanner = DataSovereigntyScanner(region=region)
+                    
+                    config_type_map = {
+                        "Terraform (.tf)": "terraform",
+                        "AWS CloudFormation": "aws",
+                        "Azure ARM/Bicep": "azure",
+                        "GCP Deployment Manager": "gcp",
+                        "Kubernetes YAML": "kubernetes",
+                        "Generic JSON/YAML": "generic"
+                    }
+                    
+                    ctype = config_type_map.get(config_type, "generic")
+                    
+                    if ctype == "terraform":
+                        scan_result = scanner.scan_terraform(content, uploaded_file.name)
+                    else:
+                        scan_result = scanner.scan_cloud_config(content, ctype)
+                    
+                    progress_bar.progress(0.8)
+                    
+                    html_report = scanner.generate_html_report(scan_result)
+                    
+                    progress_bar.progress(1.0)
+                    status_text.empty()
+                    progress_bar.empty()
+                    
+                    st.success("✅ " + _('scan.data_sovereignty.complete', 'Sovereignty analysis completed!'))
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    with col1:
+                        risk_color = {"green": "🟢", "amber": "🟡", "red": "🔴"}.get(scan_result.risk_level.value, "⚪")
+                        st.metric(_('scan.data_sovereignty.risk', 'Sovereignty Risk'), 
+                                  f"{risk_color} {scan_result.risk_level.value.upper()}")
+                    with col2:
+                        st.metric(_('scan.data_sovereignty.transfers', 'Cross-Border Transfers'), 
+                                  scan_result.cross_border_transfers)
+                    with col3:
+                        st.metric(_('scan.data_sovereignty.non_eu_access', 'Non-EU Access'), 
+                                  scan_result.non_eu_access_count)
+                    with col4:
+                        st.metric(_('scan.data_sovereignty.third_country', 'Third Country Processors'), 
+                                  scan_result.third_country_processors)
+                    
+                    if scan_result.findings:
+                        st.subheader("⚠️ " + _('scan.data_sovereignty.findings', 'Sovereignty Findings'))
+                        for finding in scan_result.findings[:5]:
+                            severity = finding.get('severity', 'medium')
+                            icon = {"high": "🔴", "medium": "🟡", "low": "🟢"}.get(severity, "⚪")
+                            st.write(f"{icon} **{finding.get('title', 'Finding')}**")
+                            st.write(f"   {finding.get('description', '')}")
+                    
+                    if scan_result.recommendations:
+                        st.subheader("📋 " + _('scan.data_sovereignty.recommendations', 'Recommendations'))
+                        for i, rec in enumerate(scan_result.recommendations[:5], 1):
+                            st.write(f"{i}. {rec}")
+                    
+                    st.download_button(
+                        label="📥 " + _('scan.data_sovereignty.download', 'Download HTML Report'),
+                        data=html_report,
+                        file_name=f"sovereignty_report_{scan_result.scan_id}.html",
+                        mime="text/html",
+                        use_container_width=True
+                    )
+                    
+                    result_dict = {
+                        'scan_type': 'Data Sovereignty Scanner',
+                        'scan_id': scan_result.scan_id,
+                        'target_name': scan_result.target_name,
+                        'risk_level': scan_result.risk_level.value,
+                        'sovereignty_risk_score': scan_result.sovereignty_risk_score,
+                        'cross_border_transfers': scan_result.cross_border_transfers,
+                        'non_eu_access_count': scan_result.non_eu_access_count,
+                        'third_country_processors': scan_result.third_country_processors,
+                        'findings': scan_result.findings,
+                        'recommendations': scan_result.recommendations,
+                        'region': region,
+                        'timestamp': scan_result.timestamp
+                    }
+                    st.session_state['last_scan_results'] = result_dict
+                    st.session_state['latest_scan_type'] = 'data_sovereignty'
+                    
+                except ImportError as e:
+                    logger.error(f"Data Sovereignty Scanner import error: {e}")
+                    st.warning(_('scan.data_sovereignty.import_error', 
+                        'Data Sovereignty Scanner module requires additional setup.'))
+                except Exception as e:
+                    logger.error(f"Sovereignty scan error: {e}")
+                    st.error(f"{_('scan.data_sovereignty.error', 'Analysis error')}: {str(e)}")
+            else:
+                st.warning(_('scan.data_sovereignty.no_file', 'Please upload a configuration file to analyze.'))
+    
+    else:
+        st.info(_('scan.data_sovereignty.manual_info', 
+            'Enter infrastructure details manually for sovereignty analysis.'))
+        
+        with st.expander("📍 " + _('scan.data_sovereignty.locations', 'Data Locations'), expanded=True):
+            num_locations = st.number_input("Number of data locations", min_value=1, max_value=10, value=1)
+            locations = []
+            for i in range(num_locations):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    region_input = st.text_input(f"Region {i+1}", key=f"loc_region_{i}", 
+                                                  placeholder="e.g., eu-west-1, westeurope")
+                with col2:
+                    provider = st.selectbox(f"Provider {i+1}", 
+                                           ["AWS", "Azure", "GCP", "On-Premises", "Other"], 
+                                           key=f"loc_provider_{i}")
+                with col3:
+                    service = st.selectbox(f"Service {i+1}", 
+                                          ["Storage", "Database", "Compute", "Analytics", "AI/ML"], 
+                                          key=f"loc_service_{i}")
+                if region_input:
+                    locations.append({
+                        'region': region_input,
+                        'provider': provider,
+                        'type': service.lower()
+                    })
+        
+        with st.expander("🔄 " + _('scan.data_sovereignty.flows', 'Data Flows')):
+            num_flows = st.number_input("Number of data flows", min_value=0, max_value=10, value=0)
+            integrations = []
+            for i in range(num_flows):
+                col1, col2 = st.columns(2)
+                with col1:
+                    source = st.text_input(f"Source {i+1}", key=f"flow_source_{i}")
+                with col2:
+                    dest = st.text_input(f"Destination {i+1}", key=f"flow_dest_{i}")
+                if source and dest:
+                    integrations.append({'source': source, 'destination': dest})
+        
+        if st.button("🔍 " + _('scan.data_sovereignty.analyze', 'Analyze Sovereignty'), 
+                     use_container_width=True, type="primary", key="run_sovereignty_manual"):
+            if locations:
+                try:
+                    from services.data_sovereignty_scanner import DataSovereigntyScanner
+                    
+                    config = {
+                        'name': 'Manual Infrastructure Analysis',
+                        'cloud_resources': locations,
+                        'integrations': integrations,
+                        'access_controls': []
+                    }
+                    
+                    scanner = DataSovereigntyScanner(region=region)
+                    scan_result = scanner.scan_infrastructure(config)
+                    html_report = scanner.generate_html_report(scan_result)
+                    
+                    st.success("✅ " + _('scan.data_sovereignty.complete', 'Sovereignty analysis completed!'))
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        risk_color = {"green": "🟢", "amber": "🟡", "red": "🔴"}.get(scan_result.risk_level.value, "⚪")
+                        st.metric("Sovereignty Risk", f"{risk_color} {scan_result.risk_level.value.upper()}")
+                    with col2:
+                        st.metric("Cross-Border Transfers", scan_result.cross_border_transfers)
+                    with col3:
+                        st.metric("Third Country Processors", scan_result.third_country_processors)
+                    
+                    st.download_button(
+                        label="📥 Download HTML Report",
+                        data=html_report,
+                        file_name=f"sovereignty_report_{scan_result.scan_id}.html",
+                        mime="text/html",
+                        use_container_width=True
+                    )
+                    
+                except Exception as e:
+                    st.error(f"Analysis error: {str(e)}")
+            else:
+                st.warning("Please add at least one data location.")
 
 
 def _render_advanced_ai_scanner(region: str, username: str):

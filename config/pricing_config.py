@@ -414,6 +414,7 @@ class PricingConfig:
                 "kvk_enterprise_validation": [PricingTier.SALESFORCE_PREMIUM.value, PricingTier.SAP_ENTERPRISE.value, PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value],  # NEW: Enterprise KvK
                 "ai_model_scanning": [PricingTier.STARTUP.value, PricingTier.PROFESSIONAL.value, PricingTier.GROWTH.value, PricingTier.SCALE.value, PricingTier.SALESFORCE_PREMIUM.value, PricingTier.SAP_ENTERPRISE.value, PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value],
                 "audio_video_deepfake_detection": [PricingTier.SCALE.value, PricingTier.SALESFORCE_PREMIUM.value, PricingTier.SAP_ENTERPRISE.value, PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value],
+                "data_sovereignty_scanning": [PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value],
                 "advanced_ai_analysis": [PricingTier.SCALE.value, PricingTier.SALESFORCE_PREMIUM.value, PricingTier.SAP_ENTERPRISE.value, PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value],
                 "netherlands_bsn_detection": [PricingTier.STARTUP.value, PricingTier.PROFESSIONAL.value, PricingTier.GROWTH.value, PricingTier.SCALE.value, PricingTier.SALESFORCE_PREMIUM.value, PricingTier.SAP_ENTERPRISE.value, PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value],
                 "automated_reporting": [PricingTier.PROFESSIONAL.value, PricingTier.GROWTH.value, PricingTier.SCALE.value, PricingTier.SALESFORCE_PREMIUM.value, PricingTier.SAP_ENTERPRISE.value, PricingTier.ENTERPRISE.value, PricingTier.GOVERNMENT.value]
