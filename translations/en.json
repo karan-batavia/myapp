@@ -385,5 +385,31 @@
     "risk_high": "High",
     "risk_medium": "Medium",
     "risk_low": "Low"
+  },
+  "data_sovereignty_scanner": {
+    "title": "Data Sovereignty Scanner",
+    "description": "Enterprise-grade data sovereignty and cross-border transfer analysis. Analyze your infrastructure for GDPR Chapter V compliance, jurisdictional mapping, and access rights analysis.",
+    "enterprise_only": "Data Sovereignty Scanner is available for Enterprise and Government license tiers only.",
+    "upgrade": "Upgrade to Enterprise or Government tier to access cross-border transfer analysis.",
+    "mode": "Select Analysis Mode",
+    "config_type": "Configuration Type",
+    "upload": "Upload configuration file",
+    "upload_help": "Upload infrastructure configuration files for sovereignty analysis",
+    "analyze": "Analyze Sovereignty",
+    "analyzing": "Analyzing configuration for sovereignty issues...",
+    "complete": "Sovereignty analysis completed!",
+    "risk": "Sovereignty Risk",
+    "transfers": "Cross-Border Transfers",
+    "non_eu_access": "Non-EU Access",
+    "third_country": "Third Country Processors",
+    "findings": "Sovereignty Findings",
+    "recommendations": "Recommendations",
+    "download": "Download HTML Report",
+    "import_error": "Data Sovereignty Scanner module requires additional setup.",
+    "error": "Analysis error",
+    "no_file": "Please upload a configuration file to analyze.",
+    "manual_info": "Enter infrastructure details manually for sovereignty analysis.",
+    "locations": "Data Locations",
+    "flows": "Data Flows"
   }
 }
