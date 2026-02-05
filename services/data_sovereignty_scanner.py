@@ -206,20 +206,101 @@ class DataSovereigntyScanner:
         'eu-central-1': {'country': 'DE', 'name': 'Frankfurt'},
         'eu-north-1': {'country': 'SE', 'name': 'Stockholm'},
         'eu-south-1': {'country': 'IT', 'name': 'Milan'},
+        'eu-south-2': {'country': 'ES', 'name': 'Spain'},
+        'eu-central-2': {'country': 'CH', 'name': 'Zurich'},
         'us-east-1': {'country': 'US', 'name': 'N. Virginia'},
         'us-east-2': {'country': 'US', 'name': 'Ohio'},
         'us-west-1': {'country': 'US', 'name': 'N. California'},
         'us-west-2': {'country': 'US', 'name': 'Oregon'},
+        'ap-northeast-1': {'country': 'JP', 'name': 'Tokyo'},
+        'ap-northeast-2': {'country': 'KR', 'name': 'Seoul'},
+        'ap-northeast-3': {'country': 'JP', 'name': 'Osaka'},
+        'ap-southeast-1': {'country': 'SG', 'name': 'Singapore'},
+        'ap-southeast-2': {'country': 'AU', 'name': 'Sydney'},
+        'ap-south-1': {'country': 'IN', 'name': 'Mumbai'},
+        'ca-central-1': {'country': 'CA', 'name': 'Canada Central'},
+        'sa-east-1': {'country': 'BR', 'name': 'Sao Paulo'},
+        'me-south-1': {'country': 'BH', 'name': 'Bahrain'},
+        'me-central-1': {'country': 'AE', 'name': 'UAE'},
+        'af-south-1': {'country': 'ZA', 'name': 'Cape Town'},
+        'il-central-1': {'country': 'IL', 'name': 'Tel Aviv'},
         'westeurope': {'country': 'NL', 'name': 'Netherlands'},
         'northeurope': {'country': 'IE', 'name': 'Ireland'},
         'germanywestcentral': {'country': 'DE', 'name': 'Frankfurt'},
         'francecentral': {'country': 'FR', 'name': 'Paris'},
+        'francesouth': {'country': 'FR', 'name': 'France South (Marseille)'},
         'uksouth': {'country': 'GB', 'name': 'London'},
+        'ukwest': {'country': 'GB', 'name': 'UK West (Cardiff)'},
+        'eastus': {'country': 'US', 'name': 'East US (Virginia)'},
+        'eastus2': {'country': 'US', 'name': 'East US 2 (Virginia)'},
+        'westus': {'country': 'US', 'name': 'West US (California)'},
+        'westus2': {'country': 'US', 'name': 'West US 2 (Washington)'},
+        'westus3': {'country': 'US', 'name': 'West US 3 (Arizona)'},
+        'centralus': {'country': 'US', 'name': 'Central US (Iowa)'},
+        'northcentralus': {'country': 'US', 'name': 'North Central US (Illinois)'},
+        'southcentralus': {'country': 'US', 'name': 'South Central US (Texas)'},
+        'canadacentral': {'country': 'CA', 'name': 'Canada Central (Toronto)'},
+        'canadaeast': {'country': 'CA', 'name': 'Canada East (Quebec)'},
+        'brazilsouth': {'country': 'BR', 'name': 'Brazil South (Sao Paulo)'},
+        'switzerlandnorth': {'country': 'CH', 'name': 'Switzerland North (Zurich)'},
+        'switzerlandwest': {'country': 'CH', 'name': 'Switzerland West (Geneva)'},
+        'norwayeast': {'country': 'NO', 'name': 'Norway East (Oslo)'},
+        'norwaywest': {'country': 'NO', 'name': 'Norway West (Stavanger)'},
+        'swedencentral': {'country': 'SE', 'name': 'Sweden Central (Gavle)'},
+        'japaneast': {'country': 'JP', 'name': 'Japan East (Tokyo)'},
+        'japanwest': {'country': 'JP', 'name': 'Japan West (Osaka)'},
+        'southeastasia': {'country': 'SG', 'name': 'Southeast Asia (Singapore)'},
+        'eastasia': {'country': 'HK', 'name': 'East Asia (Hong Kong)'},
+        'australiaeast': {'country': 'AU', 'name': 'Australia East (Sydney)'},
+        'australiasoutheast': {'country': 'AU', 'name': 'Australia Southeast (Melbourne)'},
+        'koreacentral': {'country': 'KR', 'name': 'Korea Central (Seoul)'},
+        'koreasouth': {'country': 'KR', 'name': 'Korea South (Busan)'},
+        'centralindia': {'country': 'IN', 'name': 'Central India (Pune)'},
+        'southindia': {'country': 'IN', 'name': 'South India (Chennai)'},
+        'italynorth': {'country': 'IT', 'name': 'Italy North (Milan)'},
+        'polandcentral': {'country': 'PL', 'name': 'Poland Central (Warsaw)'},
+        'qatarcentral': {'country': 'QA', 'name': 'Qatar Central (Doha)'},
+        'uaenorth': {'country': 'AE', 'name': 'UAE North (Dubai)'},
+        'southafricanorth': {'country': 'ZA', 'name': 'South Africa North (Johannesburg)'},
         'europe-west1': {'country': 'BE', 'name': 'Belgium'},
         'europe-west2': {'country': 'GB', 'name': 'London'},
         'europe-west3': {'country': 'DE', 'name': 'Frankfurt'},
         'europe-west4': {'country': 'NL', 'name': 'Netherlands'},
-        'europe-north1': {'country': 'FI', 'name': 'Finland'}
+        'europe-north1': {'country': 'FI', 'name': 'Finland'},
+        'europe-west6': {'country': 'CH', 'name': 'Zurich'},
+        'europe-west8': {'country': 'IT', 'name': 'Milan'},
+        'europe-west9': {'country': 'FR', 'name': 'Paris'},
+        'europe-west10': {'country': 'DE', 'name': 'Berlin'},
+        'europe-west12': {'country': 'IT', 'name': 'Turin'},
+        'europe-southwest1': {'country': 'ES', 'name': 'Madrid'},
+        'europe-central2': {'country': 'PL', 'name': 'Warsaw'},
+        'us-central1': {'country': 'US', 'name': 'Iowa'},
+        'us-east1': {'country': 'US', 'name': 'South Carolina'},
+        'us-east4': {'country': 'US', 'name': 'Northern Virginia'},
+        'us-east5': {'country': 'US', 'name': 'Columbus'},
+        'us-south1': {'country': 'US', 'name': 'Dallas'},
+        'us-west1': {'country': 'US', 'name': 'Oregon'},
+        'us-west2': {'country': 'US', 'name': 'Los Angeles'},
+        'us-west3': {'country': 'US', 'name': 'Salt Lake City'},
+        'us-west4': {'country': 'US', 'name': 'Las Vegas'},
+        'northamerica-northeast1': {'country': 'CA', 'name': 'Montreal'},
+        'northamerica-northeast2': {'country': 'CA', 'name': 'Toronto'},
+        'southamerica-east1': {'country': 'BR', 'name': 'Sao Paulo'},
+        'asia-east1': {'country': 'TW', 'name': 'Taiwan'},
+        'asia-east2': {'country': 'HK', 'name': 'Hong Kong'},
+        'asia-northeast1': {'country': 'JP', 'name': 'Tokyo'},
+        'asia-northeast2': {'country': 'JP', 'name': 'Osaka'},
+        'asia-northeast3': {'country': 'KR', 'name': 'Seoul'},
+        'asia-south1': {'country': 'IN', 'name': 'Mumbai'},
+        'asia-south2': {'country': 'IN', 'name': 'Delhi'},
+        'asia-southeast1': {'country': 'SG', 'name': 'Singapore'},
+        'asia-southeast2': {'country': 'ID', 'name': 'Jakarta'},
+        'australia-southeast1': {'country': 'AU', 'name': 'Sydney'},
+        'australia-southeast2': {'country': 'AU', 'name': 'Melbourne'},
+        'me-west1': {'country': 'IL', 'name': 'Tel Aviv'},
+        'me-central1': {'country': 'QA', 'name': 'Doha'},
+        'me-central2': {'country': 'SA', 'name': 'Dammam'},
+        'africa-south1': {'country': 'ZA', 'name': 'Johannesburg'}
     }
     
     def __init__(self, region: str = "Netherlands"):
@@ -537,9 +618,52 @@ class DataSovereigntyScanner:
             (r'resource\s+"azurerm_storage_', 'Azure Storage'),
             (r'resource\s+"azurerm_sql_', 'Azure SQL'),
             (r'resource\s+"azurerm_cosmosdb_', 'Cosmos DB'),
+            (r'resource\s+"azurerm_kubernetes_cluster"', 'AKS Kubernetes Cluster'),
+            (r'resource\s+"azurerm_function_app"', 'Azure Functions'),
+            (r'resource\s+"azurerm_linux_function_app"', 'Azure Functions (Linux)'),
+            (r'resource\s+"azurerm_windows_function_app"', 'Azure Functions (Windows)'),
+            (r'resource\s+"azurerm_redis_cache"', 'Azure Redis Cache'),
+            (r'resource\s+"azurerm_servicebus_', 'Azure Service Bus'),
+            (r'resource\s+"azurerm_eventhub', 'Azure Event Hub'),
+            (r'resource\s+"azurerm_virtual_machine"', 'Azure Virtual Machine'),
+            (r'resource\s+"azurerm_linux_virtual_machine"', 'Azure Linux VM'),
+            (r'resource\s+"azurerm_windows_virtual_machine"', 'Azure Windows VM'),
+            (r'resource\s+"azurerm_mssql_', 'Azure SQL Database'),
+            (r'resource\s+"azurerm_postgresql_', 'Azure PostgreSQL'),
+            (r'resource\s+"azurerm_mysql_', 'Azure MySQL'),
+            (r'resource\s+"azurerm_key_vault"', 'Azure Key Vault'),
+            (r'resource\s+"azurerm_cognitive_account"', 'Azure Cognitive Services'),
+            (r'resource\s+"azurerm_search_service"', 'Azure Cognitive Search'),
+            (r'resource\s+"azurerm_container_', 'Azure Container Instance/Registry'),
+            (r'resource\s+"azurerm_app_service"', 'Azure App Service'),
+            (r'resource\s+"azurerm_linux_web_app"', 'Azure Web App (Linux)'),
+            (r'resource\s+"azurerm_windows_web_app"', 'Azure Web App (Windows)'),
+            (r'resource\s+"azurerm_data_factory"', 'Azure Data Factory'),
+            (r'resource\s+"azurerm_synapse_', 'Azure Synapse Analytics'),
+            (r'resource\s+"azurerm_monitor_', 'Azure Monitor'),
+            (r'resource\s+"azurerm_log_analytics_', 'Azure Log Analytics'),
+            (r'resource\s+"azurerm_application_insights"', 'Azure Application Insights'),
             (r'resource\s+"google_storage_', 'Cloud Storage'),
             (r'resource\s+"google_bigquery_', 'BigQuery'),
             (r'resource\s+"google_sql_', 'Cloud SQL'),
+            (r'resource\s+"google_compute_instance"', 'GCE Compute Instance'),
+            (r'resource\s+"google_container_cluster"', 'GKE Kubernetes Cluster'),
+            (r'resource\s+"google_cloud_run_', 'Cloud Run'),
+            (r'resource\s+"google_cloudfunctions2_', 'Cloud Functions v2'),
+            (r'resource\s+"google_redis_instance"', 'Cloud Memorystore (Redis)'),
+            (r'resource\s+"google_pubsub_', 'Cloud Pub/Sub'),
+            (r'resource\s+"google_spanner_', 'Cloud Spanner'),
+            (r'resource\s+"google_firestore_', 'Cloud Firestore'),
+            (r'resource\s+"google_bigtable_', 'Cloud Bigtable'),
+            (r'resource\s+"google_dataflow_', 'Cloud Dataflow'),
+            (r'resource\s+"google_dataproc_', 'Cloud Dataproc'),
+            (r'resource\s+"google_kms_', 'Cloud KMS'),
+            (r'resource\s+"google_secret_manager_', 'Secret Manager'),
+            (r'resource\s+"google_app_engine_', 'App Engine'),
+            (r'resource\s+"google_vertex_ai_', 'Vertex AI'),
+            (r'resource\s+"google_logging_', 'Cloud Logging'),
+            (r'resource\s+"google_monitoring_', 'Cloud Monitoring'),
+            (r'resource\s+"google_dns_', 'Cloud DNS'),
         ]
         
         detected_services = []
@@ -1082,6 +1206,46 @@ class DataSovereigntyScanner:
                 'method': 'Server/Container Processing',
                 'legal_basis': 'Contract (Art. 6(1)(b))',
                 'categories': ['application_data', 'operational_data']
+            },
+            {
+                'patterns': [r'azurerm_data_factory', r'azurerm_synapse_', r'azurerm_databricks_'],
+                'name': f'{provider} Data Analytics',
+                'type': 'analytics',
+                'method': 'Data Analytics & ETL',
+                'legal_basis': 'Legitimate Interest (Art. 6(1)(f))',
+                'categories': ['operational_data', 'analytics_data', 'aggregated_data']
+            },
+            {
+                'patterns': [r'azurerm_key_vault', r'google_kms_', r'google_secret_manager'],
+                'name': f'{provider} Key/Secret Management',
+                'type': 'security',
+                'method': 'Key & Secret Management',
+                'legal_basis': 'Legitimate Interest (Art. 6(1)(f))',
+                'categories': ['encryption_keys', 'secrets', 'certificates']
+            },
+            {
+                'patterns': [r'azurerm_redis_cache', r'aws_elasticache', r'google_redis_instance'],
+                'name': f'{provider} Cache Service',
+                'type': 'cache',
+                'method': 'In-Memory Caching',
+                'legal_basis': 'Contract (Art. 6(1)(b))',
+                'categories': ['session_data', 'cached_data', 'temporary_data']
+            },
+            {
+                'patterns': [r'azurerm_cognitive_account', r'google_vertex_ai', r'aws_sagemaker', r'azurerm_machine_learning'],
+                'name': f'{provider} AI/ML Service',
+                'type': 'ai_ml',
+                'method': 'AI/ML Processing',
+                'legal_basis': 'Consent (Art. 6(1)(a))',
+                'categories': ['training_data', 'inference_data', 'model_data']
+            },
+            {
+                'patterns': [r'azurerm_container_registry', r'google_artifact_registry', r'aws_ecr_'],
+                'name': f'{provider} Container Registry',
+                'type': 'container_registry',
+                'method': 'Container Image Storage',
+                'legal_basis': 'Legitimate Interest (Art. 6(1)(f))',
+                'categories': ['application_artifacts', 'container_images']
             }
         ]
         
@@ -1274,9 +1438,9 @@ class DataSovereigntyScanner:
             recommendation="Complete TIA documenting: (1) legal framework assessment, (2) supplementary technical measures, (3) ongoing monitoring plan" if has_third_country else ""
         ))
         
-        encryption_patterns = re.findall(r'encrypt|kms|key_id|server_side_encryption|sse|cmk|customer_managed_key', content_lower)
+        encryption_patterns = re.findall(r'encrypt|kms|key_id|server_side_encryption|sse|cmk|customer_managed_key|key_vault|disk_encryption|google_kms|cmek|azurerm_key_vault', content_lower)
         has_encryption = len(encryption_patterns) > 0
-        has_customer_key = bool(re.search(r'kms|cmk|customer_managed_key|key_id', content_lower))
+        has_customer_key = bool(re.search(r'kms|cmk|customer_managed_key|key_id|key_vault|disk_encryption_set|google_kms_crypto_key|cmek', content_lower))
         checks.append(ComplianceCheck(
             check_name="Encryption at Rest",
             check_category="encryption",
@@ -1340,7 +1504,7 @@ class DataSovereigntyScanner:
             recommendation="Ensure all backup and DR storage locations are within EU/EEA jurisdictions" if backup_in_third else ("Implement backup strategy with EU/EEA-only storage" if not has_backups else "")
         ))
         
-        logging_patterns = re.findall(r'cloudwatch|cloudtrail|logging|audit|monitor', content_lower)
+        logging_patterns = re.findall(r'cloudwatch|cloudtrail|logging|audit|monitor|log_analytics|azurerm_monitor_|application_insights|google_logging|google_monitoring|stackdriver', content_lower)
         has_logging = len(logging_patterns) > 0
         checks.append(ComplianceCheck(
             check_name="Audit Logging & Monitoring",
@@ -1348,7 +1512,7 @@ class DataSovereigntyScanner:
             status="pass" if has_logging else "warning",
             description="Logging/monitoring configuration detected" if has_logging else "No audit logging or monitoring configuration found",
             legal_reference="GDPR Article 5(2) (Accountability), Article 30 (Records of Processing)",
-            recommendation="" if has_logging else "Enable CloudTrail/audit logging for all data access and processing activities"
+            recommendation="" if has_logging else "Enable audit logging (AWS CloudTrail / Azure Monitor / GCP Cloud Audit Logs) for all data access and processing activities"
         ))
         
         if has_us_storage:
@@ -1392,9 +1556,9 @@ class DataSovereigntyScanner:
     def _detect_terraform_encryption(self, content: str, enc_type: str) -> bool:
         """Detect encryption settings in Terraform"""
         if enc_type == "at_rest":
-            patterns = ['encrypt', 'kms', 'server_side_encryption', 'sse-s3', 'sse-kms']
+            patterns = ['encrypt', 'kms', 'server_side_encryption', 'sse-s3', 'sse-kms', 'key_vault', 'disk_encryption_set', 'customer_managed_key', 'google_kms_crypto_key', 'cmek', 'azure_key_vault', 'azurerm_key_vault']
         else:
-            patterns = ['https', 'tls', 'ssl', 'certificate_arn']
+            patterns = ['https', 'tls', 'ssl', 'certificate_arn', 'azurerm_app_service_certificate', 'google_compute_ssl_certificate', 'google_compute_managed_ssl_certificate', 'min_tls_version', 'ssl_enforcement']
         
         for pattern in patterns:
             if pattern in content.lower():
