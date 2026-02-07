@@ -1812,6 +1812,32 @@ def render_landing_page():
     # All 12 scanners with images and value-focused feature showcase
     scanners = [
         {
+            "icon": "🤖", 
+            "title": _('landing.scanner.ai_title', 'AI Model Scanner'),
+            "description": _('landing.scanner.ai_desc', 'Stay ahead of EU AI Act 2025 requirements. Assess your AI systems for compliance risks, bias issues, and transparency gaps before regulators do.'),
+            "features": [
+                _('landing.scanner.ai_f1', 'Full 113-article coverage'),
+                _('landing.scanner.ai_f2', 'Risk level classification'),
+                _('landing.scanner.ai_f3', 'Bias & fairness audit'),
+                _('landing.scanner.ai_f4', 'Compliance roadmap')
+            ],
+            "color": "#FF5722",
+            "image": "attached_assets/stock_images/ai_compliance_regula_cf997669.jpg"
+        },
+        {
+            "icon": "🌍",
+            "title": _('landing.scanner.sovereignty_title', 'Data Sovereignty Scanner'),
+            "description": _('landing.scanner.sovereignty_desc', 'Know exactly where your data is stored, who can access it, and which laws apply. Scan AWS, Azure, and GCP configurations to detect cross-border transfers, non-EU access risks, and GDPR compliance gaps — before regulators find them.'),
+            "features": [
+                _('landing.scanner.sovereignty_f1', 'AWS, Azure & GCP analysis'),
+                _('landing.scanner.sovereignty_f2', 'Cross-border transfer detection'),
+                _('landing.scanner.sovereignty_f3', 'Legal jurisdiction mapping'),
+                _('landing.scanner.sovereignty_f4', 'Schrems II compliance check')
+            ],
+            "color": "#1565C0",
+            "image": "attached_assets/stock_images/data_sovereignty_globe_compliance.jpg"
+        },
+        {
             "icon": "🏢", 
             "title": _('landing.scanner.enterprise_title', 'Enterprise Connector'),
             "description": _('landing.scanner.enterprise_desc', 'Connect once, scan everything. Automatically discover and protect personal data across Microsoft 365, Exact Online, Google Workspace, and more - without manual file uploads.'),
@@ -1890,19 +1916,6 @@ def render_landing_page():
             "image": "attached_assets/stock_images/website_analytics_la_d044208f.jpg"
         },
         {
-            "icon": "🤖", 
-            "title": _('landing.scanner.ai_title', 'AI Model Scanner'),
-            "description": _('landing.scanner.ai_desc', 'Stay ahead of EU AI Act 2025 requirements. Assess your AI systems for compliance risks, bias issues, and transparency gaps before regulators do.'),
-            "features": [
-                _('landing.scanner.ai_f1', 'Full 113-article coverage'),
-                _('landing.scanner.ai_f2', 'Risk level classification'),
-                _('landing.scanner.ai_f3', 'Bias & fairness audit'),
-                _('landing.scanner.ai_f4', 'Compliance roadmap')
-            ],
-            "color": "#FF5722",
-            "image": "attached_assets/stock_images/ai_compliance_regula_cf997669.jpg"
-        },
-        {
             "icon": "📋", 
             "title": _('landing.scanner.dpia_title', 'DPIA Scanner'),
             "description": _('landing.scanner.dpia_desc', 'Complete your Data Protection Impact Assessment in hours, not weeks. Guided wizard with automated risk scoring and regulator-ready documentation.'),
@@ -1966,19 +1979,6 @@ def render_landing_page():
             ],
             "color": "#9C27B0",
             "image": "attached_assets/stock_images/video_production_stu_aa808aec.jpg"
-        },
-        {
-            "icon": "🌍",
-            "title": _('landing.scanner.sovereignty_title', 'Data Sovereignty Scanner'),
-            "description": _('landing.scanner.sovereignty_desc', 'Know exactly where your data is stored, who can access it, and which laws apply. Scan AWS, Azure, and GCP configurations to detect cross-border transfers, non-EU access risks, and GDPR compliance gaps — before regulators find them.'),
-            "features": [
-                _('landing.scanner.sovereignty_f1', 'AWS, Azure & GCP analysis'),
-                _('landing.scanner.sovereignty_f2', 'Cross-border transfer detection'),
-                _('landing.scanner.sovereignty_f3', 'Legal jurisdiction mapping'),
-                _('landing.scanner.sovereignty_f4', 'Schrems II compliance check')
-            ],
-            "color": "#1565C0",
-            "image": "attached_assets/stock_images/data_sovereignty_globe_compliance.jpg"
         }
     ]
     
