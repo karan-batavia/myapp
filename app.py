@@ -4153,7 +4153,7 @@ def render_scanner_interface_safe():
     # Scanner type selection with Dutch translations - Enterprise Connector prominently positioned
     scanner_options = {
         f"🏢 {_('scan.enterprise', 'Enterprise Connector')}": _('scan.enterprise_description', 'Microsoft 365, Exact Online, Google Workspace integration for automated PII scanning'),
-        f"🔍 {_('scan.code', 'Code')}": _('scan.code_description', 'Scan source code repositories for PII, secrets, and GDPR compliance'),
+        f"🔍 {_('scan.code', 'GDPR Code Scanner')}": _('scan.code_description', 'Scan source code repositories for PII, secrets, and GDPR compliance'),
         f"📄 {_('scan.blob', 'Document')}": _('scan.document_description', 'Analyze PDF, DOCX, TXT files for sensitive information'),
         f"🖼️ {_('scan.image', 'Image')}": _('scan.image_description', 'OCR-based PII detection in images and documents'),
         f"🗄️ {_('scan.database', 'Database')}": _('scan.database_description', 'Scan database tables and columns for PII data'),
