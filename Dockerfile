@@ -32,6 +32,9 @@ COPY . .
 # Create necessary directories
 RUN mkdir -p logs reports data temp
 
+# Apply SEO meta tags to Streamlit template (before switching to non-root user)
+RUN python utils/apply_seo_template.py
+
 # Set production environment variables
 ENV ENVIRONMENT=production
 ENV PYTHONDONTWRITEBYTECODE=1
