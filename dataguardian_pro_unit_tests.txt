@@ -1,0 +1,1063 @@
+================================================================================
+DATAGUARDIAN PRO - COMPLETE UNIT TEST CASES
+Generated: 2026-02-07
+================================================================================
+
+--------------------------------------------------------------------------------
+FILE: e2e_payment_test.py
+  Test Classes: 0 | Test Cases: 0
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+FILE: test_advanced_document_analyzer.py
+  Test Classes: 15 | Test Cases: 39
+--------------------------------------------------------------------------------
+
+  CLASS: TestAdvancedDocumentAnalyzerInitialization
+    - test_default_initialization
+    - test_custom_region
+    - test_factory_function
+    - test_classification_keywords_present
+
+  CLASS: TestMetadataExtraction
+    - test_metadata_extraction_structure
+    - test_pii_detection_in_metadata
+    - test_file_size_extraction
+
+  CLASS: TestTamperingDetection
+    - test_tampering_detection_structure
+    - test_file_hash_generation
+    - test_integrity_score_starts_at_100
+
+  CLASS: TestLanguageDetection
+    - test_language_detection_structure
+    - test_english_detection
+    - test_short_text_handling
+    - test_heuristic_detection_dutch
+
+  CLASS: TestDocumentClassification
+    - test_classification_structure
+    - test_contract_classification
+    - test_invoice_classification
+    - test_medical_high_sensitivity
+
+  CLASS: TestHiddenContentDetection
+    - test_hidden_content_structure
+
+  CLASS: TestEmbeddedObjectDetection
+    - test_embedded_object_structure
+
+  CLASS: TestDigitalSignatureDetection
+    - test_signature_detection_structure
+
+  CLASS: TestRedactionDetection
+    - test_redaction_detection_structure
+    - test_black_block_redaction_detection
+    - test_redacted_label_detection
+    - test_asterisk_pattern_detection
+
+  CLASS: TestVersionHistoryAnalysis
+    - test_version_history_structure
+
+  CLASS: TestTableDataExtraction
+    - test_table_extraction_structure
+
+  CLASS: TestDocumentForensics
+    - test_forensics_structure
+    - test_multiple_authors_detection
+
+  CLASS: TestCrossReferenceDetection
+    - test_cross_reference_structure
+    - test_url_detection
+    - test_file_reference_detection
+    - test_data_sharing_indicator_detection
+
+  CLASS: TestFullDocumentAnalysis
+    - test_full_analysis_structure
+    - test_nonexistent_file_handling
+    - test_findings_generation
+    - test_risk_indicators_calculation
+
+  CLASS: TestBlobScannerIntegration
+    - test_blob_scanner_uses_advanced_analyzer
+    - test_scan_file_includes_advanced_analysis
+
+--------------------------------------------------------------------------------
+FILE: test_ai_act_calculator.py
+  Test Classes: 10 | Test Cases: 24
+--------------------------------------------------------------------------------
+
+  CLASS: TestAISystemProfile
+    - test_create_basic_profile
+    - test_high_risk_profile
+
+  CLASS: TestAIActCalculator
+
+  CLASS: TestRiskClassification
+    - test_minimal_risk_classification
+    - test_limited_risk_chatbot
+    - test_high_risk_credit_scoring
+    - test_high_risk_biometric
+    - test_high_risk_employment
+    - test_high_risk_decision_impact
+
+  CLASS: TestComplianceScoring
+    - test_minimal_risk_default_score
+    - test_high_risk_full_compliance
+    - test_high_risk_no_compliance
+
+  CLASS: TestFineRiskCalculation
+    - test_minimal_risk_no_fine
+    - test_high_risk_high_compliance_low_fine
+    - test_fine_cap_at_turnover_percentage
+
+  CLASS: TestApplicableArticles
+    - test_minimal_risk_articles
+    - test_limited_risk_articles
+    - test_high_risk_articles
+
+  CLASS: TestImplementationTimeline
+    - test_minimal_risk_timeline
+    - test_high_risk_timeline
+
+  CLASS: TestCostEstimation
+    - test_minimal_risk_low_cost
+    - test_high_risk_higher_cost
+
+  CLASS: TestCompleteAssessment
+    - test_complete_assessment_high_risk
+    - test_netherlands_specific_recommendations
+
+  CLASS: TestReportExport
+    - test_export_assessment_report
+
+--------------------------------------------------------------------------------
+FILE: test_ai_model_scanner.py
+  Test Classes: 34 | Test Cases: 55
+--------------------------------------------------------------------------------
+
+  CLASS: TestAIModelScannerInitialization
+    - test_default_initialization
+    - test_custom_region_initialization
+    - test_progress_callback_setting
+
+  CLASS: TestScanResultStructure
+    - test_scan_result_has_required_fields
+    - test_scan_id_format
+    - test_timestamp_format
+    - test_findings_is_list
+
+  CLASS: TestModelSourceHandling
+    - test_api_endpoint_source
+    - test_model_hub_source
+
+  CLASS: TestRiskMetricsCalculation
+    - test_calculate_risk_counts_empty
+    - test_calculate_risk_counts_mixed
+    - test_calculate_risk_metrics_structure
+
+  CLASS: TestComplianceMetricsCalculation
+    - test_compliance_metrics_structure
+    - test_compliance_score_range
+
+  CLASS: TestArchitectureFindings
+    - test_generate_architecture_findings
+    - test_architecture_findings_have_required_fields
+
+  CLASS: TestIOFindings
+    - test_generate_io_findings_empty_inputs
+    - test_generate_io_findings_with_pii
+
+  CLASS: TestComplianceFindings
+    - test_generate_compliance_findings_all_types
+    - test_compliance_findings_netherlands_region
+
+  CLASS: TestEUAIActFindings
+    - test_generate_eu_ai_act_findings
+    - test_eu_ai_act_findings_have_article_references
+
+  CLASS: TestProhibitedPracticesDetection
+    - test_add_prohibited_practices_findings
+
+  CLASS: TestHighRiskSystemsDetection
+    - test_add_high_risk_systems_findings
+
+  CLASS: TestTransparencyObligations
+    - test_add_transparency_obligations_findings
+
+  CLASS: TestConformityAssessment
+    - test_add_conformity_assessment_findings
+
+  CLASS: TestPostMarketMonitoring
+    - test_add_post_market_monitoring_findings
+
+  CLASS: TestBiasAnalysis
+    - test_perform_bias_analysis
+
+  CLASS: TestPIILeakageAnalysis
+    - test_analyze_pii_leakage
+
+  CLASS: TestExplainabilityAssessment
+    - test_assess_explainability
+
+  CLASS: TestRiskLevelMapping
+    - test_map_risk_level_low
+    - test_map_risk_level_high
+    - test_map_risk_level_critical
+    - test_map_risk_level_unknown_defaults_to_medium
+
+  CLASS: TestUUIDGeneration
+    - test_generate_uuid_format
+
+  CLASS: TestModelFileValidation
+    - test_validate_model_file_nonexistent
+    - test_validate_model_file_too_large
+
+  CLASS: TestDocumentationAssessment
+    - test_assess_model_documentation
+
+  CLASS: TestPrivacySafeguardsAssessment
+    - test_assess_privacy_safeguards
+
+  CLASS: TestExplainabilityFeaturesAssessment
+    - test_assess_explainability_features
+
+  CLASS: TestHumanOversightAssessment
+    - test_assess_human_oversight_mechanisms
+
+  CLASS: TestBiasMitigationAssessment
+    - test_assess_bias_mitigation_measures
+
+  CLASS: TestDataGovernanceAssessment
+    - test_assess_data_governance_processes
+
+  CLASS: TestRiskManagementAssessment
+    - test_assess_risk_management_system
+
+  CLASS: TestRegulatoryComplianceAssessment
+    - test_assess_regulatory_compliance_measures
+
+  CLASS: TestComplianceImprovementFindings
+    - test_generate_compliance_improvement_findings
+    - test_compliance_improvement_findings_have_recommendations
+
+  CLASS: Test2025ComplianceGapAssessment
+    - test_perform_2025_compliance_gap_assessment
+
+  CLASS: TestProgressCallback
+    - test_progress_callback_is_called
+
+  CLASS: TestGitHubRepoValidation
+    - test_validate_invalid_github_url
+    - test_validate_malformed_github_url
+
+  CLASS: TestIntegrationScanning
+    - test_full_scan_api_endpoint
+    - test_full_scan_model_hub
+
+  CLASS: TestRegionSpecificCompliance
+    - test_netherlands_region_compliance
+    - test_germany_region_compliance
+
+--------------------------------------------------------------------------------
+FILE: test_audio_video_scanner.py
+  Test Classes: 9 | Test Cases: 25
+--------------------------------------------------------------------------------
+
+  CLASS: TestAudioVideoScanner
+    - test_scanner_import
+    - test_scanner_has_required_methods
+    - test_supported_audio_formats
+    - test_supported_video_formats
+    - test_max_file_size
+    - test_risk_level_enum
+    - test_media_fraud_type_enum
+    - test_media_scan_result_dataclass
+
+  CLASS: TestAudioAnalysis
+    - test_audio_analysis_result_dataclass
+    - test_analyze_audio_method_exists
+
+  CLASS: TestVideoAnalysis
+    - test_video_analysis_result_dataclass
+    - test_analyze_video_method_exists
+    - test_frame_consistency_method_exists
+    - test_face_deepfake_method_exists
+
+  CLASS: TestEUAIActCompliance
+    - test_eu_ai_act_flags_method_exists
+    - test_eu_ai_act_flags_in_result
+
+  CLASS: TestHTMLReportGeneration
+    - test_generate_html_report_method_exists
+    - test_html_report_generation
+
+  CLASS: TestLicenseIntegration
+    - test_audio_video_in_license_scanners
+    - test_audio_video_tier_restrictions
+
+  CLASS: TestActivityTracking
+    - test_audio_video_scanner_type_enum
+
+  CLASS: TestDashboardIntegration
+    - test_scanner_type_map_includes_audio_video
+
+  CLASS: TestScannerInitialization
+    - test_default_region
+    - test_custom_region
+    - test_sensitivity_levels
+
+--------------------------------------------------------------------------------
+FILE: test_enterprise_connector_auth.py
+  Test Classes: 5 | Test Cases: 25
+--------------------------------------------------------------------------------
+
+  CLASS: TestCheckpointResumeClearSemantics
+    - test_checkpoint_save_creates_valid_checkpoint
+    - test_checkpoint_save_uses_correct_ttl
+    - test_checkpoint_load_returns_valid_data
+    - test_checkpoint_load_returns_none_for_missing
+    - test_restore_from_checkpoint_restores_state
+    - test_delete_checkpoint_removes_from_redis
+    - test_checkpoint_cleared_on_successful_scan
+    - test_resume_skips_completed_queries
+
+  CLASS: TestTokenExpirySimulation
+    - test_token_not_expired_when_future
+    - test_token_expired_when_past
+    - test_token_expired_within_buffer
+    - test_token_none_considered_expired
+    - test_microsoft365_token_refresh_called_on_expiry
+    - test_google_workspace_token_refresh_called_on_expiry
+    - test_exact_online_token_refresh_called_on_expiry
+    - test_salesforce_token_refresh_called_on_expiry
+
+  CLASS: TestAuthRequiredHandling
+    - test_microsoft365_returns_auth_required_on_failure
+    - test_google_workspace_returns_auth_required_on_failure
+    - test_exact_online_returns_auth_required_on_failure
+    - test_checkpoint_saved_on_auth_failure
+
+  CLASS: TestDeploymentLogMonitoring
+    - test_checkpoint_save_logs_event
+    - test_checkpoint_restore_logs_event
+    - test_token_refresh_logs_attempt
+
+  CLASS: TestIntegrationScenarios
+    - test_full_resume_flow
+    - test_checkpoint_cleanup_after_success
+
+--------------------------------------------------------------------------------
+FILE: test_eu_ai_act_compliance.py
+  Test Classes: 16 | Test Cases: 43
+--------------------------------------------------------------------------------
+
+  CLASS: TestAIActArticleCoverage
+    - test_article_enum_structure
+    - test_coverage_summary_completeness
+    - test_all_chapters_covered
+
+  CLASS: TestArticle5ProhibitedPractices
+    - test_detect_subliminal_manipulation
+    - test_detect_social_scoring
+    - test_detect_real_time_biometric
+    - test_no_false_positive_normal_content
+
+  CLASS: TestArticles6to15HighRiskRequirements
+    - test_detect_high_risk_biometric
+    - test_detect_critical_infrastructure
+    - test_detect_education_assessment
+
+  CLASS: TestArticle16QualityManagement
+    - test_detect_missing_qms
+    - test_qms_with_proper_implementation
+
+  CLASS: TestArticle17AutomaticLogging
+    - test_detect_missing_logging
+    - test_logging_with_proper_implementation
+
+  CLASS: TestArticles27to29DeployerObligations
+    - test_detect_deployer_gaps
+    - test_detect_fria_requirements
+
+  CLASS: TestArticles51to55GPAI
+    - test_detect_gpai_model
+    - test_detect_enhanced_gpai
+
+  CLASS: TestArticles56to60RegulatorsySandbox
+    - test_detect_sandbox_context
+    - test_detect_sandbox_detailed_requirements
+
+  CLASS: TestArticles69to85MarketSurveillanceAndPenalties
+    - test_detect_market_surveillance
+    - test_detect_penalty_framework
+
+  CLASS: TestArticles100to113FinalProvisions
+    - test_detect_sector_specific
+    - test_detect_transitional_provisions
+
+  CLASS: TestMainDetectionFunction
+    - test_comprehensive_detection
+    - test_empty_content
+    - test_irrelevant_content
+
+  CLASS: TestAIActCalculator
+    - test_calculator_initialization
+    - test_compliance_articles_completeness
+    - test_high_risk_use_cases
+
+  CLASS: TestDetectionAccuracy
+    - test_article_reference_extraction
+    - test_severity_levels
+    - test_remediation_guidance
+
+  CLASS: TestArticleDeadlines
+    - test_prohibited_practices_deadline
+    - test_gpai_deadline
+    - test_high_risk_deadline
+
+  CLASS: TestNewComplianceFunctions
+    - test_compliance_timeline_structure
+    - test_penalty_risk_calculator_structure
+    - test_penalty_tier_1_critical
+    - test_article_checklist_structure
+    - test_articles_6_to_15_detection
+
+  CLASS: TestHTMLReportEnhancements
+    - test_penalty_risk_in_html_report
+    - test_timeline_in_html_report
+
+--------------------------------------------------------------------------------
+FILE: test_eu_ai_act_html_reporter.py
+  Test Classes: 7 | Test Cases: 24
+--------------------------------------------------------------------------------
+
+  CLASS: TestHTMLReportGeneration
+    - test_generate_report_english
+    - test_generate_report_dutch
+    - test_report_contains_timeline
+    - test_report_contains_chapter_coverage
+    - test_report_compliance_status_colors
+    - test_report_with_empty_findings
+    - test_report_html_structure
+
+  CLASS: TestArticleCoverageCalculation
+    - test_calculate_articles_from_findings
+    - test_calculate_articles_with_range
+    - test_calculate_articles_empty
+
+  CLASS: TestChapterCoverage
+    - test_get_chapter_coverage
+    - test_chapter_coverage_percentages
+
+  CLASS: TestFindingsTableGeneration
+    - test_generate_findings_table
+    - test_generate_empty_findings_table
+    - test_findings_table_truncation
+
+  CLASS: TestChapterCoverageHTML
+    - test_generate_chapter_coverage_html
+    - test_chapter_coverage_colors
+
+  CLASS: TestReportDataHandling
+    - test_missing_fields
+    - test_malformed_findings
+    - test_extreme_compliance_scores
+    - test_special_characters_in_content
+
+  CLASS: TestReportAccessibility
+    - test_report_has_lang_attribute
+    - test_report_has_meta_charset
+    - test_report_has_viewport_meta
+
+--------------------------------------------------------------------------------
+FILE: test_exact_online_scanner.py
+  Test Classes: 6 | Test Cases: 41
+--------------------------------------------------------------------------------
+
+  CLASS: TestExactOnlineScanner
+    - test_scanner_initialization
+    - test_scanner_initialization_different_regions
+    - test_detect_exact_integration
+    - test_no_exact_integration_in_clean_code
+    - test_detect_credential_exposure
+    - test_detect_netherlands_pii
+    - test_detect_financial_patterns
+    - test_data_flow_detection
+    - test_gdpr_compliance_detection
+    - test_compliance_score_calculation
+    - test_compliance_score_clean_code
+    - test_risk_summary_structure
+    - test_recommendations_generated
+    - test_uavg_compliance_bsn_detection
+    - test_scan_with_max_files_limit
+    - test_scan_empty_input
+    - test_scan_with_status_callback
+    - test_scan_result_has_scan_id
+    - test_scan_result_has_timestamp
+    - test_scan_result_has_duration
+
+  CLASS: TestExactOnlineScannerConvenienceFunction
+    - test_convenience_function_works
+    - test_convenience_function_accepts_region
+
+  CLASS: TestExactOnlineHTMLReportGeneration
+    - test_html_report_generation
+    - test_html_report_contains_exact_online_content
+    - test_html_report_contains_credential_warnings
+    - test_html_report_contains_pii_findings
+    - test_html_report_contains_compliance_score
+    - test_html_report_handles_empty_results
+
+  CLASS: TestExactOnlineScannerPatternValidation
+    - test_bsn_pattern_valid
+    - test_kvk_pattern_valid
+    - test_iban_pattern_dutch
+    - test_exact_api_url_detection
+    - test_exact_sdk_import_detection
+    - test_oauth_endpoint_detection
+
+  CLASS: TestExactOnlineScannerEdgeCases
+    - test_binary_file_handling
+    - test_unicode_content_handling
+    - test_very_long_lines
+    - test_empty_files
+    - test_none_content_handling
+
+  CLASS: TestExactOnlineScannerPerformance
+    - test_scan_completes_in_reasonable_time
+    - test_large_file_handling
+
+--------------------------------------------------------------------------------
+FILE: test_free_user_restrictions.py
+  Test Classes: 7 | Test Cases: 22
+--------------------------------------------------------------------------------
+
+  CLASS: TestPricingTierEnum
+    - test_free_tier_exists
+    - test_all_tiers_exist
+
+  CLASS: TestIsFreeUser
+    - test_free_user_no_subscription
+    - test_free_user_empty_tier
+    - test_paid_user_with_subscription
+    - test_startup_tier_with_subscription
+
+  CLASS: TestCanDownloadReports
+    - test_free_user_cannot_download
+    - test_paid_user_can_download
+
+  CLASS: TestFreeUserScanCount
+    - test_initial_scan_count_zero
+    - test_increment_scan_view
+    - test_scan_count_increments_multiple
+
+  CLASS: TestCanViewScanResults
+    - test_paid_user_unlimited_views
+    - test_free_user_under_limit
+    - test_free_user_at_limit
+    - test_free_user_over_limit
+    - test_free_user_zero_views
+
+  CLASS: TestEdgeCases
+    - test_none_tier_is_free
+    - test_case_insensitive_free
+    - test_subscription_overrides_free_tier
+    - test_missing_session_keys
+
+  CLASS: TestIntegration
+    - test_free_user_first_view
+    - test_paid_user_full_access
+
+--------------------------------------------------------------------------------
+FILE: test_image_scanner.py
+  Test Classes: 15 | Test Cases: 49
+--------------------------------------------------------------------------------
+
+  CLASS: TestImageScannerInitialization
+    - test_scanner_initialization_default_region
+    - test_scanner_initialization_custom_region
+    - test_all_detection_features_enabled
+    - test_supported_formats
+
+  CLASS: TestEXIFMetadataExtraction
+    - test_exif_extraction_no_exif_data
+    - test_exif_extraction_with_mock_gps
+    - test_exif_extraction_with_device_info
+    - test_exif_extraction_with_timestamps
+    - test_exif_extraction_with_author_info
+
+  CLASS: TestGPSConversion
+    - test_gps_conversion_decimal_format
+    - test_gps_conversion_south_west
+
+  CLASS: TestQRBarcodeDetection
+    - test_qr_detection_by_filename
+    - test_qr_content_analysis_email
+    - test_qr_content_analysis_phone
+    - test_qr_content_analysis_tracking_url
+    - test_qr_content_analysis_vcard
+    - test_qr_content_analysis_wifi
+    - test_qr_content_analysis_credentials
+
+  CLASS: TestWatermarkDetection
+    - test_watermark_detection_runs_without_error
+    - test_visible_watermark_detection
+    - test_invisible_watermark_detection
+
+  CLASS: TestScreenshotDetection
+    - test_screenshot_detection_by_filename
+    - test_screenshot_characteristics_analysis
+
+  CLASS: TestSignatureDetection
+    - test_signature_detection_by_filename
+    - test_signature_gdpr_classification
+
+  CLASS: TestSteganographyDetection
+    - test_steganography_detection_runs_without_error
+    - test_lsb_analysis
+    - test_chi_square_analysis
+    - test_histogram_anomaly_analysis
+
+  CLASS: TestFaceDetection
+    - test_face_detection_by_filename
+    - test_face_detection_selfie_keyword
+
+  CLASS: TestDocumentDetection
+    - test_passport_detection
+    - test_drivers_license_detection
+
+  CLASS: TestPaymentCardDetection
+    - test_credit_card_detection
+    - test_visa_detection
+
+  CLASS: TestPIIDetection
+    - test_name_detection
+    - test_date_of_birth_detection
+    - test_credit_card_detection
+    - test_passport_number_detection
+
+  CLASS: TestFullImageScan
+    - test_scan_nonexistent_file
+    - test_scan_unsupported_format
+    - test_scan_valid_image
+    - test_scan_with_sensitive_filename
+
+  CLASS: TestRiskScoreCalculation
+    - test_risk_score_no_findings
+    - test_risk_score_critical_finding
+    - test_risk_score_multiple_findings
+    - test_risk_score_level_determination
+
+  CLASS: TestMultipleImageScanning
+    - test_scan_multiple_images
+    - test_scan_multiple_with_callback
+
+--------------------------------------------------------------------------------
+FILE: test_license_subscription.py
+  Test Classes: 19 | Test Cases: 39
+--------------------------------------------------------------------------------
+
+  CLASS: TestLicenseManagerInitialization
+    - test_default_initialization
+    - test_encrypted_initialization
+
+  CLASS: TestLicenseTypes
+    - test_all_license_types_defined
+    - test_license_type_values
+
+  CLASS: TestUsageLimitTypes
+    - test_all_usage_limit_types_defined
+
+  CLASS: TestLicenseGeneration
+    - test_generate_trial_license
+    - test_generate_startup_license
+    - test_generate_enterprise_license
+    - test_license_expiry_date
+
+  CLASS: TestLicenseSaveLoad
+    - test_save_license
+    - test_load_license
+
+  CLASS: TestLicenseValidation
+    - test_validate_active_license
+    - test_validate_expired_license
+
+  CLASS: TestFeatureAccessControl
+    - test_check_feature_access_granted
+    - test_check_feature_access_denied
+
+  CLASS: TestScannerAccessControl
+    - test_check_scanner_access_granted
+
+  CLASS: TestRegionAccessControl
+    - test_check_region_access_netherlands
+    - test_check_region_access_global
+
+  CLASS: TestUsageLimits
+    - test_check_usage_limit
+    - test_increment_usage
+
+  CLASS: TestSessionTracking
+    - test_track_session
+    - test_cleanup_sessions
+
+  CLASS: TestLicenseInfo
+    - test_get_license_info
+
+  CLASS: TestSubscriptionActivation
+    - test_activate_subscription
+    - test_deactivate_subscription
+
+  CLASS: TestSubscriptionPlans
+    - test_subscription_plans_defined
+    - test_plan_structure
+    - test_plan_prices_in_cents
+
+  CLASS: TestSubscriptionManagerInitialization
+    - test_initialization_with_stripe_key
+    - test_initialization_without_stripe_key
+
+  CLASS: TestSubscriptionStatus
+    - test_get_subscription_status
+
+  CLASS: TestLicenseTierLimits
+    - test_trial_limits
+    - test_startup_limits
+    - test_professional_limits
+    - test_growth_limits
+    - test_scale_unlimited
+
+  CLASS: TestHardwareFingerprint
+    - test_get_hardware_fingerprint
+    - test_hardware_fingerprint_consistent
+
+  CLASS: TestLicenseIntegrationFlow
+    - test_complete_license_flow
+
+--------------------------------------------------------------------------------
+FILE: test_mfa_security_headers.py
+  Test Classes: 3 | Test Cases: 42
+--------------------------------------------------------------------------------
+
+  CLASS: TestMFAService
+    - test_generate_secret
+    - test_generate_secret_uniqueness
+    - test_get_totp
+    - test_generate_qr_code
+    - test_generate_backup_codes
+    - test_backup_codes_uniqueness
+    - test_hash_backup_code
+    - test_hash_backup_code_case_insensitive
+    - test_setup_mfa
+    - test_verify_totp_valid_code
+    - test_verify_totp_invalid_code
+    - test_verify_totp_malformed_code
+    - test_verify_totp_empty_secret
+    - test_verify_backup_code_valid
+    - test_verify_backup_code_invalid
+    - test_verify_backup_code_case_insensitive
+    - test_validate_mfa_totp
+    - test_validate_mfa_backup_code
+    - test_validate_mfa_no_code
+    - test_get_mfa_service_singleton
+    - test_enable_mfa_for_user
+    - test_verify_mfa_code_totp
+    - test_verify_mfa_code_backup
+
+  CLASS: TestSecurityHeaders
+    - test_security_headers_defined
+    - test_x_content_type_options
+    - test_x_frame_options
+    - test_x_xss_protection
+    - test_referrer_policy
+    - test_cache_control
+    - test_csp_directives_defined
+    - test_csp_default_src_self
+    - test_csp_frame_ancestors_none
+    - test_csp_object_src_none
+    - test_build_csp_header
+    - test_get_all_security_headers
+    - test_get_nginx_security_headers_config
+    - test_get_security_headers_report
+
+  CLASS: TestMFASecurityIntegration
+    - test_mfa_code_not_reusable_immediately
+    - test_backup_code_hash_secure
+    - test_totp_code_format
+    - test_security_headers_prevent_clickjacking
+    - test_security_headers_prevent_mime_sniffing
+
+--------------------------------------------------------------------------------
+FILE: test_payment_flow.py
+  Test Classes: 4 | Test Cases: 12
+--------------------------------------------------------------------------------
+
+  CLASS: TestWebhookHandler
+    - test_subscription_created_updates_user_tier_by_id
+    - test_subscription_created_updates_user_tier_by_email
+    - test_subscription_created_default_tier
+    - test_subscription_cancelled_downgrades_user
+
+  CLASS: TestDatabaseService
+    - test_update_user_license_tier_success
+    - test_update_user_license_tier_user_not_found
+    - test_update_user_license_tier_by_email_success
+    - test_store_subscription_with_user_id
+
+  CLASS: TestPaymentSuccessHandler
+    - test_plan_tier_extraction_from_metadata
+    - test_plan_tier_default_value
+
+  CLASS: TestSubscriptionRecordUserLink
+    - test_subscription_metadata_contains_user_id
+    - test_tier_mapping
+
+--------------------------------------------------------------------------------
+FILE: test_pricing_scanner_flow.py
+  Test Classes: 6 | Test Cases: 18
+--------------------------------------------------------------------------------
+
+  CLASS: TestScannerTierAvailability
+    - test_scanner_page_tier_limits
+    - test_scanner_page_tier_limits_case_insensitive
+    - test_scanner_page_unknown_tier_defaults
+    - test_scanner_order_matches_tier_slicing
+
+  CLASS: TestLicenseManagerScannerLimits
+    - test_usage_limits_scanner_types
+    - test_allowed_scanners_generation
+    - test_scanner_order_consistency
+
+  CLASS: TestPricingConfigConsistency
+    - test_pricing_tiers_exist
+    - test_pricing_values_defined
+    - test_enterprise_pricing_consistent
+
+  CLASS: TestScannerAllocation
+    - test_all_12_scanners_defined
+    - test_scanner_ids_are_valid
+    - test_core_scanners_available_to_all_tiers
+    - test_premium_scanners_only_in_higher_tiers
+
+  CLASS: TestLockedScannerDisplay
+    - test_locked_scanners_returned_for_lower_tiers
+    - test_locked_scanners_have_descriptions
+
+  CLASS: TestPricingDisplayScannerInfo
+    - test_tier_scanner_count_function
+    - test_key_features_include_scanner_info
+
+--------------------------------------------------------------------------------
+FILE: test_soc2_nis2_performance.py
+  Test Classes: 9 | Test Cases: 39
+--------------------------------------------------------------------------------
+
+  CLASS: TestFixtures
+
+  CLASS: TestPerformance
+    - test_scan_small_file_performance
+    - test_scan_medium_file_performance
+    - test_scan_file_with_many_violations_performance
+    - test_technology_identification_performance
+
+  CLASS: TestScalability
+    - test_scan_large_terraform_file
+    - test_scan_many_violations_scalability
+    - test_scan_multiple_files_sequentially
+    - test_finding_mapping_scalability
+
+  CLASS: TestReliability
+    - test_scan_empty_file_no_crash
+    - test_scan_invalid_syntax_no_crash
+    - test_scan_binary_content_no_crash
+    - test_scan_unicode_content_no_crash
+    - test_scan_nonexistent_file_no_crash
+    - test_technology_identification_unknown_file
+    - test_consistent_results_multiple_runs
+
+  CLASS: TestMockedDependencies
+    - test_git_clone_failure_handled
+    - test_finding_includes_both_frameworks
+
+  CLASS: TestEdgeCases
+    - test_scan_very_long_lines
+    - test_scan_deeply_nested_structure
+    - test_scan_mixed_technology_content
+
+  CLASS: TestComplianceFrameworkIntegrity
+    - test_all_soc2_tsc_have_descriptions
+    - test_all_nis2_articles_have_descriptions
+    - test_finding_mappings_reference_valid_soc2
+    - test_finding_mappings_reference_valid_nis2
+    - test_no_duplicate_mappings
+
+  CLASS: TestMultiTechnologySupport
+    - test_kubernetes_scanning
+    - test_docker_scanning
+    - test_javascript_scanning
+    - test_azure_terraform_scanning
+    - test_gcp_terraform_scanning
+    - test_azure_arm_template_scanning
+
+  CLASS: TestMultiCloudCoverage
+    - test_aws_terraform_patterns_exist
+    - test_azure_terraform_patterns_exist
+    - test_gcp_terraform_patterns_exist
+    - test_azure_arm_patterns_exist
+    - test_gcp_deployment_patterns_exist
+    - test_azure_findings_have_tsc_mappings
+    - test_gcp_findings_have_tsc_mappings
+    - test_iac_patterns_include_all_clouds
+
+--------------------------------------------------------------------------------
+FILE: test_soc2_nis2_scanner.py
+  Test Classes: 8 | Test Cases: 33
+--------------------------------------------------------------------------------
+
+  CLASS: TestSOC2Categories
+    - test_soc2_categories_complete
+    - test_soc2_tsc_mapping_complete
+    - test_category_to_tsc_mapping
+
+  CLASS: TestNIS2Categories
+    - test_nis2_categories_complete
+    - test_nis2_article_mapping_comprehensive
+    - test_nis2_key_requirements_present
+    - test_nis2_penalties_documented
+    - test_nis2_annexes_documented
+
+  CLASS: TestFindingMappings
+    - test_finding_to_soc2_mapping
+    - test_finding_to_nis2_mapping
+    - test_nis2_category_to_articles_mapping
+
+  CLASS: TestRiskPatterns
+    - test_terraform_patterns_defined
+    - test_cloudformation_patterns_defined
+    - test_kubernetes_patterns_defined
+    - test_docker_patterns_defined
+    - test_javascript_patterns_defined
+
+  CLASS: TestIaCFileScanningUnit
+    - test_identify_terraform_technology
+    - test_identify_kubernetes_technology
+    - test_identify_docker_technology
+    - test_scan_terraform_hardcoded_secrets
+    - test_scan_terraform_unrestricted_ingress
+    - test_scan_finding_includes_soc2_mapping
+    - test_scan_finding_includes_nis2_mapping
+
+  CLASS: TestNIS2ComplianceCoverage
+    - test_nis2_article_21_complete
+    - test_nis2_incident_reporting_complete
+    - test_nis2_governance_articles_present
+    - test_nis2_supply_chain_articles_present
+
+  CLASS: TestSOC2ComplianceCoverage
+    - test_soc2_common_criteria_complete
+    - test_soc2_availability_criteria_complete
+    - test_soc2_privacy_criteria_complete
+
+  CLASS: TestDualFrameworkIntegration
+    - test_critical_findings_map_to_both_frameworks
+    - test_business_continuity_findings_map_correctly
+    - test_incident_handling_findings_map_correctly
+
+--------------------------------------------------------------------------------
+FILE: test_user_management.py
+  Test Classes: 3 | Test Cases: 46
+--------------------------------------------------------------------------------
+
+  CLASS: TestUserManagementService
+    - test_user_data
+    - test_create_user_success
+    - test_create_user_duplicate_username
+    - test_create_user_duplicate_email
+    - test_create_user_with_all_roles
+    - test_create_user_with_all_tiers
+    - test_get_user_by_id
+    - test_get_user_by_username
+    - test_get_user_by_email
+    - test_get_nonexistent_user
+    - test_update_user_email
+    - test_update_user_role
+    - test_update_user_tier
+    - test_update_user_invalid_field
+    - test_delete_user
+    - test_delete_nonexistent_user
+    - test_list_users
+    - test_list_users_with_role_filter
+    - test_list_users_with_tier_filter
+    - test_list_users_include_inactive
+    - test_get_user_count
+    - test_track_feature_usage
+    - test_track_multiple_usages
+    - test_get_usage_summary
+    - test_get_remaining_scans
+    - test_unlimited_tier_remaining_scans
+    - test_billing_compliance_within_limits
+    - test_billing_compliance_unlimited_tier
+    - test_billing_compliance_response_structure
+    - test_generate_billing_report
+    - test_get_tier_info
+    - test_get_all_tiers
+    - test_get_all_roles
+    - test_can_access_feature
+    - test_can_use_scanner
+    - test_enterprise_has_all_access
+    - test_record_login
+    - test_get_user_activity
+    - test_export_users_csv
+    - test_tier_prices
+    - test_tier_scan_limits
+    - test_tier_user_limits
+
+  CLASS: TestPasswordVerification
+    - test_password_hash_is_not_plaintext
+    - test_password_verification
+
+  CLASS: TestIntegration
+    - test_full_user_lifecycle
+    - test_admin_can_see_all_users
+
+--------------------------------------------------------------------------------
+FILE: test_visitor_tracking.py
+  Test Classes: 5 | Test Cases: 19
+--------------------------------------------------------------------------------
+
+  CLASS: TestVisitorTrackerFunctional
+    - test_track_page_view_anonymous
+    - test_track_login_success
+    - test_track_login_failure
+    - test_track_registration_success
+    - test_track_logout
+    - test_multiple_events_tracking
+
+  CLASS: TestVisitorTrackerGDPRCompliance
+    - test_username_always_none
+    - test_user_id_unconditional_hashing
+    - test_details_field_sanitization
+    - test_ip_anonymization
+    - test_no_pii_in_any_field
+
+  CLASS: TestVisitorTrackerPerformance
+    - test_in_memory_limit_enforcement
+    - test_hashing_performance
+    - test_event_uniqueness
+
+  CLASS: TestAuthTrackerIntegration
+    - test_track_page_view_integration
+    - test_track_logout_gdpr_compliance
+
+  CLASS: TestErrorHandling
+    - test_handle_none_session_id
+    - test_handle_invalid_details
+    - test_handle_empty_strings
+
+================================================================================
+SUMMARY
+  Total Test Files:   19
+  Total Test Classes: 181
+  Total Test Cases:   595
+================================================================================
