@@ -2207,6 +2207,93 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
+    # Interest / Contact Form Section
+    st.markdown(f"""
+    <div id="contact-form" style="text-align: center; margin: 3rem 0 1rem 0;">
+        <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
+            {_('landing.contact_title', 'Interested? Get in Touch')}
+        </h2>
+        <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
+            {_('landing.contact_subtitle', 'Fill in the form below and our team will contact you to discuss how DataGuardian Pro can help your organization.')}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    with st.form("interest_form", clear_on_submit=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            contact_name = st.text_input(
+                _('landing.contact_name', 'Full Name') + " *",
+                placeholder=_('landing.contact_name_placeholder', 'e.g. Jan de Vries')
+            )
+            contact_email = st.text_input(
+                _('landing.contact_email', 'Email Address') + " *",
+                placeholder=_('landing.contact_email_placeholder', 'e.g. jan@company.nl')
+            )
+        with col2:
+            contact_phone = st.text_input(
+                _('landing.contact_phone', 'Phone Number'),
+                placeholder=_('landing.contact_phone_placeholder', 'e.g. +31 6 12345678')
+            )
+            contact_company = st.text_input(
+                _('landing.contact_company', 'Company Name'),
+                placeholder=_('landing.contact_company_placeholder', 'e.g. Company B.V.')
+            )
+        contact_interest = st.text_area(
+            _('landing.contact_interest', 'What are you looking to use DataGuardian Pro for?') + " *",
+            placeholder=_('landing.contact_interest_placeholder', 'e.g. We need GDPR compliance scanning for our cloud infrastructure and want to assess EU AI Act readiness...'),
+            height=120
+        )
+        submitted = st.form_submit_button(
+            _('landing.contact_submit', 'Submit Interest'),
+            use_container_width=True,
+            type="primary"
+        )
+
+        if submitted:
+            if not contact_name or not contact_email or not contact_interest:
+                st.error(_('landing.contact_error', 'Please fill in all required fields (Name, Email, and Interest).'))
+            else:
+                try:
+                    import re
+                    if not re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', contact_email):
+                        st.error(_('landing.contact_email_invalid', 'Please enter a valid email address.'))
+                    else:
+                        from services.email_service import EmailService
+                        email_svc = EmailService()
+                        html_body = f"""
+                        <html><body style="font-family: Arial, sans-serif; color: #333;">
+                        <h2 style="color: #1B2559;">New Interest Form Submission</h2>
+                        <table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+                            <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold; width: 160px;">Name</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">{contact_name}</td></tr>
+                            <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Email</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="mailto:{contact_email}">{contact_email}</a></td></tr>
+                            <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Phone</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">{contact_phone or 'Not provided'}</td></tr>
+                            <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Company</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">{contact_company or 'Not provided'}</td></tr>
+                            <tr><td style="padding: 10px; border-bottom: 1px solid #eee; font-weight: bold;">Interest</td>
+                                <td style="padding: 10px; border-bottom: 1px solid #eee;">{contact_interest}</td></tr>
+                        </table>
+                        <p style="margin-top: 20px; color: #888; font-size: 0.85rem;">
+                            Submitted on {datetime.now().strftime('%d %B %Y at %H:%M')} via DataGuardian Pro landing page.
+                        </p>
+                        </body></html>
+                        """
+                        success = email_svc._send_email(
+                            to_email='info@dataguardianpro.nl',
+                            subject=f'New Interest: {contact_name} - {contact_company or "Individual"}',
+                            html_body=html_body
+                        )
+                        if success:
+                            st.success(_('landing.contact_success', 'Thank you for your interest! Our team will be in touch soon.'))
+                        else:
+                            st.warning(_('landing.contact_fallback', 'Thank you for your interest! Please email us directly at info@dataguardianpro.nl and we will get back to you.'))
+                except Exception as e:
+                    logger.error(f"Contact form submission error: {e}")
+                    st.warning(_('landing.contact_fallback', 'Thank you for your interest! Please email us directly at info@dataguardianpro.nl and we will get back to you.'))
+
     # Footer section with contact information
     st.markdown("""
     <div style="
