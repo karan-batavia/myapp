@@ -163,7 +163,7 @@ def generate_competitive_insights(results: dict) -> list:
 def get_available_scanners_for_tier(license_tier: str) -> list:
     """Get scanners available for the user's license tier"""
     all_scanners = [
-        ("code", "Code Scanner - Scan source code repositories for PII and security vulnerabilities"),
+        ("code", "GDPR Code Scanner - Scan source code repositories for PII and security vulnerabilities"),
         ("document", "Document Scanner - Analyze documents (PDF, DOCX, TXT) for personal data"),
         ("database", "Database Scanner - Connect to databases and scan for personal data"),
         ("image", "Image Scanner - OCR-based extraction and PII detection from images"),
@@ -526,7 +526,7 @@ def _execute_enterprise_scan(connector: str, region: str, username: str):
 
 def _render_code_scanner(region: str, username: str):
     """Render code scanner interface"""
-    st.subheader("💻 Code Scanner")
+    st.subheader("💻 GDPR Code Scanner")
     
     st.markdown("Scan source code repositories for PII, secrets, and security vulnerabilities.")
     

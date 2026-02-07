@@ -1823,7 +1823,7 @@ def render_landing_page():
         },
         {
             "icon": "🔍", 
-            "title": _('landing.scanner.code_title', 'Code Scanner'),
+            "title": _('landing.scanner.code_title', 'GDPR Code Scanner'),
             "description": _('landing.scanner.code_desc', 'Protect your codebase from costly data breaches. Find hardcoded secrets, exposed credentials, and privacy violations before they reach production.'),
             "features": [
                 _('landing.scanner.code_f1', 'Prevent credential leaks'),
