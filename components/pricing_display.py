@@ -438,11 +438,11 @@ def get_tier_scanner_count(tier: PricingTier) -> tuple:
         PricingTier.STARTUP: (6, ["Code", "Document", "Database", "Image", "Website", "AI Model"]),
         PricingTier.PROFESSIONAL: (9, ["All Startup +", "DPIA", "SOC2/NIS2", "API Scanner"]),
         PricingTier.GROWTH: (12, ["All Professional +", "Enterprise Connectors", "Sustainability", "Repository"]),
-        PricingTier.SCALE: (15, ["All 15 Scanners", "Audio/Video Deepfake", "Cookie Scanner", "Advanced AI"]),
-        PricingTier.SALESFORCE_PREMIUM: (15, ["All 15 Scanners", "Salesforce CRM", "Advanced AI"]),
-        PricingTier.SAP_ENTERPRISE: (15, ["All 15 Scanners", "SAP ERP", "Advanced AI"]),
-        PricingTier.ENTERPRISE: (15, ["All 15 Scanners", "Data Sovereignty", "Salesforce + SAP", "Banking PSD2"]),
-        PricingTier.GOVERNMENT: (15, ["All 15 Scanners", "Data Sovereignty", "On-Premises", "Custom Dev"]),
+        PricingTier.SCALE: (18, ["All 18 Scanners", "Audio/Video Deepfake", "Cookie Scanner", "Advanced AI"]),
+        PricingTier.SALESFORCE_PREMIUM: (18, ["All 18 Scanners", "Salesforce CRM", "Advanced AI"]),
+        PricingTier.SAP_ENTERPRISE: (18, ["All 18 Scanners", "SAP ERP", "Advanced AI"]),
+        PricingTier.ENTERPRISE: (18, ["All 18 Scanners", "Data Sovereignty", "Salesforce + SAP", "Banking PSD2"]),
+        PricingTier.GOVERNMENT: (18, ["All 18 Scanners", "Data Sovereignty", "On-Premises", "Custom Dev"]),
     }
     return scanner_mapping.get(tier, (6, ["Basic scanners"]))
 
@@ -475,7 +475,7 @@ def get_tier_key_features(tier: PricingTier) -> List[str]:
             "75 data sources"
         ],
         PricingTier.SCALE: [
-            "All 15 Scanners",
+            "All 18 Scanners",
             "Audio/Video Deepfake Detection",
             "Repository & Cookie Scanners",
             "EU AI Act compliance",
@@ -499,7 +499,7 @@ def get_tier_key_features(tier: PricingTier) -> List[str]:
             "Dedicated team 24/7"
         ],
         PricingTier.ENTERPRISE: [
-            "All 15 Scanners + Premium",
+            "All 18 Scanners + Premium",
             "Salesforce + SAP connectors",
             "Dutch Banking PSD2 integration",
             "White-label deployment",

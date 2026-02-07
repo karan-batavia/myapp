@@ -1660,6 +1660,9 @@ def render_landing_page():
                 <strong>🛡️ Synthetic Media Protection:</strong> {synthetic_banner_text}
             </span>
         </div>
+        <div style="margin-top:0.5rem;padding:0.5rem 1rem;background:linear-gradient(135deg,#1565C008,#4CAF5008);border-radius:8px;text-align:center;">
+            <span style="font-size:0.75rem;color:#555;">🔒 Beschermd door Nederlandse octrooien — Protected by Dutch Patents</span>
+        </div>
         """, unsafe_allow_html=True)
     
     with hero_col2:
@@ -1670,7 +1673,7 @@ def render_landing_page():
         st.markdown("""
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #4CAF5012, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5020;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">17</div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">18</div>
                 <div style="font-size: 0.65rem; color: #666;">Scanners</div>
             </div>
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #FF980012, #FF980005); border-radius: 8px; border: 1px solid #FF980020;">
