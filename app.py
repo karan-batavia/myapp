@@ -28,6 +28,9 @@ Netherlands jurisdiction applies. All disputes subject to Amsterdam courts.
 
 import streamlit as st
 
+from utils.apply_seo_template import apply_seo_template
+apply_seo_template()
+
 # Configure page FIRST - must be the very first Streamlit command
 st.set_page_config(
     page_title="DataGuardian Pro",
