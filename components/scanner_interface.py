@@ -128,7 +128,7 @@ def render_scanner_interface():
 
 def render_code_scanner_config():
     """Unified code scanner configuration with intelligent scanning options"""
-    st.subheader(_("scan.code_configuration", "Code Scanner Configuration"))
+    st.subheader(_("scan.code_configuration", "GDPR Code Scanner Configuration"))
     
     # Use session state to remember the selection
     if 'repo_source' not in st.session_state:

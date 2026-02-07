@@ -4253,7 +4253,7 @@ def render_scanner_interface_safe():
 
 def render_code_scanner_config():
     """Code scanner configuration"""
-    st.subheader("📝 Code Scanner Configuration")
+    st.subheader("📝 GDPR Code Scanner Configuration")
     
     # Source selection - Repository URL selected by default
     source = st.radio("Source Type", ["Upload Files", "Repository URL"], index=1)
