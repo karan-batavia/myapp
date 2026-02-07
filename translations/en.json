@@ -69,23 +69,6 @@
     "plan": "Plan"
   },
   "register": {
-    "new_user": "New user?",
-    "create_account": "Create Account",
-    "info": "Registration functionality available in full version"
-  },
-  "login": {
-    "email_username": "Email or Username",
-    "password": "Password",
-    "remember_me": "Remember me",
-    "forgot_password": "Forgot password?",
-    "button": "Login",
-    "success": "Successfully logged in!",
-    "error": {
-      "missing_fields": "Please fill in all required fields",
-      "invalid_credentials": "Invalid credentials"
-    }
-  },
-  "register": {
     "username": "Username",
     "email": "Email",
     "email_placeholder": "your@email.com",
@@ -102,6 +85,18 @@
       "email_invalid": "Invalid email address",
       "username_taken": "Username is already taken",
       "email_taken": "Email is already in use"
+    }
+  },
+  "login": {
+    "email_username": "Email or Username",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot password?",
+    "button": "Login",
+    "success": "Successfully logged in!",
+    "error": {
+      "missing_fields": "Please fill in all required fields",
+      "invalid_credentials": "Invalid credentials"
     }
   },
   "dashboard": {
@@ -178,7 +173,7 @@
     "title": "Scan",
     "new_scan_title": "New Scan",
     "select_type": "Select Scan Type",
-    "code": "Code",
+    "code": "GDPR Code Scanner",
     "blob": "Document",
     "dpia": "Data Protection Impact Assessment",
     "image": "Image",
@@ -193,7 +188,7 @@
     "upload_files": "Upload Files",
     "drag_files": "Drag files here or click to browse",
     "start_scan": "Start Scan",
-    "code_configuration": "Code Scanner Configuration",
+    "code_configuration": "GDPR Code Scanner Configuration",
     "advanced_options": "Advanced Scanning Options",
     "intelligent_options": "Intelligent Scanning Configuration",
     "mode": "Scan Mode",
@@ -319,7 +314,7 @@
     "regulatory_coverage_title": "Regulatory Coverage Overview",
     "detailed_compliance_title": "Detailed Regulatory Compliance",
     "gdpr_coverage_title": "Complete GDPR Coverage - Data-Driven Analysis",
-    "ai_act_coverage_title": "EU AI Act 2025 - Complete Implementation", 
+    "ai_act_coverage_title": "EU AI Act 2025 - Complete Implementation",
     "uavg_coverage_title": "Netherlands UAVG - Complete Specialization",
     "competitive_analysis_title": "Market Position vs Competitors",
     "total_articles": "Total Articles",
