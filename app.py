@@ -1661,7 +1661,7 @@ def render_landing_page():
             </span>
         </div>
         <div style="margin-top:0.5rem;padding:0.5rem 1rem;background:linear-gradient(135deg,#1565C008,#4CAF5008);border-radius:8px;text-align:center;">
-            <span style="font-size:0.75rem;color:#555;">🔒 Beschermd door Nederlandse octrooien — Protected by Dutch Patents</span>
+            <span style="font-size:0.75rem;color:#555;">🔒 Protected by Dutch Patents</span>
         </div>
         """, unsafe_allow_html=True)
     
