@@ -1963,6 +1963,19 @@ def render_landing_page():
             ],
             "color": "#9C27B0",
             "image": "attached_assets/stock_images/video_production_stu_aa808aec.jpg"
+        },
+        {
+            "icon": "🌍",
+            "title": _('landing.scanner.sovereignty_title', 'Data Sovereignty Scanner'),
+            "description": _('landing.scanner.sovereignty_desc', 'Know exactly where your data is stored, who can access it, and which laws apply. Scan AWS, Azure, and GCP configurations to detect cross-border transfers, non-EU access risks, and GDPR compliance gaps — before regulators find them.'),
+            "features": [
+                _('landing.scanner.sovereignty_f1', 'AWS, Azure & GCP analysis'),
+                _('landing.scanner.sovereignty_f2', 'Cross-border transfer detection'),
+                _('landing.scanner.sovereignty_f3', 'Legal jurisdiction mapping'),
+                _('landing.scanner.sovereignty_f4', 'Schrems II compliance check')
+            ],
+            "color": "#1565C0",
+            "image": "attached_assets/stock_images/data_sovereignty_globe_compliance.jpg"
         }
     ]
     
