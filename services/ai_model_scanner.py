@@ -1287,7 +1287,7 @@ class AIModelScanner:
                     "category": "Source Validation",
                     "description": f"Invalid repository URL format: {repo_url}",
                     "risk_level": "high",
-                    "location": "Repository Validator"
+                    "location": repo_url or "unknown-repository-url"
                 })
                 return validation_result
                 
@@ -1315,7 +1315,7 @@ class AIModelScanner:
                     "category": "Source Validation",
                     "description": f"Could not extract owner/repo from URL: {repo_url}",
                     "risk_level": "high",
-                    "location": "Repository Validator"
+                    "location": repo_url
                 })
                 return validation_result
                 
@@ -1346,7 +1346,7 @@ class AIModelScanner:
                     "category": "Source Validation",
                     "description": f"Repository URL '{repo_url}' is invalid or inaccessible.",
                     "risk_level": "high",
-                    "location": "Repository Validator"
+                    "location": repo_url
                 })
                 return validation_result
             
@@ -1369,7 +1369,7 @@ class AIModelScanner:
                     "category": "Open Source Compliance",
                     "description": f"Repository has a {validation_result['license_type']} license",
                     "risk_level": "low",
-                    "location": "License File",
+                    "location": f"https://github.com/{owner}/{repo}/blob/main/LICENSE",
                     "details": {
                         "license_type": validation_result["license_type"],
                         "recommendations": [
@@ -1388,7 +1388,7 @@ class AIModelScanner:
                     "category": "Open Source Compliance",
                     "description": "Repository does not have a detectable license file",
                     "risk_level": "high",
-                    "location": "Repository Root",
+                    "location": f"https://github.com/{owner}/{repo}/",
                     "details": {
                         "recommendations": [
                             "Add a license file to clarify usage permissions",
@@ -1417,7 +1417,7 @@ class AIModelScanner:
                         "category": "Rights Management",
                         "description": "Repository has a .gitignore file for excluding content",
                         "risk_level": "low",
-                        "location": ".gitignore",
+                        "location": f"https://github.com/{owner}/{repo}/blob/main/.gitignore",
                         "details": {
                             "mechanism": ".gitignore file present",
                             "recommendations": [
@@ -1436,7 +1436,7 @@ class AIModelScanner:
                         "category": "Rights Management",
                         "description": "Repository lacks basic opt-out mechanisms like .gitignore",
                         "risk_level": "medium",
-                        "location": "Repository Root",
+                        "location": f"https://github.com/{owner}/{repo}/",
                         "details": {
                             "recommendations": [
                                 "Add a .gitignore file with standard exclusions",
@@ -1460,7 +1460,7 @@ class AIModelScanner:
                         "category": "Transparency",
                         "description": "Repository has documentation files that may contain attribution guidelines",
                         "risk_level": "low",
-                        "location": "Repository Documentation",
+                        "location": f"https://github.com/{owner}/{repo}/blob/main/README.md",
                         "details": {
                             "files": [
                                 "README.md" if readme_exists else None,
@@ -1482,7 +1482,7 @@ class AIModelScanner:
                         "category": "Transparency",
                         "description": "Repository lacks documentation files with contribution guidelines",
                         "risk_level": "medium",
-                        "location": "Repository Root",
+                        "location": f"https://github.com/{owner}/{repo}/",
                         "details": {
                             "recommendations": [
                                 "Create a README.md with project overview and AI usage guidelines",
@@ -1507,7 +1507,7 @@ class AIModelScanner:
                     "category": "Source Validation",
                     "description": f"GitHub repo validation error: {str(e)}",
                     "risk_level": "high",
-                    "location": "Repository Validator"
+                    "location": repo_url
                 }]
             }
 
