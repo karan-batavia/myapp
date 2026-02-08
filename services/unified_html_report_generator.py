@@ -1211,7 +1211,7 @@ class UnifiedHTMLReportGenerator:
                 return int(match.group(1))
         return 0
 
-    def _get_ai_act_article_99_penalty(self, article_num: int, finding: Dict[str, Any]) -> dict:
+    def _get_ai_act_article_99_penalty(self, article_num: int, finding: Dict[str, Any]):
         """Map each EU AI Act article to its correct penalty tier per Article 99.
         
         EU AI Act Article 99 penalty structure:
@@ -1239,7 +1239,7 @@ class UnifiedHTMLReportGenerator:
 
         tier1_articles = {5}
         tier2_articles = set(range(6, 69))
-        tier2_articles.update([2, 3, 4])
+        tier2_articles.update([1, 2, 3, 4])
         governance_articles = set(range(69, 76))
         penalty_framework_articles = set(range(76, 100))
         transitional_articles = set(range(100, 114))
