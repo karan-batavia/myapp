@@ -1626,10 +1626,15 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
                 
                 file_findings = scan_iac_file(file_path, tech)
                 
-                # Make file paths relative to repo
+                # Make file paths relative to repo with full repo context
                 for finding in file_findings:
                     finding["file"] = os.path.relpath(finding["file"], temp_dir)
-                    finding["location"] = f"{finding['file']}:{finding.get('line', 0)}"
+                    rel_file = finding["file"]
+                    line = finding.get('line', 0)
+                    repo_base = repo_url.rstrip('/').rstrip('.git')
+                    branch_name = results.get("branch", "main")
+                    finding["location"] = f"{repo_base}/blob/{branch_name}/{rel_file}#L{line}"
+                    finding["location_short"] = f"{rel_file}:{line}"
                     
                     nis2_arts = finding.get("nis2_articles", [])
                     if any("NIS2-34.4" in a for a in nis2_arts):
@@ -1851,10 +1856,14 @@ def scan_azure_repo_for_soc2(repo_url: str, project: str, branch: Optional[str] 
                 # Scan file
                 file_findings = scan_iac_file(file_path, tech)
                 
-                # Add file path to each finding
+                # Add file path with full repo context for exact location
                 for finding in file_findings:
                     finding["file"] = rel_path
-                    finding["location"] = f"{rel_path}:{finding.get('line', 0)}"
+                    line = finding.get('line', 0)
+                    repo_base = repo_url.rstrip('/').rstrip('.git')
+                    branch_name = results.get("branch", "main")
+                    finding["location"] = f"{repo_base}/blob/{branch_name}/{rel_path}#L{line}"
+                    finding["location_short"] = f"{rel_path}:{line}"
                     
                     nis2_arts = finding.get("nis2_articles", [])
                     if any("NIS2-34.4" in a for a in nis2_arts):

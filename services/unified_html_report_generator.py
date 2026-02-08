@@ -102,8 +102,8 @@ class UnifiedHTMLReportGenerator:
             region=region
         )
         
-        # Generate findings HTML with enhanced findings
-        findings_html = self._generate_findings_html(enhanced_findings)
+        # Generate findings HTML with enhanced findings (pass scan_type for correct penalty framework)
+        findings_html = self._generate_findings_html(enhanced_findings, scan_type=scan_type)
         
         # Generate scanner-specific content
         scanner_content = self._generate_scanner_specific_content(scan_result)
@@ -969,7 +969,7 @@ class UnifiedHTMLReportGenerator:
         
         return result
     
-    def _generate_findings_html(self, findings: List[Dict[str, Any]]) -> str:
+    def _generate_findings_html(self, findings: List[Dict[str, Any]], scan_type: str = '') -> str:
         """Generate HTML for enhanced findings list with actionable recommendations."""
         if not findings:
             return f"<p>✅ {t_report('no_issues_found', 'No issues found in the analysis.')}</p>"
@@ -1044,7 +1044,7 @@ class UnifiedHTMLReportGenerator:
                     {f'<div class="finding-context"><strong>{t_report("context", "Context")}:</strong> {context}</div>' if context else ''}
                     
                     <div class="finding-location">
-                        <strong>{t_report('location_details', 'Location')}:</strong> {location}
+                        <strong>{t_report('location_details', 'Location')}:</strong> {f'<a href="{location}" target="_blank" style="color: #2563eb; text-decoration: underline;">{finding.get("location_short", location)}</a>' if location.startswith('http') else location}
                     </div>
                     
                     {f'<div class="finding-classification"><strong>{t_report("data_classification", "Data Classification")}:</strong> {data_classification}</div>' if data_classification else ''}
@@ -1055,7 +1055,7 @@ class UnifiedHTMLReportGenerator:
                     
                     {f'<div class="estimated-effort"><strong>{t_report("estimated_effort", "Estimated Effort")}:</strong> {estimated_effort}</div>' if estimated_effort else ''}
                     
-                    {self._generate_penalty_info(finding)}
+                    {self._generate_penalty_info(finding, scan_type=scan_type)}
                     
                     {self._generate_compliance_section(gdpr_articles, compliance_requirements, tsc_criteria, nis2_articles)}
                     
@@ -1396,15 +1396,87 @@ class UnifiedHTMLReportGenerator:
             }
         return None
 
-    def _generate_penalty_info(self, finding: Dict[str, Any]) -> str:
+    def _generate_penalty_info(self, finding: Dict[str, Any], scan_type: str = '') -> str:
         """Generate HTML for penalty information based on finding severity, type, and regulation.
-        Maps each EU AI Act article to its correct fine per Article 99."""
+        Uses framework-specific penalties:
+        - SOC2: TSC criteria references (attestation standard, no monetary fines)
+        - NIS2: Article 34 penalties (€10M/2% or €7M/1.4%)
+        - EU AI Act: Article 99 penalties (Tier 1-3)
+        - GDPR: Article 83 penalties"""
         is_dutch = self.current_language == 'nl'
         finding_type = finding.get('type', '').lower()
-        severity = finding.get('severity', 'Medium').lower()
+        severity = finding.get('severity', finding.get('risk_level', 'Medium')).lower()
         article_ref = finding.get('article_reference', finding.get('location', '')).lower()
+        scan_type_lower = scan_type.lower() if scan_type else ''
         
         penalty_html = ""
+        
+        is_soc2_scan = 'soc2' in scan_type_lower or 'soc 2' in scan_type_lower
+        is_nis2_scan = 'nis2' in scan_type_lower or 'nis 2' in scan_type_lower or is_soc2_scan
+        
+        if is_soc2_scan or is_nis2_scan:
+            penalty_risk = finding.get('penalty_risk', '')
+            nis2_articles = finding.get('nis2_articles', [])
+            tsc_criteria = finding.get('tsc_criteria', finding.get('soc2_tsc_criteria', []))
+            
+            if penalty_risk and ('NIS2' in penalty_risk or 'Art. 34' in penalty_risk):
+                if '€10M' in penalty_risk or '2%' in penalty_risk:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #991b1b;">⚠️ {"NIS2 Boeterisico - Essentiële Entiteiten (Artikel 34(4)):" if is_dutch else "NIS2 Penalty Risk - Essential Entities (Article 34(4)):"}</strong>
+                <span style="color: #b91c1c; font-weight: 600;">{"Tot €10 miljoen of 2% van de wereldwijde jaaromzet" if is_dutch else "Up to €10 million or 2% of worldwide annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #991b1b; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 34(4) NIS2 {"Richtlijn" if is_dutch else "Directive"} (EU 2022/2555)</div>
+            </div>
+            """
+                elif '€7M' in penalty_risk or '1.4%' in penalty_risk:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #92400e;">⚠️ {"NIS2 Boeterisico - Belangrijke Entiteiten (Artikel 34(5)):" if is_dutch else "NIS2 Penalty Risk - Important Entities (Article 34(5)):"}</strong>
+                <span style="color: #b45309; font-weight: 600;">{"Tot €7 miljoen of 1,4% van de wereldwijde jaaromzet" if is_dutch else "Up to €7 million or 1.4% of worldwide annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 34(5) NIS2 {"Richtlijn" if is_dutch else "Directive"} (EU 2022/2555)</div>
+            </div>
+            """
+                else:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #92400e;">⚠️ {"NIS2 Boeterisico (Artikel 34):" if is_dutch else "NIS2 Penalty Risk (Article 34):"}</strong>
+                <span style="color: #b45309; font-weight: 600;">{penalty_risk}</span>
+                <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 34 NIS2 {"Richtlijn" if is_dutch else "Directive"} (EU 2022/2555)</div>
+            </div>
+            """
+            elif nis2_articles:
+                has_essential = any('34.4' in a or '34-4' in a for a in nis2_articles)
+                has_important = any('34.5' in a or '34-5' in a for a in nis2_articles)
+                has_art21 = any('21' in a for a in nis2_articles)
+                
+                if has_essential or (has_art21 and severity in ('high', 'critical')):
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #991b1b;">⚠️ {"NIS2 Boeterisico - Essentiële Entiteiten (Artikel 34(4)):" if is_dutch else "NIS2 Penalty Risk - Essential Entities (Article 34(4)):"}</strong>
+                <span style="color: #b91c1c; font-weight: 600;">{"Tot €10 miljoen of 2% van de wereldwijde jaaromzet" if is_dutch else "Up to €10 million or 2% of worldwide annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #991b1b; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 34(4) NIS2 {"Richtlijn" if is_dutch else "Directive"} (EU 2022/2555)</div>
+            </div>
+            """
+                elif has_important or has_art21:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #92400e;">⚠️ {"NIS2 Boeterisico - Belangrijke Entiteiten (Artikel 34(5)):" if is_dutch else "NIS2 Penalty Risk - Important Entities (Article 34(5)):"}</strong>
+                <span style="color: #b45309; font-weight: 600;">{"Tot €7 miljoen of 1,4% van de wereldwijde jaaromzet" if is_dutch else "Up to €7 million or 1.4% of worldwide annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 34(5) NIS2 {"Richtlijn" if is_dutch else "Directive"} (EU 2022/2555)</div>
+            </div>
+            """
+            
+            if tsc_criteria and not penalty_html:
+                tsc_list = ', '.join(tsc_criteria[:5])
+                penalty_html = f"""
+            <div class="penalty-info" style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #1e40af;">🔒 {"SOC 2 Trust Services Criteria:" if not is_dutch else "SOC 2 Trust Services Criteria:"}</strong>
+                <span style="color: #1d4ed8; font-weight: 600;">{tsc_list}</span>
+                <div style="font-size: 0.85em; color: #1e40af; margin-top: 4px;">{"Attestatiebasis" if is_dutch else "Attestation basis"}: AICPA SOC 2 Type II {"Auditkader" if is_dutch else "Audit Framework"}</div>
+            </div>
+            """
+            
+            return penalty_html
         
         gdpr_penalty_risk = finding.get('penalty_risk', '')
         gdpr_penalty_tier = finding.get('penalty_tier', '')
@@ -1433,9 +1505,11 @@ class UnifiedHTMLReportGenerator:
                 """
             return penalty_html
         
+        is_ai_scan = 'ai' in scan_type_lower or 'model' in scan_type_lower
+        
         article_num = self._extract_article_number(finding)
         
-        if article_num > 0:
+        if article_num > 0 and is_ai_scan:
             penalty_data = self._get_ai_act_article_99_penalty(article_num, finding)
             if penalty_data:
                 tier = penalty_data['tier']
@@ -1478,24 +1552,25 @@ class UnifiedHTMLReportGenerator:
             """
                 return penalty_html
 
-        if 'prohibited' in finding_type or severity == 'critical':
-            penalty_html = f"""
+        if is_ai_scan:
+            if 'prohibited' in finding_type or severity == 'critical':
+                penalty_html = f"""
             <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
                 <strong style="color: #991b1b;">⚠️ {"Boete EU AI Act - Niveau 1 (Verboden Praktijken):" if is_dutch else "EU AI Act Fine - Tier 1 (Prohibited Practices):"}</strong>
                 <span style="color: #b91c1c; font-weight: 600;">{"Tot €35 miljoen of 7% van de wereldwijde jaaromzet" if is_dutch else "Up to €35 million or 7% of global annual turnover"}</span>
                 <div style="font-size: 0.85em; color: #991b1b; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 99(3) EU AI Act</div>
             </div>
             """
-        elif 'high_risk' in finding_type or 'gpai' in finding_type or severity == 'high':
-            penalty_html = f"""
+            elif 'high_risk' in finding_type or 'gpai' in finding_type or severity == 'high':
+                penalty_html = f"""
             <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
                 <strong style="color: #92400e;">⚠️ {"Boete EU AI Act - Niveau 2 (Hoog-Risico/GPAI Vereisten):" if is_dutch else "EU AI Act Fine - Tier 2 (High-Risk/GPAI Requirements):"}</strong>
                 <span style="color: #b45309; font-weight: 600;">{"Tot €15 miljoen of 3% van de wereldwijde jaaromzet" if is_dutch else "Up to €15 million or 3% of global annual turnover"}</span>
                 <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 99(4) EU AI Act</div>
             </div>
             """
-        elif 'ai_act' in finding_type or 'ai act' in finding_type or 'eu ai' in article_ref:
-            penalty_html = f"""
+            elif 'ai_act' in finding_type or 'ai act' in finding_type or 'eu ai' in article_ref:
+                penalty_html = f"""
             <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
                 <strong style="color: #92400e;">⚠️ {"Boete EU AI Act - Niet-naleving:" if is_dutch else "EU AI Act Fine - Non-Compliance:"}</strong>
                 <span style="color: #b45309; font-weight: 600;">{"Tot €15 miljoen of 3% van de wereldwijde jaaromzet" if is_dutch else "Up to €15 million or 3% of global annual turnover"}</span>
