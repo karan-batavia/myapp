@@ -1474,6 +1474,17 @@ def scan_iac_file(file_path: str, tech: Optional[str] = None) -> List[Dict[str, 
         
     return findings
 
+def _normalize_url(url: str) -> str:
+    """Normalize repository URL by replacing Unicode dashes with standard hyphens
+    and stripping whitespace. Handles non-breaking hyphens (U+2011), en-dashes (U+2013),
+    em-dashes (U+2014), figure dashes (U+2012), and other Unicode dash variants that
+    can be introduced by copy-pasting URLs from documents or browsers."""
+    dash_chars = '\u2010\u2011\u2012\u2013\u2014\u2015\uFE58\uFE63\uFF0D'
+    for ch in dash_chars:
+        url = url.replace(ch, '-')
+    return url.strip()
+
+
 def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token: Optional[str] = None) -> Dict[str, Any]:
     """
     Scan a GitHub repository for SOC2 compliance issues in IaC code.
@@ -1508,6 +1519,8 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
         "medium_risk_count": 0,
         "low_risk_count": 0,
     }
+    
+    repo_url = _normalize_url(repo_url)
     
     # Create temp directory
     temp_dir = tempfile.mkdtemp()
@@ -1720,6 +1733,8 @@ def scan_azure_repo_for_soc2(repo_url: str, project: str, branch: Optional[str] 
     Returns:
         Dictionary with scan results
     """
+    repo_url = _normalize_url(repo_url)
+    
     # Initialize results with same structure as GitHub scan
     results = {
         "scan_type": "soc2",
