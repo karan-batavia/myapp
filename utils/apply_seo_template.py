@@ -66,6 +66,26 @@ def apply_seo_template():
             '    </script>'
         )
         
+        if '<style id="dgp-preload">' not in content:
+            content = content.replace(
+                '</head>',
+                '    <style id="dgp-preload">\n'
+                '      [data-testid="collapsedControl"] span,\n'
+                '      [data-testid="stSidebarCollapseButton"] span,\n'
+                '      [data-testid="stSidebarCollapsedControl"] span,\n'
+                '      button[kind="headerNoPadding"] span,\n'
+                '      .stAppDeployButton span,\n'
+                '      [data-testid="baseButton-headerNoPadding"] span {\n'
+                '        font-size: 0 !important;\n'
+                '        color: transparent !important;\n'
+                '        overflow: hidden !important;\n'
+                '        width: 0 !important;\n'
+                '        display: inline-block !important;\n'
+                '      }\n'
+                '    </style>\n'
+                '    </head>'
+            )
+
         content = content.replace(
             '<noscript>You need to enable JavaScript to run this app.</noscript>',
             '<noscript>\n'

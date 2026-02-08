@@ -43,20 +43,23 @@ st.markdown("""
 <style>
     [data-testid="stSidebarCollapseButton"] span,
     [data-testid="collapsedControl"] span,
-    [data-testid="stSidebarCollapsedControl"] span {
+    [data-testid="stSidebarCollapsedControl"] span,
+    button[kind="headerNoPadding"] span,
+    [data-testid="baseButton-headerNoPadding"] span {
         font-size: 0 !important;
+        color: transparent !important;
         overflow: hidden !important;
         width: 24px !important;
         height: 24px !important;
         display: inline-block !important;
     }
-    [data-testid="stSidebarCollapseButton"] span::after,
-    [data-testid="collapsedControl"] span::after,
-    [data-testid="stSidebarCollapsedControl"] span::after {
-        font-size: 20px !important;
+    [data-testid="stSidebarCollapseButton"] svg,
+    [data-testid="collapsedControl"] svg,
+    [data-testid="stSidebarCollapsedControl"] svg,
+    button[kind="headerNoPadding"] svg,
+    [data-testid="baseButton-headerNoPadding"] svg {
         visibility: visible !important;
-        content: "\\00BB" !important;
-        display: block !important;
+        color: inherit !important;
     }
 </style>
 """, unsafe_allow_html=True)
