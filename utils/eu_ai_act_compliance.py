@@ -110,6 +110,8 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
     
     # NEW: Critical missing AI Act articles coverage
     findings.extend(_detect_scope_and_definitions_violations(content))  # Articles 1-4
+    findings.extend(_detect_article_2_scope(content))  # Article 2 - Material Scope
+    findings.extend(_detect_article_4_ai_literacy(content))  # Article 4 - AI Literacy
     findings.extend(_detect_data_governance_violations(content))  # Articles 10-12
     findings.extend(_detect_market_surveillance_violations(content))  # Articles 69-75
     findings.extend(_detect_penalty_framework_violations(content))  # Articles 76-85
@@ -941,6 +943,119 @@ def _detect_fundamental_rights_gaps(content: str) -> List[Dict[str, Any]]:
     return findings
 
 # NEW: Critical missing AI Act articles implementation
+
+def _detect_article_2_scope(content: str) -> List[Dict[str, Any]]:
+    """Detect Article 2 - Material Scope compliance.
+    
+    Article 2 defines who the AI Act applies to: providers placing AI systems on the EU market,
+    deployers within the EU, providers/deployers in third countries whose AI output is used in EU,
+    importers and distributors. Also defines exemptions for military, national security,
+    research/development, and personal non-professional use.
+    """
+    findings = []
+    
+    ai_patterns = [
+        r"\b(?:artificial.*intelligence|ai.*system|machine.*learning|neural.*network|deep.*learning)\b",
+        r"\b(?:algorithmic.*decision|automated.*system|intelligent.*system)\b"
+    ]
+    
+    has_ai_system = any(re.search(pattern, content, re.IGNORECASE) for pattern in ai_patterns)
+    
+    if has_ai_system:
+        scope_requirements = {
+            'provider_scope': r"\b(?:provider|developer|maker|manufacturer).*(?:ai|artificial.*intelligence|model)\b",
+            'deployer_scope': r"\b(?:deployer|operator|user).*(?:ai|artificial.*intelligence|system)\b",
+            'eu_market_scope': r"\b(?:eu.*market|european.*union|member.*state|placed.*on.*market)\b",
+            'third_country_output': r"\b(?:third.*country|non.*eu|outside.*eu|international.*deployment)\b",
+            'exemption_assessment': r"\b(?:exemption|military.*use|national.*security|research.*development|personal.*use)\b"
+        }
+        
+        missing_scope = []
+        for requirement, pattern in scope_requirements.items():
+            if not re.search(pattern, content, re.IGNORECASE):
+                missing_scope.append(requirement.replace('_', ' '))
+        
+        if len(missing_scope) > 2:
+            findings.append({
+                'type': 'AI_ACT_ARTICLE_2_SCOPE',
+                'category': 'Article 2 - Material Scope',
+                'severity': 'Medium',
+                'risk_level': 'medium',
+                'title': 'AI Act Material Scope Assessment Required',
+                'description': f'Article 2 scope elements not addressed: {", ".join(missing_scope)}. Organizations must determine whether they fall under the AI Act as providers, deployers, importers, or distributors, and whether any exemptions apply.',
+                'location': 'EU AI Act Article 2 - Material Scope',
+                'regulation': 'EU AI Act Article 2',
+                'article_reference': 'EU AI Act Article 2',
+                'compliance_deadline': 'August 2, 2025',
+                'remediation': 'Conduct a scope assessment to determine organizational role (provider/deployer/importer/distributor), EU market presence, and applicable exemptions under Article 2.',
+                'requirements': [
+                    'Determine if organization is a provider, deployer, importer, or distributor',
+                    'Assess whether AI system output is used within the EU',
+                    'Evaluate applicability of exemptions (military, national security, R&D, personal use)',
+                    'Document scope determination and keep records',
+                    'Consider third-country provider obligations when AI output reaches EU'
+                ]
+            })
+    
+    return findings
+
+
+def _detect_article_4_ai_literacy(content: str) -> List[Dict[str, Any]]:
+    """Detect Article 4 - AI Literacy compliance.
+    
+    Article 4 requires providers and deployers of AI systems to ensure that their staff
+    and other persons dealing with AI systems on their behalf have a sufficient level of
+    AI literacy, taking into account their technical knowledge, experience, education,
+    training, and the context in which the AI systems are to be used.
+    """
+    findings = []
+    
+    ai_patterns = [
+        r"\b(?:artificial.*intelligence|ai.*system|machine.*learning|neural.*network|deep.*learning)\b",
+        r"\b(?:algorithmic.*decision|automated.*system|intelligent.*system)\b"
+    ]
+    
+    has_ai_system = any(re.search(pattern, content, re.IGNORECASE) for pattern in ai_patterns)
+    
+    if has_ai_system:
+        literacy_requirements = {
+            'staff_training': r"\b(?:staff.*training|employee.*training|ai.*training.*program|personnel.*education)\b",
+            'ai_literacy_program': r"\b(?:ai.*literacy|artificial.*intelligence.*literacy|digital.*literacy|ai.*competence)\b",
+            'technical_knowledge': r"\b(?:technical.*knowledge|technical.*competence|skill.*assessment|competency.*framework)\b",
+            'context_awareness': r"\b(?:context.*awareness|use.*case.*understanding|deployment.*context|operational.*context)\b",
+            'continuous_education': r"\b(?:continuous.*education|ongoing.*training|regular.*updates|knowledge.*updates)\b"
+        }
+        
+        missing_literacy = []
+        for requirement, pattern in literacy_requirements.items():
+            if not re.search(pattern, content, re.IGNORECASE):
+                missing_literacy.append(requirement.replace('_', ' '))
+        
+        if len(missing_literacy) > 2:
+            findings.append({
+                'type': 'AI_ACT_ARTICLE_4_LITERACY',
+                'category': 'Article 4 - AI Literacy',
+                'severity': 'Medium',
+                'risk_level': 'medium',
+                'title': 'AI Literacy Obligations Not Addressed',
+                'description': f'Article 4 AI literacy elements missing: {", ".join(missing_literacy)}. Providers and deployers must ensure staff have sufficient AI literacy considering their role, technical knowledge, and the AI system context.',
+                'location': 'EU AI Act Article 4 - AI Literacy',
+                'regulation': 'EU AI Act Article 4',
+                'article_reference': 'EU AI Act Article 4',
+                'compliance_deadline': 'February 2, 2025',
+                'remediation': 'Establish an AI literacy program ensuring all staff involved with AI systems have appropriate training, knowledge assessment, and ongoing education.',
+                'requirements': [
+                    'Develop AI literacy training programs for staff handling AI systems',
+                    'Assess technical knowledge and experience levels of personnel',
+                    'Provide context-specific training for AI system use cases',
+                    'Implement continuous education and knowledge update mechanisms',
+                    'Document AI literacy measures and training completion records',
+                    'Consider education background and role-specific AI competency needs'
+                ]
+            })
+    
+    return findings
+
 
 def _detect_scope_and_definitions_violations(content: str) -> List[Dict[str, Any]]:
     """Detect scope and definitions violations (Articles 1-4)."""
@@ -2904,8 +3019,8 @@ def get_ai_act_coverage_summary() -> Dict[str, Any]:
             'XII - Final Provisions (Art. 100-113)': {'covered': True, 'articles': 14, 'individual_detection': True}
         },
         'coverage_percentage': 100.0,
-        'last_updated': '2026-01-30',
-        'detection_functions': 47,
+        'last_updated': '2026-02-08',
+        'detection_functions': 49,
         'individual_article_patterns': 113,
         'compliance_status': 'Full Granular Coverage - All 113 Articles Individually Detected',
         'enforcement_timeline': get_compliance_timeline()
