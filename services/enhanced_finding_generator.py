@@ -560,10 +560,7 @@ class EnhancedFindingGenerator:
             elif line_num:
                 location = f"Line {line_num}"
             else:
-                article_ref = finding.get('article_reference', '')
-                if article_ref:
-                    location = article_ref
-                elif finding.get('category'):
+                if finding.get('category'):
                     location = str(finding.get('category'))
                 elif finding.get('title'):
                     location = str(finding.get('title'))[:50]

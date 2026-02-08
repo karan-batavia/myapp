@@ -2331,6 +2331,13 @@ class AIModelScanner:
             
             display_category = category_mapping.get(violation_type, 'EU AI Act Compliance')
             
+            repo_source = scan_result.get('repository_url', scan_result.get('model_source', 'AI Model System'))
+            violation_location = violation.get('location', 'AI Model System')
+            if repo_source and repo_source != 'AI Model System':
+                display_location = f"{repo_source} > {violation_location}" if violation_location else repo_source
+            else:
+                display_location = violation_location
+
             finding = {
                 "id": f"EU-AI-ACT-{uuid.uuid4().hex[:8]}",
                 "type": display_category,
@@ -2339,7 +2346,8 @@ class AIModelScanner:
                 "description": violation.get('description', 'EU AI Act compliance requirement'),
                 "severity": self._map_risk_level_to_severity(violation.get('risk_level', 'Medium')),
                 "risk_level": violation.get('risk_level', 'Medium'),
-                "location": violation.get('location', 'AI Model System'),
+                "location": display_location,
+                "article_reference": violation.get('article_reference', ''),
                 "regulation": violation.get('regulation', 'EU AI Act 2025'),
                 "remediation": violation.get('remediation', 'Address compliance requirement'),
                 "requirements": violation.get('requirements', []),
