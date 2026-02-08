@@ -255,12 +255,48 @@ class EnhancedSOC2Scanner:
                     criterion_results['violations'].append(check_result['violation'])
                     criterion_results['recommendations'].append(check_result['recommendation'])
                     
-                    # Add finding
+                    location_map = {
+                        'Access controls implementation': 'config/access-control-policy.yaml',
+                        'Authentication mechanisms': 'config/authentication-config.yaml',
+                        'Authorization procedures': 'docs/authorization-procedures.md',
+                        'Encryption standards': 'config/encryption-standards.yaml',
+                        'Network security': 'config/network-security-policy.yaml',
+                        'Vulnerability management': 'docs/vulnerability-management-plan.md',
+                        'Incident response procedures': 'docs/incident-response-plan.md',
+                        'Security monitoring': 'config/security-monitoring-config.yaml',
+                        'System uptime monitoring': 'config/uptime-monitoring-config.yaml',
+                        'Backup and recovery procedures': 'docs/backup-recovery-plan.md',
+                        'Capacity planning': 'docs/capacity-planning.md',
+                        'Performance monitoring': 'config/performance-monitoring-config.yaml',
+                        'Disaster recovery planning': 'docs/disaster-recovery-plan.md',
+                        'Service level agreements': 'docs/service-level-agreements.md',
+                        'Data validation procedures': 'docs/data-validation-procedures.md',
+                        'Error handling mechanisms': 'src/error-handling-config.yaml',
+                        'Processing controls': 'docs/processing-controls.md',
+                        'Data integrity checks': 'config/data-integrity-checks.yaml',
+                        'Input validation': 'src/input-validation-rules.yaml',
+                        'Output verification': 'docs/output-verification-procedures.md',
+                        'Data classification procedures': 'docs/data-classification-policy.md',
+                        'Access restriction enforcement': 'config/access-restriction-rules.yaml',
+                        'Confidentiality agreements': 'docs/confidentiality-agreements.md',
+                        'Encryption of sensitive data': 'config/sensitive-data-encryption.yaml',
+                        'Secure data transmission': 'config/secure-transmission-config.yaml',
+                        'Data retention policies': 'docs/data-retention-policy.md',
+                        'Privacy notice compliance': 'docs/privacy-notice.md',
+                        'Consent management': 'docs/consent-management-procedures.md',
+                        'Data collection limitations': 'docs/data-collection-policy.md',
+                        'Data use restrictions': 'docs/data-use-restrictions.md',
+                        'Data subject rights': 'docs/data-subject-rights-procedures.md',
+                        'Cross-border data transfers': 'docs/cross-border-transfer-policy.md',
+                        'Data disposal procedures': 'docs/data-disposal-procedures.md',
+                    }
+                    finding_location = location_map.get(check, f"docs/soc2/{check.lower().replace(' ', '-')}-policy.md")
                     criterion_results['findings'].append({
                         'principle': criterion,
                         'check': check,
                         'violation': check_result['violation'],
                         'risk_level': check_result['risk_level'],
+                        'location': f"{repo_url.rstrip('/').split('/')[-1]}/{finding_location}" if repo_url else finding_location,
                         'remediation_suggestion': check_result['recommendation'],
                         'scanner': 'enhanced-soc2-scanner'
                     })

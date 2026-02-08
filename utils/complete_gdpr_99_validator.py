@@ -20,15 +20,16 @@ GDPR_PENALTY_TIERS = {
         "max_fine": "€20M or 4% global annual turnover",
         "fine_display": "€20M / 4%"
     },
-    # Lower tier (€10M / 2%) - Technical and organizational obligations
+    # Lower tier (€10M / 2%) - Technical and organizational obligations per Article 83(4)
     "lower": {
-        "articles": [8, 11, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43],
+        "articles": [8, 11, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42, 43],
         "max_fine": "€10M or 2% global annual turnover",
         "fine_display": "€10M / 2%"
     },
     # No direct fines - General, institutional, procedural articles
+    # Articles 40-41 (codes of conduct) are NOT listed in Article 83(4) or 83(5)
     "no_direct_fine": {
-        "articles": [1, 2, 3, 4, 10, 23, 24, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 
+        "articles": [1, 2, 3, 4, 10, 23, 24, 40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 
                      60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
                      77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99],
         "max_fine": "Indirect liability - fines determined by supervisory authority",
@@ -59,15 +60,64 @@ def get_gdpr_penalty_for_article(article_num: int) -> Dict[str, str]:
         "fine_display": "Indirect"
     }
 
+GDPR_ARTICLE_LOCATIONS = {
+    5: "docs/gdpr/processing-principles-policy.md",
+    6: "docs/gdpr/legal-basis-assessment.md",
+    7: "docs/gdpr/consent-management-procedures.md",
+    8: "docs/gdpr/children-data-protection-policy.md",
+    9: "docs/gdpr/special-categories-processing-policy.md",
+    10: "docs/gdpr/criminal-data-processing-policy.md",
+    11: "docs/gdpr/no-identification-processing-policy.md",
+    12: "docs/gdpr/transparency-information-notice.md",
+    13: "docs/gdpr/privacy-notice-data-collected.md",
+    14: "docs/gdpr/privacy-notice-data-not-collected.md",
+    15: "docs/gdpr/data-subject-access-request-procedure.md",
+    16: "docs/gdpr/rectification-procedure.md",
+    17: "docs/gdpr/erasure-right-to-be-forgotten-procedure.md",
+    18: "docs/gdpr/restriction-of-processing-procedure.md",
+    19: "docs/gdpr/notification-obligation-procedure.md",
+    20: "docs/gdpr/data-portability-procedure.md",
+    21: "docs/gdpr/right-to-object-procedure.md",
+    22: "docs/gdpr/automated-decision-making-policy.md",
+    23: "docs/gdpr/data-subject-rights-restrictions.md",
+    24: "docs/gdpr/controller-responsibilities.md",
+    25: "docs/gdpr/privacy-by-design-policy.md",
+    26: "docs/gdpr/joint-controllers-agreement.md",
+    27: "docs/gdpr/eu-representative-designation.md",
+    28: "docs/gdpr/data-processing-agreement.md",
+    29: "docs/gdpr/processor-instructions-documentation.md",
+    30: "docs/gdpr/records-of-processing-activities.md",
+    31: "docs/gdpr/supervisory-authority-cooperation.md",
+    32: "docs/gdpr/security-of-processing-policy.md",
+    33: "docs/gdpr/data-breach-notification-procedure.md",
+    34: "docs/gdpr/data-breach-communication-procedure.md",
+    35: "docs/gdpr/data-protection-impact-assessment.md",
+    36: "docs/gdpr/prior-consultation-procedure.md",
+    37: "docs/gdpr/data-protection-officer-designation.md",
+    38: "docs/gdpr/dpo-position-description.md",
+    39: "docs/gdpr/dpo-tasks-documentation.md",
+    40: "docs/gdpr/code-of-conduct-adherence.md",
+    41: "docs/gdpr/code-of-conduct-monitoring.md",
+    42: "docs/gdpr/certification-documentation.md",
+    43: "docs/gdpr/certification-body-requirements.md",
+    44: "docs/gdpr/international-transfer-policy.md",
+    45: "docs/gdpr/adequacy-decision-assessment.md",
+    46: "docs/gdpr/standard-contractual-clauses.md",
+    47: "docs/gdpr/binding-corporate-rules.md",
+    48: "docs/gdpr/transfer-safeguards-documentation.md",
+    49: "docs/gdpr/transfer-derogations-assessment.md",
+    50: "docs/gdpr/international-cooperation-framework.md",
+}
+
 def _add_penalty_to_finding(finding: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Add penalty information to a finding based on its article reference.
+    Add penalty information and location to a finding based on its article reference.
     
     Args:
         finding: The finding dictionary
         
     Returns:
-        Finding with penalty_risk added
+        Finding with penalty_risk and location added
     """
     article_ref = finding.get('article_reference', '')
     article_match = re.search(r'Article\s+(\d+)', article_ref)
@@ -78,10 +128,16 @@ def _add_penalty_to_finding(finding: Dict[str, Any]) -> Dict[str, Any]:
         finding['penalty_risk'] = penalty_info['max_fine']
         finding['fine_display'] = penalty_info['fine_display']
         finding['penalty_tier'] = penalty_info['penalty_tier']
+        if 'location' not in finding:
+            finding['location'] = GDPR_ARTICLE_LOCATIONS.get(
+                article_num, f"docs/gdpr/article-{article_num}-compliance.md"
+            )
     else:
         finding['penalty_risk'] = 'Up to €20M or 4% global turnover'
         finding['fine_display'] = '€20M / 4%'
         finding['penalty_tier'] = 'higher'
+        if 'location' not in finding:
+            finding['location'] = "docs/gdpr/general-compliance-policy.md"
     
     return finding
 

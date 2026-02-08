@@ -278,7 +278,7 @@ def _validate_gdpr_principles(content: str) -> Dict[str, Any]:
                     'risk_level': 'High',
                     'regulation': 'GDPR Article 5',
                     'description': f"Violation of {principle.replace('_', ' ')} principle",
-                    'location': f"Position {match.start()}-{match.end()}"
+                    'location': f"docs/gdpr/processing-principles-policy.md"
                 })
         
         if not has_compliance_indicators and principle in ['transparency', 'lawfulness']:
@@ -881,7 +881,7 @@ def _check_privacy_by_design_technical(content: str, metadata: Optional[Dict[str
         for match in matches:
             violations_found.append({
                 'type': violation_type,
-                'location': f"Position {match.start()}-{match.end()}",
+                'location': "docs/gdpr/privacy-by-design-policy.md",
                 'matched_text': match.group()
             })
     
@@ -1095,7 +1095,7 @@ def _check_enhanced_international_transfers(content: str, metadata: Optional[Dic
         for match in matches:
             detected_transfers.append({
                 'type': transfer_type,
-                'location': f"Position {match.start()}-{match.end()}",
+                'location': "docs/gdpr/international-transfer-policy.md",
                 'matched_text': match.group()
             })
     
