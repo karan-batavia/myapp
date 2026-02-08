@@ -1384,7 +1384,7 @@ class AdvancedAIScanner:
                 'severity': 'High',
                 'title': f"System Not Market-Ready ({conformity['conformity_progress_percentage']:.0f}% complete)",
                 'description': 'AI system lacks required conformity assessment, CE marking, or EU database registration',
-                'location': 'docs/conformity-assessment/',
+                'location': 'docs/conformity-assessment/conformity-checklist.md',
                 'impact': 'Cannot be legally placed on EU market until conformity requirements met',
                 'recommendation': '; '.join(conformity['next_steps'][:3])
             })

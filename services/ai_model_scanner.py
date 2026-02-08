@@ -2650,6 +2650,7 @@ class AIModelScanner:
                 'category': 'Privacy-Enhancing Technology Assessment',
                 'description': 'Privacy-enhancing technology assessment module not available',
                 'risk_level': 'Medium',
+                'location': 'src/privacy/pet_validator.py',
                 'remediation': 'Implement PET validation for AI systems'
             })
         

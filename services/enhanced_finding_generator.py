@@ -49,6 +49,28 @@ class EnhancedFindingGenerator:
     for all scanner types in DataGuardian Pro.
     """
     
+    ARTICLE_LOCATION_MAP = {
+        9: 'docs/risk-management-system.md',
+        10: 'docs/data-governance-policy.md',
+        11: 'docs/technical-documentation.md',
+        12: 'docs/record-keeping-policy.md',
+        13: 'src/ui/transparency-disclosure.md',
+        14: 'docs/human-oversight-plan.md',
+        15: 'docs/accuracy-robustness-cybersecurity.md',
+        16: 'docs/provider-obligations.md',
+        17: 'config/logging-config.yaml',
+        26: 'docs/human-oversight-plan.md',
+        27: 'docs/deployer-obligations.md',
+        28: 'docs/fundamental-rights-impact-assessment.md',
+        50: 'docs/transparency-obligations.md',
+    }
+
+    KEYWORD_LOCATION_MAP = [
+        ('Automated DPIA', 'docs/data-protection-impact-assessment.md'),
+        ('AI Governance', 'docs/ai-governance-framework.md'),
+        ('Privacy-Enhancing Technology', 'docs/privacy-enhancing-technologies.md'),
+    ]
+
     def __init__(self, region: str = "Netherlands"):
         self.region = region
         self.gdpr_articles = self._load_gdpr_articles()
@@ -560,32 +582,23 @@ class EnhancedFindingGenerator:
             elif line_num:
                 location = f"Line {line_num}"
             else:
+                import re
                 article_ref = finding.get('article_reference', '')
                 category = finding.get('category', '')
-                article_location_map = {
-                    'Article 17': 'config/logging-config.yaml',
-                    'Article 26': 'docs/human-oversight-plan.md',
-                    'Article 27': 'docs/deployer-obligations.md',
-                    'Article 28': 'docs/fundamental-rights-impact-assessment.md',
-                    'Article 14': 'docs/human-oversight-plan.md',
-                    'Article 9': 'docs/risk-management-system.md',
-                    'Article 10': 'docs/data-governance-policy.md',
-                    'Article 11': 'docs/technical-documentation.md',
-                    'Article 12': 'docs/record-keeping-policy.md',
-                    'Article 13': 'src/ui/transparency-disclosure.md',
-                    'Article 15': 'docs/accuracy-robustness-cybersecurity.md',
-                    'Article 16': 'docs/provider-obligations.md',
-                    'Article 50': 'docs/transparency-obligations.md',
-                    'Automated DPIA': 'docs/data-protection-impact-assessment.md',
-                    'AI Governance': 'docs/ai-governance-framework.md',
-                    'Privacy-Enhancing Technology': 'docs/privacy-enhancing-technologies.md',
-                }
-                resolved = ''
                 ref_to_check = article_ref or category
-                for key, path in article_location_map.items():
-                    if key in ref_to_check:
-                        resolved = path
-                        break
+                resolved = ''
+                if ref_to_check:
+                    article_nums = re.findall(r'Articles?\s+(\d+)', ref_to_check)
+                    for num_str in article_nums:
+                        num = int(num_str)
+                        if num in self.ARTICLE_LOCATION_MAP:
+                            resolved = self.ARTICLE_LOCATION_MAP[num]
+                            break
+                    if not resolved:
+                        for keyword, path in self.KEYWORD_LOCATION_MAP:
+                            if keyword in ref_to_check:
+                                resolved = path
+                                break
                 if resolved:
                     location = resolved
                 elif finding.get('match'):
