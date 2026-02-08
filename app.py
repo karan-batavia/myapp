@@ -39,6 +39,28 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+st.markdown("""
+<style>
+    [data-testid="stSidebarCollapseButton"] span,
+    [data-testid="collapsedControl"] span,
+    [data-testid="stSidebarCollapsedControl"] span {
+        font-size: 0 !important;
+        overflow: hidden !important;
+        width: 24px !important;
+        height: 24px !important;
+        display: inline-block !important;
+    }
+    [data-testid="stSidebarCollapseButton"] span::after,
+    [data-testid="collapsedControl"] span::after,
+    [data-testid="stSidebarCollapsedControl"] span::after {
+        font-size: 20px !important;
+        visibility: visible !important;
+        content: "\\00BB" !important;
+        display: block !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Show loading screen immediately on first load to prevent blank page
 _loading_placeholder = st.empty()
 if 'app_initialized' not in st.session_state:
@@ -57,18 +79,6 @@ if 'app_initialized' not in st.session_state:
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
-            }
-            /* Hide material icon ligature text until font loads */
-            [data-testid="stSidebarCollapseButton"] span,
-            [data-testid="collapsedControl"] span {
-                font-size: 0;
-                visibility: hidden;
-            }
-            [data-testid="stSidebarCollapseButton"] span::before,
-            [data-testid="collapsedControl"] span::before {
-                font-size: 24px;
-                visibility: visible;
-                content: "≡";
             }
         </style>
         """, unsafe_allow_html=True)
