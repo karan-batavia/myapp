@@ -1358,6 +1358,14 @@ def _render_soc2_scanner(region: str, username: str):
             
             progress_bar.progress(1.0)
             
+            if scan_result and (scan_result.get('scan_status') == 'failed' or scan_result.get('error')):
+                status_text.empty()
+                progress_bar.empty()
+                error_msg = scan_result.get('error', 'Unknown error')
+                st.error(f"Could not scan repository: {error_msg}")
+                st.info("Please check the repository URL and ensure it is accessible.")
+                return
+            
             if scan_result:
                 scan_result['region'] = region
                 scan_result['scan_type'] = 'SOC2 Compliance Scanner'
@@ -8405,6 +8413,14 @@ def execute_soc2_scan(region, username, repo_url, repo_source, branch, soc2_type
                 repo_analysis = scan_github_repo_for_soc2(repo_url, branch)
             else:
                 repo_analysis = scan_azure_repo_for_soc2(repo_url, project="", branch=branch)
+            
+            if repo_analysis.get('scan_status') == 'failed' or repo_analysis.get('error'):
+                error_msg = repo_analysis.get('error', 'Unknown error during repository scan')
+                status.update(label="Repository scan failed", state="error")
+                progress_bar.progress(100)
+                st.error(f"Could not scan repository: {error_msg}")
+                st.info("Please check the repository URL and ensure it is accessible. If private, provide an access token.")
+                return
             
             # Map findings to SOC2 TSC criteria
             status.update(label="Mapping findings to Trust Service Criteria...")
