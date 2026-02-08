@@ -1193,8 +1193,212 @@ class UnifiedHTMLReportGenerator:
         section_html += "</div>"
         return section_html
     
+    def _extract_article_number(self, finding: Dict[str, Any]) -> int:
+        """Extract EU AI Act article number from finding type, title, or location."""
+        import re
+        sources = [
+            finding.get('type', ''),
+            finding.get('title', ''),
+            finding.get('location', ''),
+            finding.get('article_reference', ''),
+        ]
+        for source in sources:
+            match = re.search(r'[Aa]rticle[_ ](\d+)', str(source))
+            if match:
+                return int(match.group(1))
+            match = re.search(r'[Aa]rtikel[_ ](\d+)', str(source))
+            if match:
+                return int(match.group(1))
+        return 0
+
+    def _get_ai_act_article_99_penalty(self, article_num: int, finding: Dict[str, Any]) -> dict:
+        """Map each EU AI Act article to its correct penalty tier per Article 99.
+        
+        EU AI Act Article 99 penalty structure:
+        - Art 99(3): Prohibited practices (Art 5) → €35M or 7%
+        - Art 99(4): Non-compliance with obligations under the Regulation → €15M or 3%
+          Covers: Arts 6-49 (high-risk), Arts 50-55 (transparency/GPAI), 
+          Arts 56-68 (sandboxes/monitoring)
+        - Art 99(5): Supplying incorrect info to authorities/notified bodies → €7.5M or 1%
+        - Arts 69-113: Governance, enforcement, transitional & final provisions
+        """
+        finding_type = finding.get('type', '').lower()
+        title = finding.get('title', '').lower()
+        description = str(finding.get('description', '')).lower()
+        
+        is_incorrect_info = any(phrase in description or phrase in title for phrase in [
+            'incorrect information', 'false information', 'misleading information',
+            'supplying incorrect', 'providing incorrect', 'information to authorities',
+            'notified body', 'incorrect data'
+        ])
+        if is_incorrect_info:
+            return {'tier': 3, 'article_99_para': '99(5)', 'amount_en': '€7.5 million or 1% of global annual turnover', 'amount_nl': '€7,5 miljoen of 1% van de wereldwijde jaaromzet'}
+
+        if 'prohibited' in finding_type:
+            return {'tier': 1, 'article_99_para': '99(3)', 'article_num': 5, 'category_en': 'Prohibited Practices', 'category_nl': 'Verboden Praktijken', 'amount_en': '€35 million or 7% of global annual turnover', 'amount_nl': '€35 miljoen of 7% van de wereldwijde jaaromzet'}
+
+        tier1_articles = {5}
+        tier2_articles = set(range(6, 69))
+        tier2_articles.update([2, 3, 4])
+        governance_articles = set(range(69, 76))
+        penalty_framework_articles = set(range(76, 100))
+        transitional_articles = set(range(100, 114))
+
+        article_categories_en = {
+            1: 'Scope & Subject Matter', 2: 'Scope', 3: 'Definitions', 4: 'AI Literacy',
+            5: 'Prohibited Practices', 6: 'Classification of High-Risk AI', 7: 'Amendments to Annex III',
+            8: 'Compliance with Requirements', 9: 'Risk Management System', 10: 'Data Governance',
+            11: 'Technical Documentation', 12: 'Record-Keeping', 13: 'Transparency & Information',
+            14: 'Human Oversight', 15: 'Accuracy, Robustness & Cybersecurity',
+            16: 'Provider Obligations', 17: 'Quality Management System', 18: 'Documentation Keeping',
+            19: 'Automatically Generated Logs', 20: 'Corrective Actions', 21: 'Cooperation with Authorities',
+            22: 'Authorized Representatives', 23: 'Importer Obligations', 24: 'Distributor Obligations',
+            25: 'Responsibilities Along the Chain', 26: 'Deployer Obligations',
+            27: 'Fundamental Rights Impact Assessment', 28: 'Fundamental Rights Assessment for Public Bodies',
+            29: 'Obligations Regarding Use', 30: 'Database Registration', 31: 'EU Database for High-Risk AI',
+            32: 'Post-Market Monitoring by Providers', 33: 'Reporting of Serious Incidents',
+            34: 'Functionality of Information Sharing', 35: 'Voluntary Codes of Conduct',
+            36: 'CE Marking', 37: 'Withdrawal from Market', 38: 'Compliance with Union Harmonisation',
+            39: 'Standards and Common Specifications', 40: 'Harmonised Standards',
+            41: 'Common Specifications', 42: 'Presumption of Conformity',
+            43: 'Conformity Assessment', 44: 'Certificates', 45: 'Information Obligations of Notified Bodies',
+            46: 'Derogation from Conformity Assessment', 47: 'EU Declaration of Conformity',
+            48: 'CE Marking Requirements', 49: 'Registration',
+            50: 'Transparency for Certain AI Systems', 51: 'Classification of GPAI Models',
+            52: 'Obligations for GPAI Model Providers', 53: 'GPAI Model Obligations',
+            54: 'Authorised Representatives of GPAI Providers', 55: 'GPAI Codes of Practice',
+            56: 'AI Regulatory Sandboxes', 57: 'Sandbox Detailed Rules', 58: 'Sandbox Conditions',
+            59: 'Processing of Personal Data in Sandboxes', 60: 'Testing in Real World Conditions',
+            61: 'Informed Consent for Testing', 62: 'Post-Market Monitoring',
+            63: 'Market Surveillance', 64: 'Access to Data and Documentation',
+            65: 'Procedure for Non-Compliant AI', 66: 'Union Safeguard Procedure',
+            67: 'Compliant AI Presenting a Risk', 68: 'Formal Non-Compliance',
+            69: 'AI Office', 70: 'European Artificial Intelligence Board',
+            71: 'Advisory Forum', 72: 'Scientific Panel of Independent Experts',
+            73: 'National Competent Authorities', 74: 'Market Surveillance Authority',
+            75: 'Mutual Assistance and Cross-Border Cooperation',
+            76: 'Confidentiality', 77: 'Right to Explanation', 78: 'Right to Lodge Complaint',
+            79: 'Right to Effective Judicial Remedy', 80: 'Penalties for Non-Compliance',
+            81: 'Penalties for EU Institutions', 82: 'Complaints Against EU Institutions',
+            83: 'General Conditions for Fines', 84: 'Delegated Acts',
+            85: 'Committee Procedure', 86: 'Penalties', 87: 'Evaluation and Review',
+            88: 'AI Act Effective Implementation', 89: 'Protection of Whistleblowers',
+            90: 'Monitoring and Evaluation', 91: 'Amendment to Regulation (EC) No 300/2008',
+            92: 'Amendment to Regulation (EU) No 167/2013', 93: 'Amendment to Regulation (EU) No 168/2013',
+            94: 'Amendment to Directive 2014/90/EU', 95: 'Amendment to Directive (EU) 2016/797',
+            96: 'Amendment to Regulation (EU) 2018/858', 97: 'Amendment to Regulation (EU) 2018/1139',
+            98: 'Amendment to Regulation (EU) 2019/2144', 99: 'Penalties',
+            100: 'Amendment to Regulation (EU) 2024/900', 101: 'Comitology',
+            102: 'Repeal of Union Acts', 103: 'Protection of Personal Data',
+            104: 'Amendment to Regulation (EU) 2018/1725', 105: 'Transitional Provisions for GPAI',
+            106: 'Transitional Provisions for High-Risk', 107: 'Transitional Provisions',
+            108: 'Application Dates', 109: 'Application to Existing AI Systems',
+            110: 'Application to Ongoing Procedures', 111: 'Penalties Transitional',
+            112: 'Entry Into Force', 113: 'Addressees',
+        }
+        article_categories_nl = {
+            1: 'Toepassingsgebied & Onderwerp', 2: 'Toepassingsgebied', 3: 'Definities', 4: 'AI-geletterdheid',
+            5: 'Verboden Praktijken', 6: 'Classificatie Hoog-Risico AI', 7: 'Wijzigingen Bijlage III',
+            8: 'Naleving van Vereisten', 9: 'Risicobeheersysteem', 10: 'Datagovernance',
+            11: 'Technische Documentatie', 12: 'Registratie', 13: 'Transparantie & Informatie',
+            14: 'Menselijk Toezicht', 15: 'Nauwkeurigheid, Robuustheid & Cyberveiligheid',
+            16: 'Verplichtingen Aanbieder', 17: 'Kwaliteitsmanagementsysteem', 18: 'Documentatiebewaring',
+            19: 'Automatisch Gegenereerde Logs', 20: 'Corrigerende Maatregelen', 21: 'Samenwerking met Autoriteiten',
+            22: 'Gemachtigde Vertegenwoordigers', 23: 'Verplichtingen Importeur', 24: 'Verplichtingen Distributeur',
+            25: 'Verantwoordelijkheden in de Keten', 26: 'Verplichtingen Gebruiker',
+            27: 'Grondrechten Effectbeoordeling', 28: 'Grondrechten Beoordeling Overheidsinstanties',
+            29: 'Verplichtingen m.b.t. Gebruik', 30: 'Registratie in Database', 31: 'EU Database Hoog-Risico AI',
+            32: 'Post-markt Monitoring door Aanbieders', 33: 'Melding Ernstige Incidenten',
+            34: 'Functionaliteit Informatiedeling', 35: 'Vrijwillige Gedragscodes',
+            36: 'CE-markering', 37: 'Terugtrekking van de Markt', 38: 'Naleving EU Harmonisatie',
+            39: 'Normen en Gemeenschappelijke Specificaties', 40: 'Geharmoniseerde Normen',
+            41: 'Gemeenschappelijke Specificaties', 42: 'Vermoeden van Conformiteit',
+            43: 'Conformiteitsbeoordeling', 44: 'Certificaten', 45: 'Informatieverplichtingen Aangemelde Instanties',
+            46: 'Afwijking van Conformiteitsbeoordeling', 47: 'EU-conformiteitsverklaring',
+            48: 'CE-markeringsvereisten', 49: 'Registratie',
+            50: 'Transparantie Bepaalde AI-systemen', 51: 'Classificatie GPAI-modellen',
+            52: 'Verplichtingen GPAI-modelaanbieders', 53: 'GPAI-modelverplichtingen',
+            54: 'Gemachtigden GPAI-aanbieders', 55: 'GPAI Gedragscodes',
+            56: 'AI Regelgevende Sandboxen', 57: 'Sandbox Gedetailleerde Regels', 58: 'Sandbox Voorwaarden',
+            59: 'Verwerking Persoonsgegevens in Sandboxen', 60: 'Testen in Reële Omstandigheden',
+            61: 'Geïnformeerde Toestemming voor Testen', 62: 'Post-markt Monitoring',
+            63: 'Markttoezicht', 64: 'Toegang tot Gegevens en Documentatie',
+            65: 'Procedure Niet-conform AI', 66: 'EU Vrijwaringsprocedure',
+            67: 'Conform AI met Risico', 68: 'Formele Niet-naleving',
+            69: 'AI-bureau', 70: 'Europese Raad voor Kunstmatige Intelligentie',
+            71: 'Adviesforum', 72: 'Wetenschappelijk Panel Onafhankelijke Deskundigen',
+            73: 'Nationale Bevoegde Autoriteiten', 74: 'Markttoezichtautoriteit',
+            75: 'Wederzijdse Bijstand en Grensoverschrijdende Samenwerking',
+            76: 'Vertrouwelijkheid', 77: 'Recht op Uitleg', 78: 'Recht op Klacht',
+            79: 'Recht op Effectief Rechtsmiddel', 80: 'Sancties bij Niet-naleving',
+            81: 'Sancties voor EU-instellingen', 82: 'Klachten tegen EU-instellingen',
+            83: 'Algemene Voorwaarden voor Boetes', 84: 'Gedelegeerde Handelingen',
+            85: 'Comitéprocedure', 86: 'Sancties', 87: 'Evaluatie en Herziening',
+            88: 'Effectieve Uitvoering AI Act', 89: 'Bescherming Klokkenluiders',
+            90: 'Monitoring en Evaluatie', 91: 'Wijziging Verordening (EG) Nr. 300/2008',
+            92: 'Wijziging Verordening (EU) Nr. 167/2013', 93: 'Wijziging Verordening (EU) Nr. 168/2013',
+            94: 'Wijziging Richtlijn 2014/90/EU', 95: 'Wijziging Richtlijn (EU) 2016/797',
+            96: 'Wijziging Verordening (EU) 2018/858', 97: 'Wijziging Verordening (EU) 2018/1139',
+            98: 'Wijziging Verordening (EU) 2019/2144', 99: 'Sancties',
+            100: 'Wijziging Verordening (EU) 2024/900', 101: 'Comitologie',
+            102: 'Intrekking EU-handelingen', 103: 'Bescherming Persoonsgegevens',
+            104: 'Wijziging Verordening (EU) 2018/1725', 105: 'Overgangsbepalingen GPAI',
+            106: 'Overgangsbepalingen Hoog-Risico', 107: 'Overgangsbepalingen',
+            108: 'Toepassingsdata', 109: 'Toepassing op Bestaande AI-systemen',
+            110: 'Toepassing op Lopende Procedures', 111: 'Overgang Sancties',
+            112: 'Inwerkingtreding', 113: 'Adressaten',
+        }
+
+        if article_num in tier1_articles:
+            return {
+                'tier': 1, 'article_99_para': '99(3)',
+                'article_num': article_num,
+                'category_en': article_categories_en.get(article_num, ''),
+                'category_nl': article_categories_nl.get(article_num, ''),
+                'amount_en': '€35 million or 7% of global annual turnover',
+                'amount_nl': '€35 miljoen of 7% van de wereldwijde jaaromzet',
+            }
+        elif article_num in tier2_articles:
+            return {
+                'tier': 2, 'article_99_para': '99(4)',
+                'article_num': article_num,
+                'category_en': article_categories_en.get(article_num, ''),
+                'category_nl': article_categories_nl.get(article_num, ''),
+                'amount_en': '€15 million or 3% of global annual turnover',
+                'amount_nl': '€15 miljoen of 3% van de wereldwijde jaaromzet',
+            }
+        elif article_num in governance_articles:
+            return {
+                'tier': 0, 'article_99_para': 'governance',
+                'article_num': article_num,
+                'category_en': article_categories_en.get(article_num, ''),
+                'category_nl': article_categories_nl.get(article_num, ''),
+                'amount_en': 'Governance framework - fines determined by national competent authorities',
+                'amount_nl': 'Governance kader - boetes bepaald door nationale bevoegde autoriteiten',
+            }
+        elif article_num in penalty_framework_articles:
+            return {
+                'tier': 0, 'article_99_para': 'enforcement',
+                'article_num': article_num,
+                'category_en': article_categories_en.get(article_num, ''),
+                'category_nl': article_categories_nl.get(article_num, ''),
+                'amount_en': 'Enforcement & rights framework - penalties per Article 99',
+                'amount_nl': 'Handhavings- & rechtenkader - sancties conform Artikel 99',
+            }
+        elif article_num in transitional_articles:
+            return {
+                'tier': 0, 'article_99_para': 'transitional',
+                'article_num': article_num,
+                'category_en': article_categories_en.get(article_num, ''),
+                'category_nl': article_categories_nl.get(article_num, ''),
+                'amount_en': 'Transitional & final provisions - compliance deadlines apply',
+                'amount_nl': 'Overgangs- & slotbepalingen - nalevingsdeadlines van toepassing',
+            }
+        return None
+
     def _generate_penalty_info(self, finding: Dict[str, Any]) -> str:
-        """Generate HTML for penalty information based on finding severity, type, and regulation."""
+        """Generate HTML for penalty information based on finding severity, type, and regulation.
+        Maps each EU AI Act article to its correct fine per Article 99."""
         is_dutch = self.current_language == 'nl'
         finding_type = finding.get('type', '').lower()
         severity = finding.get('severity', 'Medium').lower()
@@ -1202,7 +1406,6 @@ class UnifiedHTMLReportGenerator:
         
         penalty_html = ""
         
-        # Check for GDPR penalty_risk field first (from complete_gdpr_99_validator)
         gdpr_penalty_risk = finding.get('penalty_risk', '')
         gdpr_penalty_tier = finding.get('penalty_tier', '')
         
@@ -1224,47 +1427,79 @@ class UnifiedHTMLReportGenerator:
             else:
                 penalty_html = f"""
                 <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                    <strong style="color: #1e40af;">ℹ️ GDPR Compliance Note:</strong>
+                    <strong style="color: #1e40af;">ℹ️ {"GDPR Nalevingsopmerking:" if is_dutch else "GDPR Compliance Note:"}</strong>
                     <span style="color: #1d4ed8; font-weight: 600;">{gdpr_penalty_risk}</span>
                 </div>
                 """
             return penalty_html
         
-        # EU AI Act penalties
-        if 'prohibited' in finding_type or 'article 5' in article_ref or severity == 'critical':
+        article_num = self._extract_article_number(finding)
+        
+        if article_num > 0:
+            penalty_data = self._get_ai_act_article_99_penalty(article_num, finding)
+            if penalty_data:
+                tier = penalty_data['tier']
+                art_para = penalty_data['article_99_para']
+                category = penalty_data.get('category_nl', '') if is_dutch else penalty_data.get('category_en', '')
+                amount = penalty_data.get('amount_nl', '') if is_dutch else penalty_data.get('amount_en', '')
+                
+                article_label = f"Artikel {article_num}" if is_dutch else f"Article {article_num}"
+                
+                if tier == 1:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #991b1b;">⚠️ {"Boete EU AI Act" if is_dutch else "EU AI Act Fine"} - {article_label} ({category}):</strong>
+                <span style="color: #b91c1c; font-weight: 600;">{"Tot" if is_dutch else "Up to"} {amount}</span>
+                <div style="font-size: 0.85em; color: #991b1b; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} {art_para} EU AI Act</div>
+            </div>
+            """
+                elif tier == 2:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #92400e;">⚠️ {"Boete EU AI Act" if is_dutch else "EU AI Act Fine"} - {article_label} ({category}):</strong>
+                <span style="color: #b45309; font-weight: 600;">{"Tot" if is_dutch else "Up to"} {amount}</span>
+                <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} {art_para} EU AI Act</div>
+            </div>
+            """
+                elif tier == 3:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #1e40af;">⚠️ {"Boete EU AI Act" if is_dutch else "EU AI Act Fine"} - {article_label} ({category}):</strong>
+                <span style="color: #1d4ed8; font-weight: 600;">{"Tot" if is_dutch else "Up to"} {amount}</span>
+                <div style="font-size: 0.85em; color: #1e40af; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} {art_para} EU AI Act</div>
+            </div>
+            """
+                else:
+                    penalty_html = f"""
+            <div class="penalty-info" style="background: #f0f9ff; border-left: 4px solid #6366f1; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #4338ca;">ℹ️ EU AI Act {article_label} ({category}):</strong>
+                <span style="color: #4f46e5; font-weight: 600;">{amount}</span>
+            </div>
+            """
+                return penalty_html
+
+        if 'prohibited' in finding_type or severity == 'critical':
             penalty_html = f"""
             <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #991b1b;">⚠️ {"Boeterisico - Niveau 1 (Verboden Praktijken):" if is_dutch else "Penalty Risk - Tier 1 (Prohibited Practices):"}</strong>
+                <strong style="color: #991b1b;">⚠️ {"Boete EU AI Act - Niveau 1 (Verboden Praktijken):" if is_dutch else "EU AI Act Fine - Tier 1 (Prohibited Practices):"}</strong>
                 <span style="color: #b91c1c; font-weight: 600;">{"Tot €35 miljoen of 7% van de wereldwijde jaaromzet" if is_dutch else "Up to €35 million or 7% of global annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #991b1b; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 99(3) EU AI Act</div>
             </div>
             """
-        elif 'high_risk' in finding_type or 'gpai' in finding_type or severity == 'high' or any(x in article_ref for x in ['article 6', 'article 9', 'article 10', 'article 51', 'article 52']):
+        elif 'high_risk' in finding_type or 'gpai' in finding_type or severity == 'high':
             penalty_html = f"""
             <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #92400e;">⚠️ {"Boeterisico - Niveau 2 (Hoog-Risico/GPAI Vereisten):" if is_dutch else "Penalty Risk - Tier 2 (High-Risk/GPAI Requirements):"}</strong>
+                <strong style="color: #92400e;">⚠️ {"Boete EU AI Act - Niveau 2 (Hoog-Risico/GPAI Vereisten):" if is_dutch else "EU AI Act Fine - Tier 2 (High-Risk/GPAI Requirements):"}</strong>
                 <span style="color: #b45309; font-weight: 600;">{"Tot €15 miljoen of 3% van de wereldwijde jaaromzet" if is_dutch else "Up to €15 million or 3% of global annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 99(4) EU AI Act</div>
             </div>
             """
-        elif 'ai_act' in finding_type or 'eu ai' in article_ref.lower():
-            description_lower = str(finding.get('description', '')).lower()
-            title_lower = str(finding.get('title', '')).lower()
-            is_incorrect_info = any(phrase in description_lower or phrase in title_lower for phrase in [
-                'incorrect information', 'false information', 'misleading information',
-                'supplying incorrect', 'providing incorrect', 'information to authorities',
-                'notified body', 'incorrect data'
-            ])
-            if is_incorrect_info:
-                penalty_html = f"""
-            <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #1e40af;">ℹ️ {"Boeterisico - Niveau 3 (Onjuiste Info aan Autoriteiten):" if is_dutch else "Penalty Risk - Tier 3 (Incorrect Info to Authorities):"}</strong>
-                <span style="color: #1d4ed8; font-weight: 600;">{"Tot €7,5 miljoen of 1% van de wereldwijde jaaromzet" if is_dutch else "Up to €7.5 million or 1% of global annual turnover"}</span>
-            </div>
-            """
-            else:
-                penalty_html = f"""
+        elif 'ai_act' in finding_type or 'ai act' in finding_type or 'eu ai' in article_ref:
+            penalty_html = f"""
             <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #92400e;">⚠️ {"Boeterisico - Niveau 2 (Niet-naleving):" if is_dutch else "Penalty Risk - Tier 2 (Non-Compliance):"}</strong>
+                <strong style="color: #92400e;">⚠️ {"Boete EU AI Act - Niet-naleving:" if is_dutch else "EU AI Act Fine - Non-Compliance:"}</strong>
                 <span style="color: #b45309; font-weight: 600;">{"Tot €15 miljoen of 3% van de wereldwijde jaaromzet" if is_dutch else "Up to €15 million or 3% of global annual turnover"}</span>
+                <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 99(4) EU AI Act</div>
             </div>
             """
         
