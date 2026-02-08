@@ -733,6 +733,57 @@ class UnifiedHTMLReportGenerator:
         
         return deduplicated
     
+    def _translate_finding_value(self, value: str) -> str:
+        if self.current_language != 'nl' or not value:
+            return value
+        
+        translations = {
+            'Finding': 'Bevinding',
+            'Source File': 'Bronbestand',
+            'Review within 24 hours': 'Beoordeel binnen 24 uur',
+            'Review within 3 days': 'Beoordeel binnen 3 dagen', 
+            'Review within 7 days': 'Beoordeel binnen 7 dagen',
+            'Fix within 1 hour': 'Oplossen binnen 1 uur',
+            'Fix within 4 hours': 'Oplossen binnen 4 uur',
+            'Fix within 24 hours': 'Oplossen binnen 24 uur',
+            'Fix within 48 hours': 'Oplossen binnen 48 uur',
+            'Fix within 7 days': 'Oplossen binnen 7 dagen',
+            'Fix immediately': 'Onmiddellijk oplossen',
+            'Investigation and remediation': 'Onderzoek en herstel',
+            'Rotate key and update configuration': 'Sleutel roteren en configuratie bijwerken',
+            'Remove from code and implement secure storage': 'Verwijderen uit code en veilige opslag implementeren',
+            'Security review and remediation': 'Beveiligingsbeoordeling en herstel',
+            'Move to configuration management': 'Verplaatsen naar configuratiebeheer',
+            'Immediate removal and security review': 'Onmiddellijk verwijderen en beveiligingsbeoordeling',
+            'Implement proper consent': 'Correcte toestemming implementeren',
+            'Immediate': 'Onmiddellijk',
+            'Urgent': 'Dringend',
+            'High': 'Hoog',
+            'Critical': 'Kritiek',
+            'Medium': 'Gemiddeld',
+            'Low': 'Laag',
+            'Critical Security Credential': 'Kritieke Beveiligingsreferentie',
+            'Personal Identifiable Information (PII)': 'Persoonsidentificeerbare Informatie (PII)',
+            'Special Category Personal Data (Netherlands)': 'Bijzondere Categorie Persoonsgegevens (Nederland)',
+            'Behavioral Tracking Data': 'Gedragstrackinggegevens',
+            'System Configuration': 'Systeemconfiguratie',
+            'Model Assets': 'Model Activa',
+            'AI System Data': 'AI-systeemgegevens',
+            'Security Configuration': 'Beveiligingsconfiguratie',
+            'Document Content': 'Documentinhoud',
+            'Network Configuration': 'Netwerkconfiguratie',
+            'Application Data': 'Applicatiegegevens',
+            'Infrastructure Data': 'Infrastructuurgegevens',
+            'User Data': 'Gebruikersgegevens',
+            'Unknown': 'Onbekend',
+            'Potential security or compliance impact requiring investigation': 'Potentiële beveiliging- of nalevingsimpact die onderzoek vereist',
+        }
+        
+        result = value
+        for en, nl in translations.items():
+            result = result.replace(en, nl)
+        return result
+    
     def _generate_findings_html(self, findings: List[Dict[str, Any]]) -> str:
         """Generate HTML for enhanced findings list with actionable recommendations."""
         if not findings:
@@ -773,6 +824,13 @@ class UnifiedHTMLReportGenerator:
             estimated_effort = finding.get('estimated_effort', '')
             data_classification = finding.get('data_classification', '')
             
+            if self.current_language == 'nl':
+                finding_type = self._translate_finding_value(finding_type)
+                data_classification = self._translate_finding_value(data_classification)
+                business_impact = self._translate_finding_value(business_impact)
+                remediation_priority = self._translate_finding_value(remediation_priority)
+                estimated_effort = self._translate_finding_value(estimated_effort)
+            
             # SOC2/NIS2 specific fields (check both field names for compatibility)
             tsc_criteria = finding.get('tsc_criteria', finding.get('soc2_tsc_criteria', []))
             nis2_articles = finding.get('nis2_articles', [])
@@ -786,7 +844,7 @@ class UnifiedHTMLReportGenerator:
                 </div>
                 
                 <div class="finding-content">
-                    {f'<div class="finding-source" style="margin-bottom: 10px;"><strong>📄 Source File:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">{source_file}</code></div>' if source_file else ''}
+                    {f'<div class="finding-source" style="margin-bottom: 10px;"><strong>📄 {t_report("source_file", "Source File")}:</strong> <code style="background: #f8f9fa; padding: 2px 8px; border-radius: 4px;">{source_file}</code></div>' if source_file else ''}
                     
                     <div class="finding-description">
                         <strong>{t_report('description', 'Description')}:</strong> {description}

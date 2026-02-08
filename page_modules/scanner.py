@@ -7533,124 +7533,145 @@ def render_ai_model_scanner_interface(region: str, username: str):
 def render_model_analysis_interface(region: str, username: str):
     """Render the traditional model analysis interface"""
     
+    from utils.i18n import get_text as _
+    
     # Show persistent download button if report exists from previous scan
     if 'ai_model_html_report' in st.session_state and st.session_state.get('ai_model_html_report'):
-        with st.expander("📥 Previous Report Available", expanded=False):
+        with st.expander(_('scan.ai_model_previous_report', "📥 Previous Report Available"), expanded=False):
             from config.pricing_config import can_download_reports
             if can_download_reports():
                 st.download_button(
-                    label="📄 Download Previous AI Model Report",
+                    label=_('scan.ai_model_download_previous', "📄 Download Previous AI Model Report"),
                     data=st.session_state['ai_model_html_report'],
                     file_name=st.session_state.get('ai_model_report_filename', 'ai_model_report.html'),
                     mime="text/html",
                     key="download_previous_ai_report"
                 )
             else:
-                st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
-            if st.button("🗑️ Clear Previous Report", key="clear_ai_report"):
+                st.info(_('scan.ai_model_reports_locked', "🔒 Report downloads available for paid subscribers. Upgrade to download reports."))
+            if st.button(_('scan.ai_model_clear_report', "🗑️ Clear Previous Report"), key="clear_ai_report"):
                 del st.session_state['ai_model_html_report']
                 del st.session_state['ai_model_report_filename']
                 st.rerun()
     
     # Model source selection
-    st.subheader("Model Source")
+    st.subheader(_('scan.ai_model_source', "Model Source"))
     
     # Important notice about comprehensive coverage  
-    st.success("""
-    **🎯 Comprehensive EU AI Act 2025 Coverage (90%+, All 113 Articles) for ALL Input Methods:**
-    - 🔗 **Model Repository**: Automatically clones repository, detects model files (.pt, .h5, .pkl, etc.), and performs full comprehensive analysis
-    - 📤 **Upload Model File**: Full 12-phase analysis covering all EU AI Act requirements including Annex III, transparency, provider obligations, conformity, GPAI, post-market surveillance, AI literacy, enforcement, governance, and Netherlands-specific UAVG compliance
-    - 📁 **Model Path**: Full comprehensive coverage when model file exists locally
+    st.success(_('scan.ai_model_coverage_notice',
+        "**🎯 Comprehensive EU AI Act 2025 Coverage (90%+, All 113 Articles) for ALL Input Methods:**\n"
+        "- 🔗 **Model Repository**: Automatically clones repository, detects model files (.pt, .h5, .pkl, etc.), and performs full comprehensive analysis\n"
+        "- 📤 **Upload Model File**: Full 12-phase analysis covering all EU AI Act requirements including Annex III, transparency, provider obligations, conformity, GPAI, post-market surveillance, AI literacy, enforcement, governance, and Netherlands-specific UAVG compliance\n"
+        "- 📁 **Model Path**: Full comprehensive coverage when model file exists locally\n\n"
+        "*Repository note: If no model files found in repository, falls back to metadata-based analysis.*"
+    ))
     
-    *Repository note: If no model files found in repository, falls back to metadata-based analysis.*
-    """)
-    
-    model_source = st.radio("Select Model Source", ["Model Repository", "Upload Model File", "Model Path"], horizontal=True)
+    model_source_labels = {
+        "Model Repository": _('scan.ai_model_source_repository', "Model Repository"),
+        "Upload Model File": _('scan.ai_model_source_upload', "Upload Model File"),
+        "Model Path": _('scan.ai_model_source_path', "Model Path"),
+    }
+    model_source = st.radio(
+        _('scan.ai_model_select_source', "Select Model Source"),
+        ["Model Repository", "Upload Model File", "Model Path"],
+        format_func=lambda x: model_source_labels.get(x, x),
+        horizontal=True
+    )
     
     # Always show file uploader to catch uploaded files regardless of radio selection
     uploaded_model = st.file_uploader(
-        "Upload AI Model (Optional - overrides other selections)",
+        _('scan.ai_model_upload_label', "Upload AI Model (Optional - overrides other selections)"),
         type=['pkl', 'joblib', 'h5', 'pb', 'onnx', 'pt', 'pth', 'bin', 'safetensors', 'py', 'ipynb'],
-        help="Supported formats: Pickle, JobLib, HDF5, Protocol Buffers, ONNX, PyTorch, SafeTensors, Python (.py), Jupyter Notebooks (.ipynb)"
+        help=_('scan.ai_model_upload_help', "Supported formats: Pickle, JobLib, HDF5, Protocol Buffers, ONNX, PyTorch, SafeTensors, Python (.py), Jupyter Notebooks (.ipynb)")
     )
     
     # Store uploaded file in session state to persist across reruns
     if uploaded_model is not None:
         st.session_state['ai_model_upload'] = uploaded_model
-        st.success(f"✅ Model uploaded: {uploaded_model.name} ({uploaded_model.size/1024/1024:.1f} MB)")
-        st.info("📁 Uploaded file will be used instead of repository/path selections below")
+        st.success(f"✅ {_('scan.ai_model_uploaded_success', 'Model uploaded')}: {uploaded_model.name} ({uploaded_model.size/1024/1024:.1f} MB)")
+        st.info(_('scan.ai_model_uploaded_info', "📁 Uploaded file will be used instead of repository/path selections below"))
     elif 'ai_model_upload' in st.session_state:
         # Use stored file if available
         uploaded_model = st.session_state['ai_model_upload']
-        st.success(f"✅ Model ready: {uploaded_model.name} ({uploaded_model.size/1024/1024:.1f} MB)")
-        st.info("📁 Uploaded file will be used instead of repository/path selections below")
+        st.success(f"✅ {_('scan.ai_model_ready', 'Model ready')}: {uploaded_model.name} ({uploaded_model.size/1024/1024:.1f} MB)")
+        st.info(_('scan.ai_model_uploaded_info', "📁 Uploaded file will be used instead of repository/path selections below"))
     
     model_path = None
     repo_url = None
     
     if model_source == "Model Repository":
         repo_url = st.text_input(
-            "Model Repository URL",
+            _('scan.ai_model_repo_url', "Model Repository URL"),
             value=st.session_state.get('ai_model_repo_url', ''),
             placeholder="https://huggingface.co/username/model-name",
-            help="Enter model repository URL (e.g., Hugging Face, GitHub)",
+            help=_('scan.ai_model_repo_url_help', "Enter model repository URL (e.g., Hugging Face, GitHub)"),
             disabled=uploaded_model is not None,
             key="ai_model_repo_url"
         )
         
     elif model_source == "Model Path":
         model_path = st.text_input(
-            "Local Model Path",
+            _('scan.ai_model_local_path', "Local Model Path"),
             value=st.session_state.get('ai_model_path', ''),
             placeholder="/path/to/model.pkl",
-            help="Enter local path to model file",
+            help=_('scan.ai_model_local_path_help', "Enter local path to model file"),
             disabled=uploaded_model is not None,
             key="ai_model_path"
         )
     
     # Model configuration
-    st.subheader("Model Configuration")
+    st.subheader(_('scan.ai_model_configuration', "Model Configuration"))
     col1, col2 = st.columns(2)
     
     with col1:
+        model_type_labels = {
+            "Classification": _('scan.ai_model_type_classification', "Classification"),
+            "Regression": _('scan.ai_model_type_regression', "Regression"),
+            "NLP": _('scan.ai_model_type_nlp', "NLP"),
+            "Computer Vision": _('scan.ai_model_type_cv', "Computer Vision"),
+            "Recommendation": _('scan.ai_model_type_recommendation', "Recommendation"),
+            "Generative AI": _('scan.ai_model_type_genai', "Generative AI"),
+            "Time Series": _('scan.ai_model_type_timeseries', "Time Series"),
+        }
         model_type = st.selectbox(
-            "Model Type",
+            _('scan.ai_model_type', "Model Type"),
             ["Classification", "Regression", "NLP", "Computer Vision", "Recommendation", "Generative AI", "Time Series"],
-            help="Select the type of machine learning model"
+            format_func=lambda x: model_type_labels.get(x, x),
+            help=_('scan.ai_model_type_help', "Select the type of machine learning model")
         )
         
-        privacy_analysis = st.checkbox("Privacy Analysis", value=True, help="Analyze for PII exposure and data leakage")
-        bias_detection = st.checkbox("Bias Detection", value=True, help="Detect potential bias in model predictions")
-        ai_act_compliance = st.checkbox("AI Act 2025 Compliance", value=True, help="Check compliance with EU AI Act 2025 requirements")
+        privacy_analysis = st.checkbox(_('scan.ai_model_privacy_analysis', "Privacy Analysis"), value=True, help=_('scan.ai_model_privacy_help', "Analyze for PII exposure and data leakage"))
+        bias_detection = st.checkbox(_('scan.ai_model_bias_detection', "Bias Detection"), value=True, help=_('scan.ai_model_bias_help', "Detect potential bias in model predictions"))
+        ai_act_compliance = st.checkbox(_('scan.ai_model_ai_act', "AI Act 2025 Compliance"), value=True, help=_('scan.ai_model_ai_act_help', "Check compliance with EU AI Act 2025 requirements"))
         
     with col2:
         framework = st.selectbox(
-            "Framework",
+            _('scan.ai_model_framework', "Framework"),
             ["Auto-detect", "TensorFlow", "PyTorch", "Scikit-learn", "XGBoost", "ONNX", "Hugging Face"],
-            help="Select ML framework or auto-detect"
+            help=_('scan.ai_model_framework_help', "Select ML framework or auto-detect")
         )
         
-        fairness_analysis = st.checkbox("Fairness Analysis", value=True, help="Assess model fairness across demographic groups")
-        compliance_check = st.checkbox("GDPR Compliance", value=True, help="Check compliance with privacy regulations")
+        fairness_analysis = st.checkbox(_('scan.ai_model_fairness', "Fairness Analysis"), value=True, help=_('scan.ai_model_fairness_help', "Assess model fairness across demographic groups"))
+        compliance_check = st.checkbox(_('scan.ai_model_gdpr', "GDPR Compliance"), value=True, help=_('scan.ai_model_gdpr_help', "Check compliance with privacy regulations"))
         
     # AI Act 2025 Configuration
     if ai_act_compliance:
-        st.subheader("🇪🇺 AI Act 2025 Configuration")
+        st.subheader(_('scan.ai_model_ai_act_config', "🇪🇺 AI Act 2025 Configuration"))
         col1, col2 = st.columns(2)
         
         with col1:
-            st.write("**High-Risk Categories:**")
-            critical_infrastructure = st.checkbox("Critical Infrastructure", value=True, help="AI systems for critical infrastructure management")
-            education_training = st.checkbox("Education & Training", value=True, help="AI systems for education and vocational training")
-            employment = st.checkbox("Employment", value=True, help="AI systems for recruitment and worker management")
-            essential_services = st.checkbox("Essential Services", value=True, help="AI systems for access to essential services")
+            st.write(_('scan.ai_model_high_risk_categories', "**High-Risk Categories:**"))
+            critical_infrastructure = st.checkbox(_('scan.ai_model_critical_infra', "Critical Infrastructure"), value=True, help=_('scan.ai_model_critical_infra_help', "AI systems for critical infrastructure management"))
+            education_training = st.checkbox(_('scan.ai_model_education', "Education & Training"), value=True, help=_('scan.ai_model_education_help', "AI systems for education and vocational training"))
+            employment = st.checkbox(_('scan.ai_model_employment', "Employment"), value=True, help=_('scan.ai_model_employment_help', "AI systems for recruitment and worker management"))
+            essential_services = st.checkbox(_('scan.ai_model_essential_services', "Essential Services"), value=True, help=_('scan.ai_model_essential_services_help', "AI systems for access to essential services"))
             
         with col2:
-            st.write("**Compliance Requirements:**")
-            check_risk_management = st.checkbox("Risk Management System", value=True, help="Assess risk management requirements")
-            check_data_governance = st.checkbox("Data Governance", value=True, help="Evaluate data governance practices")
-            check_human_oversight = st.checkbox("Human Oversight", value=True, help="Verify human oversight mechanisms")
-            check_documentation = st.checkbox("Technical Documentation", value=True, help="Review technical documentation compliance")
+            st.write(_('scan.ai_model_compliance_requirements', "**Compliance Requirements:**"))
+            check_risk_management = st.checkbox(_('scan.ai_model_risk_management', "Risk Management System"), value=True, help=_('scan.ai_model_risk_management_help', "Assess risk management requirements"))
+            check_data_governance = st.checkbox(_('scan.ai_model_data_governance', "Data Governance"), value=True, help=_('scan.ai_model_data_governance_help', "Evaluate data governance practices"))
+            check_human_oversight = st.checkbox(_('scan.ai_model_human_oversight', "Human Oversight"), value=True, help=_('scan.ai_model_human_oversight_help', "Verify human oversight mechanisms"))
+            check_documentation = st.checkbox(_('scan.ai_model_tech_documentation', "Technical Documentation"), value=True, help=_('scan.ai_model_tech_documentation_help', "Review technical documentation compliance"))
     
     # All analysis options enabled by default (no user selection needed)
     pii_exposure = True
@@ -7662,9 +7683,10 @@ def render_model_analysis_interface(region: str, username: str):
     test_data = None  # Auto-generated when needed
     
     # Output information
-    st.markdown("""
+    output_info_text = _('scan.ai_model_output_info', "**Output:** Privacy risk assessment + bias analysis + compliance report with actionable recommendations")
+    st.markdown(f"""
     <div style="padding: 10px; border-radius: 5px; background-color: #f0f8ff; margin: 10px 0;">
-        <span style="font-weight: bold;">Output:</span> Privacy risk assessment + bias analysis + compliance report with actionable recommendations
+        {output_info_text}
     </div>
     """, unsafe_allow_html=True)
     
@@ -7675,9 +7697,9 @@ def render_model_analysis_interface(region: str, username: str):
     has_model_path = model_path and model_path.strip()
     scan_enabled = has_uploaded_model or has_repo_url or has_model_path
     
-    if st.button("🚀 Start AI Model Analysis", type="primary", use_container_width=True, disabled=not scan_enabled):
+    if st.button(_('scan.ai_model_start_analysis', "🚀 Start AI Model Analysis"), type="primary", use_container_width=True, disabled=not scan_enabled):
         if not scan_enabled:
-            st.error("❌ Please provide at least one of: uploaded model file, repository URL, or model path.")
+            st.error(_('scan.ai_model_no_input_error', "❌ Please provide at least one of: uploaded model file, repository URL, or model path."))
             return
             
         # Prepare AI Act configuration
@@ -7713,13 +7735,15 @@ def render_model_analysis_interface(region: str, username: str):
 def render_ai_act_calculator_interface(region: str, username: str):
     """Render the AI Act compliance calculator interface"""
     from components.ai_act_calculator_ui import render_ai_act_calculator
+    from utils.i18n import get_text as _
     
-    st.markdown("""
+    calc_title = _('scan.ai_model_ai_act_calculator_title', "🇪🇺 AI Act 2025 Compliance Calculator")
+    calc_desc = _('scan.ai_model_ai_act_calculator_desc', "Interactive tool to assess your AI system's compliance with EU AI Act 2025 requirements. Get risk classification, compliance score, and implementation roadmap.")
+    st.markdown(f"""
     <div style="padding: 15px; border-radius: 10px; background-color: #e8f4f8; margin: 10px 0;">
-        <h4 style="color: #1f4e79; margin-bottom: 10px;">🇪🇺 AI Act 2025 Compliance Calculator</h4>
+        <h4 style="color: #1f4e79; margin-bottom: 10px;">{calc_title}</h4>
         <p style="margin: 0; color: #333;">
-            Interactive tool to assess your AI system's compliance with EU AI Act 2025 requirements.
-            Get risk classification, compliance score, and implementation roadmap.
+            {calc_desc}
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -7759,9 +7783,10 @@ def execute_ai_model_scan(region, username, model_source, uploaded_model, repo_u
         # Track license usage
         track_scanner_usage('ai_model', region, success=True, duration_ms=0)
         
-        with st.status("Running AI Model Analysis...", expanded=True) as status:
+        from utils.i18n import get_text as _
+        with st.status(_('scan.ai_model_running', "Running AI Model Analysis..."), expanded=True) as status:
             # Initialize AI model scanner
-            status.update(label="Initializing AI model analysis framework...")
+            status.update(label=_('scan.ai_model_initializing', "Initializing AI model analysis framework..."))
             
             from services.ai_model_scanner import AIModelScanner
             scanner = AIModelScanner(region=region)
