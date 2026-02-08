@@ -128,13 +128,14 @@ class CopyrightComplianceDetector:
             }
         }
     
-    def detect_copyright_violations(self, content: str, metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def detect_copyright_violations(self, content: str, metadata: Optional[Dict[str, Any]] = None, source_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Detect copyright compliance violations in content.
         
         Args:
             content: Text content to analyze
             metadata: Additional metadata about the content source
+            source_file: Source file path for actionable location fields
             
         Returns:
             List of copyright compliance findings
@@ -142,23 +143,18 @@ class CopyrightComplianceDetector:
         findings = []
         metadata = metadata or {}
         
-        # Detect copyright notices and claims
         findings.extend(self._detect_copyright_claims(content))
-        
-        # Detect license violations  
         findings.extend(self._detect_license_violations(content))
-        
-        # Detect attribution issues
         findings.extend(self._detect_attribution_issues(content))
-        
-        # Detect proprietary dataset usage
         findings.extend(self._detect_proprietary_datasets(content))
-        
-        # Analyze fair use compliance
         findings.extend(self._analyze_fair_use_compliance(content, metadata))
-        
-        # Check for commercial content usage
         findings.extend(self._detect_commercial_content(content))
+        
+        if source_file:
+            for finding in findings:
+                loc = finding.get('location', '')
+                if re.match(r'^Position \d+-\d+$', loc):
+                    finding['location'] = source_file
         
         return findings
     

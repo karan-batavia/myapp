@@ -98,7 +98,7 @@ try:
     COMPREHENSIVE_AI_ACT_AVAILABLE = True
 except ImportError:
     COMPREHENSIVE_AI_ACT_AVAILABLE = False
-    def detect_ai_act_violations(content, document_metadata=None):
+    def detect_ai_act_violations(content, document_metadata=None, source_file=None):
         return []
     def get_ai_act_coverage_summary():
         return {'total_articles': 113, 'coverage_percentage': 100.0}
@@ -145,7 +145,7 @@ class AIModelScanner:
         combined = priority_files + other_files
         return combined[:MAX_FILES_PER_SCAN]
 
-    def _parallel_compliance_check(self, content: str, metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    def _parallel_compliance_check(self, content: str, metadata: Optional[Dict[str, Any]] = None, source_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Run EU AI Act compliance checks in parallel batches for faster processing.
         Groups related article checks to reduce overhead on large content.
@@ -154,7 +154,7 @@ class AIModelScanner:
         
         try:
             # Run compliance detection (already optimized internally)
-            findings = detect_ai_act_violations(content, metadata)
+            findings = detect_ai_act_violations(content, metadata, source_file=source_file)
             all_findings.extend(findings)
         except Exception as e:
             logging.warning(f"Parallel compliance check warning: {e}")
@@ -1581,7 +1581,7 @@ class AIModelScanner:
             Algorithmic accountability measures are limited with minimal human oversight.
             """
             
-            ai_act_findings = detect_ai_act_violations(analysis_content)
+            ai_act_findings = detect_ai_act_violations(analysis_content, source_file="src/model/ai-compliance-analysis.py")
             
             # ADD COMPLIANCE IMPROVEMENT FINDINGS FOR 95%+ SCORING POTENTIAL
             # These findings represent best practices that boost compliance scores
@@ -2335,7 +2335,7 @@ class AIModelScanner:
         """
         
         # Get EU AI Act violations using our comprehensive compliance system
-        eu_violations = detect_ai_act_violations(model_content)
+        eu_violations = detect_ai_act_violations(model_content, source_file="src/model/eu-ai-act-assessment.py")
         
         # Convert to scanner findings format with proper AI Act categorization
         for violation in eu_violations:

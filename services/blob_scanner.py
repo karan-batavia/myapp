@@ -245,7 +245,7 @@ class BlobScanner:
                 netherlands_violations = []
             
             try:
-                ai_act_violations = detect_ai_act_violations(text)
+                ai_act_violations = detect_ai_act_violations(text, source_file=file_path)
             except Exception as e:
                 print(f"AI Act violations detection failed: {str(e)}")
                 ai_act_violations = []

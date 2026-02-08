@@ -55,13 +55,14 @@ AI_RISK_CATEGORIES = {
     ]
 }
 
-def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str, Any]] = None, source_file: Optional[str] = None) -> List[Dict[str, Any]]:
     """
     Detect EU AI Act compliance violations in document content.
     
     Args:
         content: Document content to analyze
         document_metadata: Additional metadata about the document
+        source_file: Source file path for actionable location fields
         
     Returns:
         List of AI Act compliance findings
@@ -164,7 +165,7 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
     try:
         from utils.copyright_compliance_detector import CopyrightComplianceDetector
         copyright_detector = CopyrightComplianceDetector()
-        copyright_findings = copyright_detector.detect_copyright_violations(content, document_metadata)
+        copyright_findings = copyright_detector.detect_copyright_violations(content, document_metadata, source_file=source_file)
         findings.extend(copyright_findings)
     except ImportError:
         pass
@@ -202,6 +203,13 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
         findings.extend(cloud_findings)
     except ImportError:
         pass
+    
+    if source_file:
+        import re as _re
+        for finding in findings:
+            loc = finding.get('location', '')
+            if _re.match(r'^Position \d+-\d+$', loc):
+                finding['location'] = source_file
     
     return findings
 

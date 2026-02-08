@@ -356,7 +356,7 @@ class DPIAScanner:
             gdpr_results = validate_comprehensive_gdpr_compliance(content)
             
             # EU AI Act compliance check
-            ai_act_results = detect_ai_act_violations(content)
+            ai_act_results = detect_ai_act_violations(content, source_file="docs/dpia-assessment.md")
             
             # Netherlands UAVG compliance check  
             uavg_results = detect_uavg_compliance_gaps(content)

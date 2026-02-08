@@ -390,7 +390,7 @@
             <h1>🛡️ DataGuardian Pro Report</h1>
             <p><strong>Scan Type:</strong> AI Model</p>
             <p><strong>Scan ID:</strong> AIMOD-20...</p>
-            <p><strong>Generated:</strong> 2026-02-08 10:25:54</p>
+            <p><strong>Generated:</strong> 2026-02-08 10:49:58</p>
             <p><strong>Region:</strong> Netherlands</p>
         </div>
         
@@ -8259,7 +8259,7 @@
                     <div class="finding-context"><strong>Context:</strong> Model requires GDPR compliance assessment for Netherlands</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> AI Model > Compliance Assessment
+                        <strong>Location:</strong> docs/gdpr-compliance-assessment.md
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -8322,7 +8322,7 @@
                     <div class="finding-context"><strong>Context:</strong> Potential PII exposure in training data</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Training Data
+                        <strong>Location:</strong> src/data/training-data-pipeline.py
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> Training Data</div>
@@ -8390,7 +8390,7 @@
                     <div class="finding-context"><strong>Context:</strong> Assessment of code scraping practices for Copilot-style tools</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Data Collection
+                        <strong>Location:</strong> docs/data-collection-policy.md
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -8458,7 +8458,7 @@
                     <div class="finding-context"><strong>Context:</strong> Consent management finding: Verification of consent mechanisms for using open-source contributions in training. Proper consent mechanisms are required for GDPR compliance.</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Training Data
+                        <strong>Location:</strong> src/data/training-consent-verification.py
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -8521,7 +8521,7 @@
                     <div class="finding-context"><strong>Context:</strong> Opt-out mechanism detected: Compliance with developer rights to exclude their data from model training. Ensure proper exclusion handling for data collection.</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Data Management
+                        <strong>Location:</strong> src/data/developer-opt-out-registry.py
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -8589,7 +8589,7 @@
                     <div class="finding-context"><strong>Context:</strong> Assessment of explainability when AI tools suggest or generate code</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Model Output
+                        <strong>Location:</strong> src/model/output-attribution-framework.py
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -8652,7 +8652,7 @@
                     <div class="finding-context"><strong>Context:</strong> Verification of audit trails for models trained with publicly available code</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Training Process
+                        <strong>Location:</strong> src/training/audit-trail-system.py
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -15907,7 +15907,7 @@
                     <div class="finding-context"><strong>Context:</strong> EU AI Act Article 5 requirement: Assessment of compliance with EU AI Act Article 5 prohibited practices</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> AI System Design
+                        <strong>Location:</strong> docs/ai-practices-compliance-assessment.md
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -15975,7 +15975,7 @@
                     <div class="finding-context"><strong>Context:</strong> EU AI Act compliance finding: Assessment for high-risk AI system classification and requirements</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> AI System Classification
+                        <strong>Location:</strong> docs/high-risk-system-classification.md
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -16037,18 +16037,18 @@
                     
                     
                     <div class="finding-description">
-                        <strong>Description:</strong> Assessment of transparency and disclosure obligations under EU AI Act Article 52
+                        <strong>Description:</strong> Assessment of transparency and disclosure obligations under EU AI Act Article 50
                     </div>
                     
-                    <div class="finding-context"><strong>Context:</strong> EU AI Act Article 52 requirement: Assessment of transparency and disclosure obligations under EU AI Act Article 52</div>
+                    <div class="finding-context"><strong>Context:</strong> EU AI Act Article 50 requirement: Assessment of transparency and disclosure obligations under EU AI Act Article 50</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> User Interface
+                        <strong>Location:</strong> src/ui/transparency-disclosure-config.py
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
                     
-                    <div class="business-impact"><strong>Business Impact:</strong> Non-compliance with Article 52 may result in significant fines</div>
+                    <div class="business-impact"><strong>Business Impact:</strong> Non-compliance with Article 50 may result in significant fines</div>
                     
                     <div class="remediation-priority"><strong>Priority:</strong> Medium - Review within 7 days</div>
                     
@@ -16059,8 +16059,8 @@
                     
         <div class="compliance-section">
             <h4>⚖️ Compliance Requirements</h4>
-            <ul class='compliance-list'><li>EU AI Act Article 52</li></ul>
-            <ul class='compliance-list'><li>Create model cards</li><li>Document compliance evidence</li><li>Conduct verification review</li></ul>
+            <ul class='compliance-list'><li>EU AI Act Article 50</li></ul>
+            <ul class='compliance-list'><li>Document training methodology</li><li>Document compliance evidence</li><li>Conduct verification review</li></ul>
         </div>
         
                     
@@ -16070,17 +16070,17 @@
             
             <div class="recommendation">
                 <div class="recommendation-header">
-                    Ensure Transparency for GPAI
+                    Prepare Model Documentation
                     <span class="recommendation-priority priority-medium">Medium</span>
                 </div>
                 <div class="recommendation-details">
-                    <strong>Description:</strong> Implement GPAI transparency measures per Article 52
+                    <strong>Description:</strong> Create GPAI model documentation per Article 50
                 </div>
                 <div class="recommendation-details">
-                    <strong>Implementation:</strong> Create model cards, document limitations, provide integration guidelines
+                    <strong>Implementation:</strong> Document training methodology, compute resources, copyright policy, capabilities summary
                 </div>
                 <div class="recommendation-details">
-                    <strong>Effort:</strong> 4-8 hours | 
+                    <strong>Effort:</strong> 8-16 hours | 
                     <strong>Verification:</strong> Compliance audit and legal review
                 </div>
             </div>
@@ -16106,7 +16106,7 @@
                     <div class="finding-context"><strong>Context:</strong> EU AI Act compliance finding: Assessment of conformity assessment procedures for market placement</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Market Compliance
+                        <strong>Location:</strong> docs/conformity-assessment-procedure.md
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -16174,7 +16174,7 @@
                     <div class="finding-context"><strong>Context:</strong> EU AI Act compliance finding: Assessment of post-market monitoring and surveillance obligations</div>
                     
                     <div class="finding-location">
-                        <strong>Location:</strong> Market Surveillance
+                        <strong>Location:</strong> docs/post-market-monitoring-plan.md
                     </div>
                     
                     <div class="finding-classification"><strong>Data Classification:</strong> System Configuration</div>
@@ -19430,7 +19430,7 @@
         
         <div class="footer">
             <p>Generated by DataGuardian Pro - Enterprise Privacy & Sustainability Compliance Platform</p>
-            <p>Report ID: AIMOD-20260208-257057 | Generated: 2026-02-08 10:25:54</p>
+            <p>Report ID: AIMOD-20260208-2fe6f6 | Generated: 2026-02-08 10:49:58</p>
             <p style="margin-top: 15px; font-size: 11px; opacity: 0.9; border-top: 1px solid rgba(255,255,255,0.3); padding-top: 10px;">
                 ⚖️ <strong>Consent & Privacy Disclaimer:</strong> This report is generated with user consent under GDPR Article 6(1)(a). 
                 Data processed for compliance assessment purposes only. All personal data is handled in accordance with GDPR/UAVG regulations. 
