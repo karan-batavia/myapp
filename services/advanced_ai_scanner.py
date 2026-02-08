@@ -1346,7 +1346,7 @@ class AdvancedAIScanner:
                     'title': f"Article 50 Transparency Requirements Not Met ({len(non_compliant_items)} items)",
                     'description': f"Missing transparency obligations: {', '.join([item['requirement'] for item in non_compliant_items])}",
                     'location': 'EU AI Act Article 50',
-                    'impact': 'Up to €7.5M or 1.5% of annual turnover',
+                    'impact': 'Up to €7.5M or 1% of annual turnover',
                     'recommendation': '; '.join([item['recommendation'] for item in non_compliant_items if item.get('recommendation')])
                 })
         
@@ -1806,7 +1806,7 @@ class AdvancedAIScanner:
             return {
                 'risk_level': 'Medium',
                 'max_fine_eur': 7_500_000,
-                'max_fine_percentage': 1.5,
+                'max_fine_percentage': 1.0,
                 'description': 'Penalties for information obligation violations'
             }
         

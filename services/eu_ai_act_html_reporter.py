@@ -437,7 +437,7 @@ def _calculate_penalty_risk(findings: List[Dict[str, Any]]) -> Dict[str, Any]:
     penalty_tiers = {
         'tier_1': {'max_fine': 35000000, 'percentage': 7, 'violations': []},
         'tier_2': {'max_fine': 15000000, 'percentage': 3, 'violations': []},
-        'tier_3': {'max_fine': 7500000, 'percentage': 1.5, 'violations': []}
+        'tier_3': {'max_fine': 7500000, 'percentage': 1, 'violations': []}
     }
     
     for finding in findings:
