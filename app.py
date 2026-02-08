@@ -36,7 +36,7 @@ st.set_page_config(
     page_title="DataGuardian Pro",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 st.markdown("""
@@ -1682,97 +1682,10 @@ def render_landing_page():
         """, unsafe_allow_html=True)
     
     with hero_col2:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 16px; padding: 1.5rem; border: 1px solid #cbd5e1; box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
-            <div style="text-align: center; margin-bottom: 1rem;">
-                <span style="font-size: 1.5rem;">🔐</span>
-                <h3 style="color: #1B2559; margin: 0.3rem 0 0.2rem 0; font-size: 1.3rem;">{_('login.title', 'Login')}</h3>
-                <p style="color: #666; font-size: 0.8rem; margin: 0;">{_('login.subtitle', 'Access your compliance dashboard')}</p>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        with st.form("hero_login_form"):
-            hero_username = st.text_input(_('login.email_username', 'Username'), key="hero_username_input")
-            hero_password = st.text_input(_('login.password', 'Password'), type="password", key="hero_password_input")
-            hero_submit = st.form_submit_button(f"🔐 {_('login.button', 'Login')}", use_container_width=True, type="primary")
-            
-            if hero_submit:
-                if hero_username and hero_password:
-                    from utils.secure_auth_enhanced import authenticate_user
-                    auth_result = authenticate_user(hero_username, hero_password)
-                    
-                    if auth_result.success:
-                        st.session_state.authenticated = True
-                        st.session_state.username = auth_result.username
-                        st.session_state.user_role = auth_result.role
-                        st.session_state.user_id = auth_result.user_id
-                        st.session_state.auth_token = auth_result.token
-                        
-                        try:
-                            import psycopg2
-                            import json
-                            db_url = os.environ.get('DATABASE_URL')
-                            if db_url:
-                                conn = psycopg2.connect(db_url)
-                                cursor = conn.cursor()
-                                cursor.execute("""
-                                    SELECT license_tier, metadata FROM platform_users 
-                                    WHERE username = %s OR email = %s
-                                """, (auth_result.username, auth_result.username))
-                                row = cursor.fetchone()
-                                cursor.close()
-                                conn.close()
-                                
-                                if row:
-                                    tier = row[0] or 'trial'
-                                    st.session_state.license_tier = tier
-                                    if row[1]:
-                                        try:
-                                            metadata = row[1] if isinstance(row[1], dict) else json.loads(str(row[1])) if row[1] else {}
-                                            default_scans = 3 if tier == 'trial' else 0
-                                            st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', default_scans)
-                                        except:
-                                            st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
-                                    else:
-                                        st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
-                                else:
-                                    st.session_state.license_tier = 'trial'
-                                    st.session_state.free_scans_remaining = 3
-                            else:
-                                st.session_state.license_tier = 'trial'
-                                st.session_state.free_scans_remaining = 3
-                        except Exception as e:
-                            logging.error(f"Error loading license tier: {e}")
-                            st.session_state.license_tier = 'trial'
-                            st.session_state.free_scans_remaining = 3
-                        
-                        try:
-                            from services.auth_tracker import track_login_success
-                            track_login_success(user_id=auth_result.user_id, role=auth_result.role)
-                        except Exception:
-                            pass
-                        
-                        st.success(_('login.success', 'Login successful!'))
-                        st.rerun()
-                    else:
-                        try:
-                            from services.auth_tracker import track_login_failure
-                            track_login_failure(reason=auth_result.message)
-                        except Exception:
-                            pass
-                        st.error(f"{_('login.error.invalid_credentials', 'Authentication failed')}: {auth_result.message}")
-                else:
-                    st.error(_('login.error.missing_fields', 'Please enter username and password'))
-        
-        st.markdown(f"""
-        <div style="text-align: center; margin-top: 0.5rem; font-size: 0.8rem; color: #888;">
-            {_('register.new_user', 'New user?')} {_('register.open_sidebar', 'Open the sidebar to create an account')}
-        </div>
-        """, unsafe_allow_html=True)
+        st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
         
         st.markdown("""
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #4CAF5012, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5020;">
                 <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">18</div>
                 <div style="font-size: 0.65rem; color: #666;">Scanners</div>
@@ -1788,6 +1701,27 @@ def render_landing_page():
             <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #1f77b412, #1f77b405); border-radius: 8px; border: 1px solid #1f77b420;">
                 <div style="font-size: 1.3rem; font-weight: 800; color: #1f77b4;">NL</div>
                 <div style="font-size: 0.65rem; color: #666;">UAVG</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("""
+        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #6A1B9A12, #6A1B9A05); border-radius: 8px; border: 1px solid #6A1B9A20;">
+                <div style="font-size: 1.1rem;">🔍</div>
+                <div style="font-size: 0.6rem; color: #6A1B9A; font-weight: 600;">Fraud Detection</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #00838F12, #00838F05); border-radius: 8px; border: 1px solid #00838F20;">
+                <div style="font-size: 1.1rem;">🖼️</div>
+                <div style="font-size: 0.6rem; color: #00838F; font-weight: 600;">Fake Image Analysis</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #F4511E12, #F4511E05); border-radius: 8px; border: 1px solid #F4511E20;">
+                <div style="font-size: 1.1rem;">🧾</div>
+                <div style="font-size: 0.6rem; color: #F4511E; font-weight: 600;">Receipt Verification</div>
+            </div>
+            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #5E35B112, #5E35B105); border-radius: 8px; border: 1px solid #5E35B120;">
+                <div style="font-size: 1.1rem;">📄</div>
+                <div style="font-size: 0.6rem; color: #5E35B1; font-weight: 600;">Document Forensics</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
