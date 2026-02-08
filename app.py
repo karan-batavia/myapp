@@ -1148,27 +1148,7 @@ def main():
                 }
                 streamlit_session.init_session(st.session_state.get('username', 'unknown'), user_data)
             
-            # Check authentication status with JWT validation
             if not is_authenticated():
-                # Hide sidebar page navigation for unauthenticated users
-                st.markdown("""
-                <style>
-                    /* Hide multi-page navigation in sidebar before login */
-                    [data-testid="stSidebarNav"] {
-                        display: none !important;
-                    }
-                    section[data-testid="stSidebar"] > div:first-child > div:first-child > div[data-testid="stSidebarNav"] {
-                        display: none !important;
-                    }
-                    /* Also hide via attribute selectors for newer Streamlit versions */
-                    nav[aria-label="Main menu"] {
-                        display: none !important;
-                    }
-                    ul[data-testid="stSidebarNavItems"] {
-                        display: none !important;
-                    }
-                </style>
-                """, unsafe_allow_html=True)
                 render_landing_page()
                 return
             
@@ -1538,7 +1518,7 @@ def render_landing_page():
                                 if row:
                                     tier = row[0] or 'trial'
                                     st.session_state.license_tier = tier
-                                    logging.info(f"Set license_tier to: {tier} for user {auth_result.username}")
+                                    logging.info(f"Set license_tier to: {tier}")
                                     # Load free scans from metadata (default 3 for trial users)
                                     if row[1]:
                                         try:
@@ -1599,24 +1579,20 @@ def render_landing_page():
         elif st.session_state.get('show_full_registration', False):
             render_full_registration()
     
-    # Show language hint for Dutch users
-    if st.session_state.get('language') == 'en':
+    if st.session_state.get('language') == 'en' and not st.session_state.get('_nl_hint_checked', False):
+        st.session_state['_nl_hint_checked'] = True
         try:
-            # Check if user might be from Netherlands
-            try:
-                import requests
-            except ImportError:
-                requests = None
-            
-            if requests:
-                response = requests.get('https://ipapi.co/json/', timeout=1)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get('country_code', '').upper() == 'NL':
-                        st.info("💡 Deze applicatie is ook beschikbaar in het Nederlands - use the language selector in the sidebar")
+            import requests as _req
+            response = _req.get('https://ipapi.co/json/', timeout=1)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('country_code', '').upper() == 'NL':
+                    st.session_state['_show_nl_hint'] = True
         except Exception:
-            # Silent fail for IP geolocation - not critical for app functionality
             pass
+    
+    if st.session_state.get('_show_nl_hint', False):
+        st.info("💡 Deze applicatie is ook beschikbaar in het Nederlands - use the language selector in the sidebar")
     
     # Hero section with image and value proposition
     hero_col1, hero_col2 = st.columns([1, 1], gap="large")
