@@ -826,20 +826,25 @@ Article 113 - Addressees
 PENALTY FRAMEWORK SUMMARY
 ===============================================================================
 
-Tier 1 - Prohibited Practices (Article 5):
-  Maximum Fine:  EUR 35,000,000 or 7% of global annual turnover
+Tier 1 - Prohibited Practices (Art. 99(3) / Article 5):
+  Maximum Fine:  EUR 35,000,000 or 7% of global annual turnover (whichever higher)
   Applies to:    Social scoring, subliminal manipulation, exploitation
-                 of vulnerable groups, real-time biometric ID
+                 of vulnerable groups, real-time biometric identification,
+                 emotion recognition in workplace/education, untargeted
+                 facial recognition scraping, predictive policing on individuals
 
-Tier 2 - High-Risk Non-Compliance (Articles 6-49):
-  Maximum Fine:  EUR 15,000,000 or 3% of global annual turnover
-  Applies to:    High-risk system requirements, data governance,
-                 conformity assessment, transparency obligations
+Tier 2 - All Other Non-Compliance (Art. 99(4)):
+  Maximum Fine:  EUR 15,000,000 or 3% of global annual turnover (whichever higher)
+  Applies to:    High-risk system requirements (Art. 6-49), transparency
+                 obligations (Art. 50-52), GPAI model obligations (Art. 53-55),
+                 provider/deployer duties, data governance, conformity
+                 assessment, post-market monitoring, governance provisions
 
-Tier 3 - Incorrect Information (Articles 81):
-  Maximum Fine:  EUR 7,500,000 or 1% of global annual turnover
-  Applies to:    Misleading declarations, inaccurate documentation,
-                 false information to notified bodies
+Tier 3 - Incorrect Information to Authorities (Art. 99(5)):
+  Maximum Fine:  EUR 7,500,000 or 1% of global annual turnover (whichever higher)
+  Applies to:    Supplying incorrect, incomplete, or misleading information
+                 to notified bodies or national competent authorities in
+                 reply to a request
 
 ===============================================================================
 DETECTION FUNCTION INDEX (49 Functions)

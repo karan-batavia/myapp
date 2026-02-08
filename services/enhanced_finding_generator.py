@@ -924,7 +924,7 @@ class EnhancedFindingGenerator:
         elif 'risk_management' in finding_lower and 'ai' in finding_lower:
             return 'EU AI Act Article 9 - Risk Management (Penalty: €15M or 3% turnover)'
         elif 'ai_act' in finding_lower or 'ai model' in finding_lower:
-            return 'EU AI Act - General Requirements (Penalty: €7.5M or 1.5% turnover)'
+            return 'EU AI Act - General Requirements (Penalty: €15M or 3% turnover)'
         
         # Default to GDPR for general findings (not AI-specific)
         else:

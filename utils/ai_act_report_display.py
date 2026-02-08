@@ -144,7 +144,7 @@ def show_ai_act_enforcement_info() -> None:
             **Administrative Fines:**
             - 🚫 **€35M or 7% turnover**: Prohibited AI practices
             - ⚠️ **€15M or 3% turnover**: High-risk system violations  
-            - 📋 **€7.5M or 1.5% turnover**: Other violations
+            - 📋 **€7.5M or 1% turnover**: Incorrect information to authorities
             - ⚖️ **Authority**: National supervisory authorities
             """)
     

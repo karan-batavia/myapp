@@ -634,7 +634,7 @@ class AIModelScanner:
                     'maximum_penalties': {
                         'prohibited_practices': '€35M or 7% global turnover',
                         'high_risk_violations': '€15M or 3% global turnover',
-                        'transparency_violations': '€7.5M or 1% global turnover'
+                        'incorrect_information_to_authorities': '€7.5M or 1% global turnover'
                     }
                 }
                 

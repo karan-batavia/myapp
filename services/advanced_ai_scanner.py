@@ -1346,7 +1346,7 @@ class AdvancedAIScanner:
                     'title': f"Article 50 Transparency Requirements Not Met ({len(non_compliant_items)} items)",
                     'description': f"Missing transparency obligations: {', '.join([item['requirement'] for item in non_compliant_items])}",
                     'location': 'EU AI Act Article 50',
-                    'impact': 'Up to €7.5M or 1% of annual turnover',
+                    'impact': 'Up to €15M or 3% of annual turnover',
                     'recommendation': '; '.join([item['recommendation'] for item in non_compliant_items if item.get('recommendation')])
                 })
         
@@ -1418,7 +1418,7 @@ class AdvancedAIScanner:
                 'title': f"Post-Market Monitoring Gaps ({post_market['compliance_percentage']:.0f}% compliant)",
                 'description': 'Missing post-market monitoring plan, incident reporting system, or malfunction tracking',
                 'location': 'EU AI Act Articles 85-87',
-                'impact': 'Unable to detect and respond to serious incidents - regulatory penalties up to €7.5M',
+                'impact': 'Unable to detect and respond to serious incidents - regulatory penalties up to €15M or 3% of annual turnover',
                 'recommendation': 'Establish post-market monitoring plan with performance tracking and 15-day serious incident reporting procedure'
             })
         
@@ -1807,7 +1807,7 @@ class AdvancedAIScanner:
                 'risk_level': 'Medium',
                 'max_fine_eur': 7_500_000,
                 'max_fine_percentage': 1.0,
-                'description': 'Penalties for information obligation violations'
+                'description': 'Penalties for supplying incorrect or misleading information to authorities (Art. 99(5))'
             }
         
         return {

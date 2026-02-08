@@ -1911,7 +1911,7 @@ def _detect_provider_transparency_obligations(content: str) -> List[Dict[str, An
                 'article_reference': 'EU AI Act Article 50',
                 'missing_elements': missing_transparency,
                 'compliance_deadline': 'August 2, 2025',
-                'penalty_risk': 'Up to €7.5M or 1% global turnover',
+                'penalty_risk': 'Up to €15M or 3% global turnover',
                 'applicable_systems': [
                     'AI systems interacting with natural persons',
                     'Emotion recognition systems',
