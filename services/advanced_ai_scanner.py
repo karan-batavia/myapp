@@ -125,7 +125,7 @@ class AdvancedAIScanner:
             "penalties": {
                 "prohibited_practices": {"amount": 35000000, "percentage": 0.07},
                 "high_risk_non_compliance": {"amount": 15000000, "percentage": 0.03},
-                "information_obligations": {"amount": 7500000, "percentage": 0.015}
+                "information_obligations": {"amount": 7500000, "percentage": 0.01}
             }
         }
     
