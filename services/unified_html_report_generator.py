@@ -835,12 +835,14 @@ class UnifiedHTMLReportGenerator:
             tsc_criteria = finding.get('tsc_criteria', finding.get('soc2_tsc_criteria', []))
             nis2_articles = finding.get('nis2_articles', [])
             
+            severity_display = self._translate_finding_value(finding.get('severity', finding.get('risk_level', 'Low')))
+            
             # Build enhanced finding HTML
             findings_html += f"""
             <div class="finding enhanced-finding {severity}">
                 <div class="finding-header">
                     <span class="finding-type">{finding_type}</span>
-                    <span class="finding-severity severity-{severity}">{finding.get('severity', finding.get('risk_level', 'Low'))}</span>
+                    <span class="finding-severity severity-{severity}">{severity_display}</span>
                 </div>
                 
                 <div class="finding-content">
@@ -1004,6 +1006,7 @@ class UnifiedHTMLReportGenerator:
     
     def _generate_penalty_info(self, finding: Dict[str, Any]) -> str:
         """Generate HTML for penalty information based on finding severity, type, and regulation."""
+        is_dutch = self.current_language == 'nl'
         finding_type = finding.get('type', '').lower()
         severity = finding.get('severity', 'Medium').lower()
         article_ref = finding.get('article_reference', finding.get('location', '')).lower()
@@ -1018,14 +1021,14 @@ class UnifiedHTMLReportGenerator:
             if gdpr_penalty_tier == 'higher':
                 penalty_html = f"""
                 <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                    <strong style="color: #991b1b;">⚖️ GDPR Penalty Risk - Higher Tier (Article 83(5)):</strong>
+                    <strong style="color: #991b1b;">⚖️ {"GDPR Boeterisico - Hoger Niveau (Artikel 83(5)):" if is_dutch else "GDPR Penalty Risk - Higher Tier (Article 83(5)):"}</strong>
                     <span style="color: #b91c1c; font-weight: 600;">{gdpr_penalty_risk}</span>
                 </div>
                 """
             elif gdpr_penalty_tier == 'lower':
                 penalty_html = f"""
                 <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                    <strong style="color: #92400e;">⚖️ GDPR Penalty Risk - Lower Tier (Article 83(4)):</strong>
+                    <strong style="color: #92400e;">⚖️ {"GDPR Boeterisico - Lager Niveau (Artikel 83(4)):" if is_dutch else "GDPR Penalty Risk - Lower Tier (Article 83(4)):"}</strong>
                     <span style="color: #b45309; font-weight: 600;">{gdpr_penalty_risk}</span>
                 </div>
                 """
@@ -1040,17 +1043,17 @@ class UnifiedHTMLReportGenerator:
         
         # EU AI Act penalties
         if 'prohibited' in finding_type or 'article 5' in article_ref or severity == 'critical':
-            penalty_html = """
+            penalty_html = f"""
             <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #991b1b;">⚠️ Penalty Risk - Tier 1 (Prohibited Practices):</strong>
-                <span style="color: #b91c1c; font-weight: 600;">Up to €35 million or 7% of global annual turnover</span>
+                <strong style="color: #991b1b;">⚠️ {"Boeterisico - Niveau 1 (Verboden Praktijken):" if is_dutch else "Penalty Risk - Tier 1 (Prohibited Practices):"}</strong>
+                <span style="color: #b91c1c; font-weight: 600;">{"Tot €35 miljoen of 7% van de wereldwijde jaaromzet" if is_dutch else "Up to €35 million or 7% of global annual turnover"}</span>
             </div>
             """
         elif 'high_risk' in finding_type or 'gpai' in finding_type or severity == 'high' or any(x in article_ref for x in ['article 6', 'article 9', 'article 10', 'article 51', 'article 52']):
-            penalty_html = """
+            penalty_html = f"""
             <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #92400e;">⚠️ Penalty Risk - Tier 2 (High-Risk/GPAI Requirements):</strong>
-                <span style="color: #b45309; font-weight: 600;">Up to €15 million or 3% of global annual turnover</span>
+                <strong style="color: #92400e;">⚠️ {"Boeterisico - Niveau 2 (Hoog-Risico/GPAI Vereisten):" if is_dutch else "Penalty Risk - Tier 2 (High-Risk/GPAI Requirements):"}</strong>
+                <span style="color: #b45309; font-weight: 600;">{"Tot €15 miljoen of 3% van de wereldwijde jaaromzet" if is_dutch else "Up to €15 million or 3% of global annual turnover"}</span>
             </div>
             """
         elif 'ai_act' in finding_type or 'eu ai' in article_ref.lower():
@@ -1062,17 +1065,17 @@ class UnifiedHTMLReportGenerator:
                 'notified body', 'incorrect data'
             ])
             if is_incorrect_info:
-                penalty_html = """
+                penalty_html = f"""
             <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #1e40af;">ℹ️ Penalty Risk - Tier 3 (Incorrect Info to Authorities):</strong>
-                <span style="color: #1d4ed8; font-weight: 600;">Up to €7.5 million or 1% of global annual turnover</span>
+                <strong style="color: #1e40af;">ℹ️ {"Boeterisico - Niveau 3 (Onjuiste Info aan Autoriteiten):" if is_dutch else "Penalty Risk - Tier 3 (Incorrect Info to Authorities):"}</strong>
+                <span style="color: #1d4ed8; font-weight: 600;">{"Tot €7,5 miljoen of 1% van de wereldwijde jaaromzet" if is_dutch else "Up to €7.5 million or 1% of global annual turnover"}</span>
             </div>
             """
             else:
-                penalty_html = """
+                penalty_html = f"""
             <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #92400e;">⚠️ Penalty Risk - Tier 2 (Non-Compliance):</strong>
-                <span style="color: #b45309; font-weight: 600;">Up to €15 million or 3% of global annual turnover</span>
+                <strong style="color: #92400e;">⚠️ {"Boeterisico - Niveau 2 (Niet-naleving):" if is_dutch else "Penalty Risk - Tier 2 (Non-Compliance):"}</strong>
+                <span style="color: #b45309; font-weight: 600;">{"Tot €15 miljoen of 3% van de wereldwijde jaaromzet" if is_dutch else "Up to €15 million or 3% of global annual turnover"}</span>
             </div>
             """
         
@@ -1722,15 +1725,17 @@ class UnifiedHTMLReportGenerator:
             return ""
         
         recommendations_html = ""
+        priority_nl = {'Critical': 'Kritiek', 'High': 'Hoog', 'Medium': 'Gemiddeld', 'Low': 'Laag'}
         for rec in recommendations[:3]:  # Limit to first 3 for readability
             priority = rec.get('priority', 'Medium').lower()
             priority_class = f"priority-{priority}"
+            priority_display = priority_nl.get(rec.get('priority', 'Medium'), rec.get('priority', 'Medium')) if self.current_language == 'nl' else rec.get('priority', 'Medium')
             
             recommendations_html += f"""
             <div class="recommendation">
                 <div class="recommendation-header">
                     {rec.get('action', t_report('action_required', 'Action Required'))}
-                    <span class="recommendation-priority {priority_class}">{rec.get('priority', 'Medium')}</span>
+                    <span class="recommendation-priority {priority_class}">{priority_display}</span>
                 </div>
                 <div class="recommendation-details">
                     <strong>{t_report('description', 'Description')}:</strong> {rec.get('description', t_report('no_description', 'No description available'))}
@@ -2159,6 +2164,7 @@ class UnifiedHTMLReportGenerator:
 
     def _generate_ai_model_content(self, scan_result: Dict[str, Any]) -> str:
         """Generate AI model-specific compliance content with comprehensive EU AI Act coverage."""
+        is_dutch = self.current_language == 'nl'
         model_framework = scan_result.get('model_framework', 'Unknown')
         ai_act_compliance = scan_result.get('ai_act_compliance', 'Not assessed')
         coverage_version = scan_result.get('coverage_version', '')
@@ -2278,7 +2284,7 @@ class UnifiedHTMLReportGenerator:
             comprehensive_html = f"""
             <div class="info-box success" style="margin-top: 20px; background: #f0fdf4; border: 2px solid #10b981; padding: 20px; border-radius: 8px;">
                 <h3 style="color: #065f46; margin-bottom: 15px;">🎯 Comprehensive EU AI Act 2025 Coverage ({coverage_version})</h3>
-                <p style="margin-bottom: 15px;"><strong>Articles Analyzed:</strong> {articles_display}</p>
+                <p style="margin-bottom: 15px;"><strong>{"Artikelen Geanalyseerd" if is_dutch else "Articles Analyzed"}:</strong> {articles_display}</p>
                 <div class="metrics-grid">
                     {phase_cards}
                 </div>
@@ -2294,7 +2300,7 @@ class UnifiedHTMLReportGenerator:
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{model_framework}</div>
-                    <div class="metric-label">Model Framework</div>
+                    <div class="metric-label">{"Model Raamwerk" if is_dutch else "Model Framework"}</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{ai_act_compliance}</div>
@@ -2302,7 +2308,7 @@ class UnifiedHTMLReportGenerator:
                 </div>
                 <div class="metric-card">
                     <div class="metric-value">{compliance_score}%</div>
-                    <div class="metric-label">Compliance Score</div>
+                    <div class="metric-label">{"Nalevingsscore" if is_dutch else "Compliance Score"}</div>
                 </div>
             </div>
             {comprehensive_html}
@@ -2349,6 +2355,21 @@ class UnifiedHTMLReportGenerator:
                 'rating': 'Beoordeling' if is_dutch else 'Rating',
                 'regulatory_deadlines': 'Regelgevende Deadlines' if is_dutch else 'Regulatory Deadlines',
             }
+            
+            chapter_translations = {
+                'I - General Provisions': 'I - Algemene Bepalingen',
+                'II - Prohibited Practices': 'II - Verboden Praktijken',
+                'III - High-Risk AI': 'III - Hoog-Risico AI',
+                'IV - Transparency': 'IV - Transparantie',
+                'V - GPAI Models': 'V - GPAI Modellen',
+                'VI - Innovation': 'VI - Innovatie',
+                'VII - Governance': 'VII - Bestuur',
+                'VIII - Market Surveillance': 'VIII - Markttoezicht',
+                'IX - Penalties': 'IX - Sancties',
+                'X - Delegation': 'X - Delegatie',
+                'XI - Committee': 'XI - Comité',
+                'XII - Final Provisions': 'XII - Slotbepalingen',
+            } if is_dutch else {}
             
             system_name = scan_result.get('model_name', scan_result.get('repository_url', 'AI System'))
             enhanced = generate_enhanced_compliance_report(
@@ -2421,7 +2442,7 @@ class UnifiedHTMLReportGenerator:
                     
                     traceability_html += f"""
                         <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 10px;">{chapter[:40]}{'...' if len(chapter) > 40 else ''}</td>
+                            <td style="padding: 10px;">{chapter_translations.get(chapter, chapter)[:40]}{'...' if len(chapter_translations.get(chapter, chapter)) > 40 else ''}</td>
                             <td style="padding: 10px; text-align: center;">{len(data.get('articles', []))}</td>
                             <td style="padding: 10px; text-align: center; color: #22c55e;">{data.get('compliant', 0)}</td>
                             <td style="padding: 10px; text-align: center; color: #f59e0b;">{data.get('partial', 0)}</td>
@@ -2460,6 +2481,13 @@ class UnifiedHTMLReportGenerator:
                         <tbody>
                 """
                 
+                priority_translations = {
+                    'CRITICAL': 'KRITIEK',
+                    'HIGH': 'HOOG',
+                    'MEDIUM': 'GEMIDDELD',
+                    'LOW': 'LAAG',
+                } if is_dutch else {}
+                
                 for item in prioritized:
                     priority = item.get('priority', 'medium')
                     priority_color = "#ef4444" if priority == "critical" else "#f59e0b" if priority == "high" else "#3b82f6"
@@ -2474,7 +2502,7 @@ class UnifiedHTMLReportGenerator:
                             <td style="padding: 10px; font-family: monospace; font-size: 11px;">{item.get('id', '')}</td>
                             <td style="padding: 10px; font-weight: 600;">{item.get('article', '')}</td>
                             <td style="padding: 10px; font-size: 12px;">{finding_text}</td>
-                            <td style="padding: 10px; text-align: center;"><span style="background: {priority_color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">{priority_icon} {priority.upper()}</span></td>
+                            <td style="padding: 10px; text-align: center;"><span style="background: {priority_color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">{priority_icon} {priority_translations.get(priority.upper(), priority.upper())}</span></td>
                             <td style="padding: 10px; text-align: center; font-weight: bold;">{item.get('impact_score', 0):.0f}</td>
                             <td style="padding: 10px; text-align: center;">{item.get('effort_hours', 0):.0f}h</td>
                             <td style="padding: 10px; text-align: center; font-size: 11px;">{item.get('deadline', '')}</td>
@@ -2495,6 +2523,18 @@ class UnifiedHTMLReportGenerator:
             exec_summary = enhanced.get('executive_summary', {})
             compliance_overview = exec_summary.get('compliance_overview', {})
             
+            rating_raw = compliance_overview.get('rating', 'N/A')
+            if is_dutch:
+                rating_translations_map = {
+                    'PARTIALLY COMPLIANT': 'GEDEELTELIJK CONFORM',
+                    'FULLY COMPLIANT': 'VOLLEDIG CONFORM',
+                    'NON-COMPLIANT': 'NIET CONFORM',
+                    'COMPLIANT': 'CONFORM',
+                }
+                rating_display = rating_translations_map.get(rating_raw, rating_raw)
+            else:
+                rating_display = rating_raw
+            
             executive_html = f"""
             <div style="margin-top: 30px; background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #16a34a; border-radius: 12px; padding: 25px;">
                 <h3 style="color: #166534; margin-bottom: 20px; border-bottom: 2px solid #16a34a; padding-bottom: 10px;">
@@ -2505,7 +2545,7 @@ class UnifiedHTMLReportGenerator:
                         <h4 style="color: #166534; margin-bottom: 10px;">{t['compliance_overview']}</h4>
                         <table style="width: 100%; font-size: 13px;">
                             <tr><td style="padding: 5px; color: #64748b;">{t['total_score']}:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('overall_score', 'N/A')}</td></tr>
-                            <tr><td style="padding: 5px; color: #64748b;">{t['rating']}:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('rating', 'N/A')}</td></tr>
+                            <tr><td style="padding: 5px; color: #64748b;">{t['rating']}:</td><td style="padding: 5px; font-weight: bold;">{rating_display}</td></tr>
                             <tr><td style="padding: 5px; color: #64748b;">{t['articles_assessed']}:</td><td style="padding: 5px; font-weight: bold;">{compliance_overview.get('articles_assessed', 0)}</td></tr>
                         </table>
                     </div>
