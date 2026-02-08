@@ -1665,6 +1665,18 @@ class CodeScanner:
             risk_level = finding.get('risk_level', 'Medium')
             risk_counts[risk_level] = risk_counts.get(risk_level, 0) + 1
         
+        for finding in all_pii:
+            if 'location' in finding:
+                loc = finding['location']
+                if '/tmp/' in loc or '/var/' in loc:
+                    parts = loc.split(':')
+                    clean_path = os.path.basename(parts[0]) if parts else loc
+                    finding['location'] = f"{clean_path}:{parts[1]}" if len(parts) > 1 else clean_path
+            elif finding.get('file'):
+                clean_file = os.path.basename(finding['file']) if '/tmp/' in finding.get('file', '') or '/var/' in finding.get('file', '') else finding['file']
+                line = finding.get('line', 0)
+                finding['location'] = f"{clean_file}:{line}" if line else clean_file
+
         return {
             'file_name': os.path.basename(file_path),
             'file_path': file_path,
@@ -2301,7 +2313,8 @@ class CodeScanner:
                             'compliance_frameworks': ['GDPR', 'UAVG'],
                             'source': 'comprehensive_uavg_validator',
                             'penalty_risk': finding.get('penalty_risk', ''),
-                            'file': 'Multiple files analyzed'
+                            'file': 'Multiple files analyzed',
+                            'location': finding.get('location', finding.get('file', 'Cross-file analysis'))
                         }
                         
                         self.scan_checkpoint_data['findings'].append(normalized_uavg_finding)
@@ -2326,7 +2339,8 @@ class CodeScanner:
                         'compliance_frameworks': ['GDPR'],
                         'source': 'comprehensive_gdpr_validator',
                         'gdpr_chapter': finding.get('chapter', ''),
-                        'file': finding.get('file', 'Multiple files analyzed')
+                        'file': finding.get('file', 'Multiple files analyzed'),
+                        'location': finding.get('location', finding.get('file', 'Cross-file GDPR analysis'))
                     }
                     
                     if self.region == "Netherlands":

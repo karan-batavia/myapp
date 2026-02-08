@@ -4524,11 +4524,13 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                         # Netherlands compliance flags
                         nl_flags = get_netherlands_compliance_flags(pattern_name, matched_text)
                         
+                        clean_file = os.path.basename(file_path)
                         finding = {
                             'type': pattern_name.upper(),
                             'severity': severity,
-                            'file': file_path,
+                            'file': clean_file,
                             'line': line_num,
+                            'location': f"{clean_file}:{line_num}",
                             'description': f"Detected {pattern_name.replace('_', ' ').title()}: {matched_text[:20]}{'...' if len(matched_text) > 20 else ''}",
                             'matched_content': matched_text,
                             'entropy_score': round(entropy_score, 2),

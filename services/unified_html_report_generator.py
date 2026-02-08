@@ -1481,26 +1481,47 @@ class UnifiedHTMLReportGenerator:
         gdpr_penalty_risk = finding.get('penalty_risk', '')
         gdpr_penalty_tier = finding.get('penalty_tier', '')
         
-        if gdpr_penalty_risk and 'gdpr' in article_ref.lower():
-            if gdpr_penalty_tier == 'higher':
+        compliance_frameworks = finding.get('compliance_frameworks', [])
+        is_gdpr_finding = (
+            'gdpr' in article_ref.lower() or
+            'uavg' in article_ref.lower() or
+            'art.' in article_ref.lower() or
+            'GDPR' in compliance_frameworks or
+            'UAVG' in compliance_frameworks or
+            finding.get('gdpr_article', '') != '' or
+            'gdpr' in scan_type_lower or
+            'code' in scan_type_lower or
+            'directory' in scan_type_lower or
+            'website' in scan_type_lower or
+            'database' in scan_type_lower or
+            'document' in scan_type_lower
+        )
+        
+        if is_gdpr_finding and not is_soc2_scan and not is_nis2_scan:
+            gdpr_article = finding.get('gdpr_article', finding.get('article_reference', ''))
+            severity = finding.get('severity', finding.get('risk_level', 'Medium')).lower()
+            
+            if severity in ('critical', 'high') or any(kw in gdpr_article.lower() for kw in ['art. 9', 'art. 5', 'art. 6', 'special categor']):
                 penalty_html = f"""
                 <div class="penalty-info" style="background: #fee2e2; border-left: 4px solid #dc2626; padding: 12px; margin: 10px 0; border-radius: 4px;">
                     <strong style="color: #991b1b;">⚖️ {"GDPR Boeterisico - Hoger Niveau (Artikel 83(5)):" if is_dutch else "GDPR Penalty Risk - Higher Tier (Article 83(5)):"}</strong>
-                    <span style="color: #b91c1c; font-weight: 600;">{gdpr_penalty_risk}</span>
+                    <span style="color: #b91c1c; font-weight: 600;">{"Tot €20 miljoen of 4% van de wereldwijde jaaromzet" if is_dutch else "Up to €20 million or 4% of worldwide annual turnover"}</span>
+                    <div style="font-size: 0.85em; color: #991b1b; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 83(5) GDPR{" / UAVG" if 'uavg' in article_ref.lower() or 'UAVG' in compliance_frameworks else ""}</div>
                 </div>
                 """
-            elif gdpr_penalty_tier == 'lower':
+            elif severity == 'medium' or any(kw in gdpr_article.lower() for kw in ['art. 32', 'art. 25', 'art. 35', 'art. 37', 'security']):
                 penalty_html = f"""
                 <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
                     <strong style="color: #92400e;">⚖️ {"GDPR Boeterisico - Lager Niveau (Artikel 83(4)):" if is_dutch else "GDPR Penalty Risk - Lower Tier (Article 83(4)):"}</strong>
-                    <span style="color: #b45309; font-weight: 600;">{gdpr_penalty_risk}</span>
+                    <span style="color: #b45309; font-weight: 600;">{"Tot €10 miljoen of 2% van de wereldwijde jaaromzet" if is_dutch else "Up to €10 million or 2% of worldwide annual turnover"}</span>
+                    <div style="font-size: 0.85em; color: #92400e; margin-top: 4px;">{"Rechtsgrondslag" if is_dutch else "Legal basis"}: {"Artikel" if is_dutch else "Article"} 83(4) GDPR{" / UAVG" if 'uavg' in article_ref.lower() or 'UAVG' in compliance_frameworks else ""}</div>
                 </div>
                 """
             else:
                 penalty_html = f"""
                 <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
                     <strong style="color: #1e40af;">ℹ️ {"GDPR Nalevingsopmerking:" if is_dutch else "GDPR Compliance Note:"}</strong>
-                    <span style="color: #1d4ed8; font-weight: 600;">{gdpr_penalty_risk}</span>
+                    <span style="color: #1d4ed8; font-weight: 600;">{gdpr_article if gdpr_article else ("GDPR Nalevingsvereiste" if is_dutch else "GDPR Compliance Requirement")}</span>
                 </div>
                 """
             return penalty_html
