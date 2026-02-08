@@ -1537,13 +1537,21 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
         # Clone repository with fallback for different default branches
         logger.info(f"Cloning repository {repo_url}...")
         
+        clone_timeout = 60
+        
         # Try cloning with specified branch or main first
         target_branch = branch or "main"
-        process = subprocess.run(
-            ["git", "clone", "--depth", "1", "-b", target_branch, auth_repo_url, temp_dir],
-            capture_output=True,
-            text=True
-        )
+        try:
+            process = subprocess.run(
+                ["git", "clone", "--depth", "1", "-b", target_branch, auth_repo_url, temp_dir],
+                capture_output=True,
+                text=True,
+                timeout=clone_timeout
+            )
+        except subprocess.TimeoutExpired:
+            logger.error(f"Clone timed out after {clone_timeout}s for {repo_url}")
+            results["error"] = f"Repository clone timed out after {clone_timeout} seconds. The repository may be too large or inaccessible."
+            return results
         
         # If main branch fails, try master branch
         if process.returncode != 0 and target_branch == "main":
@@ -1551,11 +1559,17 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
             shutil.rmtree(temp_dir, ignore_errors=True)
             temp_dir = tempfile.mkdtemp()
             
-            process = subprocess.run(
-                ["git", "clone", "--depth", "1", "-b", "master", auth_repo_url, temp_dir],
-                capture_output=True,
-                text=True
-            )
+            try:
+                process = subprocess.run(
+                    ["git", "clone", "--depth", "1", "-b", "master", auth_repo_url, temp_dir],
+                    capture_output=True,
+                    text=True,
+                    timeout=clone_timeout
+                )
+            except subprocess.TimeoutExpired:
+                logger.error(f"Clone timed out after {clone_timeout}s for {repo_url}")
+                results["error"] = f"Repository clone timed out after {clone_timeout} seconds. The repository may be too large or inaccessible."
+                return results
             
             if process.returncode == 0:
                 results["branch"] = "master"
@@ -1566,11 +1580,17 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
             shutil.rmtree(temp_dir, ignore_errors=True)
             temp_dir = tempfile.mkdtemp()
             
-            process = subprocess.run(
-                ["git", "clone", "--depth", "1", auth_repo_url, temp_dir],
-                capture_output=True,
-                text=True
-            )
+            try:
+                process = subprocess.run(
+                    ["git", "clone", "--depth", "1", auth_repo_url, temp_dir],
+                    capture_output=True,
+                    text=True,
+                    timeout=clone_timeout
+                )
+            except subprocess.TimeoutExpired:
+                logger.error(f"Clone timed out after {clone_timeout}s for {repo_url}")
+                results["error"] = f"Repository clone timed out after {clone_timeout} seconds. The repository may be too large or inaccessible."
+                return results
         
         if process.returncode != 0:
             error_msg = process.stderr.strip()
