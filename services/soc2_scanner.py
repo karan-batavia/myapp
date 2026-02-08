@@ -98,7 +98,7 @@ NIS2_ARTICLE_MAPPING = {
     "NIS2-20.3": "Management accountability and liability for non-compliance",
     "NIS2-20.4": "Cybersecurity training requirements for management and staff",
     
-    # Cybersecurity Risk-Management Measures (Article 21) - NEW NIS2 Article 22
+    # Cybersecurity Risk-Management Measures (Article 21)
     "NIS2-21.1": "Policies on risk analysis and information system security",
     "NIS2-21.2a": "Incident handling procedures and response capabilities",
     "NIS2-21.2b": "Business continuity (backup management, disaster recovery, crisis management)",
@@ -139,7 +139,7 @@ NIS2_ARTICLE_MAPPING = {
     "NIS2-28.1": "Jurisdiction rules for essential and important entities",
     "NIS2-28.2": "Main establishment determination",
     
-    # Chapter VII - Domain Names (Articles 29-32)
+    # Chapter VI - Jurisdiction, Registration, and Domain Names (Articles 26-31)
     "NIS2-29": "WHOIS database requirements for domain registries",
     "NIS2-30": "Access to domain registration data",
     "NIS2-31": "Accuracy of domain name registration data",
@@ -1308,7 +1308,7 @@ def identify_iac_technology(file_path: str) -> Optional[str]:
                         try:
                             with open(file_path, 'r', encoding='utf-8') as f:
                                 file_content = f.read()
-                        except:
+                        except (IOError, UnicodeDecodeError):
                             return None
                     
                     # Check for Azure ARM template first (takes precedence over CloudFormation for JSON)
@@ -1333,7 +1333,7 @@ def identify_iac_technology(file_path: str) -> Optional[str]:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 file_content = f.read()
-        except:
+        except (IOError, UnicodeDecodeError):
             return None
             
     # Content-based checks
@@ -1458,7 +1458,7 @@ def scan_iac_file(file_path: str, tech: Optional[str] = None) -> List[Dict[str, 
                     "risk_level": severity,
                     "recommendation": recommendation,
                     "category": category,
-                    "location": f"{os.path.basename(file_path)}:{line_num}",
+                    "location": f"{file_path}:{line_num}",
                     "code_snippet": code_snippet,
                     "technology": tech,
                     "soc2_tsc_criteria": tsc_criteria,
@@ -1688,9 +1688,6 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
         # Add recommendations based on actual findings
         results["recommendations"] = generate_recommendations(results)
         
-        # Generate SOC2 TSC checklist based on actual findings
-        results["soc2_tsc_checklist"] = generate_soc2_tsc_checklist(results)
-        
         # Update scan status
         results["scan_status"] = "completed"
         
@@ -1703,7 +1700,7 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
         if os.path.exists(temp_dir):
             try:
                 shutil.rmtree(temp_dir)
-            except:
+            except OSError:
                 logger.warning(f"Failed to clean up temp directory: {temp_dir}")
     
     return results
@@ -1822,6 +1819,15 @@ def scan_azure_repo_for_soc2(repo_url: str, project: str, branch: Optional[str] 
                 # Add file path to each finding
                 for finding in file_findings:
                     finding["file"] = rel_path
+                    finding["location"] = f"{rel_path}:{finding.get('line', 0)}"
+                    
+                    nis2_arts = finding.get("nis2_articles", [])
+                    if any("NIS2-34.4" in a for a in nis2_arts):
+                        finding["penalty_risk"] = "Up to €10M or 2% of worldwide annual turnover (NIS2 Art. 34)"
+                    elif any("NIS2-34.5" in a for a in nis2_arts):
+                        finding["penalty_risk"] = "Up to €7M or 1.4% of worldwide annual turnover (NIS2 Art. 34)"
+                    elif any(a.startswith("NIS2-21") for a in nis2_arts):
+                        finding["penalty_risk"] = "Up to €10M or 2% / €7M or 1.4% depending on entity classification (NIS2 Art. 34)"
                     
                     # Update risk counts and categories
                     risk_level = finding["risk_level"]
@@ -1872,11 +1878,11 @@ def scan_azure_repo_for_soc2(repo_url: str, project: str, branch: Optional[str] 
             # Generate recommendations
             results["recommendations"] = generate_recommendations(results)
             
-            # Mark scan as successful
-            results["scan_status"] = "success"
+            # Mark scan as completed
+            results["scan_status"] = "completed"
         else:
             # No IaC files found
-            results["scan_status"] = "success"
+            results["scan_status"] = "completed"
             results["compliance_score"] = 100  # Perfect score if no issues
             results["warning"] = "No Infrastructure-as-Code files found in the repository."
     
@@ -1889,7 +1895,7 @@ def scan_azure_repo_for_soc2(repo_url: str, project: str, branch: Optional[str] 
         if os.path.exists(temp_dir):
             try:
                 shutil.rmtree(temp_dir)
-            except:
+            except OSError:
                 logger.warning(f"Failed to clean up temp directory: {temp_dir}")
     
     return results
