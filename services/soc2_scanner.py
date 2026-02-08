@@ -144,18 +144,16 @@ NIS2_ARTICLE_MAPPING = {
     "NIS2-30": "Access to domain registration data",
     "NIS2-31": "Accuracy of domain name registration data",
     
-    # Chapter VIII - Supervision and Enforcement
-    "NIS2-33": "Ex ante supervision requirements for essential entities",
-    "NIS2-34": "Ex post supervision requirements for important entities",
-    "NIS2-35": "Identification of essential and important entities",
-    "NIS2-37": "Registry of entities requirements",
+    # Chapter VII - Supervision and Enforcement (Articles 32-37)
+    "NIS2-32": "Supervisory and enforcement measures in respect of essential entities",
+    "NIS2-33": "Supervisory and enforcement measures in respect of important entities",
     
-    # Administrative Sanctions (Article 38)
-    "NIS2-38.1": "Essential entities: Administrative fines up to €10,000,000 or 2% of total worldwide annual turnover",
-    "NIS2-38.2": "Important entities: Administrative fines up to €7,000,000 or 1.4% of total worldwide annual turnover",
-    "NIS2-38.3": "Periodic penalty payments for continued infringements",
-    "NIS2-38.4": "Suspension of certification or authorization",
-    "NIS2-38.5": "Temporary ban of management from exercising managerial functions",
+    # Administrative Fines (Article 34) - Correct per EU Directive 2022/2555
+    "NIS2-34.1": "General conditions for imposing administrative fines on essential and important entities",
+    "NIS2-34.4": "Essential entities: Administrative fines up to €10,000,000 or 2% of total worldwide annual turnover",
+    "NIS2-34.5": "Important entities: Administrative fines up to €7,000,000 or 1.4% of total worldwide annual turnover",
+    "NIS2-35": "Infringements entailing a personal data breach",
+    "NIS2-36": "Penalties determined by Member States for non-compliance",
     
     # Chapter XI - Final Provisions
     "NIS2-43": "Review of the directive by October 17, 2027",
@@ -170,8 +168,8 @@ NIS2_ARTICLE_MAPPING = {
 # Map findings to NIS2 articles - Comprehensive mapping for IaC scanning
 FINDING_TO_NIS2_MAP = {
     # Cryptography & Secrets Management (Article 21.2g)
-    "Hard-coded AWS access keys": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-38.1"],
-    "Hard-coded AWS secret keys": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-38.1"],
+    "Hard-coded AWS access keys": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-34.4"],
+    "Hard-coded AWS secret keys": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-34.4"],
     "Hard-coded API keys": ["NIS2-21.2g", "NIS2-21.2h"],
     "Possible hard-coded secrets": ["NIS2-21.2g", "NIS2-21.2h"],
     "Possible hard-coded password": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-20.3"],
@@ -180,7 +178,7 @@ FINDING_TO_NIS2_MAP = {
     "Crypto usage without proper configuration": ["NIS2-21.2g", "NIS2-21.2e"],
     
     # Network Security (Article 21.2d)
-    "Security group with unrestricted ingress": ["NIS2-21.2d", "NIS2-21.1", "NIS2-38.1"],
+    "Security group with unrestricted ingress": ["NIS2-21.2d", "NIS2-21.1", "NIS2-34.4"],
     "Security group with unrestricted access": ["NIS2-21.2d", "NIS2-21.1"],
     "CORS allowing all origins": ["NIS2-21.2d", "NIS2-21.1"],
     "Serving static files without proper restrictions": ["NIS2-21.2d", "NIS2-21.2h"],
@@ -214,7 +212,7 @@ FINDING_TO_NIS2_MAP = {
     "MongoDB update without input validation": ["NIS2-21.2j", "NIS2-21.2d"],
     
     # Confidentiality (Article 21.2g, 21.2h)
-    "S3 bucket with public read access": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-38.1"],
+    "S3 bucket with public read access": ["NIS2-21.2g", "NIS2-21.2h", "NIS2-34.4"],
     "Container with potential PII exposure": ["NIS2-21.2g", "NIS2-21.2h"],
     
     # Supply Chain Security (Article 21.2c, 22)
@@ -1598,6 +1596,15 @@ def scan_github_repo_for_soc2(repo_url: str, branch: Optional[str] = None, token
                 # Make file paths relative to repo
                 for finding in file_findings:
                     finding["file"] = os.path.relpath(finding["file"], temp_dir)
+                    finding["location"] = f"{finding['file']}:{finding.get('line', 0)}"
+                    
+                    nis2_arts = finding.get("nis2_articles", [])
+                    if any("NIS2-34.4" in a for a in nis2_arts):
+                        finding["penalty_risk"] = "Up to €10M or 2% of worldwide annual turnover (NIS2 Art. 34)"
+                    elif any("NIS2-34.5" in a for a in nis2_arts):
+                        finding["penalty_risk"] = "Up to €7M or 1.4% of worldwide annual turnover (NIS2 Art. 34)"
+                    elif any(a.startswith("NIS2-21") for a in nis2_arts):
+                        finding["penalty_risk"] = "Up to €10M or 2% / €7M or 1.4% depending on entity classification (NIS2 Art. 34)"
                     
                     # Update summary counts
                     category = finding["category"]

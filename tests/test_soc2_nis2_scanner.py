@@ -102,8 +102,8 @@ class TestNIS2Categories:
         article_23_keys = [k for k in NIS2_ARTICLE_MAPPING.keys() if k.startswith("NIS2-23")]
         assert len(article_23_keys) >= 4
         
-        article_38_keys = [k for k in NIS2_ARTICLE_MAPPING.keys() if k.startswith("NIS2-38")]
-        assert len(article_38_keys) >= 5
+        article_34_keys = [k for k in NIS2_ARTICLE_MAPPING.keys() if k.startswith("NIS2-34")]
+        assert len(article_34_keys) >= 3
     
     def test_nis2_key_requirements_present(self):
         """Verify key NIS2 requirements are documented"""
@@ -123,11 +123,11 @@ class TestNIS2Categories:
         assert "24-hour" in NIS2_ARTICLE_MAPPING["NIS2-23.1"].lower() or "24 hour" in NIS2_ARTICLE_MAPPING["NIS2-23.1"].lower()
     
     def test_nis2_penalties_documented(self):
-        """Verify NIS2 penalty structure is documented"""
-        essential_penalty = NIS2_ARTICLE_MAPPING.get("NIS2-38.1", "")
+        """Verify NIS2 penalty structure is documented per Article 34"""
+        essential_penalty = NIS2_ARTICLE_MAPPING.get("NIS2-34.4", "")
         assert "10" in essential_penalty or "essential" in essential_penalty.lower()
         
-        important_penalty = NIS2_ARTICLE_MAPPING.get("NIS2-38.2", "")
+        important_penalty = NIS2_ARTICLE_MAPPING.get("NIS2-34.5", "")
         assert "7" in important_penalty or "important" in important_penalty.lower()
     
     def test_nis2_annexes_documented(self):
