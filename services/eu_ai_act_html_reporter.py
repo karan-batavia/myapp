@@ -59,7 +59,7 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
             'turnover_percentage': 'Turnover Percentage',
             'tier_1_violations': 'Tier 1 (Prohibited)',
             'tier_2_violations': 'Tier 2 (High-Risk)',
-            'tier_3_violations': 'Tier 3 (Other)',
+            'tier_3_violations': 'Tier 3 (Incorrect Info to Authorities)',
             'article_checklist': 'Article Compliance Checklist'
         },
         'nl': {
@@ -101,7 +101,7 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
             'turnover_percentage': 'Omzetpercentage',
             'tier_1_violations': 'Niveau 1 (Verboden)',
             'tier_2_violations': 'Niveau 2 (Hoog-Risico)',
-            'tier_3_violations': 'Niveau 3 (Overig)',
+            'tier_3_violations': 'Niveau 3 (Onjuiste Info aan Autoriteiten)',
             'article_checklist': 'Artikel Naleving Checklist'
         }
     }

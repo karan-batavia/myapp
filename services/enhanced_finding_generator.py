@@ -560,7 +560,24 @@ class EnhancedFindingGenerator:
             elif line_num:
                 location = f"Line {line_num}"
             else:
-                location = finding.get('match', 'Source file')[:50] if finding.get('match') else 'Source file'
+                article_ref = finding.get('article_reference', '')
+                if article_ref:
+                    location = article_ref
+                elif finding.get('category'):
+                    location = str(finding.get('category'))
+                elif finding.get('title'):
+                    location = str(finding.get('title'))[:50]
+                elif finding.get('type') and finding.get('type') != 'unknown':
+                    f_type = finding.get('type', '').replace('_', ' ').title()
+                    f_subtype = finding.get('subtype', '')
+                    if f_subtype and f_subtype != f_type:
+                        location = f"{f_type} - {f_subtype.replace('_', ' ').title()}"
+                    else:
+                        location = f_type
+                elif finding.get('match'):
+                    location = finding.get('match', '')[:50]
+                else:
+                    location = 'Unknown Location'
         
         severity = finding.get('severity', finding.get('risk_level', 'Medium'))
         

@@ -996,10 +996,25 @@ class UnifiedHTMLReportGenerator:
             </div>
             """
         elif 'ai_act' in finding_type or 'eu ai' in article_ref.lower():
-            penalty_html = """
+            description_lower = str(finding.get('description', '')).lower()
+            title_lower = str(finding.get('title', '')).lower()
+            is_incorrect_info = any(phrase in description_lower or phrase in title_lower for phrase in [
+                'incorrect information', 'false information', 'misleading information',
+                'supplying incorrect', 'providing incorrect', 'information to authorities',
+                'notified body', 'incorrect data'
+            ])
+            if is_incorrect_info:
+                penalty_html = """
             <div class="penalty-info" style="background: #dbeafe; border-left: 4px solid #3b82f6; padding: 12px; margin: 10px 0; border-radius: 4px;">
-                <strong style="color: #1e40af;">ℹ️ Penalty Risk - Tier 3 (Other Violations):</strong>
-                <span style="color: #1d4ed8; font-weight: 600;">Up to €7.5 million or 1.5% of global annual turnover</span>
+                <strong style="color: #1e40af;">ℹ️ Penalty Risk - Tier 3 (Incorrect Info to Authorities):</strong>
+                <span style="color: #1d4ed8; font-weight: 600;">Up to €7.5 million or 1% of global annual turnover</span>
+            </div>
+            """
+            else:
+                penalty_html = """
+            <div class="penalty-info" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #92400e;">⚠️ Penalty Risk - Tier 2 (Non-Compliance):</strong>
+                <span style="color: #b45309; font-weight: 600;">Up to €15 million or 3% of global annual turnover</span>
             </div>
             """
         
