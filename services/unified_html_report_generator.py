@@ -777,11 +777,196 @@ class UnifiedHTMLReportGenerator:
             'User Data': 'Gebruikersgegevens',
             'Unknown': 'Onbekend',
             'Potential security or compliance impact requiring investigation': 'Potentiële beveiliging- of nalevingsimpact die onderzoek vereist',
+            'low': 'laag',
+            'medium': 'gemiddeld',
+            'high': 'hoog',
+            'critical': 'kritiek',
+            'hours': 'uur',
         }
         
         result = value
         for en, nl in translations.items():
             result = result.replace(en, nl)
+        return result
+    
+    def _translate_content_nl(self, text: str) -> str:
+        import re
+        if self.current_language != 'nl' or not text:
+            return text
+        
+        exact_translations = {
+            'Complete High-Risk Classification': 'Hoog-risicoclassificatie voltooien',
+            'Complete Risk Classification': 'Risicoclassificatie voltooien',
+            'Conduct Fundamental Rights Assessment': 'Grondrechtenbeoordeling uitvoeren',
+            'Create Technical Documentation': 'Technische documentatie opstellen',
+            'Define AI Act Applicability': 'AI Act toepasselijkheid definiëren',
+            'Develop Transparency Information': 'Transparantie-informatie ontwikkelen',
+            'Document Deployer Obligations': 'Gebruikersverplichtingen documenteren',
+            'Document Model Architecture': 'Modelarchitectuur documenteren',
+            'Enhance Documentation': 'Documentatie verbeteren',
+            'Ensure Accuracy and Robustness': 'Nauwkeurigheid en robuustheid waarborgen',
+            'Ensure Transparency for GPAI': 'Transparantie voor GPAI waarborgen',
+            'Establish Accountability Framework': 'Verantwoordingskader opzetten',
+            'Establish Data Governance Framework': 'Datagegevensbeheer kader opzetten',
+            'Establish Human Oversight Mechanisms': 'Menselijk toezicht mechanismen instellen',
+            'Implement Comprehensive Logging': 'Uitgebreide logging implementeren',
+            'Implement Data Governance Framework': 'Datagovernance kader implementeren',
+            'Implement Human Oversight Controls': 'Menselijk toezicht controles implementeren',
+            'Implement Prohibited Practice Controls': 'Verboden praktijken controles implementeren',
+            'Implement Quality Management System': 'Kwaliteitsmanagementsysteem implementeren',
+            'Implement Record-Keeping System': 'Registratiesysteem implementeren',
+            'Implement Risk Management System': 'Risicobeheersysteem implementeren',
+            'Prepare Model Documentation': 'Modeldocumentatie voorbereiden',
+            'Review Consent Implementation': 'Toestemmingsimplementatie beoordelen',
+            'Review Form Compliance': 'Formuliernaleving beoordelen',
+            'Review and Remediate': 'Beoordelen en herstellen',
+            'Verify License Compliance': 'Licentienaleving verifiëren',
+            'Verify Opt-Out Compliance': 'Opt-out naleving verifiëren',
+            'Compliance audit and legal review': 'Nalevingsaudit en juridische beoordeling',
+            'Compliance review': 'Nalevingsbeoordeling',
+            'Confirm remediation complete': 'Bevestig dat herstel voltooid is',
+            'Data quality audit': 'Datakwaliteitsaudit',
+            'Documentation completeness review': 'Beoordeling volledigheid documentatie',
+            'Governance framework review': 'Beoordeling governancekader',
+            'Legal review of applicability': 'Juridische beoordeling van toepasselijkheid',
+            'Legal review of assessment': 'Juridische beoordeling van beoordeling',
+            'Legal review of classification': 'Juridische beoordeling van classificatie',
+            'Legal review of license terms': 'Juridische beoordeling van licentievoorwaarden',
+            'Technical review of documentation': 'Technische beoordeling van documentatie',
+            'Test consent flow against GDPR requirements': 'Test toestemmingsproces tegen AVG-vereisten',
+            'Test form submission flow for GDPR compliance': 'Test formulierinzending voor AVG-naleving',
+            'Test human override capabilities': 'Test menselijke overschrijvingsmogelijkheden',
+            'Test opt-out flow': 'Test opt-out proces',
+            'Third-party QMS audit': 'Onafhankelijke KMS-audit',
+            'Verify log completeness and retention': 'Verifieer logvolledigheid en bewaring',
+            'Verification method not specified': 'Verificatiemethode niet gespecificeerd',
+            'License violations can result in legal action and copyright infringement claims': 'Licentieschendingen kunnen leiden tot juridische stappen en claims wegens auteursrechtinbreuk',
+            'Failure to honor opt-out requests violates data subject rights': 'Het niet honoreren van opt-out verzoeken schendt de rechten van betrokkenen',
+            'Inadequate documentation hinders transparency and complicates regulatory compliance': 'Ontoereikende documentatie belemmert transparantie en bemoeilijkt naleving van regelgeving',
+            'Model architecture affects system capabilities and associated compliance requirements': 'Modelarchitectuur beïnvloedt systeemcapaciteiten en bijbehorende nalevingsvereisten',
+            'AI systems affecting fundamental rights require documented impact assessments and mitigation measures': 'AI-systemen die grondrechten beïnvloeden vereisen gedocumenteerde impactbeoordelingen en mitigatiemaatregelen',
+            'EU AI Act non-compliance can result in significant fines and market access restrictions': 'Niet-naleving van de EU AI Act kan leiden tot aanzienlijke boetes en markttoegangsbeperkingen',
+            'Incorrect risk classification can lead to inadequate compliance measures or unnecessary burdens': 'Onjuiste risicoclassificatie kan leiden tot ontoereikende nalevingsmaatregelen of onnodige lasten',
+            'Non-compliance with EU AI Act QMS requirements can result in fines up to €15M or 3% of global turnover': 'Niet-naleving van EU AI Act KMS-vereisten kan leiden tot boetes tot €15M of 3% van de wereldwijde omzet',
+            'Insufficient logging prevents incident investigation and violates transparency requirements': 'Onvoldoende logging verhindert incidentonderzoek en schendt transparantievereisten',
+            'Missing human oversight can lead to uncontrolled AI decisions and regulatory non-compliance': 'Ontbrekend menselijk toezicht kan leiden tot ongecontroleerde AI-beslissingen en niet-naleving van regelgeving',
+            'Unclear scope can lead to missed compliance requirements or wasted effort on non-applicable rules': 'Onduidelijke reikwijdte kan leiden tot gemiste nalevingsvereisten of verspilde inspanning aan niet-toepasselijke regels',
+            'Ensure compliance with applicable EU AI Act requirements': 'Zorg voor naleving van toepasselijke EU AI Act vereisten',
+            'Poor data governance leads to biased AI outputs and regulatory non-compliance': 'Slecht datagovernance leidt tot bevooroordeelde AI-uitvoer en niet-naleving van regelgeving',
+            'Potential security or compliance impact requiring investigation': 'Potentiële beveiliging- of nalevingsimpact die onderzoek vereist',
+            'AI fairness concerns': 'AI-eerlijkheidsproblemen',
+            'Privacy violation': 'Privacyschending',
+            'Consent violation': 'Toestemmingsschending',
+            'License detected: Repository has a': 'Licentie gedetecteerd: Repository heeft een',
+            'Open source licenses may have attribution or copyleft requirements.': 'Open source licenties kunnen naamsvermelding- of copyleft-vereisten hebben.',
+            'Opt-out mechanism detected: Repository has a .gitignore file for excluding content. Ensure proper exclusion handling for data collection.': 'Opt-out mechanisme gedetecteerd: Repository heeft een .gitignore bestand voor het uitsluiten van inhoud. Zorg voor correcte uitsluiting bij gegevensverzameling.',
+            'Documentation review: Repository has documentation files that may contain attribution guidelines. Proper documentation supports transparency and accountability.': 'Documentatiebeoordeling: Repository heeft documentatiebestanden die naamsvermelding richtlijnen kunnen bevatten. Goede documentatie ondersteunt transparantie en verantwoording.',
+            'Model architecture finding: Model architecture review completed. Architecture decisions affect compliance requirements.': 'Modelarchitectuur bevinding: Beoordeling van modelarchitectuur voltooid. Architectuurbeslissingen beïnvloeden nalevingsvereisten.',
+            'consideration of fundamental rights impact for high-risk AI systems.': 'overweging van de impact op grondrechten voor hoog-risico AI-systemen.',
+            'risk classification of AI systems to determine applicable requirements.': 'risicoclassificatie van AI-systemen om toepasselijke vereisten te bepalen.',
+            'quality management systems for high-risk AI. Missing elements indicate compliance gaps.': 'kwaliteitsmanagementsystemen voor hoog-risico AI. Ontbrekende elementen duiden op nalevingslacunes.',
+            'automatic logging for high-risk AI systems to ensure traceability.': 'automatische logging voor hoog-risico AI-systemen om traceerbaarheid te waarborgen.',
+            'human oversight mechanisms for high-risk AI systems to ensure human control.': 'menselijk toezicht mechanismen voor hoog-risico AI-systemen om menselijke controle te waarborgen.',
+            'EU AI Act compliance finding: Algorithmic decision-making detected without adequate governance framework': 'EU AI Act nalevingsbevinding: Algoritmische besluitvorming gedetecteerd zonder adequaat governance kader',
+            'EU AI Act compliance finding: General-Purpose AI model detected requiring compliance with August 2025 requirements': 'EU AI Act nalevingsbevinding: Algemeen AI-model gedetecteerd dat naleving vereist van de augustus 2025 vereisten',
+            'Clear definitions ensure proper compliance scope.': 'Duidelijke definities zorgen voor een correct nalevingsbereik.',
+            'Providers and deployers must ensure staff have sufficient AI literacy': 'Aanbieders en gebruikers moeten ervoor zorgen dat personeel voldoende AI-geletterdheid heeft',
+            'considering their role, technical knowledge, and the AI system context.': 'rekening houdend met hun rol, technische kennis en de AI-systeemcontext.',
+            'robust data governance for AI training data quality and representativeness.': 'robuust datagovernance voor AI-trainingsgegevens kwaliteit en representativiteit.',
+            'Deployers must use AI per instructions': 'Gebruikers moeten AI gebruiken volgens instructies',
+            'assign human oversight': 'menselijk toezicht toewijzen',
+            'ensure data relevance': 'datarelevantie waarborgen',
+            'monitor operation': 'werking monitoren',
+            'Public bodies and essential service providers must assess fundamental rights impacts before deployment': 'Overheidsinstanties en essentiële dienstverleners moeten de impact op grondrechten beoordelen vóór inzet',
+            'Verify license compliance': 'Verifieer licentienaleving',
+            'Document attribution requirements': 'Documenteer naamsvermelding vereisten',
+            'Ensure commercial use permitted': 'Zorg dat commercieel gebruik is toegestaan',
+            'Respect opt-out preferences': 'Respecteer opt-out voorkeuren',
+            'Implement exclusion mechanisms': 'Implementeer uitsluitingsmechanismen',
+            'Document compliance': 'Documenteer naleving',
+            'Maintain comprehensive documentation': 'Onderhoud uitgebreide documentatie',
+            'Document AI system design decisions': 'Documenteer AI-systeem ontwerpbeslissingen',
+            'Keep records up to date': 'Houd registraties actueel',
+            'Document architecture decisions': 'Documenteer architectuurbeslissingen',
+            'Assess accuracy and robustness': 'Beoordeel nauwkeurigheid en robuustheid',
+            'Implement appropriate testing': 'Implementeer gepaste testen',
+            'Conduct fundamental rights assessment': 'Voer grondrechtenbeoordeling uit',
+            'Document impact on individuals': 'Documenteer impact op individuen',
+            'Implement safeguards': 'Implementeer waarborgen',
+            'Review applicable article requirements': 'Beoordeel toepasselijke artikelvereisten',
+            'Implement required controls': 'Implementeer vereiste controles',
+            'Document compliance evidence': 'Documenteer nalevingsbewijs',
+            'Classify AI system risk level': 'Classificeer AI-systeem risiconiveau',
+            'Apply appropriate controls': 'Pas passende controles toe',
+            'Document classification rationale': 'Documenteer classificatie onderbouwing',
+            'Implement documented QMS procedures': 'Implementeer gedocumenteerde KMS-procedures',
+            'Establish risk management processes': 'Stel risicobeheerprocessen vast',
+            'Create audit trails': 'Maak audittrails aan',
+            'Implement comprehensive event logging': 'Implementeer uitgebreide gebeurtenislogging',
+            'Maintain audit trails': 'Onderhoud audittrails',
+            'Enable log retention': 'Schakel logbewaring in',
+            'Implement human-in-the-loop controls': 'Implementeer mens-in-de-lus controles',
+            'Enable operator intervention': 'Schakel operator interventie in',
+            'Provide override capabilities': 'Bied overschrijvingsmogelijkheden',
+            'Define AI system boundaries': 'Definieer AI-systeem grenzen',
+            'Identify provider/deployer roles': 'Identificeer aanbieder/gebruiker rollen',
+            'Document applicability': 'Documenteer toepasselijkheid',
+            'Review article requirements': 'Beoordeel artikelvereisten',
+            'License Detection': 'Licentiedetectie',
+            'Opt-Out Mechanism': 'Opt-Out Mechanisme',
+            'Documentation': 'Documentatie',
+            'Model Architecture': 'Modelarchitectuur',
+            'Ai Act Fundamental Rights': 'AI Act Grondrechten',
+            'Ai Act Accountability': 'AI Act Verantwoording',
+            'Ai Act Gpai Compliance': 'AI Act GPAI-naleving',
+            'Ai Act Risk Classification Required': 'AI Act Risicoclassificatie Vereist',
+            'Ai Act Quality Management Insufficient': 'AI Act Kwaliteitsbeheer Onvoldoende',
+            'Ai Act Automatic Logging Insufficient': 'AI Act Automatische Logging Onvoldoende',
+            'Ai Act Human Oversight Insufficient': 'AI Act Menselijk Toezicht Onvoldoende',
+            'Ai Act Fundamental Rights Insufficient': 'AI Act Grondrechten Onvoldoende',
+            'Ai Act Scope Definitions Missing': 'AI Act Reikwijdte Definities Ontbreken',
+            'Ai Act Data Governance Insufficient': 'AI Act Datagovernance Onvoldoende',
+            'Ai Act Automatic Logging Requirements': 'AI Act Automatische Logging Vereisten',
+            'Ai Act Human Oversight Requirements': 'AI Act Menselijk Toezicht Vereisten',
+            'AI governance deficiencies identified:': 'AI-governance tekortkomingen geïdentificeerd:',
+            'Risk management system not implemented': 'Risicobeheersysteem niet geïmplementeerd',
+            'Human oversight not implemented': 'Menselijk toezicht niet geïmplementeerd',
+            'Inadequate data governance practices': 'Ontoereikende datagovernance praktijken',
+            'Review subliminal manipulation, exploitation of vulnerabilities, social scoring, real-time biometric ID': 'Beoordeel subliminale manipulatie, exploitatie van kwetsbaarheden, sociale scoring, realtime biometrische identificatie',
+            'Test exclusion functionality, verify data is excluded from training': 'Test uitsluitingsfunctionaliteit, verifieer dat gegevens zijn uitgesloten van training',
+            'Verify consent is specific, informed, unambiguous, and withdrawable': 'Verifieer dat toestemming specifiek, geïnformeerd, ondubbelzinnig en intrekbaar is',
+            'AI Act entered into force August 1, 2024': 'AI Act in werking getreden op 1 augustus 2024',
+            'AI Act implementation adequately funded': 'AI Act implementatie adequaat gefinancierd',
+            'AI Act amends other EU regulations': 'AI Act wijzigt andere EU-regelgeving',
+            'text, identify applicable requirements, implement controls': 'tekst, identificeer toepasselijke vereisten, implementeer controles',
+        }
+        
+        if text in exact_translations:
+            return exact_translations[text]
+        
+        result = text
+        for en, nl in exact_translations.items():
+            if en in result:
+                result = result.replace(en, nl)
+        
+        regex_patterns = [
+            (r'Review Article (\d+) Requirements', lambda m: f'Beoordeel Artikel {m.group(1)} Vereisten'),
+            (r'Review Article (\d+) text, identify applicable requirements, implement controls', lambda m: f'Beoordeel Artikel {m.group(1)} tekst, identificeer toepasselijke vereisten, implementeer controles'),
+            (r'EU AI Act Article (\d+) requires', lambda m: f'EU AI Act Artikel {m.group(1)} vereist'),
+            (r'EU AI Act Articles (\d+)-(\d+) define', lambda m: f'EU AI Act Artikelen {m.group(1)}-{m.group(2)} definiëren'),
+            (r'Content should address Article (\d+) requirements:', lambda m: f'Inhoud moet voldoen aan Artikel {m.group(1)} vereisten:'),
+            (r'Non-compliance with Article (\d+) may result in significant fines', lambda m: f'Niet-naleving van Artikel {m.group(1)} kan leiden tot aanzienlijke boetes'),
+            (r'Ai Act Article (\d+) Compliance', lambda m: f'AI Act Artikel {m.group(1)} Naleving'),
+            (r'Ai Act Article (\d+) Requirement', lambda m: f'AI Act Artikel {m.group(1)} Vereiste'),
+            (r'Ai Act Article (\d+)', lambda m: f'AI Act Artikel {m.group(1)}'),
+            (r'EU AI Act Article (\d+):', lambda m: f'EU AI Act Artikel {m.group(1)}:'),
+            (r'EU AI Act Article (\d+)', lambda m: f'EU AI Act Artikel {m.group(1)}'),
+            (r'Article (\d+)', lambda m: f'Artikel {m.group(1)}'),
+        ]
+        
+        for pattern, replacement in regex_patterns:
+            result = re.sub(pattern, replacement, result)
+        
         return result
     
     def _generate_findings_html(self, findings: List[Dict[str, Any]]) -> str:
@@ -825,11 +1010,15 @@ class UnifiedHTMLReportGenerator:
             data_classification = finding.get('data_classification', '')
             
             if self.current_language == 'nl':
-                finding_type = self._translate_finding_value(finding_type)
+                finding_type = self._translate_content_nl(self._translate_finding_value(finding_type))
                 data_classification = self._translate_finding_value(data_classification)
-                business_impact = self._translate_finding_value(business_impact)
+                business_impact = self._translate_content_nl(self._translate_finding_value(business_impact))
                 remediation_priority = self._translate_finding_value(remediation_priority)
                 estimated_effort = self._translate_finding_value(estimated_effort)
+                context = self._translate_content_nl(context)
+                description = self._translate_content_nl(description)
+                gdpr_articles = [self._translate_content_nl(a) for a in gdpr_articles]
+                compliance_requirements = [self._translate_content_nl(r) for r in compliance_requirements]
             
             # SOC2/NIS2 specific fields (check both field names for compatibility)
             tsc_criteria = finding.get('tsc_criteria', finding.get('soc2_tsc_criteria', []))
@@ -1700,15 +1889,17 @@ class UnifiedHTMLReportGenerator:
         articles_html = ""
         if gdpr_articles:
             articles_html = "<ul class='compliance-list'>"
-            for article in gdpr_articles[:3]:  # Limit to first 3 for readability
-                articles_html += f"<li>{article}</li>"
+            for article in gdpr_articles[:3]:
+                translated_article = self._translate_content_nl(article)
+                articles_html += f"<li>{translated_article}</li>"
             articles_html += "</ul>"
         
         requirements_html = ""
         if compliance_requirements:
             requirements_html = "<ul class='compliance-list'>"
-            for requirement in compliance_requirements[:3]:  # Limit to first 3
-                requirements_html += f"<li>{requirement}</li>"
+            for requirement in compliance_requirements[:3]:
+                translated_req = self._translate_content_nl(requirement)
+                requirements_html += f"<li>{translated_req}</li>"
             requirements_html += "</ul>"
         
         return f"""
@@ -1731,21 +1922,27 @@ class UnifiedHTMLReportGenerator:
             priority_class = f"priority-{priority}"
             priority_display = priority_nl.get(rec.get('priority', 'Medium'), rec.get('priority', 'Medium')) if self.current_language == 'nl' else rec.get('priority', 'Medium')
             
+            action_text = self._translate_content_nl(rec.get('action', t_report('action_required', 'Action Required')))
+            desc_text = self._translate_content_nl(rec.get('description', t_report('no_description', 'No description available')))
+            impl_text = self._translate_content_nl(rec.get('implementation', t_report('not_specified', 'Not specified')))
+            effort_text = self._translate_finding_value(rec.get('effort_estimate', t_report('not_estimated', 'Not estimated')))
+            verify_text = self._translate_content_nl(rec.get('verification', t_report('verification_not_specified', 'Verification method not specified')))
+            
             recommendations_html += f"""
             <div class="recommendation">
                 <div class="recommendation-header">
-                    {rec.get('action', t_report('action_required', 'Action Required'))}
+                    {action_text}
                     <span class="recommendation-priority {priority_class}">{priority_display}</span>
                 </div>
                 <div class="recommendation-details">
-                    <strong>{t_report('description', 'Description')}:</strong> {rec.get('description', t_report('no_description', 'No description available'))}
+                    <strong>{t_report('description', 'Description')}:</strong> {desc_text}
                 </div>
                 <div class="recommendation-details">
-                    <strong>{t_report('implementation', 'Implementation')}:</strong> {rec.get('implementation', t_report('not_specified', 'Not specified'))}
+                    <strong>{t_report('implementation', 'Implementation')}:</strong> {impl_text}
                 </div>
                 <div class="recommendation-details">
-                    <strong>{t_report('effort', 'Effort')}:</strong> {rec.get('effort_estimate', t_report('not_estimated', 'Not estimated'))} | 
-                    <strong>{t_report('verification', 'Verification')}:</strong> {rec.get('verification', t_report('verification_not_specified', 'Verification method not specified'))}
+                    <strong>{t_report('effort', 'Effort')}:</strong> {effort_text} | 
+                    <strong>{t_report('verification', 'Verification')}:</strong> {verify_text}
                 </div>
             </div>
             """
