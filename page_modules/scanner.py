@@ -4524,7 +4524,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                         # Netherlands compliance flags
                         nl_flags = get_netherlands_compliance_flags(pattern_name, matched_text)
                         
-                        clean_file = os.path.basename(file_path)
+                        clean_file = os.path.basename(file_path) if '/tmp/' in file_path or '/var/' in file_path else file_path
                         finding = {
                             'type': pattern_name.upper(),
                             'severity': severity,
