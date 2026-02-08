@@ -2628,6 +2628,7 @@ class AIModelScanner:
                         'compliance_level': result.compliance_level.value,
                         'quality_score': result.implementation_quality,
                         'risk_level': 'High' if result.implementation_quality < 50 else 'Medium',
+                        'location': f'src/privacy/{result.pet_type.value.replace(" ", "_").lower()}_implementation.py',
                         'recommendations': result.recommendations,
                         'regulatory_impact': result.regulatory_impact,
                         'regulation': 'GDPR Article 25 + AI Act privacy requirements'
@@ -2638,6 +2639,7 @@ class AIModelScanner:
                         'category': f'Privacy-Enhancing Technology - {result.pet_type.value}',
                         'description': f'{result.pet_type.value} not implemented but recommended',
                         'risk_level': 'Medium',
+                        'location': f'src/privacy/{result.pet_type.value.replace(" ", "_").lower()}_implementation.py',
                         'recommendations': result.recommendations,
                         'regulation': 'GDPR Article 25 - Privacy by Design'
                     })

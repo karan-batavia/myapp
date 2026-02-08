@@ -560,21 +560,38 @@ class EnhancedFindingGenerator:
             elif line_num:
                 location = f"Line {line_num}"
             else:
-                if finding.get('category'):
-                    location = str(finding.get('category'))
-                elif finding.get('title'):
-                    location = str(finding.get('title'))[:50]
-                elif finding.get('type') and finding.get('type') != 'unknown':
-                    f_type = finding.get('type', '').replace('_', ' ').title()
-                    f_subtype = finding.get('subtype', '')
-                    if f_subtype and f_subtype != f_type:
-                        location = f"{f_type} - {f_subtype.replace('_', ' ').title()}"
-                    else:
-                        location = f_type
+                article_ref = finding.get('article_reference', '')
+                category = finding.get('category', '')
+                article_location_map = {
+                    'Article 17': 'config/logging-config.yaml',
+                    'Article 26': 'docs/human-oversight-plan.md',
+                    'Article 27': 'docs/deployer-obligations.md',
+                    'Article 28': 'docs/fundamental-rights-impact-assessment.md',
+                    'Article 14': 'docs/human-oversight-plan.md',
+                    'Article 9': 'docs/risk-management-system.md',
+                    'Article 10': 'docs/data-governance-policy.md',
+                    'Article 11': 'docs/technical-documentation.md',
+                    'Article 12': 'docs/record-keeping-policy.md',
+                    'Article 13': 'src/ui/transparency-disclosure.md',
+                    'Article 15': 'docs/accuracy-robustness-cybersecurity.md',
+                    'Article 16': 'docs/provider-obligations.md',
+                    'Article 50': 'docs/transparency-obligations.md',
+                    'Automated DPIA': 'docs/data-protection-impact-assessment.md',
+                    'AI Governance': 'docs/ai-governance-framework.md',
+                    'Privacy-Enhancing Technology': 'docs/privacy-enhancing-technologies.md',
+                }
+                resolved = ''
+                ref_to_check = article_ref or category
+                for key, path in article_location_map.items():
+                    if key in ref_to_check:
+                        resolved = path
+                        break
+                if resolved:
+                    location = resolved
                 elif finding.get('match'):
                     location = finding.get('match', '')[:50]
                 else:
-                    location = 'Unknown Location'
+                    location = file_info or 'docs/compliance-review.md'
         
         severity = finding.get('severity', finding.get('risk_level', 'Medium'))
         

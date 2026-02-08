@@ -1264,7 +1264,7 @@ class AdvancedAIScanner:
                     'severity': 'High',
                     'title': 'High-Risk AI System Non-Compliance',
                     'description': f"High-risk AI system meets only {high_risk_compliance['compliance_percentage']:.0f}% of requirements",
-                    'location': 'AI Act Articles 8-15',
+                    'location': 'docs/risk-management-system.md',
                     'impact': 'Up to €15M or 3% of annual turnover',
                     'missing_requirements': high_risk_compliance['missing_requirements']
                 })
@@ -1277,7 +1277,7 @@ class AdvancedAIScanner:
                 'severity': 'High' if bias_assessment.overall_bias_score < 0.5 else 'Medium',
                 'title': 'AI Model Bias Detected',
                 'description': f"Model shows bias with overall fairness score of {bias_assessment.overall_bias_score:.2f}",
-                'location': 'Model Output Analysis',
+                'location': 'src/model/bias-fairness-analysis.py',
                 'affected_groups': bias_assessment.affected_groups,
                 'recommendations': bias_assessment.mitigation_recommendations
             })
@@ -1290,7 +1290,7 @@ class AdvancedAIScanner:
                 'severity': 'Medium',
                 'title': 'Limited Model Explainability',
                 'description': f"Model has low interpretability score ({explainability_assessment.interpretability_score:.2f})",
-                'location': 'Model Architecture',
+                'location': 'src/model/explainability-analysis.py',
                 'impact': 'May not meet transparency obligations for high-risk systems',
                 'recommendation': 'Implement explanation methods (SHAP, LIME) or use interpretable models'
             })
@@ -1311,7 +1311,7 @@ class AdvancedAIScanner:
                 'severity': 'Medium',
                 'title': 'AI Governance Gaps',
                 'description': f"AI governance deficiencies identified: {', '.join(governance_issues)}",
-                'location': 'AI System Management',
+                'location': 'docs/ai-governance-framework.md',
                 'impact': 'Increased operational and compliance risks',
                 'recommendations': [
                     'Implement comprehensive AI governance framework',
@@ -1330,7 +1330,7 @@ class AdvancedAIScanner:
                 'severity': 'High',
                 'title': f"High-Risk AI System - {annex_iii['total_matches']} Annex III Categories Matched",
                 'description': f"System classified as high-risk under: {', '.join([cat['category'] for cat in annex_iii['annex_iii_categories']])}",
-                'location': 'EU AI Act Articles 6-7, Annex III',
+                'location': 'docs/risk-classification.md',
                 'impact': 'Requires conformity assessment, CE marking, and EU database registration before market placement',
                 'recommendation': 'Implement full high-risk AI system requirements including technical documentation, risk management, and quality management systems'
             })
@@ -1345,7 +1345,7 @@ class AdvancedAIScanner:
                     'severity': 'Medium',
                     'title': f"Article 50 Transparency Requirements Not Met ({len(non_compliant_items)} items)",
                     'description': f"Missing transparency obligations: {', '.join([item['requirement'] for item in non_compliant_items])}",
-                    'location': 'EU AI Act Article 50',
+                    'location': 'docs/transparency-obligations.md',
                     'impact': 'Up to €15M or 3% of annual turnover',
                     'recommendation': '; '.join([item['recommendation'] for item in non_compliant_items if item.get('recommendation')])
                 })
@@ -1359,7 +1359,7 @@ class AdvancedAIScanner:
                     'severity': 'High',
                     'title': f"Provider Obligations ({obligations['provider']['compliance_percentage']:.0f}% compliant)",
                     'description': f"Missing {len(obligations['provider']['missing_obligations'])} provider requirements",
-                    'location': 'EU AI Act Articles 16-25',
+                    'location': 'docs/provider-obligations.md',
                     'impact': 'Non-compliance with provider obligations - up to €15M or 3% of annual turnover',
                     'recommendation': 'Implement missing provider obligations including quality management, documentation, and cooperation procedures'
                 })
@@ -1371,7 +1371,7 @@ class AdvancedAIScanner:
                     'severity': 'Medium',
                     'title': f"Deployer Obligations ({obligations['deployer']['compliance_percentage']:.0f}% compliant)",
                     'description': f"Missing {len(obligations['deployer']['missing_obligations'])} deployer requirements",
-                    'location': 'EU AI Act Articles 26-27',
+                    'location': 'docs/deployer-obligations.md',
                     'impact': 'Increased operational risk and potential non-compliance penalties',
                     'recommendation': 'Implement human oversight, input data monitoring, and fundamental rights impact assessment'
                 })
@@ -1384,7 +1384,7 @@ class AdvancedAIScanner:
                 'severity': 'High',
                 'title': f"System Not Market-Ready ({conformity['conformity_progress_percentage']:.0f}% complete)",
                 'description': 'AI system lacks required conformity assessment, CE marking, or EU database registration',
-                'location': 'EU AI Act Articles 38-46',
+                'location': 'docs/conformity-assessment/',
                 'impact': 'Cannot be legally placed on EU market until conformity requirements met',
                 'recommendation': '; '.join(conformity['next_steps'][:3])
             })
@@ -1404,7 +1404,7 @@ class AdvancedAIScanner:
                     'severity': 'High' if gpai.get('systemic_risk_model') else 'Medium',
                     'title': 'General Purpose AI Model Non-Compliance',
                     'description': f"GPAI model compliance issues: {'; '.join(issues)}",
-                    'location': 'EU AI Act Articles 51-55',
+                    'location': 'model/gpai-model-card.md',
                     'impact': 'Up to €15M or 3% of annual turnover (systemic risk models face enhanced penalties)',
                     'recommendation': 'Complete technical documentation (Annex XI/XII), publish training data summary, ensure copyright compliance, conduct systemic risk evaluations'
                 })
@@ -1417,7 +1417,7 @@ class AdvancedAIScanner:
                 'severity': 'Medium',
                 'title': f"Post-Market Monitoring Gaps ({post_market['compliance_percentage']:.0f}% compliant)",
                 'description': 'Missing post-market monitoring plan, incident reporting system, or malfunction tracking',
-                'location': 'EU AI Act Articles 85-87',
+                'location': 'docs/post-market-monitoring-plan.md',
                 'impact': 'Unable to detect and respond to serious incidents - regulatory penalties up to €15M or 3% of annual turnover',
                 'recommendation': 'Establish post-market monitoring plan with performance tracking and 15-day serious incident reporting procedure'
             })
@@ -1432,7 +1432,7 @@ class AdvancedAIScanner:
                     'severity': 'Low',
                     'title': 'AI Literacy Requirements Not Met',
                     'description': 'Staff training programs or user guidance insufficient for AI system deployment',
-                    'location': 'EU AI Act Article 4',
+                    'location': 'docs/ai-literacy-training-plan.md',
                     'impact': 'Increased risk of misuse and operational errors',
                     'recommendation': literacy_compliance.get('recommendation', 'Establish AI literacy training program')
                 })
@@ -1445,7 +1445,7 @@ class AdvancedAIScanner:
                 'severity': 'Medium',
                 'title': 'Enforcement Readiness Incomplete',
                 'description': 'Missing explanation mechanisms or supervisory authority cooperation procedures',
-                'location': 'EU AI Act Articles 88-94',
+                'location': 'docs/enforcement-cooperation.md',
                 'impact': 'Unable to respond to regulatory requests or individual rights - potential administrative fines',
                 'recommendation': 'Implement right to explanation mechanism and establish competent authority cooperation procedures'
             })
@@ -1458,7 +1458,7 @@ class AdvancedAIScanner:
                 'severity': 'Low',
                 'title': 'Governance Structure Gaps',
                 'description': f"Missing awareness of AI Office or national authority ({governance_structures.get('netherlands_authority', 'AP')})",
-                'location': 'EU AI Act Articles 60-75',
+                'location': 'docs/governance-structure.md',
                 'impact': 'Potential delays in addressing regulatory requirements',
                 'recommendation': 'Identify national competent authority, understand market surveillance procedures, prepare for safeguard procedures'
             })
