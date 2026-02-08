@@ -1514,13 +1514,22 @@ class AIModelScanner:
     def _generate_architecture_findings(
             self, model_source: str,
             model_details: Dict[str, Any]) -> List[Dict[str, Any]]:
+        if model_source in ["Repository URL", "Model Repository"]:
+            repo_url = model_details.get("repository_url", model_details.get("repo_url", ""))
+            location = f"{repo_url}/blob/main/model/" if repo_url else "src/model/architecture-review.py"
+        elif model_source == "Model Path":
+            location = model_details.get("model_path", "src/model/architecture-review.py")
+        elif model_source == "Model Hub":
+            location = model_details.get("hub_url", "src/model/architecture-review.py")
+        else:
+            location = "src/model/architecture-review.py"
         return [{
             "id": f"AIARCH-{uuid.uuid4().hex[:6]}",
             "type": "Model Architecture",
             "category": "PII Protection",
             "description": "Model architecture review completed",
             "risk_level": "medium",
-            "location": model_source,
+            "location": location,
             "details": {
                 "model_source": model_source,
                 "model_details": {

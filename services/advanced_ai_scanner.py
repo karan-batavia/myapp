@@ -272,7 +272,7 @@ class AdvancedAIScanner:
         # Determine scan location from metadata
         scan_location = model_metadata.get('repository_url', 
                          model_metadata.get('model_name', 
-                         model_metadata.get('file_path', 'AI Model Repository')))
+                         model_metadata.get('file_path', '')))
         
         findings = self._generate_ai_findings_expanded(
             ai_act_compliance, bias_assessment, explainability_assessment, governance_assessment,
@@ -2913,9 +2913,10 @@ class AdvancedAIScanner:
                                        governance_assessment, annex_iii, transparency, obligations,
                                        conformity, gpai, post_market, literacy, enforcement, governance,
                                        risk_mgmt, data_gov, documentation, oversight, accuracy, fria,
-                                       incident, national_auth, scan_location: str = "AI Model Repository") -> List[Dict[str, Any]]:
+                                       incident, national_auth, scan_location: str = "") -> List[Dict[str, Any]]:
         """Generate findings from all 18 phases of EU AI Act assessment"""
         findings = []
+        loc_prefix = f"{scan_location.rstrip('/')}/" if scan_location else ""
         
         # Call original findings generation
         original_findings = self._generate_ai_findings(
@@ -2937,7 +2938,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'high',
                         'severity': 'High',
-                        'location': f"{scan_location}/docs/risk-assessment.md or /RISK_MANAGEMENT.md",
+                        'location': f"{loc_prefix}docs/risk-management-system.md",
                         'ai_act_article': f"Article {req.get('sub_article', '9').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Risk management is mandatory for high-risk AI systems',
@@ -2956,7 +2957,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'high',
                         'severity': 'High',
-                        'location': f"{scan_location}/data/ or /datasets/ or /training_data/",
+                        'location': f"{loc_prefix}docs/data-governance-policy.md",
                         'ai_act_article': f"Article {req.get('sub_article', '10').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Data governance is critical for training data quality',
@@ -2975,7 +2976,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'medium',
                         'severity': 'Medium',
-                        'location': f"{scan_location}/docs/ or /README.md or /MODEL_CARD.md",
+                        'location': f"{loc_prefix}docs/technical-documentation.md",
                         'ai_act_article': f"Article {req.get('sub_article', '11-12').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Documentation is required for conformity assessment',
@@ -2994,7 +2995,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'high',
                         'severity': 'High',
-                        'location': f"{scan_location}/config/oversight.yaml or /deployment/",
+                        'location': f"{loc_prefix}docs/human-oversight-plan.md",
                         'ai_act_article': f"Article {req.get('sub_article', '14').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Human oversight is mandatory for high-risk AI systems',
@@ -3013,7 +3014,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'high',
                         'severity': 'High',
-                        'location': f"{scan_location}/tests/ or /benchmarks/ or /evaluation/",
+                        'location': f"{loc_prefix}docs/accuracy-robustness-cybersecurity.md",
                         'ai_act_article': f"Article {req.get('sub_article', '15').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Accuracy and robustness are mandatory quality requirements',
@@ -3032,7 +3033,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'critical',
                         'severity': 'Critical',
-                        'location': f"{scan_location}/docs/FRIA.md or /compliance/impact-assessment/",
+                        'location': f"{loc_prefix}docs/fundamental-rights-impact-assessment.md",
                         'ai_act_article': f"Article {req.get('sub_article', '29-35').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Fundamental rights protection is a core EU AI Act requirement',
@@ -3051,7 +3052,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'high',
                         'severity': 'High',
-                        'location': f"{scan_location}/docs/incident-response.md or /.github/INCIDENT_TEMPLATE.md",
+                        'location': f"{loc_prefix}docs/incident-response.md",
                         'ai_act_article': f"Article {req.get('sub_article', '73').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Incident reporting is mandatory for serious incidents',
@@ -3070,7 +3071,7 @@ class AdvancedAIScanner:
                         'description': f"Non-compliant: {req.get('requirement', 'Unknown requirement')}",
                         'risk_level': 'medium',
                         'severity': 'Medium',
-                        'location': f"{scan_location}/compliance/ or /docs/regulatory/",
+                        'location': f"{loc_prefix}docs/national-authority-compliance.md",
                         'ai_act_article': f"Article {req.get('sub_article', '70-72').replace('Art. ', '').replace('Article ', '')}",
                         'evidence_required': req.get('evidence_required', []),
                         'impact': 'Cooperation with national authorities is required',
