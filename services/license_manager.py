@@ -315,7 +315,8 @@ class LicenseManager:
         # Scale+: audio_video, advanced_ai
         all_scanners = [
             "code", "document", "database", "image", "website", "ai_model",
-            "dpia", "soc2", "enterprise", "sustainability", "audio_video", "advanced_ai"
+            "dpia", "soc2", "enterprise", "sustainability", "audio_video",
+            "data_sovereignty", "api", "advanced_ai"
         ]
         
         all_regions = ["Netherlands", "Germany", "France", "Belgium", "EU", "Global"]
@@ -587,7 +588,7 @@ class LicenseManager:
         all_scanners = [
             "code", "document", "database", "image", "website", "ai_model",
             "dpia", "soc2", "enterprise", "sustainability", "audio_video", 
-            "data_sovereignty", "advanced_ai"
+            "data_sovereignty", "api", "advanced_ai"
         ]
         return scanner_type in all_scanners
     
