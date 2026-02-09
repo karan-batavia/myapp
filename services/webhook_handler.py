@@ -21,15 +21,15 @@ if _parent_dir not in sys.path:
 if _current_dir not in sys.path:
     sys.path.insert(0, _current_dir)
 
-# Import services - handle both standalone and integrated imports
+# Import services - try local imports first (works in Docker), then package imports
 try:
-    from services.email_service import email_service
-    from services.database_service import database_service
-    from services.invoice_generator import invoice_generator
-except ImportError:
     from email_service import email_service
     from database_service import database_service
     from invoice_generator import invoice_generator
+except ImportError:
+    from services.email_service import email_service
+    from services.database_service import database_service
+    from services.invoice_generator import invoice_generator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -19,9 +19,9 @@ if current_dir not in sys.path:
 from flask import Flask, request, jsonify
 
 try:
-    from services.webhook_handler import process_stripe_webhook
-except ImportError:
     from webhook_handler import process_stripe_webhook
+except ImportError:
+    from services.webhook_handler import process_stripe_webhook
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
