@@ -68,17 +68,37 @@ st.markdown("""
             width: 100% !important;
             min-width: 100% !important;
             max-width: 100% !important;
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
             transform: none !important;
-            z-index: 999 !important;
+            z-index: 1 !important;
+            overflow: visible !important;
         }
         [data-testid="stSidebar"] > div:first-child {
             width: 100% !important;
+            height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
             padding: 1rem !important;
+            overflow: visible !important;
+            position: relative !important;
+        }
+        [data-testid="stSidebarUserContent"] {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
         }
         [data-testid="stSidebarCollapsedControl"],
         [data-testid="collapsedControl"],
         [data-testid="stSidebarCollapseButton"] {
             display: none !important;
+        }
+        [data-testid="stAppViewContainer"] {
+            display: block !important;
+        }
+        section.main {
+            display: block !important;
         }
         section.main .block-container {
             padding: 0.5rem 1rem !important;
