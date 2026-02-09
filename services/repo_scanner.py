@@ -657,6 +657,40 @@ class RepoScanner:
         'enterprise': {'max_files': 2000, 'timeout': 600, 'max_file_size_kb': 1024},
     }
 
+    def _build_repo_file_url(self, repo_url: str, branch: Optional[str], 
+                            file_path: str, line_num=None) -> str:
+        """Build a direct URL to a file in the repository."""
+        try:
+            clean_url = repo_url.rstrip('/')
+            if clean_url.endswith('.git'):
+                clean_url = clean_url[:-4]
+
+            ref = branch or 'main'
+
+            if 'github.com' in clean_url:
+                url = f"{clean_url}/blob/{ref}/{file_path}"
+                if line_num:
+                    url += f"#L{line_num}"
+                return url
+            elif 'gitlab.com' in clean_url:
+                url = f"{clean_url}/-/blob/{ref}/{file_path}"
+                if line_num:
+                    url += f"#L{line_num}"
+                return url
+            elif 'bitbucket.org' in clean_url:
+                url = f"{clean_url}/src/{ref}/{file_path}"
+                if line_num:
+                    url += f"#lines-{line_num}"
+                return url
+            elif 'dev.azure.com' in clean_url or 'visualstudio.com' in clean_url:
+                url = f"{clean_url}?path=/{file_path}&version=GB{ref}"
+                if line_num:
+                    url += f"&line={line_num}"
+                return url
+        except Exception:
+            pass
+        return ''
+
     def scan_repository(self, repo_url: str, branch: Optional[str] = None, 
                         auth_token: Optional[str] = None,
                         progress_callback: Optional[Callable] = None,
@@ -870,14 +904,27 @@ class RepoScanner:
                         finding['source_file'] = rel_path
 
                         old_loc = finding.get('location', '')
+                        line_num = None
                         if old_loc:
                             loc_parts = old_loc.split(':')
-                            loc_file = loc_parts[0]
-                            if loc_file == os.path.basename(rel_path) or '/tmp/' in loc_file or '/var/' in loc_file:
-                                line_suffix = f":{loc_parts[1]}" if len(loc_parts) > 1 else ''
-                                finding['location'] = f"{rel_path}{line_suffix}"
+                            if len(loc_parts) > 1 and loc_parts[-1].isdigit():
+                                line_num = loc_parts[-1]
+                        if not line_num:
+                            line_num = finding.get('line_number', finding.get('line', ''))
+
+                        base_url = self._build_repo_file_url(repo_url, branch, rel_path, line_num)
+                        if base_url:
+                            finding['location'] = base_url
+                            finding['location_short'] = f"{rel_path}:{line_num}" if line_num else rel_path
                         else:
-                            finding['location'] = rel_path
+                            if old_loc:
+                                loc_parts = old_loc.split(':')
+                                loc_file = loc_parts[0]
+                                if loc_file == os.path.basename(rel_path) or '/tmp/' in loc_file or '/var/' in loc_file:
+                                    line_suffix = f":{loc_parts[1]}" if len(loc_parts) > 1 else ''
+                                    finding['location'] = f"{rel_path}{line_suffix}"
+                            else:
+                                finding['location'] = rel_path
 
                         risk_level = finding.get('risk_level', finding.get('severity', 'Medium'))
                         if isinstance(risk_level, str):
