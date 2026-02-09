@@ -61,6 +61,30 @@ st.markdown("""
         visibility: visible !important;
         color: inherit !important;
     }
+    @media (max-width: 768px) {
+        [data-testid="stSidebar"] {
+            display: block !important;
+            position: relative !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            transform: none !important;
+            z-index: 999 !important;
+        }
+        [data-testid="stSidebar"] > div:first-child {
+            width: 100% !important;
+            padding: 1rem !important;
+        }
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"],
+        [data-testid="stSidebarCollapseButton"] {
+            display: none !important;
+        }
+        section.main .block-container {
+            padding: 0.5rem 1rem !important;
+            max-width: 100% !important;
+        }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1593,21 +1617,6 @@ def render_landing_page():
     
     if st.session_state.get('_show_nl_hint', False):
         st.info("💡 Deze applicatie is ook beschikbaar in het Nederlands - use the language selector in the sidebar")
-    
-    st.markdown("""
-    <style>
-        @media (max-width: 768px) {
-            section.main .block-container { padding: 0.5rem 1rem !important; max-width: 100% !important; }
-            h1 { font-size: 1.5rem !important; }
-            h2 { font-size: 1.3rem !important; }
-            [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; }
-            [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-                min-width: 100% !important;
-                flex: 1 1 100% !important;
-            }
-        }
-    </style>
-    """, unsafe_allow_html=True)
     
     # Hero section with image and value proposition
     hero_col1, hero_col2 = st.columns([1, 1], gap="large")
