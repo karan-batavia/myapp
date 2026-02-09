@@ -24,6 +24,12 @@ import pandas as pd
 import requests
 import importlib.util
 
+try:
+    from utils.smart_file_selector import SmartFileSelector, SCAN_DEPTH_PRESETS
+    SMART_SELECTOR_AVAILABLE = True
+except ImportError:
+    SMART_SELECTOR_AVAILABLE = False
+
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -1641,18 +1647,21 @@ class CloudResourcesScanner:
 class GithubRepoSustainabilityScanner:
     """Scanner for analyzing GitHub repositories for code efficiency and sustainability."""
     
-    def __init__(self, repo_url: str, branch: str = 'main'):
+    def __init__(self, repo_url: str, branch: str = 'main', scan_depth: str = 'standard'):
         """
         Initialize the GitHub repository scanner.
         
         Args:
             repo_url: URL of the GitHub repository
             branch: Branch to analyze
+            scan_depth: Depth of scan ('quick', 'standard', 'deep', 'enterprise')
         """
         self.repo_url = repo_url
         self.branch = branch
+        self.scan_depth = scan_depth
         self.progress_callback = None
         self.temp_dir = None
+        self._scan_coverage = None
         
     def set_progress_callback(self, callback: Callable[[int, int, str], None]) -> None:
         """
@@ -1676,6 +1685,15 @@ class GithubRepoSustainabilityScanner:
             self.progress_callback(current, total, message)
         else:
             logger.info(f"Progress {current}/{total}: {message}")
+    
+    def get_scan_coverage(self) -> Optional[Dict[str, Any]]:
+        """
+        Get the scan coverage report from SmartFileSelector.
+        
+        Returns:
+            Coverage report dictionary or None if not available
+        """
+        return self._scan_coverage
     
     def scan_repository(self) -> Dict[str, Any]:
         """
@@ -1757,6 +1775,24 @@ class GithubRepoSustainabilityScanner:
                 cwd=self.temp_dir, check=True, capture_output=True
             )
             
+            # Smart file selection for large repositories
+            if SMART_SELECTOR_AVAILABLE:
+                try:
+                    smart_selector = SmartFileSelector(scanner_type='sustainability')
+                    selected_files, coverage_report = smart_selector.select_with_depth(
+                        self.temp_dir, scan_depth=self.scan_depth
+                    )
+                    self._scan_coverage = coverage_report
+                    scan_result['scan_coverage'] = coverage_report
+                    scan_result['smart_selection_applied'] = True
+                    logger.info(f"SmartFileSelector: {coverage_report.get('scanned_files', 0)}/{coverage_report.get('total_files', 0)} files selected")
+                except Exception as e:
+                    logger.warning(f"SmartFileSelector failed, continuing without it: {e}")
+                    self._scan_coverage = None
+                    scan_result['smart_selection_applied'] = False
+            else:
+                scan_result['smart_selection_applied'] = False
+
             # Step 2: Analyze repository structure
             current_step += 1
             self._update_progress(current_step, total_steps, "Analyzing repository structure")
@@ -1864,8 +1900,30 @@ class GithubRepoSustainabilityScanner:
                         # Sample files if there are too many to process efficiently
                         file_paths = file_list_process.stdout.strip().split('\n')
                         
-                        # For very large repos, limit to 5000 files max for detailed analysis
-                        if use_sampling:
+                        # Use SmartFileSelector for prioritized file limiting if available
+                        if SMART_SELECTOR_AVAILABLE and use_sampling:
+                            try:
+                                depth_limits = {
+                                    'quick': 500,
+                                    'standard': 2000,
+                                    'deep': 5000,
+                                    'enterprise': 10000
+                                }
+                                file_limit = depth_limits.get(self.scan_depth, 2000)
+                                if len(file_paths) > file_limit:
+                                    smart_selector = SmartFileSelector(scanner_type='sustainability')
+                                    full_paths = [os.path.join(self.temp_dir, fp) for fp in file_paths if fp.strip()]
+                                    selected, _ = smart_selector.select_files(full_paths, self.temp_dir, file_limit)
+                                    file_paths = [os.path.relpath(fp, self.temp_dir) for fp in selected]
+                                    use_sampling = True
+                                    logger.info(f"SmartFileSelector limited analysis to {len(file_paths)} prioritized files (depth={self.scan_depth})")
+                            except Exception as e:
+                                logger.warning(f"SmartFileSelector file limiting failed, using default sampling: {e}")
+                                if use_sampling:
+                                    sample_size = min(5000, max(500, int(total_files * 0.1)))
+                                    file_paths = random.sample(file_paths, sample_size)
+                        elif use_sampling:
+                            # For very large repos, limit to 5000 files max for detailed analysis
                             # Set a max sample size with a minimum 10% of repo files
                             sample_size = min(5000, max(500, int(total_files * 0.1)))
                             file_paths = random.sample(file_paths, sample_size)

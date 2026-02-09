@@ -58,6 +58,13 @@ except ImportError:
     def detect_uavg_compliance_gaps(content, metadata=None):
         return []
 
+# Import smart file selector for intelligent file prioritization
+try:
+    from utils.smart_file_selector import SmartFileSelector, SCAN_DEPTH_PRESETS as SMART_DEPTH_PRESETS
+    SMART_SELECTOR_AVAILABLE = True
+except ImportError:
+    SMART_SELECTOR_AVAILABLE = False
+
 # Custom exception classes for better error handling
 class ScannerError(Exception):
     """Base exception for code scanner errors"""
@@ -109,6 +116,7 @@ class CodeScanner:
             fast_mode: Whether to skip advanced analyzers for faster scanning (default: False)
         """
         self.fast_mode = fast_mode
+        self._last_coverage_report = {}
         # Long-running scan settings
         self.max_timeout = max_timeout
         self.checkpoint_interval = checkpoint_interval
@@ -697,7 +705,8 @@ class CodeScanner:
                       ignore_patterns=None, max_file_size_mb=50, 
                       continue_from_checkpoint=False, 
                       smart_sampling=True, 
-                      max_files_to_scan=200) -> Dict[str, Any]:
+                      max_files_to_scan=200,
+                      scan_depth: Optional[str] = None) -> Dict[str, Any]:
         """
         Scan a directory of files with timeout protection, checkpoints and smart sampling.
         
@@ -709,6 +718,9 @@ class CodeScanner:
             continue_from_checkpoint: Whether to continue from last checkpoint if available
             smart_sampling: Whether to use smart sampling for large repositories
             max_files_to_scan: Maximum number of files to scan in a large repository
+            scan_depth: Optional scan depth preset ('quick', 'standard', 'deep', 'enterprise').
+                        When provided and SmartFileSelector is available, uses intelligent
+                        file prioritization instead of basic smart sampling.
             
         Returns:
             Dictionary containing scan results
@@ -741,10 +753,25 @@ class CodeScanner:
         # Use better batch size for faster scanning
         batch_size = 100  # Increased batch size for better performance
         
-        # Apply smart sampling if needed
-        filtered_files = self._apply_smart_sampling(
-            all_files, smart_sampling, max_files_to_scan
-        )
+        # Apply smart file selection or basic smart sampling
+        if scan_depth is not None and SMART_SELECTOR_AVAILABLE:
+            selector = SmartFileSelector(scanner_type='general')
+            depth_preset = SMART_DEPTH_PRESETS.get(scan_depth, SMART_DEPTH_PRESETS['standard'])
+            smart_max_files = depth_preset['max_files']
+            flat_files = [f[0] for f in all_files]
+            selected_files, coverage_report = selector.select_files(
+                flat_files, directory_path, smart_max_files
+            )
+            self._last_coverage_report = coverage_report
+            self._last_coverage_report['scan_depth'] = scan_depth
+            self._last_coverage_report['scan_depth_preset'] = depth_preset
+            skipped_count = len(all_files) - len(selected_files)
+            self.scan_checkpoint_data['stats']['files_skipped'] += skipped_count
+            filtered_files = selected_files
+        else:
+            filtered_files = self._apply_smart_sampling(
+                all_files, smart_sampling, max_files_to_scan
+            )
             
         # Total file stats for logging
         print(f"Total files found: {total_file_count}, files to scan: {len(filtered_files)}, files skipped: {self.scan_checkpoint_data['stats']['files_skipped']}")
@@ -1028,6 +1055,10 @@ class CodeScanner:
         logger.info(f"Smart sampling selected {len(filtered_files)} files out of {len(all_files)} total files.")
         
         return filtered_files
+    
+    def get_scan_coverage(self) -> Dict[str, Any]:
+        """Return the coverage report from the last smart file selection scan."""
+        return self._last_coverage_report
     
     def _execute_parallel_scan(self, filtered_files: List[str], directory_path: str, 
                              checkpoint_path: str, num_workers: int, batch_size: int) -> None:

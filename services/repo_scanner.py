@@ -27,6 +27,12 @@ import uuid
 
 from services.code_scanner import CodeScanner
 
+try:
+    from utils.smart_file_selector import SmartFileSelector, SCAN_DEPTH_PRESETS as SHARED_DEPTH_PRESETS
+    SMART_SELECTOR_AVAILABLE = True
+except ImportError:
+    SMART_SELECTOR_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -539,6 +545,10 @@ class RepoScanner:
             return metadata
     
     def _select_priority_files(self, all_files: List[str], repo_path: str, max_files: int) -> tuple:
+        if SMART_SELECTOR_AVAILABLE:
+            selector = SmartFileSelector(scanner_type='general')
+            return selector.select_files(all_files, repo_path, max_files)
+
         TIER1_EXACT_NAMES = {
             '.env', 'Dockerfile', '.dockerignore', '.htaccess', '.htpasswd',
             'web.config', 'application.properties', 'appsettings.json'
@@ -640,12 +650,15 @@ class RepoScanner:
 
         return selected_files, coverage_report
 
-    SCAN_DEPTH_PRESETS = {
-        'quick': {'max_files': 50, 'timeout': 60, 'max_file_size_kb': 100},
-        'standard': {'max_files': 150, 'timeout': 120, 'max_file_size_kb': 200},
-        'deep': {'max_files': 500, 'timeout': 300, 'max_file_size_kb': 500},
-        'enterprise': {'max_files': 2000, 'timeout': 600, 'max_file_size_kb': 1024},
-    }
+    if SMART_SELECTOR_AVAILABLE:
+        SCAN_DEPTH_PRESETS = SHARED_DEPTH_PRESETS
+    else:
+        SCAN_DEPTH_PRESETS = {
+            'quick': {'max_files': 50, 'timeout': 60, 'max_file_size_kb': 100},
+            'standard': {'max_files': 150, 'timeout': 120, 'max_file_size_kb': 200},
+            'deep': {'max_files': 500, 'timeout': 300, 'max_file_size_kb': 500},
+            'enterprise': {'max_files': 2000, 'timeout': 600, 'max_file_size_kb': 1024},
+        }
 
     def scan_repository(self, repo_url: str, branch: Optional[str] = None, 
                         auth_token: Optional[str] = None,

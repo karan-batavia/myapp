@@ -107,6 +107,18 @@ except ImportError:
     def generate_article_checklist(findings):
         return {}
 
+try:
+    from utils.smart_file_selector import SmartFileSelector, SCAN_DEPTH_PRESETS
+    SMART_FILE_SELECTOR_AVAILABLE = True
+except ImportError:
+    SMART_FILE_SELECTOR_AVAILABLE = False
+    SCAN_DEPTH_PRESETS = {
+        'quick': {'max_files': 50, 'timeout': 60, 'max_file_size_kb': 100},
+        'standard': {'max_files': 150, 'timeout': 120, 'max_file_size_kb': 200},
+        'deep': {'max_files': 500, 'timeout': 300, 'max_file_size_kb': 500},
+        'enterprise': {'max_files': 2000, 'timeout': 600, 'max_file_size_kb': 1024},
+    }
+
 
 class AIModelScanner:
     """
@@ -117,33 +129,47 @@ class AIModelScanner:
         self.region = region
         self.progress_callback: Optional[Callable[[int, int, str],
                                                   None]] = None
+        self._coverage_report: Dict[str, Any] = {}
 
     def set_progress_callback(
             self, callback: Callable[[int, int, str], None]) -> None:
         self.progress_callback = callback
 
-    def _prioritize_files(self, file_list: List[str]) -> List[str]:
+    def _prioritize_files(self, file_list: List[str], repo_path: str = '') -> List[str]:
         """
-        Prioritize files for scanning - model files first, limit total count.
-        Optimizes large repository scanning without changing core logic.
+        Prioritize files for scanning using SmartFileSelector with ai_model strategy.
+        Falls back to basic prioritization if SmartFileSelector is not available.
         """
+        if SMART_FILE_SELECTOR_AVAILABLE:
+            try:
+                selector = SmartFileSelector(scanner_type='ai_model')
+                selected_files, coverage_report = selector.select_files(
+                    file_list, repo_path or '', max_files=MAX_FILES_PER_SCAN
+                )
+                self._coverage_report = coverage_report
+                return selected_files
+            except Exception as e:
+                logging.warning(f"SmartFileSelector failed, using fallback: {e}")
+
         priority_files = []
         other_files = []
-        
+
         for f in file_list:
-            # Skip unwanted directories
             if any(skip_dir in f for skip_dir in SKIP_DIRECTORIES):
                 continue
-            
+
             ext = os.path.splitext(f)[1].lower()
             if ext in PRIORITY_FILE_EXTENSIONS:
                 priority_files.append(f)
             else:
                 other_files.append(f)
-        
-        # Combine: priority files first, then others, limited to MAX_FILES
+
         combined = priority_files + other_files
         return combined[:MAX_FILES_PER_SCAN]
+
+    def get_scan_coverage(self) -> Dict[str, Any]:
+        """Return the coverage report from the last scan."""
+        return self._coverage_report
 
     def _parallel_compliance_check(self, content: str, metadata: Optional[Dict[str, Any]] = None, source_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """
@@ -175,7 +201,8 @@ class AIModelScanner:
             model_details: Dict[str, Any],
             leakage_types: Optional[List[str]] = None,
             context: Optional[List[str]] = None,
-            sample_inputs: Optional[List[str]] = None) -> Dict[str, Any]:
+            sample_inputs: Optional[List[str]] = None,
+            scan_depth: str = 'standard') -> Dict[str, Any]:
 
         if leakage_types is None:
             leakage_types = ["All"]
@@ -183,6 +210,9 @@ class AIModelScanner:
             context = ["General"]
         if sample_inputs is None:
             sample_inputs = []
+
+        depth_preset = SCAN_DEPTH_PRESETS.get(scan_depth, SCAN_DEPTH_PRESETS['standard'])
+        effective_max_files = min(depth_preset.get('max_files', MAX_FILES_PER_SCAN), MAX_FILES_PER_SCAN)
 
         scan_id = f"AIMOD-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6]}"
         scan_result = {
@@ -376,18 +406,36 @@ class AIModelScanner:
                         
                         logging.info(f"Repository cloned successfully to {temp_repo_dir}")
                         
-                        # Find model files in repository (common AI model file extensions)
                         model_extensions = ['.pt', '.pth', '.h5', '.keras', '.pkl', '.pickle', '.onnx', '.pb', '.tflite', '.safetensors', '.bin']
                         model_files = []
+                        all_repo_files = []
                         
                         for root, dirs, files in os.walk(temp_repo_dir):
-                            # Skip .git directory
                             if '.git' in root:
                                 continue
                             for file in files:
+                                full_path = os.path.join(root, file)
+                                all_repo_files.append(full_path)
                                 if any(file.lower().endswith(ext) for ext in model_extensions):
-                                    model_files.append(os.path.join(root, file))
-                        
+                                    model_files.append(full_path)
+
+                        if SMART_FILE_SELECTOR_AVAILABLE and all_repo_files:
+                            try:
+                                repo_selector = SmartFileSelector(scanner_type='ai_model')
+                                prioritized_files, repo_coverage = repo_selector.select_files(
+                                    all_repo_files, temp_repo_dir, max_files=effective_max_files
+                                )
+                                self._coverage_report = repo_coverage
+                                model_metadata['smart_file_selection'] = True
+                                model_metadata['repo_coverage'] = repo_coverage
+                                model_metadata['prioritized_source_files'] = [
+                                    f for f in prioritized_files
+                                    if not any(f.lower().endswith(ext) for ext in model_extensions)
+                                ]
+                                logging.info(f"SmartFileSelector selected {len(prioritized_files)} files from {len(all_repo_files)} total repo files")
+                            except Exception as selector_err:
+                                logging.warning(f"SmartFileSelector repo scan failed, continuing with model files only: {selector_err}")
+
                         if model_files:
                             # Use the first model file found (or largest if multiple)
                             if len(model_files) > 1:
