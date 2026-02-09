@@ -4184,11 +4184,23 @@ def render_code_scanner_interface(region: str, username: str):
     
     elif source_type == "Repository URL":
         repo_url = st.text_input("Repository URL", placeholder="https://github.com/user/repo")
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             branch = st.text_input("Branch", value="main")
         with col2:
             token = st.text_input("Access Token (optional)", type="password")
+        with col3:
+            repo_scan_depth = st.selectbox(
+                "Scan Depth",
+                ["quick", "standard", "deep", "enterprise"],
+                index=1,
+                format_func=lambda x: {
+                    "quick": "Quick (50 files, ~10s)",
+                    "standard": "Standard (150 files, ~30s)",
+                    "deep": "Deep (500 files, ~2min)",
+                    "enterprise": "Enterprise (2000 files, ~5min)"
+                }.get(x, x)
+            )
     
     else:  # Directory Path
         directory_path = st.text_input("Directory Path", placeholder="/path/to/code")
