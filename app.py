@@ -62,29 +62,9 @@ st.markdown("""
         color: inherit !important;
     }
     @media (max-width: 768px) {
-        [data-testid="stSidebar"] {
-            display: none !important;
-        }
-        [data-testid="stSidebarCollapsedControl"],
-        [data-testid="collapsedControl"],
-        [data-testid="stSidebarCollapseButton"] {
-            display: none !important;
-        }
         section.main .block-container {
             padding: 0.5rem 1rem !important;
             max-width: 100% !important;
-        }
-        .mobile-login-card {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #e2e8f0;
-        }
-    }
-    @media (min-width: 769px) {
-        .mobile-login-card {
-            display: none !important;
         }
     }
 </style>
@@ -1619,132 +1599,6 @@ def render_landing_page():
     
     if st.session_state.get('_show_nl_hint', False):
         st.info("💡 Deze applicatie is ook beschikbaar in het Nederlands - use the language selector in the sidebar")
-    
-    import streamlit.components.v1 as components
-    components.html("""
-    <script>
-    function applyMobileLayout() {
-        const isMobile = window.innerWidth <= 768 || 
-            /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        try {
-            const topWindow = window.parent;
-            const sidebar = topWindow.document.querySelector('[data-testid="stSidebar"]');
-            const collapseBtn = topWindow.document.querySelector('[data-testid="stSidebarCollapsedControl"]') || 
-                               topWindow.document.querySelector('[data-testid="collapsedControl"]');
-            
-            if (isMobile) {
-                if (sidebar) sidebar.style.display = 'none';
-                if (collapseBtn) collapseBtn.style.display = 'none';
-                
-                const mobileLogin = topWindow.document.getElementById('mobile-login-container');
-                if (mobileLogin) mobileLogin.style.display = 'block';
-            } else {
-                const mobileLogin = topWindow.document.getElementById('mobile-login-container');
-                if (mobileLogin) mobileLogin.style.display = 'none';
-            }
-        } catch(e) {}
-    }
-    applyMobileLayout();
-    window.addEventListener('resize', applyMobileLayout);
-    </script>
-    """, height=0)
-    
-    mobile_login_container = st.container()
-    with mobile_login_container:
-        st.markdown(f"### 🔐 {_('login.title', 'Login')}")
-        from utils.i18n import language_selector
-        language_selector("mobile_landing")
-        
-        with st.form("mobile_login_form"):
-            m_username = st.text_input(_('login.email_username', 'Username'), key="mobile_username")
-            m_password = st.text_input(_('login.password', 'Password'), type="password", key="mobile_password")
-            m_submit = st.form_submit_button(_('login.button', 'Login'), use_container_width=True)
-            
-            if m_submit:
-                if m_username and m_password:
-                    from utils.secure_auth_enhanced import authenticate_user
-                    auth_result = authenticate_user(m_username, m_password)
-                    
-                    if auth_result.success:
-                        st.session_state.authenticated = True
-                        st.session_state.username = auth_result.username
-                        st.session_state.user_role = auth_result.role
-                        st.session_state.user_id = auth_result.user_id
-                        st.session_state.auth_token = auth_result.token
-                        
-                        try:
-                            import psycopg2
-                            import json
-                            import logging
-                            db_url = os.environ.get('DATABASE_URL')
-                            if db_url:
-                                conn = psycopg2.connect(db_url)
-                                cursor = conn.cursor()
-                                cursor.execute("""
-                                    SELECT license_tier, metadata FROM platform_users 
-                                    WHERE username = %s OR email = %s
-                                """, (auth_result.username, auth_result.username))
-                                row = cursor.fetchone()
-                                cursor.close()
-                                conn.close()
-                                
-                                if row:
-                                    tier = row[0] or 'trial'
-                                    st.session_state.license_tier = tier
-                                    if row[1]:
-                                        try:
-                                            metadata = row[1] if isinstance(row[1], dict) else json.loads(str(row[1])) if row[1] else {}
-                                            default_scans = 3 if tier == 'trial' else 0
-                                            st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', default_scans)
-                                        except:
-                                            st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
-                                    else:
-                                        st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
-                                else:
-                                    st.session_state.license_tier = 'trial'
-                                    st.session_state.free_scans_remaining = 3
-                            else:
-                                st.session_state.license_tier = 'trial'
-                                st.session_state.free_scans_remaining = 3
-                        except Exception as e:
-                            import logging
-                            logging.error(f"Error loading license tier: {e}")
-                            st.session_state.license_tier = 'trial'
-                            st.session_state.free_scans_remaining = 3
-                        
-                        try:
-                            from services.auth_tracker import track_login_success
-                            track_login_success(user_id=auth_result.user_id, role=auth_result.role)
-                        except Exception:
-                            pass
-                        
-                        st.success(_('login.success', 'Login successful!'))
-                        st.rerun()
-                    else:
-                        try:
-                            from services.auth_tracker import track_login_failure
-                            track_login_failure(reason=auth_result.message)
-                        except Exception:
-                            pass
-                        st.error(f"{_('login.error.invalid_credentials', 'Authentication failed')}: {auth_result.message}")
-                else:
-                    st.error(_('login.error.missing_fields', 'Please enter username and password'))
-        
-        m_reg_col1, m_reg_col2 = st.columns(2)
-        with m_reg_col1:
-            if st.button("🚀 Try Free Scan", type="primary", key="mobile_free_scan"):
-                st.session_state['show_registration'] = True
-        with m_reg_col2:
-            if st.button(_('register.create_account', 'Create Account'), key="mobile_create_account"):
-                st.session_state['show_full_registration'] = True
-        
-        if st.session_state.get('show_registration', False):
-            render_freemium_registration()
-        elif st.session_state.get('show_full_registration', False):
-            render_full_registration()
-        
-        st.markdown("---")
     
     # Hero section with image and value proposition
     hero_col1, hero_col2 = st.columns([1, 1], gap="large")
