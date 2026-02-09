@@ -204,5 +204,54 @@
     ],
     "created_at": "2025-07-03T21:34:38.401772",
     "password_reset_at": "2025-07-04T18:09:01.227195"
+  },
+  "customer1": {
+    "username": "customer1",
+    "password_hash": "01932b3563c9d15b742d09bf5de800728eaf4c39241b731b7db85165ec68bfc4",
+    "role": "user",
+    "email": "customer1@dataguardianpro.nl",
+    "permissions": [
+      "scan:create",
+      "scan:view",
+      "scan:export",
+      "scan:website",
+      "scan:code",
+      "scan:document",
+      "scan:database",
+      "scan:api",
+      "report:create",
+      "report:view",
+      "report:export",
+      "dashboard:view",
+      "history:view"
+    ],
+    "created_at": "2026-02-09T12:09:46.616884"
+  },
+  "customer2": {
+    "username": "customer2",
+    "password_hash": "01932b3563c9d15b742d09bf5de800728eaf4c39241b731b7db85165ec68bfc4",
+    "role": "analyst",
+    "email": "customer2@dataguardianpro.nl",
+    "permissions": [
+      "scan:create",
+      "scan:view",
+      "scan:export",
+      "scan:premium",
+      "scan:configure",
+      "scan:website",
+      "scan:code",
+      "scan:document",
+      "scan:database",
+      "scan:api",
+      "report:create",
+      "report:view",
+      "report:export",
+      "user:view",
+      "audit:view",
+      "dashboard:view",
+      "history:view",
+      "api:access"
+    ],
+    "created_at": "2026-02-09T12:09:46.922409"
   }
 }
