@@ -120,7 +120,7 @@ def _find_addresses(text: str) -> List[Dict[str, Any]]:
         # Postal codes
         r'\b\d{5}(-\d{4})?\b',  # US ZIP
         r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b',  # UK Postcode
-        r'\b\d{4}\s?[A-Z]{2}\b'  # Dutch Postcode
+        r'\b\d{4}\s?(?!KB|MB|GB|TB|PB|HZ)[A-Z]{2}\b'  # Dutch Postcode (excluding unit suffixes)
     ]
     
     found = []
