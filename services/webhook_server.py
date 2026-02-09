@@ -18,17 +18,27 @@ if current_dir not in sys.path:
 
 from flask import Flask, request, jsonify
 
-try:
-    from webhook_handler import process_stripe_webhook
-except ImportError:
-    from services.webhook_handler import process_stripe_webhook
-
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Create Flask app
 app = Flask(__name__)
+
+webhook_handler_available = False
+try:
+    from webhook_handler import process_stripe_webhook
+    webhook_handler_available = True
+except ImportError:
+    try:
+        from services.webhook_handler import process_stripe_webhook
+        webhook_handler_available = True
+    except ImportError:
+        logger.warning("webhook_handler not available - webhook processing disabled")
+        process_stripe_webhook = None
+
+@app.route('/health', methods=['GET'])
+def root_health():
+    """Root health check endpoint"""
+    return jsonify({'status': 'healthy', 'service': 'webhook-server'}), 200
 
 @app.route('/webhook/stripe', methods=['POST'])
 @app.route('/stripe', methods=['POST'])
@@ -38,7 +48,10 @@ def stripe_webhook():
     Handles all Stripe webhook events with proper security
     """
     try:
-        # Get request data
+        if not webhook_handler_available:
+            logger.error("Webhook handler not available")
+            return jsonify({'error': 'Service unavailable'}), 503
+
         payload = request.get_data()
         signature = request.headers.get('stripe-signature')
         
@@ -46,7 +59,6 @@ def stripe_webhook():
             logger.error("Missing Stripe signature header")
             return jsonify({'error': 'Missing signature'}), 400
         
-        # Process webhook
         result = process_stripe_webhook(payload, signature)
         
         # Return response based on processing result
