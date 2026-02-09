@@ -1469,25 +1469,97 @@ Your subscription will be activated automatically.
                     st.error(f"Registration error: {str(e)}")
 
 def render_landing_page():
-    """Render the beautiful landing page and login interface"""
+    """Render the professional landing page with centered login"""
     
-    # Sidebar login
-    with st.sidebar:
-        st.header(f"🔐 {_('login.title', 'Login')}")
-        
-        # Language selector with proper i18n
-        from utils.i18n import language_selector
+    st.markdown("""
+    <style>
+        [data-testid="stSidebar"] { display: none !important; }
+        .block-container { max-width: 1100px; padding-top: 1rem; }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    from utils.i18n import language_selector
+    
+    lang_col1, lang_col2 = st.columns([6, 1])
+    with lang_col2:
         language_selector("landing_page")
+    
+    if st.session_state.get('language') == 'en' and not st.session_state.get('_nl_hint_checked', False):
+        st.session_state['_nl_hint_checked'] = True
+        try:
+            import requests as _req
+            response = _req.get('https://ipapi.co/json/', timeout=1)
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('country_code', '').upper() == 'NL':
+                    st.session_state['_show_nl_hint'] = True
+        except Exception:
+            pass
+    
+    if st.session_state.get('_show_nl_hint', False):
+        st.info("Deze applicatie is ook beschikbaar in het Nederlands - selecteer de taal rechtsboven")
+    
+    hero_col1, hero_col2 = st.columns([3, 2], gap="large")
+    
+    with hero_col1:
+        st.markdown(f"""
+        <div style="padding: 1rem 0;">
+            <div style="display: inline-flex; align-items: center; background: linear-gradient(135deg, #1565C0 0%, #1976D2 50%, #2196F3 100%); padding: 0.4rem 1rem; border-radius: 25px; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);">
+                <span style="color: white; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.3px;">Netherlands & Europe</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="width: 52px; height: 52px; background: linear-gradient(145deg, #1B2559, #2D4A8C); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(27, 37, 89, 0.3);">
+                    <span style="font-size: 1.6rem;">🛡️</span>
+                </div>
+                <h1 style="color: #1B2559; font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Data<span style="color: #1f77b4;">Guardian</span> Pro</h1>
+            </div>
+            <p style="font-size: 1.15rem; color: #1f77b4; font-weight: 600; margin: 0 0 0.75rem 0;">
+                {_('app.subtitle', 'Enterprise Privacy Compliance Platform')}
+            </p>
+            <p style="font-size: 0.95rem; color: #555; line-height: 1.65; margin: 0 0 1rem 0;">
+                {_('app.tagline', 'Protect your organization from GDPR fines with AI-powered privacy scanning. Automatically discover, analyze, and report personal data across your entire digital ecosystem.')}
+            </p>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #E8F5E9; padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #C8E6C9;">
+                    <span style="color: #2E7D32; font-weight: 600; font-size: 0.8rem;">GDPR & UAVG</span>
+                </div>
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #E3F2FD; padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #BBDEFB;">
+                    <span style="color: #1565C0; font-weight: 600; font-size: 0.8rem;">EU AI Act 2025</span>
+                </div>
+                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #FFF3E0; padding: 0.4rem 0.75rem; border-radius: 6px; border: 1px solid #FFE0B2;">
+                    <span style="color: #E65100; font-weight: 600; font-size: 0.8rem;">SOC2 & NIS2</span>
+                </div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <span style="background: linear-gradient(135deg, #4CAF5012, #4CAF5005); padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid #4CAF5020; font-size: 0.8rem; font-weight: 700; color: #4CAF50;">18 Scanners</span>
+                <span style="background: linear-gradient(135deg, #FF980012, #FF980005); padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid #FF980020; font-size: 0.8rem; font-weight: 700; color: #FF9800;">113 AI Act Articles</span>
+                <span style="background: linear-gradient(135deg, #E91E6312, #E91E6305); padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid #E91E6320; font-size: 0.8rem; font-weight: 700; color: #E91E63;">100% GDPR</span>
+                <span style="background: linear-gradient(135deg, #1f77b412, #1f77b405); padding: 0.5rem 0.8rem; border-radius: 8px; border: 1px solid #1f77b420; font-size: 0.8rem; font-weight: 700; color: #1f77b4;">NL UAVG</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with hero_col2:
+        st.markdown(f"""
+        <div style="background: white; border-radius: 16px; padding: 1.75rem; box-shadow: 0 8px 32px rgba(27, 37, 89, 0.12); border: 1px solid #E2E8F0;">
+            <div style="text-align: center; margin-bottom: 1.25rem;">
+                <h2 style="color: #1B2559; font-size: 1.4rem; font-weight: 700; margin: 0 0 0.25rem 0;">
+                    {_('login.title', 'Login')}
+                </h2>
+                <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+                    {_('login.subtitle', 'Access your compliance dashboard')}
+                </p>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Login form with Dutch support
         with st.form("login_form"):
-            username = st.text_input(_('login.email_username', 'Username'))
+            username = st.text_input(_('login.email_username', 'Username'), placeholder="user@company.nl")
             password = st.text_input(_('login.password', 'Password'), type="password")
-            submit = st.form_submit_button(_('login.button', 'Login'))
+            submit = st.form_submit_button(_('login.button', 'Login'), use_container_width=True, type="primary")
             
             if submit:
                 if username and password:
-                    # Enhanced secure authentication with JWT tokens
                     from utils.secure_auth_enhanced import authenticate_user
                     auth_result = authenticate_user(username, password)
                     
@@ -1498,7 +1570,6 @@ def render_landing_page():
                         st.session_state.user_id = auth_result.user_id
                         st.session_state.auth_token = auth_result.token
                         
-                        # Set license tier from database
                         try:
                             import psycopg2
                             import json
@@ -1519,7 +1590,6 @@ def render_landing_page():
                                     tier = row[0] or 'trial'
                                     st.session_state.license_tier = tier
                                     logging.info(f"Set license_tier to: {tier}")
-                                    # Load free scans from metadata (default 3 for trial users)
                                     if row[1]:
                                         try:
                                             metadata = row[1] if isinstance(row[1], dict) else json.loads(str(row[1])) if row[1] else {}
@@ -1540,7 +1610,6 @@ def render_landing_page():
                             st.session_state.license_tier = 'trial'
                             st.session_state.free_scans_remaining = 3
                         
-                        # Track successful login
                         try:
                             from services.auth_tracker import track_login_success
                             track_login_success(user_id=auth_result.user_id, role=auth_result.role)
@@ -1548,10 +1617,8 @@ def render_landing_page():
                             pass
                         
                         st.success(_('login.success', 'Login successful!'))
-                        # Force immediate rerun after successful login
                         st.rerun()
                     else:
-                        # Track failed login
                         try:
                             from services.auth_tracker import track_login_failure
                             track_login_failure(reason=auth_result.message)
@@ -1561,146 +1628,20 @@ def render_landing_page():
                 else:
                     st.error(_('login.error.missing_fields', 'Please enter username and password'))
         
-        # Registration option with freemium trial
-        st.markdown("---")
-        st.write(f"**{_('register.new_user', 'New user?')}**")
+        reg_col1, reg_col2 = st.columns(2)
+        with reg_col1:
+            if st.button(_('landing.try_free', 'Try Free Scan'), type="primary", use_container_width=True):
+                st.session_state['show_registration'] = True
+                st.session_state['show_full_registration'] = False
+        with reg_col2:
+            if st.button(_('register.create_account', 'Create Account'), use_container_width=True):
+                st.session_state['show_full_registration'] = True
+                st.session_state['show_registration'] = False
         
-        # Freemium trial button
-        if st.button("🚀 Try Free Scan", type="primary", help="Get 3 free scans to test the platform"):
-            st.session_state['show_registration'] = True
-            
-        # Full registration button
-        if st.button(_('register.create_account', 'Create Account'), help="Full access with subscription"):
-            st.session_state['show_full_registration'] = True
-            
-        # Show registration forms based on selection
         if st.session_state.get('show_registration', False):
             render_freemium_registration()
         elif st.session_state.get('show_full_registration', False):
             render_full_registration()
-    
-    if st.session_state.get('language') == 'en' and not st.session_state.get('_nl_hint_checked', False):
-        st.session_state['_nl_hint_checked'] = True
-        try:
-            import requests as _req
-            response = _req.get('https://ipapi.co/json/', timeout=1)
-            if response.status_code == 200:
-                data = response.json()
-                if data.get('country_code', '').upper() == 'NL':
-                    st.session_state['_show_nl_hint'] = True
-        except Exception:
-            pass
-    
-    if st.session_state.get('_show_nl_hint', False):
-        st.info("💡 Deze applicatie is ook beschikbaar in het Nederlands - use the language selector in the sidebar")
-    
-    # Hero section with image and value proposition
-    hero_col1, hero_col2 = st.columns([1, 1], gap="large")
-    
-    with hero_col1:
-        st.markdown(f"""
-        <div style="padding: 1.5rem 0;">
-            <div style="display: inline-flex; align-items: center; background: linear-gradient(135deg, #1565C0 0%, #1976D2 50%, #2196F3 100%); padding: 0.4rem 1rem; border-radius: 25px; margin-bottom: 1.25rem; box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);">
-                <span style="color: white; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.3px;">🇳🇱 Netherlands & Europe 🇪🇺</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
-                <div style="width: 52px; height: 52px; background: linear-gradient(145deg, #1B2559, #2D4A8C); border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(27, 37, 89, 0.3);">
-                    <span style="font-size: 1.6rem;">🛡️</span>
-                </div>
-                <h1 style="color: #1B2559; font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;">Data<span style="color: #1f77b4;">Guardian</span> Pro</h1>
-            </div>
-            <p style="font-size: 1.15rem; color: #1f77b4; font-weight: 600; margin: 0 0 1rem 0;">
-                {_('app.subtitle', 'Enterprise Privacy Compliance Platform')}
-            </p>
-            <p style="font-size: 1rem; color: #555; line-height: 1.65; margin: 0 0 1.25rem 0;">
-                {_('app.tagline', 'Protect your organization from GDPR fines with AI-powered privacy scanning. Automatically discover, analyze, and report personal data across your entire digital ecosystem.')}
-            </p>
-            <div style="display: flex; flex-wrap: wrap; gap: 0.6rem;">
-                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #E8F5E9; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #C8E6C9;">
-                    <span style="color: #2E7D32; font-size: 0.9rem;">✓</span>
-                    <span style="color: #2E7D32; font-weight: 600; font-size: 0.8rem;">GDPR & UAVG</span>
-                </div>
-                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #E3F2FD; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #BBDEFB;">
-                    <span style="color: #1565C0; font-size: 0.9rem;">✓</span>
-                    <span style="color: #1565C0; font-weight: 600; font-size: 0.8rem;">EU AI Act 2025</span>
-                </div>
-                <div style="display: inline-flex; align-items: center; gap: 0.35rem; background: #FFF3E0; padding: 0.45rem 0.8rem; border-radius: 6px; border: 1px solid #FFE0B2;">
-                    <span style="color: #E65100; font-size: 0.9rem;">✓</span>
-                    <span style="color: #E65100; font-weight: 600; font-size: 0.8rem;">SOC2 & NIS2</span>
-                </div>
-            </div>
-            <p style="font-size: 0.95rem; color: #1B2559; line-height: 1.5; margin: 1rem 0 0 0; padding: 0.75rem 1rem; background: linear-gradient(135deg, #f8fafc, #e2e8f0); border-radius: 8px; border-left: 3px solid #4CAF50;">
-                <strong style="color: #2E7D32;">💰</strong> {_('landing.value_proposition', 'Achieve 100% EU compliance while reducing privacy audit costs by 60-80% and avoiding fines up to €35M or 7% of global turnover.')}
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Quick stats pills
-        st.markdown("""
-        <div style="display:flex;gap:0.5rem;margin-top:1rem;flex-wrap:wrap;">
-            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1B2559;white-space:nowrap;">⚡ Save Hours Per Audit</span>
-            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#4CAF50;white-space:nowrap;">🎯 Never Miss a Violation</span>
-            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1565C0;white-space:nowrap;">🇪🇺 Dutch Data Sovereignty</span>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # AI Act deepfake detection banner
-        synthetic_banner_text = _('landing.synthetic_media_banner', 'Detect deepfakes, AI-generated content & manipulated media with EU AI Act 2025 compliance verification')
-        st.markdown(f"""
-        <div style="margin-top:1rem;padding:0.8rem 1rem;background:linear-gradient(135deg,#6A1B9A08,#E91E6308);border-radius:8px;border-left:3px solid #6A1B9A;">
-            <span style="font-size:0.85rem;color:#1B2559;">
-                <strong>🛡️ Synthetic Media Protection:</strong> {synthetic_banner_text}
-            </span>
-        </div>
-        <div style="margin-top:0.5rem;padding:0.5rem 1rem;background:linear-gradient(135deg,#1565C008,#4CAF5008);border-radius:8px;text-align:center;">
-            <span style="font-size:0.75rem;color:#555;">🔒 Protected by Dutch Patents</span>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with hero_col2:
-        st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
-        
-        st.markdown("""
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
-            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #4CAF5012, #4CAF5005); border-radius: 8px; border: 1px solid #4CAF5020;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #4CAF50;">18</div>
-                <div style="font-size: 0.65rem; color: #666;">Scanners</div>
-            </div>
-            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #FF980012, #FF980005); border-radius: 8px; border: 1px solid #FF980020;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #FF9800;">113</div>
-                <div style="font-size: 0.65rem; color: #666;">AI Act Articles</div>
-            </div>
-            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #E91E6312, #E91E6305); border-radius: 8px; border: 1px solid #E91E6320;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #E91E63;">100%</div>
-                <div style="font-size: 0.65rem; color: #666;">GDPR</div>
-            </div>
-            <div style="flex: 1; min-width: 70px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #1f77b412, #1f77b405); border-radius: 8px; border: 1px solid #1f77b420;">
-                <div style="font-size: 1.3rem; font-weight: 800; color: #1f77b4;">NL</div>
-                <div style="font-size: 0.65rem; color: #666;">UAVG</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #6A1B9A12, #6A1B9A05); border-radius: 8px; border: 1px solid #6A1B9A20;">
-                <div style="font-size: 1.1rem;">🔍</div>
-                <div style="font-size: 0.6rem; color: #6A1B9A; font-weight: 600;">Fraud Detection</div>
-            </div>
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #00838F12, #00838F05); border-radius: 8px; border: 1px solid #00838F20;">
-                <div style="font-size: 1.1rem;">🖼️</div>
-                <div style="font-size: 0.6rem; color: #00838F; font-weight: 600;">Fake Image Analysis</div>
-            </div>
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #F4511E12, #F4511E05); border-radius: 8px; border: 1px solid #F4511E20;">
-                <div style="font-size: 1.1rem;">🧾</div>
-                <div style="font-size: 0.6rem; color: #F4511E; font-weight: 600;">Receipt Verification</div>
-            </div>
-            <div style="flex: 1; min-width: 100px; text-align: center; padding: 0.5rem 0.3rem; background: linear-gradient(135deg, #5E35B112, #5E35B105); border-radius: 8px; border: 1px solid #5E35B120;">
-                <div style="font-size: 1.1rem;">📄</div>
-                <div style="font-size: 0.6rem; color: #5E35B1; font-weight: 600;">Document Forensics</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
     
     # Key benefits section
     st.markdown("---")
@@ -1783,247 +1724,49 @@ def render_landing_page():
     
     st.markdown("---")
     
-    # Scanner showcase section title
     st.markdown(f"""
-    <div style="text-align: center; margin: 2rem 0;">
-        <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
-            {_('landing.scanner_showcase_title', 'Powerful Privacy Scanners')}
+    <div style="text-align: center; margin: 1.5rem 0 1rem 0;">
+        <h2 style="color: #1B2559; font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem;">
+            {_('landing.scanner_showcase_title', 'Advanced Privacy Scanners')}
         </h2>
-        <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
-            {_('landing.scanner_showcase_subtitle', 'Everything you need for complete GDPR, EU AI Act, and data protection compliance')}
+        <p style="font-size: 1rem; color: #666; max-width: 650px; margin: 0 auto;">
+            {_('landing.scanner_showcase_subtitle', 'Comprehensive AI-powered tools for complete GDPR compliance and privacy protection')}
         </p>
     </div>
     """, unsafe_allow_html=True)
     
-    # All 12 scanners with images and value-focused feature showcase
     scanners = [
-        {
-            "icon": "🤖", 
-            "title": _('landing.scanner.ai_title', 'AI Model Scanner'),
-            "description": _('landing.scanner.ai_desc', 'Stay ahead of EU AI Act 2025 requirements. Assess your AI systems for compliance risks, bias issues, and transparency gaps before regulators do.'),
-            "features": [
-                _('landing.scanner.ai_f1', 'Full 113-article coverage'),
-                _('landing.scanner.ai_f2', 'Risk level classification'),
-                _('landing.scanner.ai_f3', 'Bias & fairness audit'),
-                _('landing.scanner.ai_f4', 'Compliance roadmap')
-            ],
-            "color": "#FF5722",
-            "image": "attached_assets/stock_images/ai_compliance_regula_cf997669.jpg"
-        },
-        {
-            "icon": "🌍",
-            "title": _('landing.scanner.sovereignty_title', 'Data Sovereignty Scanner'),
-            "description": _('landing.scanner.sovereignty_desc', 'Know exactly where your data is stored, who can access it, and which laws apply. Scan AWS, Azure, and GCP configurations to detect cross-border transfers, non-EU access risks, and GDPR compliance gaps — before regulators find them.'),
-            "features": [
-                _('landing.scanner.sovereignty_f1', 'AWS, Azure & GCP analysis'),
-                _('landing.scanner.sovereignty_f2', 'Cross-border transfer detection'),
-                _('landing.scanner.sovereignty_f3', 'Legal jurisdiction mapping'),
-                _('landing.scanner.sovereignty_f4', 'Schrems II compliance check')
-            ],
-            "color": "#1565C0",
-            "image": "attached_assets/stock_images/data_sovereignty_globe_compliance.jpg"
-        },
-        {
-            "icon": "🏢", 
-            "title": _('landing.scanner.enterprise_title', 'Enterprise Connector'),
-            "description": _('landing.scanner.enterprise_desc', 'Connect once, scan everything. Automatically discover and protect personal data across Microsoft 365, Exact Online, Google Workspace, and more - without manual file uploads.'),
-            "features": [
-                _('landing.scanner.enterprise_f1', 'One-click platform connection'),
-                _('landing.scanner.enterprise_f2', 'Automatic data discovery'),
-                _('landing.scanner.enterprise_f3', 'Continuous monitoring'),
-                _('landing.scanner.enterprise_f4', 'Multi-platform coverage')
-            ],
-            "color": "#E91E63",
-            "image": "attached_assets/stock_images/business_team_collab_a15119a2.jpg"
-        },
-        {
-            "icon": "🔍", 
-            "title": _('landing.scanner.code_title', 'GDPR Code Scanner'),
-            "description": _('landing.scanner.code_desc', 'Protect your codebase from costly data breaches. Find hardcoded secrets, exposed credentials, and privacy violations before they reach production.'),
-            "features": [
-                _('landing.scanner.code_f1', 'Prevent credential leaks'),
-                _('landing.scanner.code_f2', 'Dutch BSN auto-detection'),
-                _('landing.scanner.code_f3', 'GDPR violation alerts'),
-                _('landing.scanner.code_f4', 'Scan entire Git repositories')
-            ],
-            "color": "#4CAF50",
-            "image": "attached_assets/stock_images/developer_laptop_cod_d6588fe5.jpg"
-        },
-        {
-            "icon": "📄", 
-            "title": _('landing.scanner.document_title', 'Document Scanner'),
-            "description": _('landing.scanner.document_desc', 'Turn hours of manual document review into minutes. Automatically identify personal data in contracts, HR files, and business documents with AI-powered analysis.'),
-            "features": [
-                _('landing.scanner.document_f1', 'Process 100+ formats'),
-                _('landing.scanner.document_f2', 'Smart text extraction'),
-                _('landing.scanner.document_f3', 'Auto-classify risk levels'),
-                _('landing.scanner.document_f4', 'Bulk processing support')
-            ],
-            "color": "#FF9800",
-            "image": "attached_assets/stock_images/business_contract_pa_279b28d9.jpg"
-        },
-        {
-            "icon": "🖼️", 
-            "title": _('landing.scanner.image_title', 'Image Scanner'),
-            "description": _('landing.scanner.image_desc', 'Uncover hidden personal data in images and scanned documents. Detect faces, ID cards, and embedded text that other scanners miss.'),
-            "features": [
-                _('landing.scanner.image_f1', 'Face & ID detection'),
-                _('landing.scanner.image_f2', 'Scanned document OCR'),
-                _('landing.scanner.image_f3', 'Hidden metadata analysis'),
-                _('landing.scanner.image_f4', 'Photo library scanning')
-            ],
-            "color": "#9C27B0",
-            "image": "attached_assets/stock_images/digital_photo_scanni_dc2f2d4c.jpg"
-        },
-        {
-            "icon": "🗄️", 
-            "title": _('landing.scanner.database_title', 'Database Scanner'),
-            "description": _('landing.scanner.database_desc', 'Know exactly where your sensitive data lives. Scan database tables to identify PII columns, unprotected fields, and data retention violations.'),
-            "features": [
-                _('landing.scanner.database_f1', 'All major databases'),
-                _('landing.scanner.database_f2', 'Column-level detection'),
-                _('landing.scanner.database_f3', 'Retention policy check'),
-                _('landing.scanner.database_f4', 'Encryption validation')
-            ],
-            "color": "#3F51B5",
-            "image": "attached_assets/stock_images/data_analytics_dashb_e12b4d3e.jpg"
-        },
-        {
-            "icon": "🌐", 
-            "title": _('landing.scanner.website_title', 'Website Scanner'),
-            "description": _('landing.scanner.website_desc', 'Avoid costly GDPR fines. Audit your website for cookie consent issues, hidden trackers, dark patterns, and privacy policy gaps in minutes.'),
-            "features": [
-                _('landing.scanner.website_f1', 'Cookie consent audit'),
-                _('landing.scanner.website_f2', 'Tracker identification'),
-                _('landing.scanner.website_f3', 'Dark pattern detection'),
-                _('landing.scanner.website_f4', 'AP Netherlands ready')
-            ],
-            "color": "#2196F3",
-            "image": "attached_assets/stock_images/website_analytics_la_d044208f.jpg"
-        },
-        {
-            "icon": "📋", 
-            "title": _('landing.scanner.dpia_title', 'DPIA Scanner'),
-            "description": _('landing.scanner.dpia_desc', 'Complete your Data Protection Impact Assessment in hours, not weeks. Guided wizard with automated risk scoring and regulator-ready documentation.'),
-            "features": [
-                _('landing.scanner.dpia_f1', 'Step-by-step wizard'),
-                _('landing.scanner.dpia_f2', 'Automated risk scoring'),
-                _('landing.scanner.dpia_f3', 'Netherlands UAVG ready'),
-                _('landing.scanner.dpia_f4', 'Export to PDF/Word')
-            ],
-            "color": "#795548",
-            "image": "attached_assets/stock_images/risk_assessment_chec_72e940c1.jpg"
-        },
-        {
-            "icon": "🛡️", 
-            "title": _('landing.scanner.soc2_title', 'SOC2 & NIS2 Scanner'),
-            "description": _('landing.scanner.soc2_desc', 'Prove your security posture to customers and auditors. Scan cloud infrastructure against SOC2 Type II and EU NIS2 requirements automatically.'),
-            "features": [
-                _('landing.scanner.soc2_f1', 'AWS, Azure, GCP ready'),
-                _('landing.scanner.soc2_f2', 'SOC2 TSC mapping'),
-                _('landing.scanner.soc2_f3', 'NIS2 compliance check'),
-                _('landing.scanner.soc2_f4', 'Audit evidence export')
-            ],
-            "color": "#607D8B",
-            "image": "attached_assets/stock_images/cloud_computing_secu_9f083e1f.jpg"
-        },
-        {
-            "icon": "🔗", 
-            "title": _('landing.scanner.api_title', 'API Scanner'),
-            "description": _('landing.scanner.api_desc', 'Prevent data leaks through your APIs. Test endpoints for exposed personal data, weak authentication, and privacy compliance issues.'),
-            "features": [
-                _('landing.scanner.api_f1', 'REST & GraphQL support'),
-                _('landing.scanner.api_f2', 'PII exposure detection'),
-                _('landing.scanner.api_f3', 'Auth weakness testing'),
-                _('landing.scanner.api_f4', 'Automated reporting')
-            ],
-            "color": "#00BCD4",
-            "image": "attached_assets/stock_images/api_software_develop_35f2fc42.jpg"
-        },
-        {
-            "icon": "🌱", 
-            "title": _('landing.scanner.sustainability_title', 'Sustainability Scanner'),
-            "description": _('landing.scanner.sustainability_desc', 'Reduce cloud costs and carbon footprint. Identify over-provisioned resources, missing auto-scaling, and inefficient infrastructure configurations.'),
-            "features": [
-                _('landing.scanner.sustainability_f1', 'Cost optimization tips'),
-                _('landing.scanner.sustainability_f2', 'Carbon footprint report'),
-                _('landing.scanner.sustainability_f3', 'Resource right-sizing'),
-                _('landing.scanner.sustainability_f4', 'Green IT certification')
-            ],
-            "color": "#4CAF50",
-            "image": "attached_assets/stock_images/sustainable_business_35700aa4.jpg"
-        },
-        {
-            "icon": "🎬", 
-            "title": _('landing.scanner.audio_video_title', 'Audio/Video Scanner'),
-            "description": _('landing.scanner.audio_video_desc', 'Detect deepfakes, voice cloning, and AI-generated media. Protect your organization from synthetic media fraud with EU AI Act 2025 compliance analysis.'),
-            "features": [
-                _('landing.scanner.audio_video_f1', 'Deepfake detection'),
-                _('landing.scanner.audio_video_f2', 'Voice cloning identification'),
-                _('landing.scanner.audio_video_f3', 'EU AI Act 2025 compliance'),
-                _('landing.scanner.audio_video_f4', 'Media authenticity scoring')
-            ],
-            "color": "#9C27B0",
-            "image": "attached_assets/stock_images/video_production_stu_aa808aec.jpg"
-        }
+        {"icon": "🤖", "title": _('landing.scanner.ai_title', 'AI Model Scanner'), "desc": _('landing.scanner.ai_short', 'EU AI Act 2025 compliance with full 113-article coverage'), "color": "#FF5722"},
+        {"icon": "🌍", "title": _('landing.scanner.sovereignty_title', 'Data Sovereignty Scanner'), "desc": _('landing.scanner.sovereignty_short', 'AWS, Azure & GCP cross-border transfer detection'), "color": "#1565C0"},
+        {"icon": "🏢", "title": _('landing.scanner.enterprise_title', 'Enterprise Connector'), "desc": _('landing.scanner.enterprise_short', 'Microsoft 365, Exact Online, Google Workspace integration'), "color": "#E91E63"},
+        {"icon": "🔍", "title": _('landing.scanner.code_title', 'GDPR Code Scanner'), "desc": _('landing.scanner.code_short', 'Repository scanning with PII detection and BSN identification'), "color": "#4CAF50"},
+        {"icon": "📄", "title": _('landing.scanner.document_title', 'Document Scanner'), "desc": _('landing.scanner.document_short', 'AI-powered analysis of contracts, HR files and documents'), "color": "#FF9800"},
+        {"icon": "🖼️", "title": _('landing.scanner.image_title', 'Image Scanner'), "desc": _('landing.scanner.image_short', 'OCR-based PII detection in images and scanned documents'), "color": "#9C27B0"},
+        {"icon": "🗄️", "title": _('landing.scanner.database_title', 'Database Scanner'), "desc": _('landing.scanner.database_short', 'Column-level PII detection with retention policy checks'), "color": "#3F51B5"},
+        {"icon": "🌐", "title": _('landing.scanner.website_title', 'Website Scanner'), "desc": _('landing.scanner.website_short', 'Cookie consent, tracker detection and dark pattern audit'), "color": "#2196F3"},
+        {"icon": "📋", "title": _('landing.scanner.dpia_title', 'DPIA Scanner'), "desc": _('landing.scanner.dpia_short', 'GDPR Art. 35 impact assessment with guided wizard'), "color": "#795548"},
+        {"icon": "🛡️", "title": _('landing.scanner.soc2_title', 'SOC2 & NIS2 Scanner'), "desc": _('landing.scanner.soc2_short', 'Cloud infrastructure security and compliance audit'), "color": "#607D8B"},
+        {"icon": "🔗", "title": _('landing.scanner.api_title', 'API Scanner'), "desc": _('landing.scanner.api_short', 'REST & GraphQL endpoint PII exposure testing'), "color": "#00BCD4"},
+        {"icon": "🌱", "title": _('landing.scanner.sustainability_title', 'Sustainability Scanner'), "desc": _('landing.scanner.sustainability_short', 'Cloud resource optimization and carbon footprint analysis'), "color": "#4CAF50"},
+        {"icon": "🎬", "title": _('landing.scanner.audio_video_title', 'Audio/Video Scanner'), "desc": _('landing.scanner.audio_video_short', 'Deepfake detection and synthetic media analysis'), "color": "#9C27B0"},
     ]
     
-    # Display scanners with images - one per row for visual impact
-    for idx, scanner in enumerate(scanners):
-        # Alternate image position (left/right)
-        is_image_left = idx % 2 == 0
-        
-        if is_image_left:
-            img_col, content_col = st.columns([1, 1], gap="large")
-        else:
-            content_col, img_col = st.columns([1, 1], gap="large")
-        
-        with img_col:
-            try:
-                st.image(scanner.get('image', ''), use_container_width=True)
-            except:
-                st.markdown(f"""
-                <div style="
-                    background: linear-gradient(135deg, {scanner['color']}20, {scanner['color']}05);
-                    border-radius: 12px;
-                    height: 200px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">
-                    <span style="font-size: 4rem;">{scanner['icon']}</span>
-                </div>
-                """, unsafe_allow_html=True)
-        
-        with content_col:
-            st.markdown(f"""
-            <div style="padding: 1rem 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 0.75rem;">
-                    <span style="
-                        font-size: 1.8rem;
-                        background: linear-gradient(145deg, {scanner['color']}20, {scanner['color']}08);
-                        border-radius: 10px;
-                        width: 50px;
-                        height: 50px;
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        margin-right: 0.75rem;
-                    ">{scanner['icon']}</span>
-                    <h3 style="color: {scanner['color']}; margin: 0; font-size: 1.4rem; font-weight: 700;">{scanner['title']}</h3>
-                </div>
-                <p style="color: #444; font-size: 1rem; line-height: 1.6; margin: 0 0 1rem 0;">
-                    {scanner['description']}
-                </p>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    {"".join([f'<span style="display: inline-flex; align-items: center; background: {scanner["color"]}12; color: {scanner["color"]}; font-size: 0.85rem; font-weight: 500; padding: 0.4rem 0.8rem; border-radius: 20px;"><span style="margin-right: 0.4rem;">&#10003;</span>{feature}</span>' for feature in scanner['features']])}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        # Add divider between scanners (except last)
-        if idx < len(scanners) - 1:
-            st.markdown("<hr style='margin: 2rem 0; border: none; border-top: 1px solid #E2E8F0;'>", unsafe_allow_html=True)
+    for row_start in range(0, len(scanners), 3):
+        cols = st.columns(3, gap="medium")
+        for i, col in enumerate(cols):
+            idx = row_start + i
+            if idx < len(scanners):
+                s = scanners[idx]
+                with col:
+                    st.markdown(f"""
+                    <div style="background: white; border-radius: 12px; padding: 1.25rem; border: 1px solid #E2E8F0; box-shadow: 0 2px 8px rgba(0,0,0,0.04); height: 100%; min-height: 160px;">
+                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.6rem;">
+                            <span style="font-size: 1.5rem; background: {s['color']}12; border-radius: 8px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;">{s['icon']}</span>
+                            <h4 style="color: {s['color']}; margin: 0; font-size: 0.95rem; font-weight: 700;">{s['title']}</h4>
+                        </div>
+                        <p style="color: #555; font-size: 0.85rem; line-height: 1.5; margin: 0;">{s['desc']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
     
     # EU AI Act Compliance Timeline Section
     st.markdown("---")
