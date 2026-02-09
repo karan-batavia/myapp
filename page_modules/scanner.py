@@ -4323,12 +4323,14 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
     """Execute comprehensive GDPR-compliant code scanning with Netherlands UAVG support"""
     # Initialize variables at function scope to prevent UnboundLocalError
     import tempfile
+    import shutil
     import os
     import uuid
     import re
     import hashlib
     import math
     import time
+    from collections import Counter
     from utils.activity_tracker import track_scan_started, track_scan_completed, track_scan_failed, ScannerType
     
     # Get session information at function scope
@@ -4430,7 +4432,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             'jwt_token': r'(eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*)',
             
             # Financial Data
-            'bank_account': r'\b[A-Z]{2}\d{2}[A-Z]{4}\d{10,30}\b',
+            'bank_account': r'\b(?!NL)[A-Z]{2}\d{2}[A-Z0-9]{8,30}\b',
             'bitcoin': r'\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b',
             
             # Employment Data (Netherlands specific)
@@ -4449,7 +4451,6 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             """Calculate Shannon entropy for secret detection"""
             if len(data) == 0:
                 return 0
-            from collections import Counter
             counts = Counter(data)
             length = len(data)
             entropy = 0
@@ -4613,6 +4614,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             # Extract files from cloned repository
             if 'temp_dir' in repo_results:
                 temp_dir = repo_results['temp_dir']
+                scan_results['_temp_dir'] = temp_dir
                 for root, dirs, files in os.walk(temp_dir):
                     for file in files:
                         if file.endswith(('.py', '.js', '.java', '.ts', '.go', '.rs', '.cpp', '.c', '.h', '.php', '.rb', '.cs')):
@@ -4727,8 +4729,8 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'file': 'models/User.py',
                     'line': 23,
                     'location': 'models/User.py:23',
-                    'description': 'Detected Bsn: 123456789',
-                    'matched_content': '123456789',
+                    'description': 'Detected Bsn: 111222333',
+                    'matched_content': '111222333',
                     'entropy_score': 1.8,
                     'risk_level': 'High',
                     'gdpr_article': 'Art. 4(1) Personal Data, Art. 9 Special Categories',
@@ -4739,7 +4741,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'legal_basis_required': True,
                     'consent_verification': False,
                     'retention_policy_required': True,
-                    'context': 'bsn_number = "123456789"'
+                    'context': 'bsn_number = "111222333"'
                 },
                 {
                     'type': 'HEALTH_DATA',
@@ -4800,7 +4802,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         
         else:
             max_file_size = 10 * 1024 * 1024  # 10MB per file limit
-            scan_file_limit = min(len(files_to_scan), 50)
+            scan_file_limit = 50
             if len(files_to_scan) > scan_file_limit:
                 st.warning(f"⚠️ Repository contains {len(files_to_scan)} files. Scanning first {scan_file_limit} for performance.")
             for i, file_path in enumerate(files_to_scan[:scan_file_limit]):
@@ -4821,7 +4823,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     logger.warning(f"Failed to scan {file_path}: {e}")
                     continue
                 
-                progress_bar.progress(50 + (i + 1) * 30 // len(files_to_scan[:20]))
+                progress_bar.progress(50 + (i + 1) * 30 // scan_file_limit)
         
         scan_results['total_lines'] = total_lines
         scan_results['findings'] = all_findings
@@ -4979,7 +4981,6 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         
         if scan_results.get('_temp_dir'):
             try:
-                import shutil
                 shutil.rmtree(scan_results['_temp_dir'], ignore_errors=True)
             except Exception:
                 pass
