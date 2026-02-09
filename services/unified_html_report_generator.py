@@ -92,15 +92,17 @@ class UnifiedHTMLReportGenerator:
         scan_result_deduped = scan_result.copy()
         scan_result_deduped['findings'] = deduplicated_findings
         
-        # Extract metrics using deduplicated findings
-        metrics = self._extract_metrics(scan_result_deduped)
-        
         # Enhance findings with specific context and actionable recommendations
         enhanced_findings = enhance_findings_for_report(
             scanner_type=scan_type.lower().replace(' ', '_'),
             findings=deduplicated_findings,
             region=region
         )
+        
+        # Extract metrics using enhanced findings (severity may be elevated during enhancement)
+        scan_result_enhanced = scan_result_deduped.copy()
+        scan_result_enhanced['findings'] = enhanced_findings
+        metrics = self._extract_metrics(scan_result_enhanced)
         
         # Generate findings HTML with enhanced findings (pass scan_type for correct penalty framework)
         findings_html = self._generate_findings_html(enhanced_findings, scan_type=scan_type)

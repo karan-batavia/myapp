@@ -634,8 +634,8 @@ def _find_dutch_phone_numbers(text: str) -> List[Dict[str, Any]]:
 def _find_dutch_addresses(text: str) -> List[Dict[str, Any]]:
     """Find comprehensive Dutch address components."""
     patterns = [
-        # Dutch postcode (4 digits + 2 letters)
-        r'\b\d{4}\s?[A-Z]{2}\b',
+        # Dutch postcode (4 digits + 2 letters), excluding unit suffixes (KB, MB, GB, TB, PB, HZ)
+        r'\b\d{4}\s?(?!KB|MB|GB|TB|PB|HZ)[A-Z]{2}\b',
         
         # Street names with house numbers
         r'\b[A-Za-z\s-]+(?:straat|laan|weg|plein|kade|gracht|steeg|pad|park|hof|singel|boulevard|avenue)[\s]*\d+[a-zA-Z]?\b',
