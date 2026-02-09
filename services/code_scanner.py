@@ -1221,13 +1221,14 @@ class CodeScanner:
             large_file_threshold = 10 * 1024 * 1024  # 10MB threshold
             
             if file_size > large_file_threshold:
-                # Use streaming for large files to reduce memory usage
                 return self._scan_large_file_streaming(file_path, file_metadata)
             else:
-                # Use in-memory processing for smaller files (faster)
                 with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                     content = f.read()
-                
+
+                if self.fast_mode and len(content) > 50000:
+                    content = content[:50000]
+
                 return self._scan_file_content(file_path, content, file_metadata)
             
         except (OSError, PermissionError) as e:
@@ -2094,12 +2095,10 @@ class CodeScanner:
                             
                             pii_found.append(uavg_finding)
             
-            # Check for vulnerability patterns in each line
-            if content_type == "code":  # Only check code, not comments
+            if content_type == "code" and not self.fast_mode:
                 for vuln_type, patterns in vulnerability_patterns.items():
                     for pattern in patterns:
                         if re.search(pattern, line):
-                            # Create vulnerability finding
                             finding = {
                                 'type': f'Vulnerability:{vuln_type.replace("_", " ").title()}',
                                 'value': line.strip(),
@@ -2109,16 +2108,13 @@ class CodeScanner:
                             }
                             pii_found.append(finding)
         
-        # Also check multiline patterns (for complex vulnerabilities spanning multiple lines)
-        if content_type == "code" and len(lines) > 1:
-            # Multiline chunked analysis - check 5 lines at a time
+        if content_type == "code" and len(lines) > 1 and not self.fast_mode:
             for i in range(0, len(lines), 5):
                 chunk = "\n".join(lines[i:i+5])
                 for vuln_type, patterns in vulnerability_patterns.items():
                     for pattern in patterns:
                         match = re.search(pattern, chunk, re.DOTALL)
                         if match:
-                            # Create vulnerability finding for the chunk
                             finding = {
                                 'type': f'Vulnerability:{vuln_type.replace("_", " ").title()}',
                                 'value': match.group(0),

@@ -707,49 +707,68 @@ class RepoScanner:
                 scan_results['original_file_count'] = scan_results['total_files']
                 scan_results['total_files'] = len(all_files)
             
-            # Process files sequentially to avoid multiprocessing issues
+            MAX_FILE_SIZE_KB = 200
+            MAX_FILE_LINES = 5000
+            PER_FILE_TIMEOUT = 15
+            TOTAL_SCAN_TIMEOUT = 120
+
+            scan_start = time.time()
+
             for i, file_path in enumerate(all_files):
-                # Update progress if callback is provided
+                if time.time() - scan_start > TOTAL_SCAN_TIMEOUT:
+                    logger.warning(f"Total scan timeout ({TOTAL_SCAN_TIMEOUT}s) reached after {i} files")
+                    scan_results['timeout_reached'] = True
+                    break
+
+                rel_path = os.path.relpath(file_path, repo_path)
+
                 if progress_callback:
-                    rel_path = os.path.relpath(file_path, repo_path)
                     progress_callback(i + 1, len(all_files), rel_path)
-                
+
                 try:
-                    # Process each file individually using the code scanner's scan_file method
+                    file_size = os.path.getsize(file_path)
+                    if file_size > MAX_FILE_SIZE_KB * 1024:
+                        logger.info(f"Skipping large file ({file_size // 1024}KB): {rel_path}")
+                        scan_results['skipped_files'] += 1
+                        continue
+
+                    try:
+                        with open(file_path, 'r', errors='ignore') as f:
+                            lines = f.readlines()
+                        if len(lines) > MAX_FILE_LINES:
+                            lines = lines[:MAX_FILE_LINES]
+                    except Exception:
+                        scan_results['skipped_files'] += 1
+                        continue
+
+                    file_start = time.time()
                     file_result = self.code_scanner.scan_file(file_path)
-                    
-                    # Get relative path for the file
-                    rel_path = os.path.relpath(file_path, repo_path)
-                    
-                    # Check for skipped or error files
+                    file_elapsed = time.time() - file_start
+
+                    if file_elapsed > PER_FILE_TIMEOUT:
+                        logger.warning(f"File scan took {file_elapsed:.1f}s (slow): {rel_path}")
+
                     if file_result.get('status') in ['skipped', 'error']:
                         scan_results['processed_files'] += 1
                         continue
-                    
-                    # Get findings - scan_file uses 'pii_found' key
+
                     pii_findings = file_result.get('pii_found', [])
-                    
-                    # Skip if no findings
+
                     if not pii_findings:
                         scan_results['processed_files'] += 1
                         continue
-                    
-                    # Convert pii_found to findings format and add to results
+
                     for finding in pii_findings:
-                        # Add file path to finding
                         finding['file_path'] = rel_path
                         finding['source_file'] = rel_path
-                        
-                        # Normalize risk level/severity - ensure both fields are set
+
                         risk_level = finding.get('risk_level', finding.get('severity', 'Medium'))
                         if isinstance(risk_level, str):
                             risk_level = risk_level.capitalize()
-                        
-                        # Ensure both severity and risk_level are set for report compatibility
+
                         finding['severity'] = risk_level
                         finding['risk_level'] = risk_level
-                        
-                        # Count risk levels
+
                         if risk_level.lower() == 'critical':
                             scan_results['critical_count'] += 1
                         elif risk_level.lower() == 'high':
@@ -758,13 +777,11 @@ class RepoScanner:
                             scan_results['medium_risk_count'] += 1
                         elif risk_level.lower() == 'low':
                             scan_results['low_risk_count'] += 1
-                        
-                        # Add individual finding to results
+
                         scan_results['findings'].append(finding)
-                    
-                    # Increment processed files count
+
                     scan_results['processed_files'] += 1
-                    
+
                 except Exception as e:
                     logger.warning(f"Error scanning file {file_path}: {str(e)}")
                     scan_results['skipped_files'] += 1
