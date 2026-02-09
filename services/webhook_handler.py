@@ -4,6 +4,7 @@ Handles real-time payment confirmations and subscription events
 """
 
 import os
+import sys
 import json
 import hashlib
 import hmac
@@ -12,15 +13,23 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 import stripe
 
-# Import new services - handle both standalone and integrated imports
+# Ensure parent directory is in path for package imports
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_parent_dir = os.path.dirname(_current_dir)
+if _parent_dir not in sys.path:
+    sys.path.insert(0, _parent_dir)
+if _current_dir not in sys.path:
+    sys.path.insert(0, _current_dir)
+
+# Import services - handle both standalone and integrated imports
 try:
-    from email_service import email_service
-    from database_service import database_service
-    from invoice_generator import invoice_generator
-except ImportError:
     from services.email_service import email_service
     from services.database_service import database_service
     from services.invoice_generator import invoice_generator
+except ImportError:
+    from email_service import email_service
+    from database_service import database_service
+    from invoice_generator import invoice_generator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
