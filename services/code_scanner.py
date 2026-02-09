@@ -753,12 +753,11 @@ class CodeScanner:
         # Use better batch size for faster scanning
         batch_size = 100  # Increased batch size for better performance
         
-        # Apply smart file selection or basic smart sampling
         if scan_depth is not None and SMART_SELECTOR_AVAILABLE:
             selector = SmartFileSelector(scanner_type='general')
             depth_preset = SMART_DEPTH_PRESETS.get(scan_depth, SMART_DEPTH_PRESETS['standard'])
             smart_max_files = depth_preset['max_files']
-            flat_files = [f[0] for f in all_files]
+            flat_files = [f[0] if isinstance(f, tuple) else f for f in all_files]
             selected_files, coverage_report = selector.select_files(
                 flat_files, directory_path, smart_max_files
             )
@@ -800,11 +799,14 @@ class CodeScanner:
             except Exception as e:
                 logger.debug(f"Git history scan failed: {e}")
         
-        # Comprehensive GDPR 99-article validation for 100% coverage (skip in fast_mode)
         gdpr_compliance_result = {}
         if not getattr(self, 'fast_mode', False):
+            gdpr_files_for_validation = [
+                (f, False) if isinstance(f, str) else f
+                for f in filtered_files
+            ]
             gdpr_compliance_result = self._perform_comprehensive_gdpr_validation(
-                directory_path, filtered_files
+                directory_path, gdpr_files_for_validation
             )
         else:
             logger.info("Skipping comprehensive GDPR validation in fast_mode")

@@ -650,15 +650,12 @@ class RepoScanner:
 
         return selected_files, coverage_report
 
-    if SMART_SELECTOR_AVAILABLE:
-        SCAN_DEPTH_PRESETS = SHARED_DEPTH_PRESETS
-    else:
-        SCAN_DEPTH_PRESETS = {
-            'quick': {'max_files': 50, 'timeout': 60, 'max_file_size_kb': 100},
-            'standard': {'max_files': 150, 'timeout': 120, 'max_file_size_kb': 200},
-            'deep': {'max_files': 500, 'timeout': 300, 'max_file_size_kb': 500},
-            'enterprise': {'max_files': 2000, 'timeout': 600, 'max_file_size_kb': 1024},
-        }
+    SCAN_DEPTH_PRESETS = {
+        'quick': {'max_files': 50, 'timeout': 60, 'max_file_size_kb': 100},
+        'standard': {'max_files': 150, 'timeout': 120, 'max_file_size_kb': 200},
+        'deep': {'max_files': 500, 'timeout': 300, 'max_file_size_kb': 500},
+        'enterprise': {'max_files': 2000, 'timeout': 600, 'max_file_size_kb': 1024},
+    }
 
     def scan_repository(self, repo_url: str, branch: Optional[str] = None, 
                         auth_token: Optional[str] = None,

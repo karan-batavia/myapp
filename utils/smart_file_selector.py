@@ -138,10 +138,14 @@ class SmartFileSelector:
             dir_buckets.setdefault(d, []).append(f)
 
         sorted_dirs = sorted(dir_buckets.keys())
-        selected = []
-        base_per_dir = max(1, budget // len(sorted_dirs))
-        leftover = budget - (base_per_dir * len(sorted_dirs))
+        num_dirs = len(sorted_dirs)
+        if num_dirs == 0:
+            return []
 
+        base_per_dir = max(1, budget // num_dirs)
+        leftover = max(0, budget - (base_per_dir * num_dirs))
+
+        selected = []
         for i, d in enumerate(sorted_dirs):
             alloc = base_per_dir + (1 if i < leftover else 0)
             take = min(alloc, len(dir_buckets[d]))
@@ -161,7 +165,7 @@ class SmartFileSelector:
             tiers[tier].append(fpath)
 
         selected_files: List[str] = []
-        tiers_breakdown: Dict[str, int] = {}
+        tiers_breakdown: Dict[str, Any] = {}
         remaining = max_files
 
         tier_labels = self._get_tier_labels()
