@@ -63,6 +63,14 @@ Payment system preference: iDEAL for Netherlands, full GDPR compliance, transpar
 - **AI Act Calculator**: Integrated 4-step wizard for EU AI Act 2025 compliance, including risk classification and Netherlands-specific features.
 - **EU AI Act Compliance**: Complete 100% coverage of all 113 EU AI Act articles with 38+ detection functions integrated in AI Model Scanner, comprehensive HTML reporting, and phased implementation timeline tracking (Feb 2025, Aug 2025, Aug 2026, Aug 2027). Maximum penalties tracked: €35M or 7% global turnover for prohibited practices.
 - **DPIA Implementation**: 5-step wizard interface for GDPR Article 35 compliance.
+- **Smart File Selection** (Added Feb 2026):
+  - **Shared Utility**: `utils/smart_file_selector.py` - reusable SmartFileSelector class for all scanners
+  - **Scanner Types**: 3 specialized modes (general, ai_model, sustainability) with type-specific file prioritization tiers
+  - **Scan Depth Presets**: Quick (50 files), Standard (150), Deep (500), Enterprise (2000)
+  - **Directory Sampling**: Distributes file selection evenly across all directories for broad coverage
+  - **Coverage Reporting**: File coverage %, directory coverage %, tier breakdown, scanner type metadata
+  - **Integrated In**: RepoScanner, AI Model Scanner, Code Scanner, Cloud/Sustainability Scanner
+  - **Data Residency**: All scans processed locally, auto-cleanup, GDPR Art. 32 compliant
 
 ## External Dependencies
 - **Streamlit**: Web application framework.
