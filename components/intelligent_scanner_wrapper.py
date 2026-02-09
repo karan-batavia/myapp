@@ -827,8 +827,20 @@ class IntelligentScannerWrapper:
             files_scanned = scan_result.get('files_scanned', scan_result.get('pages_scanned', 0))
             st.metric("Files Scanned", files_scanned)
         with col2:
-            total_findings = len(scan_result.get('findings', []))
-            st.metric("Total Findings", total_findings)
+            all_findings = scan_result.get('findings', [])
+            suppressed_types = {'Semantic Analysis: Syntax Error'}
+            seen_locs = set()
+            deduped_count = 0
+            for f in all_findings:
+                if f.get('type', '') in suppressed_types:
+                    continue
+                loc = f.get('location', '')
+                if loc and loc not in seen_locs:
+                    seen_locs.add(loc)
+                    deduped_count += 1
+                elif not loc:
+                    deduped_count += 1
+            st.metric("Total Findings", deduped_count)
         with col3:
             lines_analyzed = scan_result.get('lines_analyzed', files_scanned * 50 if files_scanned else 0)
             st.metric("Lines Analyzed", f"{lines_analyzed:,}")
@@ -1012,11 +1024,43 @@ class IntelligentScannerWrapper:
                 st.markdown("---")
         
         if findings:
+            type_display_map = {
+                'Dutch Address Component': 'Address',
+                'UAVG-Dutch Personal Identifiers': 'Dutch ID (UAVG)',
+                'Semantic Analysis: Syntax Error': None,
+                'IP Address': 'IP Address',
+            }
+            severity_priority = {'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1}
+            special_pii = {'bsn', 'health', 'medical', 'biometric'}
+            elevated_pii = {'financial', 'salary', 'iban', 'credit', 'secret', 'key', 'token', 'password'}
+
+            seen_locations = {}
+            for f in findings:
+                loc = f.get('location', '')
+                ft = (f.get('type') or 'Unknown').lower()
+                display_type = type_display_map.get(f.get('type', ''), f.get('type', 'Unknown'))
+                if display_type is None:
+                    continue
+                sev = f.get('severity', f.get('risk_level', 'Medium'))
+                if any(t in ft for t in special_pii):
+                    sev = 'Critical'
+                elif any(t in ft for t in elevated_pii) and sev not in ['Critical']:
+                    sev = 'High'
+                f['_display_type'] = display_type
+                f['_display_severity'] = sev
+                if loc in seen_locations:
+                    existing = seen_locations[loc]
+                    if severity_priority.get(sev, 0) > severity_priority.get(existing.get('_display_severity', 'Low'), 0):
+                        seen_locations[loc] = f
+                else:
+                    seen_locations[loc] = f
+            deduped = list(seen_locations.values())
+
             st.subheader("🔍 Findings Summary")
-            for i, finding in enumerate(findings[:10], 1):  # Show first 10 findings
-                severity = finding.get('severity', finding.get('risk_level', 'Medium'))
-                with st.expander(f"Finding {i}: {finding.get('type', 'Unknown')} - {severity}"):
-                    # Extract file path and line from 'location' field (format: "file_path:line_num")
+            for i, finding in enumerate(deduped[:20], 1):
+                display_type = finding.get('_display_type', finding.get('type', 'Unknown'))
+                severity = finding.get('_display_severity', finding.get('severity', 'Medium'))
+                with st.expander(f"Finding {i}: {display_type} - {severity}"):
                     location_str = finding.get('location', '')
                     if location_str and ':' in str(location_str):
                         last_colon = str(location_str).rfind(':')
@@ -1025,10 +1069,13 @@ class IntelligentScannerWrapper:
                     else:
                         file_loc = finding.get('file', finding.get('location', 'N/A'))
                         line_loc = finding.get('line', 'N/A')
-                    
+
                     st.write(f"**File:** {file_loc}")
                     st.write(f"**Line:** {line_loc}")
-                    st.write(f"**Description:** {finding.get('description', finding.get('reason', 'PII detected in source code'))}")
+                    st.write(f"**Type:** {display_type}")
+                    st.write(f"**Severity:** {severity}")
+                    desc = finding.get('description', finding.get('reason', 'PII detected in source code'))
+                    st.write(f"**Description:** {desc}")
                     if finding.get('privacy_risk'):
                         st.write(f"**Privacy Risk:** {finding.get('privacy_risk')}")
         else:

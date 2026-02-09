@@ -94,15 +94,7 @@ class SemanticCodeAnalyzer:
                     findings.extend(self._check_python_function(node, file_path))
                     
         except SyntaxError as e:
-            findings.append({
-                'type': 'Semantic Analysis: Syntax Error',
-                'severity': 'Medium',
-                'value': f'Syntax error at line {e.lineno}: {e.msg}',
-                'line': e.lineno or 0,
-                'file': file_path,
-                'category': 'code_quality',
-                'remediation': 'Fix syntax error before deployment'
-            })
+            logger.debug(f"Syntax error in {file_path} at line {e.lineno}: {e.msg}")
         except Exception as e:
             logger.debug(f"AST parsing failed for {file_path}: {e}")
             

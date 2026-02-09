@@ -72,21 +72,26 @@ class UnifiedHTMLReportGenerator:
         # Format timestamp based on language
         formatted_timestamp = self._format_timestamp(timestamp)
         
-        # Deduplicate findings first (prevents duplicate violations in reports)
+        suppressed_types = {'Semantic Analysis: Syntax Error'}
         original_findings = scan_result.get('findings', [])
-        seen_findings = set()
-        deduplicated_findings = []
+        severity_priority = {'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1}
+        seen_locations = {}
         for finding in original_findings:
-            # Create unique key from location and description
+            if finding.get('type', '') in suppressed_types:
+                continue
             location = finding.get('location', finding.get('file', ''))
             if not location and finding.get('file'):
                 line = finding.get('line', 0)
                 location = f"{finding.get('file')}:{line}" if line else finding.get('file')
-            description = finding.get('description', '')
-            key = (location, description)
-            if key not in seen_findings:
-                seen_findings.add(key)
-                deduplicated_findings.append(finding)
+            sev = finding.get('severity', finding.get('risk_level', 'Medium'))
+            if location and location in seen_locations:
+                existing_sev = seen_locations[location].get('severity', seen_locations[location].get('risk_level', 'Medium'))
+                if severity_priority.get(sev, 0) > severity_priority.get(existing_sev, 0):
+                    seen_locations[location] = finding
+            else:
+                key = location or id(finding)
+                seen_locations[key] = finding
+        deduplicated_findings = list(seen_locations.values())
         
         # Create copy of scan_result with deduplicated findings for metrics
         scan_result_deduped = scan_result.copy()
