@@ -629,7 +629,8 @@ def _execute_code_scan(region: str, username: str, source_type: str, uploaded_fi
                     branch=branch or 'main',
                     auth_token=access_token,
                     progress_callback=progress_callback,
-                    max_files=max_files
+                    max_files=max_files,
+                    scan_depth=locals().get('repo_scan_depth', 'standard')
                 )
             except ImportError:
                 status_text.text(f"Repository scanning requires git. Using code scanner...")
@@ -4628,13 +4629,21 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                 if message:
                     status_text.text(f"📥 {message}")
             
-            repo_results = repo_scanner.scan_repository(repo_url, progress_callback=repo_progress)
+            selected_depth = locals().get('repo_scan_depth', 'standard')
+            repo_results = repo_scanner.scan_repository(
+                repo_url, 
+                progress_callback=repo_progress,
+                scan_depth=selected_depth
+            )
             
             if repo_results.get('status') == 'completed' and repo_results.get('findings'):
                 scan_results['findings'] = repo_results.get('findings', [])
                 scan_results['files_scanned'] = repo_results.get('files_scanned', repo_results.get('processed_files', 0))
                 scan_results['total_lines'] = repo_results.get('total_lines', scan_results['files_scanned'] * 50)
                 scan_results['compliance_score'] = repo_results.get('compliance_score', 100)
+                scan_results['scan_coverage'] = repo_results.get('scan_coverage', {})
+                scan_results['enterprise_compliance'] = repo_results.get('enterprise_compliance', {})
+                scan_results['data_residency'] = repo_results.get('data_residency', {})
                 
                 progress_bar.progress(1.0)
                 status_text.empty()
@@ -4645,13 +4654,39 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                 
                 st.success(f"✅ Repository scan completed! Found {len(scan_results['findings'])} findings in {scan_results['files_scanned']} files.")
                 
-                col1, col2, col3 = st.columns(3)
+                col1, col2, col3, col4 = st.columns(4)
                 with col1:
                     st.metric("Files Scanned", scan_results['files_scanned'])
                 with col2:
                     st.metric("Findings", len(scan_results['findings']))
                 with col3:
                     st.metric("Compliance Score", f"{scan_results['compliance_score']}%")
+                with col4:
+                    coverage = scan_results.get('scan_coverage', {})
+                    cov_pct = coverage.get('coverage_percentage', 0)
+                    st.metric("Code Coverage", f"{cov_pct:.0f}%")
+                
+                coverage = scan_results.get('scan_coverage', {})
+                if coverage:
+                    tiers = coverage.get('tiers_breakdown', {})
+                    dir_cov = coverage.get('directory_coverage_percentage', 0)
+                    with st.expander("Scan Coverage Details", expanded=False):
+                        st.markdown(f"""
+**File Coverage**: {coverage.get('scanned_files', 0)} of {coverage.get('total_files', 0)} files ({cov_pct:.0f}%)  
+**Directory Coverage**: {coverage.get('directories_covered', 0)} of {coverage.get('total_directories', 0)} directories ({dir_cov:.0f}%)  
+**Scan Depth**: {selected_depth.title()}
+
+| Priority Tier | Files Scanned |
+|---|---|
+| Config & Secrets (Tier 1) | {tiers.get('tier_1', 0)} |
+| Security-Related (Tier 2) | {tiers.get('tier_2', 0)} |
+| Source Code (Tier 3) | {tiers.get('tier_3', 0)} |
+| Other Files (Tier 4) | {tiers.get('tier_4', 0)} |
+
+**Data Residency**: All data processed locally, deleted after scan  
+**GDPR Art. 32 Compliant**: Data minimization applied
+""")
+
                 
                 try:
                     aggregator = ResultsAggregator()
