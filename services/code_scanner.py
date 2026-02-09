@@ -1699,15 +1699,27 @@ class CodeScanner:
             risk_level = finding.get('risk_level', 'Medium')
             risk_counts[risk_level] = risk_counts.get(risk_level, 0) + 1
         
+        scan_dir = getattr(self, 'scan_checkpoint_data', {}).get('directory', '')
         for finding in all_pii:
             if 'location' in finding:
                 loc = finding['location']
                 if '/tmp/' in loc or '/var/' in loc:
                     parts = loc.split(':')
-                    clean_path = os.path.basename(parts[0]) if parts else loc
+                    raw_path = parts[0] if parts else loc
+                    if scan_dir and raw_path.startswith(scan_dir):
+                        clean_path = os.path.relpath(raw_path, scan_dir)
+                    else:
+                        clean_path = os.path.basename(raw_path)
                     finding['location'] = f"{clean_path}:{parts[1]}" if len(parts) > 1 else clean_path
             elif finding.get('file'):
-                clean_file = os.path.basename(finding['file']) if '/tmp/' in finding.get('file', '') or '/var/' in finding.get('file', '') else finding['file']
+                raw_file = finding['file']
+                if '/tmp/' in raw_file or '/var/' in raw_file:
+                    if scan_dir and raw_file.startswith(scan_dir):
+                        clean_file = os.path.relpath(raw_file, scan_dir)
+                    else:
+                        clean_file = os.path.basename(raw_file)
+                else:
+                    clean_file = raw_file
                 line = finding.get('line', 0)
                 finding['location'] = f"{clean_file}:{line}" if line else clean_file
 

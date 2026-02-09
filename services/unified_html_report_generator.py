@@ -1001,10 +1001,19 @@ class UnifiedHTMLReportGenerator:
             description = finding.get('description', finding.get('message', 'No description available'))
             location = finding.get('location', 'Unknown')
             
-            # Get source file information
             import os
             source_path = finding.get('source', finding.get('source_file', ''))
-            source_file = os.path.basename(source_path) if source_path else ''
+            if source_path:
+                if '/tmp/' in source_path or '/var/' in source_path:
+                    scan_dir = scan_result.get('directory', '')
+                    if scan_dir and source_path.startswith(scan_dir):
+                        source_file = os.path.relpath(source_path, scan_dir)
+                    else:
+                        source_file = os.path.basename(source_path)
+                else:
+                    source_file = source_path
+            else:
+                source_file = ''
             
             # Enhanced finding fields
             context = finding.get('context', '')
