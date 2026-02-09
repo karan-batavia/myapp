@@ -869,6 +869,16 @@ class RepoScanner:
                         finding['file_path'] = rel_path
                         finding['source_file'] = rel_path
 
+                        old_loc = finding.get('location', '')
+                        if old_loc:
+                            loc_parts = old_loc.split(':')
+                            loc_file = loc_parts[0]
+                            if loc_file == os.path.basename(rel_path) or '/tmp/' in loc_file or '/var/' in loc_file:
+                                line_suffix = f":{loc_parts[1]}" if len(loc_parts) > 1 else ''
+                                finding['location'] = f"{rel_path}{line_suffix}"
+                        else:
+                            finding['location'] = rel_path
+
                         risk_level = finding.get('risk_level', finding.get('severity', 'Medium'))
                         if isinstance(risk_level, str):
                             risk_level = risk_level.capitalize()
