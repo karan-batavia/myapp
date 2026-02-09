@@ -566,6 +566,12 @@ class EnhancedFindingGenerator:
                        finding.get('line_content') or
                        'Security or privacy issue detected')
         
+        # Include detected value in description for PII findings
+        detected_value = finding.get('value', finding.get('matched_content', ''))
+        if detected_value and len(description) < 100:
+            masked_value = detected_value[:8] + '...' if len(detected_value) > 8 else detected_value
+            description = f"{description} — Detected: {masked_value}"
+        
         # For EXIF findings, use reason as it contains the detailed explanation
         if 'exif' in finding_type and finding.get('reason'):
             description = finding.get('reason')
@@ -607,6 +613,14 @@ class EnhancedFindingGenerator:
                     location = file_info or 'docs/compliance-review.md'
         
         severity = finding.get('severity', finding.get('risk_level', 'Medium'))
+        
+        # Elevate severity for special category PII
+        ft_lower = finding_type.lower()
+        if any(term in ft_lower for term in ['bsn', 'health', 'medical', 'biometric']):
+            severity = 'Critical'
+        elif any(term in ft_lower for term in ['financial', 'salary', 'iban', 'credit', 'secret', 'key', 'token', 'password']):
+            if severity not in ['Critical']:
+                severity = 'High'
         
         # Generate intelligent context based on finding type
         context, gdpr_articles, compliance_reqs, business_impact, recommendations = self._get_type_specific_context(
@@ -915,6 +929,106 @@ class EnhancedFindingGenerator:
                 [ActionableRecommendation(action="Review Form Compliance", description="Ensure forms meet GDPR requirements", implementation="Add privacy notice, link to policy, collect only necessary data, implement proper validation", effort_estimate="1-2 hours", priority=severity, verification="Test form submission flow for GDPR compliance")]
             )
         
+        # Phone number findings (code scanner PII)
+        elif 'phone' in finding_type or 'telefoon' in finding_type:
+            return (
+                f"Phone number detected in source code at {location}. {description}",
+                ['GDPR Article 4(1) - Personal Data Definition (Penalty: €20M or 4% turnover)', 'GDPR Article 6 - Lawfulness of Processing'],
+                ['Remove hardcoded phone numbers from source code', 'Use environment variables or secure storage', 'Implement data minimization'],
+                "Exposed phone numbers in code create GDPR liability and potential harassment risk if leaked",
+                [ActionableRecommendation(action="Remove Phone Number from Code", description="Replace hardcoded phone number with secure reference", implementation="Move to environment variable, secrets manager, or encrypted config. Mask in logs.", effort_estimate="30 mins - 1 hour", priority=severity, verification="Grep codebase to confirm no phone numbers remain")]
+            )
+        
+        # Email address findings (code scanner PII)
+        elif 'email' in finding_type or 'e-mail' in finding_type:
+            return (
+                f"Email address detected in source code at {location}. {description}",
+                ['GDPR Article 4(1) - Personal Data Definition (Penalty: €20M or 4% turnover)', 'GDPR Article 6 - Lawfulness of Processing'],
+                ['Remove hardcoded email addresses from source code', 'Use configuration or environment variables', 'Implement data minimization per GDPR Article 5(1)(c)'],
+                "Exposed email addresses enable phishing attacks and violate data minimization principles",
+                [ActionableRecommendation(action="Remove Email from Source Code", description="Replace hardcoded email with secure configuration", implementation="Move to config file, environment variable, or user input. Never hardcode PII.", effort_estimate="30 mins", priority=severity, verification="Scan codebase for remaining email patterns")]
+            )
+        
+        # Physical address findings (code scanner PII)
+        elif 'address' in finding_type and 'email' not in finding_type:
+            return (
+                f"Physical address detected in source code at {location}. {description}",
+                ['GDPR Article 4(1) - Personal Data Definition (Penalty: €20M or 4% turnover)', 'GDPR Article 5(1)(c) - Data Minimization'],
+                ['Remove hardcoded addresses from source code', 'Store in secure database with access controls', 'Apply data minimization principles'],
+                "Physical addresses are personal data enabling individual identification and location tracking",
+                [ActionableRecommendation(action="Remove Address from Code", description="Move physical address data to secure storage", implementation="Replace hardcoded address with database reference or config. Apply access controls.", effort_estimate="30 mins - 1 hour", priority=severity, verification="Verify no physical addresses remain in source files")]
+            )
+        
+        # Name/person findings (code scanner PII)
+        elif 'name' in finding_type or 'person' in finding_type:
+            return (
+                f"Personal name detected in source code at {location}. {description}",
+                ['GDPR Article 4(1) - Personal Data Definition (Penalty: €20M or 4% turnover)', 'GDPR Article 5(1)(c) - Data Minimization'],
+                ['Remove hardcoded personal names from source code', 'Use anonymized test data', 'Implement pseudonymization per GDPR Article 4(5)'],
+                "Personal names directly identify individuals and constitute personal data under GDPR",
+                [ActionableRecommendation(action="Remove Personal Names from Code", description="Replace real names with anonymized or synthetic data", implementation="Use faker library for test data, move real names to secure database", effort_estimate="30 mins", priority=severity, verification="Verify no real personal names in source code")]
+            )
+        
+        # Financial data findings (code scanner PII)
+        elif 'financial' in finding_type or 'salary' in finding_type or 'iban' in finding_type or 'bank' in finding_type or 'credit' in finding_type:
+            return (
+                f"Financial data detected in source code at {location}. {description}",
+                ['GDPR Article 4(1) - Personal Data Definition (Penalty: €20M or 4% turnover)', 'GDPR Article 32 - Security of Processing', 'PSD2 - Payment Services Directive'],
+                ['Remove financial data from source code immediately', 'Implement encryption for financial data at rest and in transit', 'Apply PCI DSS requirements for payment card data'],
+                "Exposed financial data creates fraud risk, regulatory liability under GDPR and PSD2, and potential financial losses",
+                [ActionableRecommendation(action="Secure Financial Data", description="Remove financial data from source code and implement encryption", implementation="Move to encrypted database, implement tokenization for IBANs/card numbers, apply PCI DSS controls", effort_estimate="1-2 hours", priority="High", verification="Verify no financial data in source, confirm encryption at rest")]
+            )
+        
+        # BSN (Dutch SSN) findings from code scanner (not in template path)
+        elif 'bsn' in finding_type or 'burgerservicenummer' in finding_type:
+            return (
+                f"Dutch BSN (Burgerservicenummer) detected in source code at {location}. This is a national identification number requiring strict UAVG protection.",
+                ['GDPR Article 87 - National Identification Numbers (Penalty: €20M or 4% turnover)', 'UAVG Article 46 - BSN Processing Restrictions', 'GDPR Article 9 - Special Categories'],
+                ['Remove BSN from source code immediately - BSN processing requires explicit legal basis under UAVG', 'Notify DPO within 24 hours', 'Report to AP (Autoriteit Persoonsgegevens) if data breach occurred'],
+                "BSN exposure is a Critical UAVG violation. The Dutch DPA (AP) has fined organizations up to €830,000 for improper BSN processing. Breach notification required within 72 hours.",
+                [ActionableRecommendation(action="Immediate BSN Removal", description="Remove BSN from source code and assess breach notification", implementation="1) Delete BSN from code 2) Check git history for exposure 3) Notify DPO 4) Assess if AP notification required under Art. 33", effort_estimate="1-2 hours", priority="Critical", verification="Verify BSN removed from all code, git history scrubbed, DPO notified")]
+            )
+        
+        # Health/medical data findings
+        elif 'health' in finding_type or 'medical' in finding_type or 'patient' in finding_type:
+            return (
+                f"Health/medical data detected in source code at {location}. This is a GDPR special category requiring explicit consent or legal basis.",
+                ['GDPR Article 9 - Special Categories of Personal Data (Penalty: €20M or 4% turnover)', 'GDPR Article 35 - DPIA Required'],
+                ['Remove health data from source code', 'Conduct DPIA for health data processing', 'Obtain explicit consent or identify legal basis under Art. 9(2)'],
+                "Health data is a special category under GDPR Article 9, requiring highest level of protection. Processing without legal basis can result in fines up to €20M.",
+                [ActionableRecommendation(action="Secure Health Data", description="Remove health data from code and ensure proper legal basis", implementation="Move to encrypted health data system, conduct DPIA, document Art. 9(2) legal basis", effort_estimate="2-4 hours", priority="Critical", verification="DPIA completed, health data secured, legal basis documented")]
+            )
+        
+        # Secret/credential findings (API keys, tokens)
+        elif 'secret' in finding_type or 'key' in finding_type or 'token' in finding_type or 'credential' in finding_type or 'password' in finding_type:
+            return (
+                f"Secret/credential detected in source code at {location}. {description}",
+                ['GDPR Article 32 - Security of Processing (Penalty: €10M or 2% turnover)', 'GDPR Article 33 - Breach Notification'],
+                ['Rotate compromised credentials immediately', 'Move secrets to environment variables or secrets manager', 'Implement pre-commit hooks to prevent future exposure'],
+                "Exposed credentials enable unauthorized access to systems and data, potentially triggering a reportable data breach",
+                [ActionableRecommendation(action="Rotate and Secure Credentials", description="Rotate exposed credentials and implement secure storage", implementation="1) Rotate the credential immediately 2) Move to secrets manager/env vars 3) Add .gitignore rules 4) Install pre-commit hooks", effort_estimate="30 mins - 1 hour", priority="Critical", verification="Verify old credential deactivated, new one in secure storage")]
+            )
+        
+        # UAVG-specific findings
+        elif 'uavg' in finding_type:
+            return (
+                f"Netherlands UAVG compliance finding at {location}. {description}",
+                ['UAVG - Uitvoeringswet AVG (Penalty: €20M or 4% turnover)', 'GDPR Article 87 - National Identification Numbers'],
+                ['Review UAVG-specific requirements', 'Ensure compliance with Dutch data protection law', 'Consult with DPO on Netherlands-specific obligations'],
+                "UAVG violations are enforced by the Autoriteit Persoonsgegevens (AP) with significant penalty authority",
+                [ActionableRecommendation(action="Address UAVG Compliance", description="Remediate Netherlands-specific privacy violation", implementation="Review UAVG requirements, implement required controls, document compliance", effort_estimate="1-4 hours", priority=severity, verification="Verify UAVG compliance with DPO")]
+            )
+        
+        # Vulnerability findings from code scanner
+        elif 'vulnerability' in finding_type or 'vuln' in finding_type:
+            return (
+                f"Security vulnerability detected at {location}. {description}",
+                ['GDPR Article 32 - Security of Processing (Penalty: €10M or 2% turnover)', 'GDPR Article 25 - Data Protection by Design'],
+                ['Remediate vulnerability following secure coding standards', 'Implement security testing in CI/CD pipeline', 'Conduct code review'],
+                "Security vulnerabilities can lead to data breaches, triggering GDPR notification obligations and regulatory penalties",
+                [ActionableRecommendation(action="Remediate Security Vulnerability", description="Fix security issue and implement preventive controls", implementation="Apply security patch, add input validation, implement security testing", effort_estimate="1-4 hours", priority=severity, verification="Re-scan to verify vulnerability resolved")]
+            )
+        
         # Default fallback with description-based context
         else:
             compliance_ref = self._get_compliance_reference_for_finding(finding_type, description)
@@ -987,11 +1101,20 @@ class EnhancedFindingGenerator:
     
     def _infer_data_classification(self, finding_type: str) -> str:
         """Infer data classification from finding type"""
-        if 'pii' in finding_type or 'personal' in finding_type:
-            return 'Personal Data'
-        elif 'training' in finding_type or 'data' in finding_type:
+        ft = finding_type.lower()
+        if any(term in ft for term in ['bsn', 'health', 'medical', 'biometric', 'genetic', 'racial', 'ethnic', 'political', 'religion', 'sexual']):
+            return 'Special Category Data (GDPR Art. 9)'
+        elif any(term in ft for term in ['pii', 'personal', 'email', 'phone', 'name', 'address', 'person']):
+            return 'Personal Data (GDPR Art. 4(1))'
+        elif any(term in ft for term in ['financial', 'salary', 'iban', 'bank', 'credit', 'payment']):
+            return 'Financial Personal Data'
+        elif any(term in ft for term in ['secret', 'key', 'token', 'credential', 'password', 'api']):
+            return 'Security Credential'
+        elif any(term in ft for term in ['vulnerability', 'vuln']):
+            return 'Security Configuration'
+        elif 'training' in ft:
             return 'Training Data'
-        elif 'model' in finding_type:
+        elif 'model' in ft:
             return 'Model Assets'
         else:
             return 'System Configuration'
@@ -1175,7 +1298,8 @@ def enhance_findings_for_report(scanner_type: str, findings: List[Dict[str, Any]
                 'reason': finding.get('reason', ''),
                 
                 # Preserve original finding data
-                'original_finding': finding
+                'original_finding': finding,
+                'matched_value': finding.get('value', finding.get('matched_content', ''))
             }
             
             enhanced_findings.append(enhanced_dict)
