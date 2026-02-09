@@ -4293,16 +4293,17 @@ def render_code_scanner_interface(region: str, username: str):
                 return
             
             if scan_result:
+                st.session_state['last_scan_results'] = scan_result
+                st.session_state['latest_scan_type'] = 'code'
+                st.session_state['scan_completed'] = True
                 intelligent_wrapper.display_intelligent_scan_results(scan_result)
                 
-                # Generate HTML report
                 try:
                     from services import unified_html_report_generator
                     html_report = unified_html_report_generator.generate_comprehensive_report(scan_result)
                 except ImportError:
                     html_report = f"<html><body><h1>Report for {scan_result.get('scan_id', 'unknown')}</h1></body></html>"
                 
-                # Offer download
                 from config.pricing_config import can_download_reports
                 if can_download_reports():
                     st.download_button(
@@ -4602,25 +4603,69 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         files_to_scan = []
         
         if repo_url:
-            status_text.text("📥 Cloning repository for analysis...")
+            status_text.text("📥 Cloning and scanning repository...")
             from services.repo_scanner import RepoScanner
             from services.code_scanner import CodeScanner
             
-            # Initialize scanners
-            code_scanner = CodeScanner()
+            code_scanner = CodeScanner(region=region)
             repo_scanner = RepoScanner(code_scanner)
-            repo_results = repo_scanner.scan_repository(repo_url)
             
-            # Extract files from cloned repository
-            if 'temp_dir' in repo_results:
-                temp_dir = repo_results['temp_dir']
-                scan_results['_temp_dir'] = temp_dir
-                for root, dirs, files in os.walk(temp_dir):
-                    for file in files:
-                        if file.endswith(('.py', '.js', '.java', '.ts', '.go', '.rs', '.cpp', '.c', '.h', '.php', '.rb', '.cs')):
-                            files_to_scan.append(os.path.join(root, file))
+            def repo_progress(current, total, message=""):
+                progress = min(20 + int((current / max(total, 1)) * 60), 80)
+                progress_bar.progress(progress / 100)
+                if message:
+                    status_text.text(f"📥 {message}")
             
-            scan_results['files_scanned'] = len(files_to_scan)
+            repo_results = repo_scanner.scan_repository(repo_url, progress_callback=repo_progress)
+            
+            if repo_results.get('status') == 'completed' and repo_results.get('findings'):
+                scan_results['findings'] = repo_results.get('findings', [])
+                scan_results['files_scanned'] = repo_results.get('files_scanned', repo_results.get('processed_files', 0))
+                scan_results['total_lines'] = repo_results.get('total_lines', scan_results['files_scanned'] * 50)
+                scan_results['compliance_score'] = repo_results.get('compliance_score', 100)
+                
+                progress_bar.progress(1.0)
+                status_text.empty()
+                
+                st.session_state['last_scan_results'] = scan_results
+                st.session_state['latest_scan_type'] = 'code'
+                st.session_state['scan_completed'] = True
+                
+                st.success(f"✅ Repository scan completed! Found {len(scan_results['findings'])} findings in {scan_results['files_scanned']} files.")
+                
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    st.metric("Files Scanned", scan_results['files_scanned'])
+                with col2:
+                    st.metric("Findings", len(scan_results['findings']))
+                with col3:
+                    st.metric("Compliance Score", f"{scan_results['compliance_score']}%")
+                
+                try:
+                    aggregator = ResultsAggregator()
+                    aggregator.save_scan_result(username=username, result=scan_results)
+                except Exception as e:
+                    logger.warning(f"Could not save scan result: {e}")
+                
+                try:
+                    from services import unified_html_report_generator
+                    html_report = unified_html_report_generator.generate_comprehensive_report(scan_results)
+                    st.download_button(
+                        label="📄 Download Scan Report",
+                        data=html_report,
+                        file_name=f"code_scan_{scan_results['scan_id'][:8]}.html",
+                        mime="text/html"
+                    )
+                except Exception:
+                    pass
+                
+                return
+            elif repo_results.get('status') == 'completed':
+                scan_results['files_scanned'] = repo_results.get('files_scanned', 0)
+                scan_results['findings'] = repo_results.get('findings', [])
+            else:
+                st.warning(f"Repository scan issue: {repo_results.get('message', 'Unknown error')}")
+                scan_results['files_scanned'] = 0
             
         elif uploaded_files:
             temp_dir = tempfile.mkdtemp()

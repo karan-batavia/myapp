@@ -125,7 +125,7 @@ class IntelligentScannerWrapper:
         
         def progress_callback(current: int, total: int, message: str):
             """Progress callback for real-time updates."""
-            progress = current / total
+            progress = min(current / max(total, 1), 0.99)
             progress_bar.progress(progress)
             status_text.text(f"🔍 {message}")
         
@@ -332,7 +332,7 @@ class IntelligentScannerWrapper:
             # Track license usage
             track_scanner_usage('code', region, success=True, duration_ms=scan_duration)
             
-            progress_bar.progress(100)
+            progress_bar.progress(1.0)
             status_text.text("✅ Intelligent scan completed!")
             
             return scan_result
