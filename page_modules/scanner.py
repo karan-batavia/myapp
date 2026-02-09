@@ -4411,10 +4411,10 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             'ssn': r'\b\d{3}-\d{2}-\d{4}\b',
             
             # Netherlands-Specific UAVG Patterns
-            'bsn': r'\b[1-9]\d{8}\b',  # Burgerservicenummer (Dutch SSN)
-            'kvk': r'\b\d{8}\b',  # KvK number (Chamber of Commerce)
+            'bsn': r'\b[1-9]\d{8}\b',
+            'kvk': r'(?i)(?:kvk|kamer\s*van\s*koophandel|handelsregister|chamber\s*of\s*commerce)[:\s#-]*\b(\d{8})\b',
             'iban_nl': r'\bNL\d{2}[A-Z]{4}\d{10}\b',  # Dutch IBAN
-            'postcode_nl': r'\b\d{4}\s?[A-Z]{2}\b',  # Dutch postal code
+            'postcode_nl': r'\b\d{4}\s?(?!KB|MB|GB|TB|PB|HZ)[A-Z]{2}\b',
             
             # Health Data (Article 9 GDPR Special Categories)
             'health_data': r'\b(patient|medical|diagnosis|treatment|medication|hospital|clinic|doctor|physician)\b',
@@ -4424,13 +4424,13 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             'biometric': r'\b(fingerprint|facial recognition|iris scan|biometric|dna|genetic)\b',
             
             # API Keys and Secrets (Article 32 GDPR - Security)
-            'api_key': r'(?i)(api[_-]?key|apikey|access[_-]?token|secret[_-]?key|private[_-]?key)',
+            'api_key': r'(api[_-]?key|apikey|access[_-]?token|secret[_-]?key|private[_-]?key)',
             'aws_key': r'(AKIA[0-9A-Z]{16})',
             'github_token': r'(ghp_[a-zA-Z0-9]{36})',
             'jwt_token': r'(eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*)',
             
             # Financial Data
-            'bank_account': r'\b\d{3,4}[\s-]?\d{3,4}[\s-]?\d{3,4}\b',
+            'bank_account': r'\b[A-Z]{2}\d{2}[A-Z]{4}\d{10,30}\b',
             'bitcoin': r'\b[13][a-km-zA-HJ-NP-Z1-9]{25,34}\b',
             
             # Employment Data (Netherlands specific)
@@ -4449,14 +4449,16 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             """Calculate Shannon entropy for secret detection"""
             if len(data) == 0:
                 return 0
+            from collections import Counter
+            counts = Counter(data)
+            length = len(data)
             entropy = 0
-            for x in range(256):
-                p_x = float(data.count(chr(x))) / len(data)
-                if p_x > 0:
-                    entropy += - p_x * math.log(p_x, 2)
+            for count in counts.values():
+                p_x = count / length
+                entropy -= p_x * math.log(p_x, 2)
             return entropy
         
-        def assess_gdpr_principle(finding_type, content):
+        def assess_gdpr_principle(finding_type):
             """Assess which GDPR principle is affected"""
             principles = []
             
@@ -4473,7 +4475,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             
             return principles
         
-        def get_netherlands_compliance_flags(finding_type, content):
+        def get_netherlands_compliance_flags(finding_type):
             """Get Netherlands-specific UAVG compliance flags"""
             flags = []
             
@@ -4494,7 +4496,18 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             
             return flags
         
-        def scan_content_for_patterns(content, file_path, file_type):
+        def validate_bsn(number_str):
+            """Validate BSN using the 11-proef (eleven test) algorithm"""
+            if len(number_str) != 9:
+                return False
+            try:
+                digits = [int(d) for d in number_str]
+                checksum = (9*digits[0] + 8*digits[1] + 7*digits[2] + 6*digits[3] + 5*digits[4] + 4*digits[5] + 3*digits[6] + 2*digits[7] - 1*digits[8])
+                return checksum % 11 == 0 and checksum != 0
+            except (ValueError, IndexError):
+                return False
+        
+        def scan_content_for_patterns(content, file_path):
             """Scan content for PII and secrets with GDPR compliance"""
             findings = []
             lines = content.split('\n')
@@ -4505,6 +4518,8 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     
                     for match in matches:
                         matched_text = match.group()
+                        if pattern_name == 'bsn' and not validate_bsn(matched_text):
+                            continue
                         entropy_score = calculate_entropy(matched_text)
                         
                         # Determine severity based on GDPR risk assessment
@@ -4519,10 +4534,9 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                             risk_level = 'Low'
                         
                         # GDPR principle assessment
-                        affected_principles = assess_gdpr_principle(pattern_name, matched_text)
+                        affected_principles = assess_gdpr_principle(pattern_name)
                         
-                        # Netherlands compliance flags
-                        nl_flags = get_netherlands_compliance_flags(pattern_name, matched_text)
+                        nl_flags = get_netherlands_compliance_flags(pattern_name)
                         
                         clean_file = os.path.basename(file_path) if '/tmp/' in file_path or '/var/' in file_path else file_path
                         finding = {
@@ -4608,6 +4622,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             
         elif uploaded_files:
             temp_dir = tempfile.mkdtemp()
+            scan_results['_temp_dir'] = temp_dir
             for file in uploaded_files:
                 file_path = os.path.join(temp_dir, file.name)
                 with open(file_path, "wb") as f:
@@ -4627,6 +4642,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         if not files_to_scan:
             # Generate realistic findings for demonstration
             status_text.text("📊 Generating realistic GDPR scan results...")
+            scan_results['demo_mode'] = True
             
             # Simulate comprehensive repository analysis
             files_to_scan = [
@@ -4650,6 +4666,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'severity': 'High',
                     'file': 'src/main/java/com/example/UserService.java',
                     'line': 42,
+                    'location': 'src/main/java/com/example/UserService.java:42',
                     'description': 'Detected Email: user@example.com',
                     'matched_content': 'user@example.com',
                     'entropy_score': 3.2,
@@ -4669,6 +4686,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'severity': 'Critical',
                     'file': 'config/secrets.yml',
                     'line': 8,
+                    'location': 'config/secrets.yml:8',
                     'description': 'Detected Api Key: sk-1234567890abcdef...',
                     'matched_content': 'sk-1234567890abcdef1234567890abcdef',
                     'entropy_score': 4.8,
@@ -4688,6 +4706,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'severity': 'High',
                     'file': 'src/components/PaymentForm.js',
                     'line': 156,
+                    'location': 'src/components/PaymentForm.js:156',
                     'description': 'Detected Phone: +31612345678',
                     'matched_content': '+31612345678',
                     'entropy_score': 2.1,
@@ -4707,6 +4726,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'severity': 'Critical',
                     'file': 'models/User.py',
                     'line': 23,
+                    'location': 'models/User.py:23',
                     'description': 'Detected Bsn: 123456789',
                     'matched_content': '123456789',
                     'entropy_score': 1.8,
@@ -4726,6 +4746,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'severity': 'Critical',
                     'file': 'src/main/java/com/example/UserService.java',
                     'line': 89,
+                    'location': 'src/main/java/com/example/UserService.java:89',
                     'description': 'Detected Health Data: patient medical records',
                     'matched_content': 'patient medical records',
                     'entropy_score': 3.7,
@@ -4745,6 +4766,7 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     'severity': 'Critical',
                     'file': 'scripts/backup.sh',
                     'line': 12,
+                    'location': 'scripts/backup.sh:12',
                     'description': 'Detected Github Token: ghp_abcdef1234567890...',
                     'matched_content': 'ghp_abcdef1234567890abcdef1234567890abcd',
                     'entropy_score': 5.2,
@@ -4777,20 +4799,26 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
                     scan_results['breach_notification_required'] = True
         
         else:
-            # Process actual files
-            for i, file_path in enumerate(files_to_scan[:20]):  # Limit to 20 files for performance
+            max_file_size = 10 * 1024 * 1024  # 10MB per file limit
+            scan_file_limit = min(len(files_to_scan), 50)
+            if len(files_to_scan) > scan_file_limit:
+                st.warning(f"⚠️ Repository contains {len(files_to_scan)} files. Scanning first {scan_file_limit} for performance.")
+            for i, file_path in enumerate(files_to_scan[:scan_file_limit]):
                 try:
+                    file_size = os.path.getsize(file_path)
+                    if file_size > max_file_size:
+                        logger.warning(f"Skipping {file_path}: file size {file_size} exceeds {max_file_size} byte limit")
+                        continue
                     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                         content = f.read()
                         lines_in_file = len(content.split('\n'))
                         total_lines += lines_in_file
                         
-                        file_type = os.path.splitext(file_path)[1]
-                        findings = scan_content_for_patterns(content, file_path, file_type)
+                        findings = scan_content_for_patterns(content, file_path)
                         all_findings.extend(findings)
                         
                 except Exception as e:
-                    # Log error but continue scanning
+                    logger.warning(f"Failed to scan {file_path}: {e}")
                     continue
                 
                 progress_bar.progress(50 + (i + 1) * 30 // len(files_to_scan[:20]))
@@ -4836,6 +4864,9 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         st.markdown("---")
         st.subheader("🛡️ GDPR-Compliant Code Scan Results")
         
+        if scan_results.get('demo_mode'):
+            st.info("ℹ️ Demo mode: These are example findings for demonstration purposes. Upload files or provide a repository URL for actual scanning.")
+        
         # Executive summary
         col1, col2, col3, col4 = st.columns(4)
         with col1:
@@ -4845,9 +4876,9 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
         with col3:
             st.metric("PII/Secrets Found", len(all_findings))
         with col4:
-            color = "green" if compliance_score >= 70 else "red"
             st.metric("GDPR Compliance", f"{compliance_score}%")
         
+        uavg_critical = 0
         # Netherlands UAVG compliance
         if region == "Netherlands":
             st.markdown("### 🇳🇱 Netherlands UAVG Compliance Status")
@@ -4945,6 +4976,13 @@ def execute_code_scan(region, username, uploaded_files, repo_url, directory_path
             # Also log the full exception details
             import traceback
             logger.error(f"Code Scanner: Full exception trace: {traceback.format_exc()}")
+        
+        if scan_results.get('_temp_dir'):
+            try:
+                import shutil
+                shutil.rmtree(scan_results['_temp_dir'], ignore_errors=True)
+            except Exception:
+                pass
         
         st.success("✅ GDPR-compliant code scan completed!")
         
