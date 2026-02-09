@@ -36,7 +36,7 @@ st.set_page_config(
     page_title="DataGuardian Pro",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 st.markdown("""
@@ -1599,33 +1599,6 @@ def render_landing_page():
     
     if st.session_state.get('_show_nl_hint', False):
         st.info("💡 Deze applicatie is ook beschikbaar in het Nederlands - use the language selector in the sidebar")
-    
-    import streamlit.components.v1 as components
-    
-    login_btn_col, spacer_col = st.columns([1, 4])
-    with login_btn_col:
-        st.markdown(f"""
-        <div id="open-sidebar-btn" onclick="
-            try {{
-                const sidebar = window.parent.document.querySelector('[data-testid=\\'stSidebar\\']');
-                const collapseBtn = window.parent.document.querySelector('[data-testid=\\'stSidebarCollapsedControl\\'] button') || 
-                                   window.parent.document.querySelector('[data-testid=\\'collapsedControl\\'] button');
-                if (collapseBtn) {{ collapseBtn.click(); }}
-                else if (sidebar) {{ sidebar.style.display = 'block'; sidebar.style.transform = 'none'; }}
-            }} catch(e) {{}}
-        " style="
-            display: inline-flex; align-items: center; gap: 0.5rem;
-            background: linear-gradient(135deg, #1B2559, #2D4A8C);
-            color: white; padding: 0.6rem 1.5rem; border-radius: 8px;
-            cursor: pointer; font-weight: 600; font-size: 0.95rem;
-            box-shadow: 0 2px 8px rgba(27, 37, 89, 0.3);
-            transition: all 0.2s ease;
-            user-select: none;
-        " onmouseover="this.style.boxShadow='0 4px 12px rgba(27, 37, 89, 0.5)'; this.style.transform='translateY(-1px)';"
-           onmouseout="this.style.boxShadow='0 2px 8px rgba(27, 37, 89, 0.3)'; this.style.transform='none';">
-            🔐 {_('login.button', 'Login')}
-        </div>
-        """, unsafe_allow_html=True)
     
     # Hero section with image and value proposition
     hero_col1, hero_col2 = st.columns([1, 1], gap="large")
