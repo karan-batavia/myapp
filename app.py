@@ -1597,10 +1597,6 @@ def render_landing_page():
     st.markdown("""
     <style>
         @media (max-width: 768px) {
-            [data-testid="stSidebar"] { display: none !important; }
-            [data-testid="collapsedControl"] { display: none !important; }
-            [data-testid="stSidebarCollapsedControl"] { display: none !important; }
-            .mobile-login-container { display: block !important; }
             section.main .block-container { padding: 0.5rem 1rem !important; max-width: 100% !important; }
             h1 { font-size: 1.5rem !important; }
             h2 { font-size: 1.3rem !important; }
@@ -1610,80 +1606,8 @@ def render_landing_page():
                 flex: 1 1 100% !important;
             }
         }
-        @media (min-width: 769px) {
-            .mobile-login-container { display: none !important; }
-        }
     </style>
     """, unsafe_allow_html=True)
-    
-    st.markdown("""<div class="mobile-login-container">""", unsafe_allow_html=True)
-    
-    if not st.session_state.get('authenticated', False):
-        st.markdown(f"""
-        <div style="text-align:center;margin-bottom:0.5rem;">
-            <div style="display:inline-flex;align-items:center;gap:0.5rem;">
-                <div style="width:40px;height:40px;background:linear-gradient(145deg,#1B2559,#2D4A8C);border-radius:10px;display:flex;align-items:center;justify-content:center;">
-                    <span style="font-size:1.3rem;">🛡️</span>
-                </div>
-                <span style="color:#1B2559;font-size:1.4rem;font-weight:800;">Data<span style="color:#1f77b4;">Guardian</span> Pro</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        with st.form("mobile_login_form"):
-            m_username = st.text_input(_('login.email_username', 'Username'), key="mobile_username")
-            m_password = st.text_input(_('login.password', 'Password'), type="password", key="mobile_password")
-            m_submit = st.form_submit_button(_('login.button', 'Login'), use_container_width=True)
-            
-            if m_submit:
-                if m_username and m_password:
-                    from utils.secure_auth_enhanced import authenticate_user
-                    auth_result = authenticate_user(m_username, m_password)
-                    
-                    if auth_result.success:
-                        st.session_state.authenticated = True
-                        st.session_state.username = auth_result.username
-                        st.session_state.user_role = auth_result.role
-                        st.session_state.user_id = auth_result.user_id
-                        st.session_state.auth_token = auth_result.token
-                        try:
-                            import psycopg2
-                            import json as _json
-                            db_url = os.environ.get('DATABASE_URL')
-                            if db_url:
-                                conn = psycopg2.connect(db_url)
-                                cursor = conn.cursor()
-                                cursor.execute("SELECT license_tier, metadata FROM platform_users WHERE username = %s OR email = %s", (auth_result.username, auth_result.username))
-                                row = cursor.fetchone()
-                                cursor.close()
-                                conn.close()
-                                if row:
-                                    tier = row[0] or 'trial'
-                                    st.session_state.license_tier = tier
-                                    if row[1]:
-                                        try:
-                                            metadata = row[1] if isinstance(row[1], dict) else _json.loads(str(row[1])) if row[1] else {}
-                                            st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', 3 if tier == 'trial' else 0)
-                                        except:
-                                            st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
-                                    else:
-                                        st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
-                                else:
-                                    st.session_state.license_tier = 'trial'
-                                    st.session_state.free_scans_remaining = 3
-                        except Exception:
-                            st.session_state.license_tier = 'trial'
-                            st.session_state.free_scans_remaining = 3
-                        st.success(_('login.success', 'Login successful!'))
-                        st.rerun()
-                    else:
-                        st.error(f"{_('login.error.invalid_credentials', 'Authentication failed')}: {auth_result.message}")
-                else:
-                    st.error(_('login.error.missing_fields', 'Please enter username and password'))
-        
-        st.markdown("---")
-    
-    st.markdown("""</div>""", unsafe_allow_html=True)
     
     # Hero section with image and value proposition
     hero_col1, hero_col2 = st.columns([1, 1], gap="large")
