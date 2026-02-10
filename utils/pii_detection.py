@@ -108,30 +108,30 @@ def _find_phone_numbers(text: str) -> List[Dict[str, Any]]:
     return found
 
 def _find_addresses(text: str) -> List[Dict[str, Any]]:
-    """Find addresses in text."""
-    # Simple address pattern for demonstration (would need more complex patterns in production)
+    """Find addresses in text - requires street type keywords to reduce false positives."""
     patterns = [
-        # Street address with number
-        r'\b\d{1,5}\s[A-Za-z0-9\s]{1,50}(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr)\b',
-        
-        # European-style address
-        r'\b[A-Za-z0-9\s]{1,50}(straat|laan|weg|plein|straße|straße|rue)\s\d{1,5}\b',
-        
-        # Postal codes
-        r'\b\d{5}(-\d{4})?\b',  # US ZIP
-        r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s?\d[A-Z]{2}\b',  # UK Postcode
-        r'\b\d{4}\s?(?!KB|MB|GB|TB|PB|HZ)[A-Z]{2}\b'  # Dutch Postcode (excluding unit suffixes)
+        # Street address with number (US/UK style)
+        r'\b\d{1,5}\s[A-Z][a-z]+(?:\s[A-Z][a-z]+)?\s(?:Street|Avenue|Road|Boulevard|Lane|Drive|Court|Place|Way)\b',
+
+        # European-style: street name + type + number
+        r'\b[A-Z][a-z]+(?:straat|laan|weg|plein|stra(?:ss|ß)e|rue)\s+\d{1,5}[a-zA-Z]?\b',
+
+        # UK Postcode (specific format)
+        r'\b[A-Z]{1,2}\d{1,2}[A-Z]?\s\d[A-Z]{2}\b',
+
+        # US ZIP+4 only (5+4 format to avoid matching random 5-digit numbers)
+        r'\b\d{5}-\d{4}\b',
     ]
-    
+
     found = []
     for pattern in patterns:
-        matches = re.finditer(pattern, text, re.IGNORECASE)
+        matches = re.finditer(pattern, text)
         for match in matches:
             found.append({
                 'type': 'Address',
                 'value': match.group(0)
             })
-    
+
     return found
 
 def _find_names(text: str) -> List[Dict[str, Any]]:
@@ -667,37 +667,31 @@ def _find_dutch_phone_numbers(text: str) -> List[Dict[str, Any]]:
 
 
 def _find_dutch_addresses(text: str) -> List[Dict[str, Any]]:
-    """Find comprehensive Dutch address components."""
+    """Find Dutch address components - focuses on specific address patterns, not generic city/province mentions."""
     patterns = [
-        # Dutch postcode (4 digits + 2 letters), excluding unit suffixes (KB, MB, GB, TB, PB, HZ)
+        # Dutch postcode (4 digits + 2 letters), excluding unit suffixes
         r'\b\d{4}\s?(?!KB|MB|GB|TB|PB|HZ)[A-Z]{2}\b',
-        
-        # Street names with house numbers
-        r'\b[A-Za-z\s-]+(?:straat|laan|weg|plein|kade|gracht|steeg|pad|park|hof|singel|boulevard|avenue)[\s]*\d+[a-zA-Z]?\b',
-        
-        # House number with toevoeging (addition)
-        r'\b\d{1,5}[a-zA-Z]?(?:[-\s]+(?:bis|ter|quater|A|B|C|D|I|II|III|IV))?\b',
-        
-        # Dutch city names (common ones)
-        r'\b(?:Amsterdam|Rotterdam|Den\s+Haag|Utrecht|Eindhoven|Tilburg|Groningen|Almere|Breda|Nijmegen|Enschede|Haarlem|Arnhem|Zaanstad|Amersfoort|Apeldoorn|Hoofddorp|Maastricht|Leiden|Dordrecht|Zoetermeer|Zwolle|Deventer|Delft|Alkmaar|Leeuwarden|Sittard)\b',
-        
-        # Province names
-        r'\b(?:Noord-Holland|Zuid-Holland|Utrecht|Gelderland|Overijssel|Flevoland|Noord-Brabant|Zeeland|Limburg|Friesland|Drenthe|Groningen)\b',
-        
+
+        # Street names with house numbers (strong indicator of actual address)
+        r'\b[A-Z][a-z]+(?:straat|laan|weg|plein|kade|gracht|steeg|singel|boulevard)\s+\d+[a-zA-Z]?\b',
+
         # PO Box (Postbus)
         r'\bPostbus\s+\d{1,6}\b',
+
+        # Full address pattern: street + number + postcode
+        r'\b[A-Z][a-z]+(?:straat|laan|weg|plein|kade|gracht)\s+\d+[a-zA-Z]?\s*,?\s*\d{4}\s?[A-Z]{2}\b',
     ]
-    
+
     found = []
     for pattern in patterns:
-        matches = re.finditer(pattern, text, re.IGNORECASE)
+        matches = re.finditer(pattern, text)
         for match in matches:
             found.append({
                 'type': 'Dutch Address Component',
                 'value': match.group(0),
                 'description': 'Netherlands address information'
             })
-    
+
     return found
 
 
