@@ -75,7 +75,7 @@ class UnifiedHTMLReportGenerator:
         suppressed_types = {'Semantic Analysis: Syntax Error'}
         original_findings = scan_result.get('findings', [])
         severity_priority = {'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1}
-        seen_locations = {}
+        seen_findings = {}
         for finding in original_findings:
             if finding.get('type', '') in suppressed_types:
                 continue
@@ -83,15 +83,17 @@ class UnifiedHTMLReportGenerator:
             if not location and finding.get('file'):
                 line = finding.get('line', 0)
                 location = f"{finding.get('file')}:{line}" if line else finding.get('file')
+            finding_type = finding.get('type', finding.get('subtype', ''))
+            description_key = finding.get('subtype', finding.get('description', ''))[:60]
+            dedup_key = f"{location}|{finding_type}|{description_key}"
             sev = finding.get('severity', finding.get('risk_level', 'Medium'))
-            if location and location in seen_locations:
-                existing_sev = seen_locations[location].get('severity', seen_locations[location].get('risk_level', 'Medium'))
+            if dedup_key in seen_findings:
+                existing_sev = seen_findings[dedup_key].get('severity', seen_findings[dedup_key].get('risk_level', 'Medium'))
                 if severity_priority.get(sev, 0) > severity_priority.get(existing_sev, 0):
-                    seen_locations[location] = finding
+                    seen_findings[dedup_key] = finding
             else:
-                key = location or id(finding)
-                seen_locations[key] = finding
-        deduplicated_findings = list(seen_locations.values())
+                seen_findings[dedup_key] = finding
+        deduplicated_findings = list(seen_findings.values())
         
         # Create copy of scan_result with deduplicated findings for metrics
         scan_result_deduped = scan_result.copy()
