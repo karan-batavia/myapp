@@ -109,48 +109,39 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
     findings.extend(_detect_human_oversight_gaps(content))
     findings.extend(_detect_fundamental_rights_gaps(content))
     
-    # NEW: Critical missing AI Act articles coverage
+    # Critical missing AI Act articles coverage (company-applicable only)
     findings.extend(_detect_scope_and_definitions_violations(content))  # Articles 1-4
     findings.extend(_detect_article_2_scope(content))  # Article 2 - Material Scope
     findings.extend(_detect_article_4_ai_literacy(content))  # Article 4 - AI Literacy
     findings.extend(_detect_data_governance_violations(content))  # Articles 10-12
-    findings.extend(_detect_market_surveillance_violations(content))  # Articles 69-75
-    findings.extend(_detect_penalty_framework_violations(content))  # Articles 76-85
-    findings.extend(_detect_ce_marking_violations(content))  # Articles 30-49
+    findings.extend(_detect_ce_marking_violations(content))  # Articles 47-49 (provider obligations)
     
-    # NEW: Complete EU AI Act 113 Articles Coverage (December 2025)
+    # Company-applicable EU AI Act coverage
     findings.extend(_detect_annex_iii_amendments(content))  # Articles 7-8
     findings.extend(_detect_provider_record_keeping(content))  # Article 18
     findings.extend(_detect_instructions_for_use(content))  # Article 25
     findings.extend(_detect_deployer_obligations(content))  # Articles 27-28
-    findings.extend(_detect_regulatory_sandbox(content))  # Articles 56-60
-    findings.extend(_detect_delegation_provisions(content))  # Articles 86-92
-    findings.extend(_detect_committee_procedures(content))  # Articles 93-99
-    findings.extend(_detect_final_provisions(content))  # Articles 100-113
+    findings.extend(_detect_final_provisions(content))  # Articles 100-113 (sector-specific + timeline only)
     
-    # FULL COVERAGE: Additional article detection for 100% coverage
+    # Provider/deployer-specific article detection
     findings.extend(_detect_quality_management_system(content))  # Article 16
     findings.extend(_detect_automatic_logging_requirements(content))  # Article 17
     findings.extend(_detect_human_oversight_requirements(content))  # Article 26
     findings.extend(_detect_fundamental_rights_impact_assessment(content))  # Article 29
     findings.extend(_detect_provider_transparency_obligations(content))  # Article 50
-    findings.extend(_detect_notified_bodies_requirements(content))  # Articles 30-49
-    findings.extend(_detect_sandbox_detailed_requirements(content))  # Articles 57-59
     findings.extend(_detect_transitional_provisions(content))  # Articles 108-110
     
-    # NEW: Articles 6-15 High-Risk System Requirements (accuracy, robustness, cybersecurity)
+    # Articles 6-15 High-Risk System Requirements (accuracy, robustness, cybersecurity)
     findings.extend(_detect_high_risk_requirements_articles_6_15(content))
     
-    # INDIVIDUAL ARTICLE DETECTION (100% Coverage - January 2026)
-    findings.extend(_detect_articles_27_28_individual(content))  # Articles 27-28
-    findings.extend(_detect_articles_30_49_individual(content))  # Articles 30-49
-    findings.extend(_detect_articles_51_55_individual(content))  # Articles 51-55 GPAI
-    findings.extend(_detect_articles_56_60_individual(content))  # Articles 56-60 Sandbox
-    findings.extend(_detect_articles_61_68_individual(content))  # Articles 61-68 Monitoring
-    findings.extend(_detect_articles_69_75_individual(content))  # Articles 69-75 Governance
-    findings.extend(_detect_articles_76_85_individual(content))  # Articles 76-85 Penalties
-    findings.extend(_detect_articles_86_99_individual(content))  # Articles 86-99 Delegation
-    findings.extend(_detect_articles_100_113_individual(content))  # Articles 100-113 Final
+    # Individual article detection (company-applicable only)
+    findings.extend(_detect_articles_27_28_individual(content))  # Articles 27-28 deployer obligations
+    findings.extend(_detect_articles_51_55_individual(content))  # Articles 51-55 GPAI provider obligations
+    
+    # NOTE: Articles 30-49 (notified bodies), 56-60 (sandboxes), 63-68 (surveillance authorities),
+    # 69-75 (governance/AI Office), 76-85 (penalties framework), 86-99 (delegation/committee)
+    # are EU institutional/governmental obligations, NOT company requirements.
+    # They are tracked in the compliance matrix but do not generate actionable findings.
     
     # NEW: Integrate real-time compliance monitoring
     try:
@@ -211,7 +202,28 @@ def detect_ai_act_violations(content: str, document_metadata: Optional[Dict[str,
             if _re.match(r'^Position \d+-\d+$', loc):
                 finding['location'] = source_file
     
+    findings = _deduplicate_findings(findings)
+    
     return findings
+
+
+def _deduplicate_findings(findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Remove duplicate findings based on type + article reference + description similarity."""
+    seen_keys = set()
+    deduplicated = []
+    
+    for finding in findings:
+        finding_type = finding.get('type', '')
+        article_ref = finding.get('article_reference', finding.get('regulation', ''))
+        description = finding.get('description', '')[:80]
+        
+        dedup_key = f"{finding_type}|{article_ref}|{description}"
+        
+        if dedup_key not in seen_keys:
+            seen_keys.add(dedup_key)
+            deduplicated.append(finding)
+    
+    return deduplicated
 
 def _detect_prohibited_practices(content: str) -> List[Dict[str, Any]]:
     """Enhanced detection of prohibited AI practices under EU AI Act Article 5 - COMPLETE COVERAGE."""
