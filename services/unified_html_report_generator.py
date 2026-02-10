@@ -719,13 +719,33 @@ class UnifiedHTMLReportGenerator:
         """Generate energy-focused executive summary for sustainability scans."""
         is_dutch = self.current_language == 'nl'
         
-        metrics_data = scan_result.get('metrics', scan_result.get('sustainability_metrics', {}))
-        co2_monthly = metrics_data.get('co2_emissions_monthly', metrics_data.get('co2_emissions', 0))
-        energy_kwh = metrics_data.get('energy_consumption_kwh', metrics_data.get('energy_consumption', 0))
-        cost_savings = metrics_data.get('potential_cost_savings', metrics_data.get('cost_savings', 0))
-        sustainability_score = metrics_data.get('sustainability_score', 0)
-        co2_reduction = metrics_data.get('co2_reduction_potential', 0)
-        unused_resources = metrics_data.get('unused_resources', 0)
+        emissions_data = scan_result.get('emissions', {})
+        metrics_data = scan_result.get('metrics', {})
+        resources_data = scan_result.get('resources', {})
+        
+        co2_monthly = emissions_data.get('total_co2_kg_month', 0)
+        energy_kwh = emissions_data.get('total_energy_kwh_month', 0)
+        cost_savings = resources_data.get('total_waste_cost', 0) + metrics_data.get('total_cost_savings_potential', 0)
+        sustainability_score = scan_result.get('sustainability_score', metrics_data.get('sustainability_score', 0))
+        co2_reduction = metrics_data.get('total_co2_reduction_potential', 0)
+        unused_resources = resources_data.get('unused_resources', 0)
+        
+        import re
+        if not co2_monthly or not energy_kwh:
+            for finding in scan_result.get('findings', []):
+                desc = finding.get('description', '') or finding.get('context', '')
+                co2_match = re.search(r'CO₂[:\s]*([\d.]+)\s*kg', desc)
+                kwh_match = re.search(r'([\d.]+)\s*kWh', desc)
+                cost_match = re.search(r'Cost:\s*€?([\d,.]+)/month', desc)
+                if co2_match:
+                    co2_monthly += float(co2_match.group(1))
+                if kwh_match:
+                    energy_kwh += float(kwh_match.group(1))
+                if cost_match:
+                    try:
+                        cost_savings += float(cost_match.group(1).replace(',', '.'))
+                    except ValueError:
+                        pass
         
         score_class = self._get_score_class(sustainability_score)
         
@@ -735,9 +755,11 @@ class UnifiedHTMLReportGenerator:
         energy_label = 'Energieverbruik' if is_dutch else 'Energy Consumption'
         co2_label = 'CO₂ Uitstoot/Maand' if is_dutch else 'CO₂ Emissions/Month'
         savings_label = 'Mogelijke Kostenbesparing' if is_dutch else 'Potential Cost Savings'
-        reduction_label = 'CO₂ Reductiepotentieel' if is_dutch else 'CO₂ Reduction Potential'
-        unused_label = 'Ongebruikte Resources' if is_dutch else 'Unused Resources'
         summary_title = 'Energie & Duurzaamheid Overzicht' if is_dutch else 'Energy & Sustainability Overview'
+        
+        co2_display = f"{co2_monthly:.1f} kg" if co2_monthly else ('N/B' if is_dutch else 'N/A')
+        energy_display = f"{energy_kwh:.1f} kWh" if energy_kwh else ('N/B' if is_dutch else 'N/A')
+        cost_display = f"€{cost_savings:,.2f}" if cost_savings else ('N/B' if is_dutch else 'N/A')
         
         return f"""
         <div class="summary" style="border-left: 5px solid #2e7d32;">
@@ -752,26 +774,18 @@ class UnifiedHTMLReportGenerator:
                     <div class="metric-label">{issues_label}</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value" style="color: #d32f2f;">{co2_monthly:.1f} kg</div>
+                    <div class="metric-value" style="color: #d32f2f;">{co2_display}</div>
                     <div class="metric-label">{co2_label}</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-value" style="color: #e65100;">{energy_kwh:.1f} kWh</div>
+                    <div class="metric-value" style="color: #e65100;">{energy_display}</div>
                     <div class="metric-label">{energy_label}</div>
                 </div>
             </div>
             <div class="metrics-grid" style="margin-top: 15px;">
                 <div class="metric-card">
-                    <div class="metric-value" style="color: #2e7d32;">€{cost_savings:,.2f}</div>
+                    <div class="metric-value" style="color: #2e7d32;">{cost_display}</div>
                     <div class="metric-label">{savings_label}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" style="color: #1565c0;">{co2_reduction:.1f} kg</div>
-                    <div class="metric-label">{reduction_label}</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value" style="color: #ff6f00;">{unused_resources}</div>
-                    <div class="metric-label">{unused_label}</div>
                 </div>
             </div>
             <div class="compliance-score {score_class}">
