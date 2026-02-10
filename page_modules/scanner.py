@@ -6639,6 +6639,11 @@ def generate_api_html_report(scan_results):
                 color: #991b1b;
                 border: 1px solid #fecaca;
             }}
+            .partially-compliant {{
+                background: #fffbeb;
+                color: #92400e;
+                border: 1px solid #fde68a;
+            }}
             .footer {{
                 text-align: center;
                 padding: 20px;
@@ -6721,8 +6726,8 @@ def generate_api_html_report(scan_results):
         
         <div class="content-section">
             <h2>⚖️ GDPR Compliance Status</h2>
-            <div class="compliance-status {'compliant' if scan_results.get('gdpr_compliance', False) else 'non-compliant'}">
-                {'✅ GDPR Compliant' if scan_results.get('gdpr_compliance', False) else '❌ GDPR Non-Compliant'}
+            <div class="compliance-status {'compliant' if scan_results.get('gdpr_compliance') == 'compliant' else ('partially-compliant' if scan_results.get('gdpr_compliance') == 'partially_compliant' else 'non-compliant')}">
+                {'✅ GDPR Compliant' if scan_results.get('gdpr_compliance') == 'compliant' else ('⚠️ GDPR Partially Compliant - Medium findings require attention' if scan_results.get('gdpr_compliance') == 'partially_compliant' else '❌ GDPR Non-Compliant')}
             </div>
             <p>This assessment is based on security findings that may impact GDPR compliance requirements under Article 32 (Security of processing).</p>
         </div>
@@ -6765,6 +6770,7 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
         import requests
         import time
         import json
+        from urllib.parse import urlparse
         from services.api_scanner import APIScanner
         from utils.activity_tracker import track_scan_started, track_scan_completed, track_scan_failed, ScannerType
         
@@ -6904,7 +6910,13 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
             progress_bar.progress(current_progress / 100)
             status_text.text(f"🔍 Scanning endpoint {i+1}/{len(endpoint_list)}: {endpoint}")
             
-            full_url = base_url.rstrip('/') + '/' + endpoint.lstrip('/')
+            parsed_ep = urlparse(endpoint)
+            if parsed_ep.scheme or (parsed_ep.netloc and not endpoint.startswith('/')):
+                full_url = endpoint if parsed_ep.scheme else f"https://{endpoint}"
+            elif '.' in endpoint and not endpoint.startswith('/'):
+                full_url = f"https://{endpoint}"
+            else:
+                full_url = base_url.rstrip('/') + '/' + endpoint.lstrip('/')
             
             try:
                 # Test multiple HTTP methods
@@ -7032,10 +7044,10 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
                                 'evidence': f'HTTP {response.status_code}: {response.reason}'
                             })
                         
-                        # Check for verbose error messages
+                        # Check for verbose error messages (internal details leaking, not standard error responses)
                         if response.status_code >= 400:
-                            error_indicators = ['stack trace', 'exception', 'error', 'traceback', 'debug']
-                            if any(indicator in response_text.lower() for indicator in error_indicators):
+                            error_indicators = ['stack trace', 'exception', 'traceback', 'debug', 'internal server', 'at line', 'file "/', 'syntax error']
+                            if any(indicator in response_text.lower() for indicator in error_indicators) and len(response_text) > 200:
                                 endpoint_findings.append({
                                     'type': 'VERBOSE_ERROR_MESSAGES',
                                     'severity': 'Medium',
@@ -7127,7 +7139,7 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
             "high_findings": high_findings,
             "medium_findings": medium_findings,
             "low_findings": low_findings,
-            "gdpr_compliance": critical_findings == 0 and high_findings == 0,
+            "gdpr_compliance": "compliant" if (critical_findings == 0 and high_findings == 0 and medium_findings == 0) else ("partially_compliant" if (critical_findings == 0 and high_findings == 0) else "non_compliant"),
             "performance_metrics": {
                 "average_response_time": "< 2 seconds",
                 "endpoints_accessible": scan_results["endpoints_scanned"],
@@ -7205,7 +7217,9 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
             st.write(f"• **Endpoints Scanned:** {scan_results['endpoints_scanned']}")
             st.write(f"• **Security Score:** {scan_results['security_score']}/100")
             st.write(f"• **Total Findings:** {scan_results['total_findings']}")
-            st.write(f"• **GDPR Compliance:** {'✅ Compliant' if scan_results['gdpr_compliance'] else '❌ Non-compliant'}")
+            gdpr_status = scan_results.get('gdpr_compliance', 'non_compliant')
+            gdpr_label = '✅ Compliant' if gdpr_status == 'compliant' else ('⚠️ Partially Compliant' if gdpr_status == 'partially_compliant' else '❌ Non-compliant')
+            st.write(f"• **GDPR Compliance:** {gdpr_label}")
         
         # Calculate scan metrics for tracking and storage
         scan_duration = int((datetime.now() - scan_start_time).total_seconds() * 1000)
