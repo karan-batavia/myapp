@@ -117,8 +117,15 @@ class UnifiedHTMLReportGenerator:
         # Generate scanner-specific content
         scanner_content = self._generate_scanner_specific_content(scan_result)
         
-        # Generate compliance forecast chart
-        compliance_forecast_html = self._generate_compliance_forecast_section(scan_result)
+        # Generate compliance forecast chart (skip for sustainability scans)
+        is_sustainability = 'sustainability' in scan_type.lower()
+        compliance_forecast_html = '' if is_sustainability else self._generate_compliance_forecast_section(scan_result)
+        
+        # For sustainability scans, generate energy-focused executive summary
+        if is_sustainability:
+            executive_summary = self._generate_sustainability_executive_summary(scan_result, metrics)
+        else:
+            executive_summary = self._generate_executive_summary(metrics)
         
         # Build complete HTML
         html_content = f"""
@@ -134,7 +141,7 @@ class UnifiedHTMLReportGenerator:
 <body>
     <div class="container">
         {self._generate_header(scan_type, scan_id, formatted_timestamp, region, scan_result.get('base_url', scan_result.get('url', scan_result.get('repo_url', ''))))}
-        {self._generate_executive_summary(metrics)}
+        {executive_summary}
         {compliance_forecast_html}
         {scanner_content}
         {self._generate_findings_section(findings_html)}
@@ -708,6 +715,71 @@ class UnifiedHTMLReportGenerator:
         </div>
         """
     
+    def _generate_sustainability_executive_summary(self, scan_result: Dict[str, Any], metrics: Dict[str, Any]) -> str:
+        """Generate energy-focused executive summary for sustainability scans."""
+        is_dutch = self.current_language == 'nl'
+        
+        metrics_data = scan_result.get('metrics', scan_result.get('sustainability_metrics', {}))
+        co2_monthly = metrics_data.get('co2_emissions_monthly', metrics_data.get('co2_emissions', 0))
+        energy_kwh = metrics_data.get('energy_consumption_kwh', metrics_data.get('energy_consumption', 0))
+        cost_savings = metrics_data.get('potential_cost_savings', metrics_data.get('cost_savings', 0))
+        sustainability_score = metrics_data.get('sustainability_score', 0)
+        co2_reduction = metrics_data.get('co2_reduction_potential', 0)
+        unused_resources = metrics_data.get('unused_resources', 0)
+        
+        score_class = self._get_score_class(sustainability_score)
+        
+        score_label = 'Duurzaamheidsscore' if is_dutch else 'Sustainability Score'
+        files_label = 'Bestanden Gescand' if is_dutch else 'Files Scanned'
+        issues_label = 'Optimalisatiemogelijkheden' if is_dutch else 'Optimization Opportunities'
+        energy_label = 'Energieverbruik' if is_dutch else 'Energy Consumption'
+        co2_label = 'CO₂ Uitstoot/Maand' if is_dutch else 'CO₂ Emissions/Month'
+        savings_label = 'Mogelijke Kostenbesparing' if is_dutch else 'Potential Cost Savings'
+        reduction_label = 'CO₂ Reductiepotentieel' if is_dutch else 'CO₂ Reduction Potential'
+        unused_label = 'Ongebruikte Resources' if is_dutch else 'Unused Resources'
+        summary_title = 'Energie & Duurzaamheid Overzicht' if is_dutch else 'Energy & Sustainability Overview'
+        
+        return f"""
+        <div class="summary" style="border-left: 5px solid #2e7d32;">
+            <h2>🌱 {summary_title}</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">{metrics.get('files_scanned', 0):,}</div>
+                    <div class="metric-label">{files_label}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">{metrics.get('total_findings', 0):,}</div>
+                    <div class="metric-label">{issues_label}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #d32f2f;">{co2_monthly:.1f} kg</div>
+                    <div class="metric-label">{co2_label}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #e65100;">{energy_kwh:.1f} kWh</div>
+                    <div class="metric-label">{energy_label}</div>
+                </div>
+            </div>
+            <div class="metrics-grid" style="margin-top: 15px;">
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #2e7d32;">€{cost_savings:,.2f}</div>
+                    <div class="metric-label">{savings_label}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #1565c0;">{co2_reduction:.1f} kg</div>
+                    <div class="metric-label">{reduction_label}</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" style="color: #ff6f00;">{unused_resources}</div>
+                    <div class="metric-label">{unused_label}</div>
+                </div>
+            </div>
+            <div class="compliance-score {score_class}">
+                {score_label}: {sustainability_score}/100
+            </div>
+        </div>
+        """
+    
     def _get_score_class(self, score: int) -> str:
         """Get CSS class for compliance score."""
         if score >= 90:
@@ -989,6 +1061,8 @@ class UnifiedHTMLReportGenerator:
         
         findings = self._deduplicate_findings(findings)
         
+        is_sustainability_scan = 'sustainability' in (scan_type or '').lower()
+        
         # Separate deepfake findings from other findings
         deepfake_findings = [f for f in findings if f.get('type') == 'DEEPFAKE_SYNTHETIC_MEDIA']
         other_findings = [f for f in findings if f.get('type') != 'DEEPFAKE_SYNTHETIC_MEDIA']
@@ -1080,9 +1154,9 @@ class UnifiedHTMLReportGenerator:
                     
                     {f'<div class="estimated-effort"><strong>{t_report("estimated_effort", "Estimated Effort")}:</strong> {estimated_effort}</div>' if estimated_effort else ''}
                     
-                    {self._generate_penalty_info(finding, scan_type=scan_type)}
+                    {self._generate_penalty_info(finding, scan_type=scan_type) if not is_sustainability_scan else ''}
                     
-                    {self._generate_compliance_section(gdpr_articles, compliance_requirements, tsc_criteria, nis2_articles)}
+                    {self._generate_compliance_section(gdpr_articles, compliance_requirements, tsc_criteria, nis2_articles) if not is_sustainability_scan else ''}
                     
                     {self._generate_recommendations_section(recommendations)}
                 </div>

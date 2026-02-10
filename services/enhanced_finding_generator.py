@@ -1246,6 +1246,8 @@ def enhance_findings_for_report(scanner_type: str, findings: List[Dict[str, Any]
     generator = EnhancedFindingGenerator(region=region)
     enhanced_findings = []
     
+    is_sustainability = 'sustainability' in scanner_type.lower()
+    
     for finding in findings:
         try:
             enhanced = generator.enhance_finding(scanner_type, finding)
@@ -1260,9 +1262,9 @@ def enhance_findings_for_report(scanner_type: str, findings: List[Dict[str, Any]
                 'context': enhanced.context,
                 'risk_level': enhanced.risk_level,
                 'severity': enhanced.severity,
-                'business_impact': enhanced.business_impact,
-                'gdpr_articles': enhanced.gdpr_articles,
-                'compliance_requirements': enhanced.compliance_requirements,
+                'business_impact': enhanced.business_impact if not is_sustainability else finding.get('business_impact', ''),
+                'gdpr_articles': [] if is_sustainability else enhanced.gdpr_articles,
+                'compliance_requirements': [] if is_sustainability else enhanced.compliance_requirements,
                 'recommendations': [
                     {
                         'action': rec.action,
