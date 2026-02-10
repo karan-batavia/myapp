@@ -1,0 +1,693 @@
+================================================================================
+         DATAGUARDIAN PRO - SCANNER USER MANUAL
+         Complete Guide to All Scanners & Options
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1.  Getting Started
+2.  Code Scanner
+3.  Document Scanner
+4.  Image Scanner
+5.  Database Scanner
+6.  Website Scanner
+7.  AI Model Scanner (EU AI Act)
+8.  DPIA Scanner
+9.  SOC2 Compliance Scanner
+10. Sustainability Scanner
+11. Audio/Video Deepfake Scanner
+12. Data Sovereignty Scanner (Enterprise Only)
+13. Advanced AI Scanner
+14. Enterprise Connector Scanner
+    14a. Microsoft 365
+    14b. Google Workspace
+    14c. Exact Online
+    14d. Salesforce
+    14e. SAP
+
+================================================================================
+1. GETTING STARTED
+================================================================================
+
+After logging in, go to "New Scan" from the sidebar navigation.
+
+COMMON SETTINGS FOR ALL SCANNERS:
+- Select Region: Netherlands, Germany, France, Belgium, EU, or Global
+  (This determines which region-specific GDPR rules are applied)
+- Free trial users get 3 scans. Upgrade for unlimited scans.
+- Paid subscribers can download HTML reports after each scan.
+
+================================================================================
+2. CODE SCANNER
+================================================================================
+
+PURPOSE: Scan source code repositories for PII, secrets, and security
+vulnerabilities with GDPR compliance checking.
+
+HOW TO USE:
+1. Select "Code Scanner" from the scan type dropdown
+2. Choose your Source Type:
+   a) Upload Files - Upload code files directly
+   b) Repository URL - Enter a Git repo URL (recommended)
+   c) Directory Path - Enter a local directory path
+
+INPUT OPTIONS BY SOURCE TYPE:
+
+  Upload Files:
+  - Click "Upload Code Files" and select files
+  - Supported: .py, .js, .ts, .java, .cs, .php, .rb, .go, .txt,
+    .json, .yaml, .yml, .xml, .html, .css
+  - Multiple files allowed
+
+  Repository URL:
+  - Git Repository URL: paste your repo URL
+    Example: https://github.com/user/repo
+  - Branch: which branch to scan (default: main)
+  - Access Token: optional, needed for private repositories
+
+  Directory Path:
+  - Enter the full path to the code folder on your system
+
+SCAN OPTIONS (checkboxes):
+  [x] Fast scan (recommended for large repos)
+      - 3-5x faster, scans up to 100 priority files
+      - Uncheck for thorough scan (up to 500 files)
+  [x] Include comments - scan code comments for PII
+  [x] Detect secrets - find API keys, passwords, tokens
+  [x] GDPR compliance check - check for GDPR violations
+  [x] Generate remediation - provide fix suggestions
+
+CLICK: "Start Code Scan" button to begin
+
+RESULTS SHOWN:
+- Files Scanned count
+- Lines Analyzed count
+- Findings count with severity (Critical/High/Medium/Low)
+- Download HTML Report button (paid users)
+
+================================================================================
+3. DOCUMENT SCANNER
+================================================================================
+
+PURPOSE: Analyze documents for personal data with OCR support for
+scanned PDFs and handwritten text.
+
+HOW TO USE:
+1. Select "Document Scanner" from the scan type dropdown
+2. Click "Upload Documents" and select your files
+
+SUPPORTED FILE TYPES:
+- PDF, DOCX, DOC, TXT, XLSX, XLS, CSV, RTF
+- Multiple files allowed
+
+SCAN OPTIONS (checkboxes):
+  [x] Enable OCR for scanned documents
+      - Uses optical character recognition for scanned/image PDFs
+  [x] Extract metadata
+      - Extracts document metadata (author, dates, etc.)
+  [ ] Detect handwritten text
+      - Recognizes handwritten content in documents
+
+CLICK: "Start Document Scan" button to begin
+
+RESULTS SHOWN:
+- Documents Scanned count
+- PII Found count
+- Findings with severity levels
+- Download HTML Report button (paid users)
+
+================================================================================
+4. IMAGE SCANNER
+================================================================================
+
+PURPOSE: OCR-based PII detection in images, including ID documents
+and scanned forms.
+
+HOW TO USE:
+1. Select "Image Scanner" from the scan type dropdown
+2. Click "Upload Images" and select your image files
+
+SUPPORTED FILE TYPES:
+- PNG, JPG, JPEG, GIF, BMP, TIFF, WEBP
+- Multiple files allowed
+
+SCAN OPTIONS (checkboxes):
+  [x] ID document detection
+      - Detects identity documents (passports, ID cards, etc.)
+  [x] Face detection (privacy check)
+      - Identifies faces in images for privacy assessment
+  [x] Handwriting recognition
+      - Recognizes handwritten text in images
+
+CLICK: "Start Image Scan" button to begin
+
+RESULTS SHOWN:
+- Images Scanned count
+- PII Found count
+- Findings with severity levels
+- Download HTML Report button (paid users)
+
+================================================================================
+5. DATABASE SCANNER
+================================================================================
+
+PURPOSE: Connect to databases and scan for personal data across
+tables and columns.
+
+HOW TO USE:
+1. Select "Database Scanner" from the scan type dropdown
+2. Choose your Database Type
+3. Enter connection details
+4. Test connection first, then scan
+
+DATABASE TYPES SUPPORTED:
+- PostgreSQL
+- MySQL
+- SQL Server
+- Oracle
+- MongoDB
+
+CONNECTION FIELDS:
+  Left column:
+  - Host: database server address (e.g., localhost)
+  - Port: auto-filled based on database type
+    (PostgreSQL=5432, MySQL=3306, SQL Server=1433,
+     Oracle=1521, MongoDB=27017)
+  - Database Name: name of the database to scan
+
+  Right column:
+  - Username: database login username
+  - Password: database login password
+  - Use SSL: checkbox (enabled by default for security)
+
+BUTTONS:
+  "Test Connection" - verify connection works before scanning
+  "Start Database Scan" - begin the full scan
+
+RESULTS SHOWN:
+- Tables Scanned count
+- Columns with PII count
+- Findings with severity levels
+- Download HTML Report button (paid users)
+
+================================================================================
+6. WEBSITE SCANNER
+================================================================================
+
+PURPOSE: Comprehensive privacy and cookie compliance analysis for
+websites with GDPR consent checking.
+
+HOW TO USE:
+1. Select "Website Scanner" from the scan type dropdown
+2. Enter the website URL (https:// is added automatically if missing)
+3. Configure scan options
+4. Choose scan depth
+
+INPUT:
+- Website URL: enter the full URL to scan
+  Example: https://example.com
+
+SCAN OPTIONS (checkboxes):
+  Left column:
+  [x] Cookie analysis - detect and classify cookies
+  [x] Privacy policy check - verify privacy policy compliance
+  [x] Form analysis - check forms for PII collection
+
+  Right column:
+  [x] Third-party tracker detection - find tracking scripts
+  [x] GDPR consent check - verify consent mechanisms
+  [ ] Multi-page crawl - crawl beyond the homepage
+
+SCAN DEPTH (dropdown):
+  - Light (homepage only) - scans 1 page, fastest
+  - Standard (5 pages) - scans up to 5 pages
+  - Deep (20+ pages) - scans up to 25 pages, most thorough
+
+CLICK: "Start Website Scan" button to begin
+
+RESULTS SHOWN:
+- Pages Scanned count
+- Cookies Found count
+- Trackers Detected count
+- Findings count
+- Cookie details with categories
+- Tracker details with descriptions
+- Privacy findings with severity levels
+- Download Full Report (HTML) button (paid users)
+
+================================================================================
+7. AI MODEL SCANNER (EU AI Act 2025)
+================================================================================
+
+PURPOSE: Comprehensive EU AI Act 2025 compliance analysis covering
+all 113 articles. Includes risk classification and penalty assessment.
+
+HOW TO USE:
+1. Select "AI Model Scanner" from the scan type dropdown
+2. The 4-step AI Act Calculator wizard will appear
+
+STEP 1 - SYSTEM INFORMATION:
+- System Name: name of your AI system
+- Purpose: describe what the AI system does
+- Use Case (dropdown):
+  Healthcare, Financial Services, Law Enforcement,
+  Education, Employment, Social Services, Transportation,
+  Customer Service, Marketing, Manufacturing, Other
+- Deployment Context (dropdown):
+  Production, Development, Testing, Research
+- Decision Impact (dropdown):
+  High (affects fundamental rights), Medium (business decisions),
+  Low (recommendations only)
+- Automation Level (dropdown):
+  Fully Autonomous, Semi-Autonomous, Human-in-the-Loop, Advisory Only
+
+STEP 2 - DATA & OVERSIGHT:
+- Data Processing Scope (dropdown):
+  Large-scale, Medium-scale, Small-scale, Individual
+- Human Oversight: checkbox for human review capability
+- Regulatory Context (dropdown):
+  EU-wide, National (Netherlands), Cross-border, Non-EU
+
+STEP 3 - COMPLIANCE REQUIREMENTS:
+- Checklist of requirements with checkboxes for each
+- Mark which requirements you have already implemented
+
+STEP 4 - RISK ASSESSMENT & RESULTS:
+- Company Annual Revenue: enter for penalty calculation
+- Company Size (dropdown): options available
+- Generates risk classification and compliance report
+- Shows penalty risk (up to 35M EUR or 7% of global turnover)
+
+RESULTS SHOWN:
+- Risk Classification: Prohibited, High-Risk, Limited, or Minimal
+- Compliance score
+- Required actions
+- Penalty risk assessment
+- Phased timeline (Feb 2025, Aug 2025, Aug 2026, Aug 2027)
+
+================================================================================
+8. DPIA SCANNER (Data Protection Impact Assessment)
+================================================================================
+
+PURPOSE: Guided 5-step wizard for GDPR Article 35 Data Protection
+Impact Assessment with Netherlands-specific UAVG compliance.
+
+HOW TO USE:
+1. Select "DPIA Scanner" from the scan type dropdown
+2. Follow the 5-step wizard
+
+STEP 1 - PROJECT INFORMATION:
+- Project Name: name of your data processing project
+- Data Controller: organization responsible for data processing
+- Processing Purpose: describe why you process personal data
+
+STEP 2 - DATA TYPES BEING PROCESSED (checkboxes):
+  [ ] Personal data (names, addresses, etc.)
+  [ ] Sensitive/special category data (race, religion, etc.)
+  [ ] Biometric data
+  [ ] Health data
+  [ ] BSN data (Netherlands-specific - Citizen Service Number)
+  [ ] Government data
+
+STEP 3 - RISK FACTORS ASSESSMENT (checkboxes):
+  [ ] Large-scale processing (1000+ individuals)
+  [ ] Automated decision-making
+  [ ] Vulnerable data subjects (children, elderly, patients)
+  [ ] New or innovative technology (AI, ML, biometrics, IoT)
+  [ ] Systematic monitoring (CCTV, location tracking)
+  [ ] Cross-border data transfers
+
+STEP 4 - SECURITY SAFEGUARDS (checkboxes):
+  [ ] Data encryption (at rest and in transit)
+  [ ] Access controls and authentication
+  [ ] Data minimization practices
+  [ ] Data retention policy
+  [ ] Consent mechanisms
+  [ ] Data breach procedures
+
+STEP 5 - REVIEW AND GENERATE REPORT:
+- Shows risk level (High/Medium/Low) with color coding
+- Assessment summary with project details
+- Risk score out of 10
+- Risk factors identified
+- Click "Generate DPIA Report" to create the full report
+
+RESULTS SHOWN:
+- Risk Level with color coding
+- Risk Score out of 10
+- Identified risk factors list
+- Downloadable DPIA report
+
+================================================================================
+9. SOC2 COMPLIANCE SCANNER
+================================================================================
+
+PURPOSE: Assess your codebase against SOC2 Trust Service Criteria.
+
+HOW TO USE:
+1. Select "SOC2 Scanner" from the scan type dropdown
+2. Enter repository details
+3. Select criteria to check
+
+INPUT:
+- Repository URL: GitHub repo URL to scan
+  Example: https://github.com/org/repo
+- Access Token: optional, for private repositories
+
+SOC2 REPORT TYPE (dropdown):
+- Type I (Point-in-time) - snapshot assessment
+- Type II (Period of time) - ongoing compliance
+
+TRUST SERVICE CRITERIA (checkboxes):
+  Left column:
+  [x] Security - protection of system resources
+  [x] Availability - system uptime and reliability
+  [x] Processing Integrity - accurate data processing
+
+  Right column:
+  [x] Confidentiality - data protection measures
+  [x] Privacy - personal information handling
+
+CLICK: "Start SOC2 Assessment" button to begin
+
+RESULTS SHOWN:
+- Controls Assessed count
+- Compliance Score percentage
+- Findings with severity levels
+
+================================================================================
+10. SUSTAINABILITY SCANNER
+================================================================================
+
+PURPOSE: Analyze environmental impact and sustainability of your
+digital infrastructure by scanning cloud configuration files.
+
+HOW TO USE:
+1. Select "Sustainability Scanner" from the scan type dropdown
+2. Choose your analysis source
+
+ANALYSIS SOURCE (radio buttons):
+  a) Repository URL
+     - Enter GitHub repo URL containing infrastructure files
+     - Scans for: Terraform (.tf), AWS CloudFormation, Azure ARM/Bicep,
+       GCP Deployment Manager, Kubernetes YAML, Docker files
+
+  b) Cloud Provider
+     - Select from: AWS, Azure, Google Cloud, Hetzner, DigitalOcean
+     - Analyzes resource usage and carbon footprint
+
+  c) Infrastructure Config
+     - Upload configuration files directly
+     - Supported: .yaml, .json, .tf files
+
+CLICK: "Start Sustainability Analysis" button to begin
+
+RESULTS SHOWN:
+- Carbon Footprint (kg CO2)
+- Sustainability Score percentage
+- Recommendations count
+- Detects: oversized instances, missing auto-scaling,
+  sustainability issues in cloud configurations
+
+================================================================================
+11. AUDIO/VIDEO DEEPFAKE SCANNER
+================================================================================
+
+PURPOSE: Enterprise-grade deepfake detection for audio and video
+files with EU AI Act compliance flagging.
+
+HOW TO USE:
+1. Select "Audio/Video Scanner" from the scan type dropdown
+2. Choose media type and upload file
+
+MEDIA TYPE (radio buttons):
+  a) Audio Files
+     - Supported: MP3, WAV, FLAC, M4A
+     - Upload one audio file
+
+  b) Video Files
+     - Supported: MP4, AVI, MOV, MKV
+     - Upload one video file
+
+DETECTION OPTIONS (checkboxes):
+  Left column:
+  [x] Voice cloning detection
+  [x] Face swap detection
+
+  Right column:
+  [x] Frame consistency analysis
+  [x] Metadata forensics
+
+CLICK: "Start Deepfake Analysis" button to begin
+
+RESULTS SHOWN:
+- Authenticity Score percentage (higher = more likely authentic)
+- Confidence percentage
+- Deepfake Risk level (High/Medium/Low)
+- Detection results with details
+- EU AI Act compliance flags
+
+================================================================================
+12. DATA SOVEREIGNTY SCANNER (Enterprise/Government Only)
+================================================================================
+
+PURPOSE: Cross-border data transfer analysis and sovereignty risk
+assessment for GDPR Chapter V compliance.
+
+AVAILABILITY: Enterprise and Government license tiers only.
+Other tiers will see an upgrade prompt.
+
+HOW TO USE:
+1. Select "Data Sovereignty Scanner" from the scan type dropdown
+2. Choose your analysis mode
+
+ANALYSIS MODES (radio buttons):
+
+  a) Upload Configuration
+     - Configuration Type (dropdown):
+       Terraform (.tf), AWS CloudFormation, Azure ARM/Bicep,
+       GCP Deployment Manager, Kubernetes YAML, Generic JSON/YAML
+     - Upload your infrastructure configuration file
+     - Supported: .tf, .json, .yaml, .yml, .bicep, .template
+
+  b) GitHub Repository
+     - Repository URL: enter full GitHub URL
+       Example: https://github.com/organization/repo
+     - Branch: which branch to scan (default: main)
+     - Scan Depth (dropdown):
+       Full Repository, Root Only, Specific Directory
+     - If "Specific Directory": enter the directory path
+       Example: infrastructure/
+     - Scans for infrastructure files (.tf, .json, .yaml, etc.)
+
+  c) Manual Input
+     - Data Locations:
+       * Number of locations (1-10)
+       * For each: Region, Provider (AWS/Azure/GCP/On-Premises/Other),
+         Service type (Storage/Database/Compute/Analytics/AI-ML)
+     - Data Flows:
+       * Number of data flows (0-10)
+       * For each: Source and Destination
+
+CLICK: "Analyze Sovereignty" button to begin
+
+RESULTS SHOWN:
+- Sovereignty Risk level (Green/Amber/Red)
+- Cross-Border Transfers count
+- Non-EU Access count
+- Third Country Processors count
+- Sovereignty findings with severity
+- Recommendations list
+- Download HTML Report button
+- Checks: US CLOUD Act risk, data location mapping,
+  jurisdictional analysis, GDPR Chapter V compliance
+
+================================================================================
+13. ADVANCED AI SCANNER
+================================================================================
+
+PURPOSE: GPT-4 powered deep analysis for complex compliance
+scenarios with contextual understanding.
+
+HOW TO USE:
+1. Select "Advanced AI Scanner" from the scan type dropdown
+2. Choose analysis type and provide content
+
+ANALYSIS TYPE (dropdown):
+- Deep PII Analysis - contextual understanding of sensitive data
+- Contract Review - legal document compliance scanning
+- Privacy Policy Audit - GDPR/UAVG policy compliance check
+- Consent Flow Analysis - user consent mechanism review
+
+INPUT METHOD (radio buttons):
+  a) Upload Document
+     - Supported: PDF, DOCX, TXT
+
+  b) Paste Text
+     - Text area for pasting content directly
+
+  c) URL
+     - Enter a URL to analyze (e.g., privacy policy page)
+
+CLICK: "Start Advanced AI Analysis" button to begin
+
+RESULTS SHOWN:
+- Compliance Score percentage
+- Issues Found count
+- Recommendations count
+- AI-powered insights and suggestions
+
+================================================================================
+14. ENTERPRISE CONNECTOR SCANNER
+================================================================================
+
+PURPOSE: Connect and scan enterprise data sources for automated PII
+detection with Netherlands-specific UAVG compliance.
+
+HOW TO USE:
+1. Select "Enterprise Connector" from the scan type dropdown
+2. Choose your connector from the dropdown
+
+CONNECTORS AVAILABLE:
+- Microsoft 365
+- Google Workspace
+- Exact Online
+- Salesforce
+- SAP
+
+--------------------------------------------------------------------------------
+14a. MICROSOFT 365 CONNECTOR
+--------------------------------------------------------------------------------
+
+AUTHENTICATION METHOD (radio buttons):
+- OAuth 2.0 (Recommended) - click "Connect" to authenticate
+- Service Principal - enter Tenant ID, Client ID, Client Secret
+- Certificate - enter credentials manually
+
+SCAN OPTIONS (checkboxes):
+  Left column:
+  [x] OneDrive files
+  [x] SharePoint documents
+  [x] Outlook emails
+
+  Right column:
+  [ ] Teams messages
+  [ ] OneNote notebooks
+  [ ] Planner tasks
+
+CLICK: "Start Microsoft 365 Scan" button
+
+--------------------------------------------------------------------------------
+14b. GOOGLE WORKSPACE CONNECTOR
+--------------------------------------------------------------------------------
+
+AUTHENTICATION METHOD (radio buttons):
+- OAuth 2.0 (Recommended) - click "Connect" to authenticate
+- Service Account - upload Service Account JSON file
+
+SCAN OPTIONS (checkboxes):
+  Left column:
+  [x] Google Drive files
+  [x] Gmail messages
+
+  Right column:
+  [x] Google Docs
+  [x] Google Sheets
+
+CLICK: "Start Google Workspace Scan" button
+
+--------------------------------------------------------------------------------
+14c. EXACT ONLINE CONNECTOR
+--------------------------------------------------------------------------------
+
+Netherlands-specific with BSN validation and UAVG compliance.
+
+AUTHENTICATION METHOD (radio buttons):
+- OAuth 2.0 (Recommended) - click "Connect" to authenticate
+- API Key - enter API key manually
+
+SCAN OPTIONS (checkboxes):
+  [x] Customer records
+  [x] Supplier records
+  [x] Employee data
+  [x] Financial transactions
+
+CLICK: "Start Exact Online Scan" button
+
+--------------------------------------------------------------------------------
+14d. SALESFORCE CONNECTOR
+--------------------------------------------------------------------------------
+
+INPUT:
+- Salesforce Instance URL: your Salesforce URL
+  Example: https://yourcompany.salesforce.com
+
+AUTHENTICATION METHOD (radio buttons):
+- OAuth 2.0 - click "Connect" to authenticate
+- Username/Password - enter Username, Password, Security Token
+
+SCAN OPTIONS (checkboxes):
+  [x] Contacts
+  [x] Leads
+  [x] Accounts
+  [ ] Custom Objects
+
+CLICK: "Start Salesforce Scan" button
+
+--------------------------------------------------------------------------------
+14e. SAP CONNECTOR
+--------------------------------------------------------------------------------
+
+SAP SYSTEM TYPE (dropdown):
+- SAP S/4HANA
+- SAP ECC
+- SAP Business One
+- SAP SuccessFactors
+
+CONNECTION FIELDS:
+- SAP Hostname: e.g., sap.company.com
+- System Number: e.g., 00
+- Client: e.g., 100
+- SAP Username
+- SAP Password
+
+SCAN OPTIONS (checkboxes):
+  [x] Customer Master Data
+  [x] Vendor Master Data
+  [x] HR Employee Data
+  [ ] Financial Documents
+
+CLICK: "Start SAP Scan" button
+
+================================================================================
+GENERAL TIPS
+================================================================================
+
+1. REGION SELECTION: Always set the correct region. "Netherlands"
+   applies UAVG-specific rules including BSN validation.
+
+2. FREE TRIAL: You get 3 free scans. After that, upgrade to a paid
+   plan for unlimited scanning.
+
+3. REPORTS: HTML report downloads are only available for paid
+   subscribers. The on-screen results are available to all users.
+
+4. SEVERITY LEVELS:
+   - Critical (Red)  = Immediate action required
+   - High (Orange)   = Action needed soon
+   - Medium (Yellow) = Should be addressed
+   - Low (Green)     = Minor issue, good to fix
+
+5. SCAN HISTORY: All completed scans are saved and can be viewed
+   from the "History" page in the sidebar.
+
+6. DASHBOARD: The "Dashboard" page shows aggregated metrics across
+   all your scans.
+
+7. RESULTS: After any scan completes, go to the "Results" page for
+   detailed findings from your most recent scan.
+
+================================================================================
+         END OF MANUAL
+         DataGuardian Pro v2.0 - Enterprise Privacy Compliance
+================================================================================
