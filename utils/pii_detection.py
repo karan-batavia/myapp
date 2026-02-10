@@ -378,52 +378,60 @@ def _find_medical_data(text: str) -> List[Dict[str, Any]]:
 
 def _find_credentials(text: str) -> List[Dict[str, Any]]:
     """Find usernames and passwords in text."""
+    natural_language_words = {
+        'the', 'and', 'for', 'with', 'that', 'this', 'from', 'your', 'will',
+        'are', 'was', 'has', 'have', 'had', 'not', 'but', 'can', 'all', 'any',
+        'our', 'use', 'may', 'also', 'how', 'its', 'you', 'who', 'which',
+        'their', 'them', 'than', 'been', 'some', 'when', 'what', 'more',
+        'about', 'would', 'make', 'like', 'time', 'very', 'after', 'could',
+        'into', 'year', 'just', 'most', 'only', 'over', 'such', 'take',
+        'other', 'than', 'then', 'now', 'look', 'come', 'each', 'site',
+        'page', 'name', 'data', 'here', 'should', 'does', 'experience',
+        'information', 'prefilling', 'details', 'account', 'settings',
+        'features', 'service', 'services', 'website', 'cookies', 'policy',
+        'automatic', 'please', 'enable', 'disable', 'manage', 'access',
+        'visit', 'browse', 'content', 'based', 'provide', 'using', 'used',
+    }
+
     patterns = [
-        # Username
-        r'\busername(?:[:\s]+)([A-Za-z0-9_-]{3,20})\b',
-        
-        # Username/Password pair
+        # Username/Password pair (strong signal)
         r'\busername(?:[:\s]+)([A-Za-z0-9_-]{3,20})(?:[,\s]+)password(?:[:\s]+)([^\s,;]{6,20})\b',
-        
-        # Common login patterns
-        r'\blogin(?:[:\s]+)([A-Za-z0-9_-]{3,20})\b',
-        r'\buser(?:[:\s]+)([A-Za-z0-9_-]{3,20})\b',
-        
-        # Expanded credential patterns for vulnerable applications
+
+        # Credentials assigned in code (requires = or : followed by quotes)
         r'\b(username|user|login|user_id|userid|user_name)\s*[=:]\s*["\']([^"\']{3,30})["\']',
         r'\b(password|passwd|pwd|pass|secret|api_key|apikey|token|access_key)\s*[=:]\s*["\']([^"\']{3,30})["\']',
-        
+
         # Hard-coded credentials in code
         r'\blogin\s*\(["\']([^"\']{3,30})["\'],\s*["\']([^"\']{3,30})["\']\)',
         r'\bauth\w*\s*\(["\']([^"\']{3,30})["\'],\s*["\']([^"\']{3,30})["\']\)',
-        
+
         # Database connection strings with credentials
         r'(?i)(mongodb|mysql|postgresql|jdbc|sqlserver|oracle|redis)(://|:|@)([^\s;,]*:[^\s;,]*@)([a-zA-Z0-9.-]+)',
-        
+
         # Environment variables or config with credentials
         r'(?i)(APP|API|DB|ENV|CONFIG)_?(SECRET|KEY|TOKEN|PASS|PASSWORD|USER|USERNAME)\s*[=:]\s*["\']([^"\']{3,30})["\']',
-        
+
         # Credentials in JSON/dict format
         r'["\'](?:user|username|login)["\'][\s:]+["\']([^"\']{3,30})["\']',
         r'["\'](?:pass|password|secret|token|key)["\'][\s:]+["\']([^"\']{3,30})["\']',
-        
+
         # Intentional vulnerable patterns
         r'(?i)(test|demo|example|sample|dummy|default)_(user|password|secret|key)',
-        r'(?i)(root|admin|administrator|superuser|superadmin|dba|sa)[.](password|pwd|pass)',
+        r'(?i)(root|admin|administrator|superuser|superadmin|dba|sa)\.(password|pwd|pass)',
         r'hardcoded[_\s]*(password|credential|secret|key|token)',
-        
+
         # Framework-specific patterns (Flask, Django, etc.)
         r'(?i)app\.config\[["\']SECRET_KEY["\']\]\s*=\s*["\']([^"\']{3,})["\']',
         r'(?i)SECRET_KEY\s*=\s*["\']([^"\']{3,})["\']',
         r'(?i)SQLALCHEMY_DATABASE_URI\s*=\s*["\']([^"\']{3,})["\']',
-        
+
         # URL with credentials embedded
         r'(https?|ftp)://([^:]+):([^@]+)@[^/\s]+',
-        
+
         # Common credential variables in vulnerable applications
         r'(?i)var\s+(api_key|apikey|key|token|secret|password)\s*=\s*["\']([^"\']{8,})["\']',
         r'(?i)const\s+(api_key|apikey|key|token|secret|password)\s*=\s*["\']([^"\']{8,})["\']',
-        
+
         # Security implementation patterns
         r'plain[_\s]*text[_\s]*(password|credential)',
         r'unencrypted[_\s]*(password|credential)'
@@ -434,30 +442,35 @@ def _find_credentials(text: str) -> List[Dict[str, Any]]:
         matches = re.finditer(pattern, text, re.IGNORECASE)
         for match in matches:
             try:
-                if match.lastindex == 2:  # Username/password pair
+                captured_value = match.group(1) if match.lastindex else match.group(0)
+                if captured_value and captured_value.lower().strip() in natural_language_words:
+                    continue
+
+                if match.lastindex == 2:
+                    second_val = match.group(2)
+                    if second_val and second_val.lower().strip() in natural_language_words:
+                        continue
                     found.append({
                         'type': 'Username',
                         'value': match.group(1)
                     })
                     found.append({
                         'type': 'Password',
-                        'value': '*******'  # Mask password
+                        'value': '*******'
                     })
                 else:
-                    # Just credential or full match
                     if "password" in match.group(0).lower() or "secret" in match.group(0).lower() or "key" in match.group(0).lower():
                         found.append({
                             'type': 'Credentials',
                             'value': match.group(0)
                         })
                     else:
-                        value = match.group(1) if match.lastindex else match.group(0)
+                        value = captured_value
                         found.append({
                             'type': 'Credentials',
                             'value': value
                         })
             except Exception:
-                # Fallback if regex groups don't match expectations
                 found.append({
                     'type': 'Credentials',
                     'value': match.group(0)
