@@ -352,28 +352,50 @@ def _find_financial_data(text: str) -> List[Dict[str, Any]]:
     return found
 
 def _find_medical_data(text: str) -> List[Dict[str, Any]]:
-    """Find medical data in text."""
-    # Medical terms and contexts
-    medical_contexts = [
-        r'\b(?:patient|medical|health|diagnosis|treatment|medication|prescription|symptom|disease|doctor|hospital|clinic)\b',
-        r'\b(?:MRI|CT scan|X-ray|blood test|examination|surgery|condition|admitted|discharged)\b'
+    """Find medical data in text - requires strong medical context to avoid false positives."""
+    strong_medical_patterns = [
+        r'\b(?:patient\s+(?:id|name|record|number|data|information|diagnosis))\b',
+        r'\b(?:medical\s+(?:record|history|report|data|file|number|condition|information))\b',
+        r'\b(?:health\s+(?:record|data|information|insurance|condition|status))\b',
+        r'\b(?:diagnosis|medication|prescription|symptom|disease)\s*[:\s]+\S+',
+        r'\b(?:MRI|CT\s+scan|X-ray|blood\s+test)\s+(?:result|report|finding)',
+        r'\b(?:admitted|discharged)\s+(?:to|from|on|at)\b',
+        r'\bpatient\s*(?:ID|#|nr|number)\s*[:\s]*\S+',
+        r'\b(?:ICD[-\s]?10|DSM[-\s]?5)\s*[:\s]*[A-Z]\d+',
+        r'\bBIG[-\s]?registratie(?:nummer)?\s*[:\s]*\d+',
     ]
-    
+
+    non_medical_prefixes = [
+        'beauty', 'heat', 'water', 'waste', 'surface', 'special', 'vip',
+        'spa', 'hair', 'skin', 'nail', 'facial', 'gift', 'card',
+    ]
+
     found = []
-    for pattern in medical_contexts:
+    for pattern in strong_medical_patterns:
         matches = re.finditer(pattern, text, re.IGNORECASE)
         for match in matches:
-            # Get a context snippet around the match
+            matched_text = match.group(0).lower()
             start = max(0, match.start() - 50)
+            prefix_text = text[start:match.start()].lower().strip()
+
+            is_false_positive = False
+            for prefix in non_medical_prefixes:
+                if prefix_text.endswith(prefix):
+                    is_false_positive = True
+                    break
+
+            if is_false_positive:
+                continue
+
             end = min(len(text), match.end() + 50)
             context = text[start:end]
-            
+
             found.append({
                 'type': 'Medical Data',
                 'value': match.group(0),
                 'context': '...' + context + '...'
             })
-    
+
     return found
 
 def _find_credentials(text: str) -> List[Dict[str, Any]]:
