@@ -856,37 +856,78 @@ def _detect_quality_management_gaps(content: str) -> List[Dict[str, Any]]:
     return findings
 
 def _detect_automatic_logging_gaps(content: str) -> List[Dict[str, Any]]:
-    """Enhanced Article 17 - Automatic Logging Requirements."""
+    """Article 17 - Automatic Logging Requirements for High-Risk AI Systems.
+    
+    Consolidated check covering all Article 17 obligations:
+    operational logging, input/output traceability, anomaly detection,
+    log integrity, and retention policies.
+    """
     findings = []
     
+    ai_system_patterns = [
+        r"\b(?:ai.*system|machine.*learning|neural.*network|deep.*learning)\b",
+        r"\b(?:automated.*decision|algorithmic.*system|prediction.*model)\b",
+        r"\b(?:chatbot|virtual.*assistant|ai.*agent)\b"
+    ]
+    
+    has_ai_system = any(re.search(pattern, content, re.IGNORECASE) for pattern in ai_system_patterns)
+    if not has_ai_system:
+        return findings
+    
     logging_requirements = {
-        "event_logging": r"\b(?:event.*log|audit.*log|system.*log|activity.*log)\b",
-        "data_logging": r"\b(?:input.*data.*log|output.*log|prediction.*log)\b",
-        "user_interaction": r"\b(?:user.*interaction|user.*session|interaction.*log)\b",
-        "system_performance": r"\b(?:performance.*log|latency.*log|throughput.*log)\b",
-        "error_logging": r"\b(?:error.*log|exception.*log|failure.*log)\b",
-        "security_events": r"\b(?:security.*event|access.*log|authentication.*log)\b",
-        "retention_policy": r"\b(?:log.*retention|retention.*policy|log.*archival)\b"
+        'Audit trail / event logging': r"\b(?:event.*log|audit.*log|audit.*trail|system.*log|activity.*log)\b",
+        'Input/output data recording': r"\b(?:input.*data.*log|output.*log|prediction.*log|input.*record|input.*verification)\b",
+        'Anomaly and deviation logging': r"\b(?:anomaly.*detection.*log|anomaly.*record|deviation.*log|error.*log|exception.*log|failure.*log)\b",
+        'Traceability of decisions': r"\b(?:traceability|traceable.*record|automatic.*recording|automated.*log|auto.*record)\b",
+        'Log integrity protection': r"\b(?:log.*integrity|tamper.*proof.*log|immutable.*log|security.*event|access.*log)\b",
+        'Retention policy': r"\b(?:log.*retention|retention.*policy|log.*archival|record.*retention|storage.*period)\b",
     }
     
-    missing_logging = []
-    for log_type, pattern in logging_requirements.items():
-        if not re.search(pattern, content, re.IGNORECASE):
-            missing_logging.append(log_type)
+    present = []
+    missing = []
+    for requirement, pattern in logging_requirements.items():
+        if re.search(pattern, content, re.IGNORECASE):
+            present.append(requirement)
+        else:
+            missing.append(requirement)
     
-    if len(missing_logging) >= 3:
+    if len(missing) >= 3:
+        severity = 'High' if len(missing) >= 5 else 'Medium'
+        
+        readable_missing = '\n'.join(f'  - {item}' for item in missing)
+        readable_present = '\n'.join(f'  - {item}' for item in present) if present else '  (none detected)'
+        
+        missing_list = ', '.join(missing)
+        present_list = ', '.join(present) if present else 'none detected'
+        
         findings.append({
-            'type': 'AI_ACT_AUTOMATIC_LOGGING_INSUFFICIENT',
+            'type': 'AI_ACT_ARTICLE_17_LOGGING',
             'category': 'Article 17 - Automatic Logging',
-            'severity': 'Medium',
-            'title': 'Automatic Logging Requirements Not Met',
-            'description': f'Missing {len(missing_logging)} required logging capabilities',
-            'location': 'config/logging-config.yaml',
+            'severity': severity,
+            'title': f'Automatic Logging: {len(missing)} of {len(logging_requirements)} requirements missing',
+            'description': (
+                f'Your AI system is missing {len(missing)} out of {len(logging_requirements)} '
+                f'automatic logging capabilities required by Article 17 for high-risk AI systems. '
+                f'Missing: {missing_list}. '
+                f'Already in place: {present_list}.'
+            ),
             'article_reference': 'EU AI Act Article 17',
-            'missing_logging': missing_logging,
-            'compliance_deadline': 'August 2, 2026',
-            'penalty_risk': 'Up to €15M or 3% global turnover',
-            'remediation': 'Implement comprehensive automatic logging system per Article 17'
+            'context': (
+                'Article 17 requires high-risk AI systems to automatically generate logs '
+                'that enable monitoring of system operation, support post-market surveillance, '
+                'and facilitate investigation of incidents or malfunctions.'
+            ),
+            'recommendations': [
+                'Add audit trail logging for all AI system events and decisions',
+                'Record input data and output predictions with timestamps',
+                'Implement anomaly/error detection logging',
+                'Ensure all logs are traceable to specific AI operations',
+                'Protect log integrity (tamper-proof or immutable storage)',
+                'Define and enforce a log retention policy (minimum recommended: 6 months)',
+            ],
+            'penalty_risk': 'Up to €15M or 3% of global annual turnover',
+            'compliance_deadline': 'August 2, 2026 (high-risk systems)',
+            'business_impact': 'Non-compliant logging may result in inability to investigate AI incidents and regulatory enforcement action',
         })
     
     return findings
@@ -1728,55 +1769,8 @@ def _detect_quality_management_system(content: str) -> List[Dict[str, Any]]:
 
 
 def _detect_automatic_logging_requirements(content: str) -> List[Dict[str, Any]]:
-    """Detect Article 17 - Automatic logging requirements."""
-    findings = []
-    
-    ai_system_patterns = [
-        r"\b(?:ai.*system|machine.*learning|neural.*network|deep.*learning)\b",
-        r"\b(?:automated.*decision|algorithmic.*system|prediction.*model)\b"
-    ]
-    
-    has_ai_system = any(re.search(pattern, content, re.IGNORECASE) for pattern in ai_system_patterns)
-    
-    if has_ai_system:
-        logging_requirements = {
-            'operation_period_logging': r"\b(?:operation.*period.*log|period.*of.*use.*log|usage.*duration.*log)\b",
-            'reference_database': r"\b(?:reference.*database|input.*database.*log|training.*data.*reference)\b",
-            'input_data_logging': r"\b(?:input.*data.*log|input.*verification|input.*record)\b",
-            'anomaly_detection_logging': r"\b(?:anomaly.*detection.*log|anomaly.*record|deviation.*log)\b",
-            'automatic_recording': r"\b(?:automatic.*recording|automated.*log|auto.*record)\b",
-            'traceability': r"\b(?:traceability|traceable.*record|audit.*trail)\b",
-            'log_integrity': r"\b(?:log.*integrity|tamper.*proof.*log|immutable.*log)\b",
-            'retention_period': r"\b(?:log.*retention|record.*retention|storage.*period)\b"
-        }
-        
-        missing_logging = []
-        for requirement, pattern in logging_requirements.items():
-            if not re.search(pattern, content, re.IGNORECASE):
-                missing_logging.append(requirement.replace('_', ' '))
-        
-        if len(missing_logging) >= 4:
-            findings.append({
-                'type': 'AI_ACT_AUTOMATIC_LOGGING_REQUIREMENTS',
-                'category': 'Article 17 - Automatic Logging',
-                'severity': 'High',
-                'title': 'Automatic Logging Requirements Not Met',
-                'description': f'Missing {len(missing_logging)} automatic logging elements for high-risk AI',
-                'article_reference': 'EU AI Act Article 17',
-                'missing_elements': missing_logging,
-                'compliance_deadline': 'August 2, 2027',
-                'penalty_risk': 'Up to €15M or 3% global turnover',
-                'technical_requirements': [
-                    'Logs must be automatically generated',
-                    'Enable monitoring of AI system operation',
-                    'Facilitate post-market monitoring',
-                    'Support incident investigation',
-                    'Maintain appropriate retention periods'
-                ],
-                'remediation': 'Implement comprehensive automatic logging per Article 17'
-            })
-    
-    return findings
+    """Article 17 - Redirects to consolidated _detect_automatic_logging_gaps."""
+    return []
 
 
 def _detect_human_oversight_requirements(content: str) -> List[Dict[str, Any]]:
