@@ -150,7 +150,7 @@ class IntelligentWebsiteScanner:
             scan_results['pages_discovered'] = len(pages_to_scan)
             
             # Step 4: Scan pages in parallel
-            findings, metrics, all_cookies, all_trackers = self._scan_pages_parallel(
+            findings, metrics, all_cookies, all_trackers, security_checks = self._scan_pages_parallel(
                 pages_to_scan, scan_results, progress_callback
             )
             
@@ -208,6 +208,7 @@ class IntelligentWebsiteScanner:
             
             scan_results['compliance_score'] = compliance_score
             scan_results['risk_level'] = risk_level
+            scan_results['security_checks_summary'] = security_checks
             
             logger.info(f"Intelligent website scan completed: {len(findings)} findings in {scan_results['duration_seconds']:.1f}s")
             logger.info(f"Scanned {scan_results['pages_scanned']}/{scan_results['pages_discovered']} pages ({scan_results['scan_coverage']:.1f}% coverage)")
@@ -504,6 +505,7 @@ class IntelligentWebsiteScanner:
         all_findings = []
         all_cookies = {}
         all_trackers = []
+        all_security_checks = []
         metrics = {'cookies': 0, 'trackers': 0, 'forms': 0}
         
         workers = scan_results['crawling_strategy']['parallel_workers']
@@ -530,13 +532,16 @@ class IntelligentWebsiteScanner:
                     result = future.result(timeout=30)  # 30 second per page timeout
                     
                     if result:
-                        findings, page_metrics, page_cookies, page_trackers = result
+                        findings, page_metrics, page_cookies, page_trackers, page_security_checks = result
                         all_findings.extend(findings)
                         
                         # Accumulate cookies and trackers
                         for cookie_name, cookie_data in page_cookies.items():
                             all_cookies[cookie_name] = cookie_data
                         all_trackers.extend(page_trackers)
+                        
+                        if page_security_checks:
+                            all_security_checks.append(page_security_checks)
                         
                         metrics['cookies'] += len(page_cookies)
                         metrics['trackers'] += len(page_trackers)
@@ -559,7 +564,17 @@ class IntelligentWebsiteScanner:
                     scan_results['pages_skipped'] += 1
                     logger.warning(f"Page scan error: {str(e)}")
         
-        return all_findings, metrics, all_cookies, all_trackers
+        merged_security_checks = []
+        if all_security_checks:
+            merged_security_checks = all_security_checks[0]
+            for page_checks in all_security_checks[1:]:
+                for i, check in enumerate(page_checks):
+                    if i < len(merged_security_checks):
+                        merged_security_checks[i]['findings_count'] += check['findings_count']
+                        if check['status'] == 'Issue Found':
+                            merged_security_checks[i]['status'] = 'Issue Found'
+
+        return all_findings, metrics, all_cookies, all_trackers, merged_security_checks
 
     def _deduplicate_findings(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Deduplicate findings that appear across multiple pages.
@@ -711,11 +726,14 @@ class IntelligentWebsiteScanner:
                 metrics['cookies'] = len(cookies)
                 metrics['trackers'] = len(trackers)
                 metrics['forms'] = len(result.get('forms', []))
+
+                security_checks = result.get('security_checks_summary', [])
                     
             elif isinstance(result, list):
                 findings = result
+                security_checks = []
             
-            return findings, metrics, cookies, trackers
+            return findings, metrics, cookies, trackers, security_checks
                 
         except Exception as e:
             logger.warning(f"Error scanning page {page_url}: {str(e)}")

@@ -737,7 +737,8 @@ class WebsiteScanner:
             'domain_info': domain_info,
             'ssl_info': ssl_info,
             'stats': stats,
-            'scan_type': 'website'
+            'scan_type': 'website',
+            'security_checks_summary': getattr(self, '_security_checks_summary', [])
         }
         
         # Integrate cost savings analysis
@@ -1236,7 +1237,21 @@ class WebsiteScanner:
         scripts = soup.find_all('script')
         links = soup.find_all('a', href=True)
         inputs = soup.find_all('input')
-        
+
+        check_counts_before = {}
+        vuln_checks_order = [
+            ('SQL Injection', 'CWE-89', 'A03:2021 - Injection'),
+            ('XSS (Cross-Site Scripting)', 'CWE-79', 'A03:2021 - Injection'),
+            ('Broken Authentication', 'CWE-287', 'A07:2021 - Identification and Authentication Failures'),
+            ('Broken Session Management', 'CWE-384', 'A07:2021 - Identification and Authentication Failures'),
+            ('Access Control Bypass', 'CWE-284', 'A01:2021 - Broken Access Control'),
+            ('Open URL Redirect', 'CWE-601', 'A01:2021 - Broken Access Control'),
+            ('Directory Traversal', 'CWE-22', 'A01:2021 - Broken Access Control'),
+            ('SSRF (Server-Side Request Forgery)', 'CWE-918', 'A10:2021 - Server-Side Request Forgery'),
+            ('RCE (Remote Command Execution)', 'CWE-78', 'A03:2021 - Injection'),
+            ('Business Logic Error', 'CWE-840', 'A04:2021 - Insecure Design'),
+        ]
+
         # 1. SQL Injection Detection
         for form in forms:
             action = form.get('action', '')
@@ -1743,6 +1758,28 @@ class WebsiteScanner:
                         'recommendation': 'Set min="0" or min="1" on quantity fields. Validate quantities server-side.',
                         'cwe_id': 'CWE-840'
                     })
+
+        security_checks_summary = []
+        for vuln_name, cwe_id, owasp_cat in vuln_checks_order:
+            found_count = sum(1 for f in findings if f.get('vulnerability_type') == vuln_name)
+            security_checks_summary.append({
+                'check': vuln_name,
+                'cwe_id': cwe_id,
+                'owasp_category': owasp_cat,
+                'status': 'Issue Found' if found_count > 0 else 'Passed',
+                'findings_count': found_count
+            })
+
+        if not hasattr(self, '_security_checks_summary'):
+            self._security_checks_summary = security_checks_summary
+        else:
+            for new_check in security_checks_summary:
+                for existing_check in self._security_checks_summary:
+                    if existing_check['check'] == new_check['check']:
+                        existing_check['findings_count'] += new_check['findings_count']
+                        if new_check['status'] == 'Issue Found':
+                            existing_check['status'] = 'Issue Found'
+                        break
 
         return findings
 

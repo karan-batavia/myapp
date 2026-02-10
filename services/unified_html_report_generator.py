@@ -2187,6 +2187,57 @@ class UnifiedHTMLReportGenerator:
                 trackers_details += f"<tr><td>{name}</td><td>{tracker_type}</td><td>{purpose}</td><td class='{risk_class}'>{risk}</td></tr>"
             trackers_details += "</table></div>"
         
+        security_checks = scan_result.get('security_checks_summary', [])
+        security_html = ""
+        if security_checks:
+            passed_count = sum(1 for c in security_checks if c['status'] == 'Passed')
+            issue_count = sum(1 for c in security_checks if c['status'] == 'Issue Found')
+            total_checks = len(security_checks)
+            security_html = f"""
+            <div class="scanner-specific" style="background: #e8eaf6; margin-top: 0;">
+                <h2>🔒 Security Assessment Summary</h2>
+                <p style="color: #555; margin-bottom: 15px;">All {total_checks} OWASP vulnerability checks were performed across {scan_result.get('pages_scanned', scan_result.get('stats', {}).get('pages_scanned', 0))} scanned pages.</p>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value" style="color: #2e7d32;">{passed_count}</div>
+                        <div class="metric-label">Checks Passed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" style="color: {'#d32f2f' if issue_count > 0 else '#2e7d32'};">{issue_count}</div>
+                        <div class="metric-label">Issues Found</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" style="color: #1565c0;">{total_checks}</div>
+                        <div class="metric-label">Total Checks</div>
+                    </div>
+                </div>
+                <table style="margin-top: 15px;">
+                    <tr>
+                        <th>Vulnerability Check</th>
+                        <th>CWE ID</th>
+                        <th>OWASP Category</th>
+                        <th>Status</th>
+                        <th>Findings</th>
+                    </tr>"""
+            for check in security_checks:
+                status = check['status']
+                if status == 'Passed':
+                    status_html = '<span style="color: #2e7d32; font-weight: 600;">✅ Passed</span>'
+                else:
+                    status_html = f'<span style="color: #d32f2f; font-weight: 600;">⚠️ Issue Found</span>'
+                findings_count = check.get('findings_count', 0)
+                security_html += f"""
+                    <tr>
+                        <td><strong>{check['check']}</strong></td>
+                        <td>{check['cwe_id']}</td>
+                        <td>{check['owasp_category']}</td>
+                        <td>{status_html}</td>
+                        <td>{findings_count}</td>
+                    </tr>"""
+            security_html += """
+                </table>
+            </div>"""
+
         return f"""
         <div class="scanner-specific">
             <h2>🌐 {t_report('website_privacy_report', 'Website Privacy Analysis')}</h2>
@@ -2203,6 +2254,7 @@ class UnifiedHTMLReportGenerator:
             {cookies_details}
             {trackers_details}
         </div>
+        {security_html}
         """
     
     def _generate_compliance_section(self, gdpr_articles: List[str], compliance_requirements: List[str], 
