@@ -43,9 +43,6 @@ wheels/
 *.secret
 .replit_auth
 
-# User credentials (managed on server, never in Git)
-secure_users.json
-users.json
 
 # Logs
 *.log
