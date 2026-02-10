@@ -6875,17 +6875,20 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
             }
             
             missing_headers = []
+            present_headers = [h for h in security_headers if h in ssl_response.headers]
             for header, description in security_headers.items():
                 if header not in ssl_response.headers:
                     missing_headers.append({
                         'type': 'SECURITY_HEADER_MISSING',
                         'severity': 'Medium',
                         'endpoint': base_url,
+                        'method': 'GET',
                         'header': header,
                         'description': description,
                         'impact': 'Security vulnerability - missing protective header',
                         'action_required': f'Add {header} header to improve security posture',
-                        'gdpr_article': 'Article 32 - Security of processing'
+                        'gdpr_article': 'Article 32 - Security of processing',
+                        'evidence': f'Header "{header}" not found in server response. Headers present: {", ".join(present_headers) if present_headers else "None of the checked security headers"}'
                     })
             
             scan_results["findings"].extend(missing_headers)

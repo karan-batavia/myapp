@@ -905,6 +905,7 @@ class APIScanner:
             'Content-Security-Policy': 'Missing Content-Security-Policy header (XSS/injection protection)'
         }
         
+        present_sec_headers = [h for h in security_headers if h in headers]
         for header, description in security_headers.items():
             if header not in headers:
                 endpoint_data['findings'].append({
@@ -913,7 +914,8 @@ class APIScanner:
                     'description': description,
                     'method': method,
                     'url': response.url,
-                    'recommendation': f'Add {header} header to improve security'
+                    'recommendation': f'Add {header} header to improve security',
+                    'evidence': f'Header "{header}" not found in server response. Present security headers: {", ".join(present_sec_headers) if present_sec_headers else "None"}'
                 })
         
         # Check for information disclosure in headers
