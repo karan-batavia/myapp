@@ -1097,34 +1097,44 @@ def _find_dutch_health_insurance(text: str) -> List[Dict[str, Any]]:
 
 def _find_dutch_bank_codes(text: str) -> List[Dict[str, Any]]:
     """Find Dutch bank-specific codes and identifiers."""
-    patterns = [
-        # Dutch bank account numbers (legacy format)
-        r'\b\d{3}[-\s]?\d{7}[-\s]?\d{3}\b',
-        
-        # BIC codes for Dutch banks
-        r'\b(?:ABNA|INGB|RABO|BUNQ|TRIO|KABA|BNPA|DEUT)NL2[A-Z0-9]\b',
-        
-        # Dutch bank transaction reference
-        r'\b(?:transactie|transaction)(?:[:\s#-]+)?([A-Z0-9]{10,16})\b',
-        
-        # iDEAL transaction ID
-        r'\b(?:ideal|iDEAL)(?:[:\s#-]+)?([A-Z0-9]{16})\b',
-        
-        # Dutch direct debit mandate
-        r'\b(?:incassomachtiging|mandate)(?:[:\s#-]+)?([A-Z0-9]{8,15})\b',
-    ]
-    
     found = []
-    for pattern in patterns:
-        matches = re.finditer(pattern, text, re.IGNORECASE)
-        for match in matches:
-            value = match.group(1) if match.lastindex else match.group(0)
+
+    bic_pattern = r'\b(?:ABNA|INGB|RABO|BUNQ|TRIO|KABA|BNPA|DEUT)NL2[A-Z0-9]\b'
+    for match in re.finditer(bic_pattern, text):
+        found.append({
+            'type': 'Dutch Bank Code',
+            'value': match.group(0),
+            'description': 'Netherlands BIC/SWIFT code'
+        })
+
+    tx_pattern = r'\b(?:transactie|transaction)[\s:=#-]+(\d[A-Z0-9]{12,15})\b'
+    for match in re.finditer(tx_pattern, text, re.IGNORECASE):
+        value = match.group(1)
+        if sum(c.isdigit() for c in value) >= 6:
             found.append({
                 'type': 'Dutch Bank Code',
                 'value': value,
-                'description': 'Netherlands banking identifier'
+                'description': 'Netherlands transaction reference'
             })
-    
+
+    ideal_pattern = r'\b(?:iDEAL|ideal)[\s:=#-]+(\d[A-Z0-9]{15})\b'
+    for match in re.finditer(ideal_pattern, text, re.IGNORECASE):
+        value = match.group(1)
+        if sum(c.isdigit() for c in value) >= 8:
+            found.append({
+                'type': 'Dutch Bank Code',
+                'value': value,
+                'description': 'iDEAL transaction ID'
+            })
+
+    mandate_pattern = r'\b(?:incassomachtiging)[\s:=#-]+([A-Z0-9]{8,15})\b'
+    for match in re.finditer(mandate_pattern, text, re.IGNORECASE):
+        found.append({
+            'type': 'Dutch Bank Code',
+            'value': match.group(1),
+            'description': 'Netherlands direct debit mandate'
+        })
+
     return found
 
 
