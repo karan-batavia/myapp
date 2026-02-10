@@ -574,11 +574,11 @@ class IntelligentWebsiteScanner:
         for finding in findings:
             finding_type = finding.get('type', '')
             description = finding.get('description', '')
-            location = finding.get('location', '')
+            location_detail = finding.get('location_detail', '')
             
             pattern_match = ''
-            if 'Pattern:' in location:
-                pattern_match = location.split('Pattern:')[-1].strip()
+            if 'Pattern:' in location_detail:
+                pattern_match = location_detail.split('Pattern:')[-1].strip()
             
             key = f"{finding_type}|{pattern_match or description[:50]}"
             
@@ -588,7 +588,7 @@ class IntelligentWebsiteScanner:
                 consolidated['occurrence_count'] = 0
                 unique_findings[key] = consolidated
             
-            found_on = finding.get('found_on', finding.get('location', ''))
+            found_on = finding.get('url', finding.get('found_on', finding.get('location', '')))
             if found_on and found_on not in unique_findings[key]['pages_affected']:
                 unique_findings[key]['pages_affected'].append(found_on)
             unique_findings[key]['occurrence_count'] += 1
@@ -600,8 +600,10 @@ class IntelligentWebsiteScanner:
             
             if count > 1:
                 finding['context'] = f"Found on {count} pages across the website"
-                if len(pages) > 0:
-                    finding['location'] = f"{finding.get('location', '')} (affects {len(pages)} pages)"
+                if len(pages) > 1:
+                    pages_list = ', '.join(pages[:3])
+                    extra = f" and {len(pages) - 3} more" if len(pages) > 3 else ""
+                    finding['location_detail'] = f"{finding.get('location_detail', '')} — affects {len(pages)} pages: {pages_list}{extra}"
             else:
                 tracker_name = finding.get('description', '').replace('Inline tracker script for ', '')
                 if 'tracker' in finding.get('type', '').lower():
