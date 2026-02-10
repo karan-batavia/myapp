@@ -1061,7 +1061,10 @@ class UnifiedHTMLReportGenerator:
                     
                     <div class="finding-location">
                         <strong>{t_report('location_details', 'Location')}:</strong> {f'<a href="{location}" target="_blank" style="color: #2563eb; text-decoration: underline;">{finding.get("location_short", location)}</a>' if location.startswith('http') else location}
+                        {f'<br><span style="color: #6b7280; font-size: 0.9em;">📌 {finding.get("location_detail")}</span>' if finding.get('location_detail') else ''}
                     </div>
+                    
+                    {f'<div style="margin: 8px 0; padding: 8px 12px; background: #fef2f2; border-radius: 4px; border-left: 3px solid #dc3545;"><strong>🔒 Vulnerability:</strong> {finding.get("vulnerability_type")} <span style="color: #6b7280;">({finding.get("cwe_id", "")})</span><br><strong>OWASP:</strong> {finding.get("owasp_category", "")}</div>' if finding.get('vulnerability_type') else ''}
                     
                     {f'<div class="finding-classification"><strong>{t_report("data_classification", "Data Classification")}:</strong> {data_classification}</div>' if data_classification else ''}
                     

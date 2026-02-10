@@ -844,7 +844,8 @@ class WebsiteScanner:
                                 'type': 'tracker',
                                 'subtype': tracker_name,
                                 'url': url,
-                                'location': f"External Script: {src}",
+                                'location': url,
+                                'location_detail': f"External Script: {src}",
                                 'element': 'script[src]',
                                 'description': f"External tracker script from {tracker_name}",
                                 'severity': severity,
@@ -877,7 +878,8 @@ class WebsiteScanner:
                                 'type': 'tracker',
                                 'subtype': tracker_name,
                                 'url': url,
-                                'location': f"Inline Script Pattern: {pattern}",
+                                'location': url,
+                                'location_detail': f"Inline Script Pattern: {pattern}",
                                 'element': 'script[inline]',
                                 'description': f"Inline tracker script for {tracker_name}",
                                 'severity': severity,
@@ -899,7 +901,8 @@ class WebsiteScanner:
                         'type': 'consent_management',
                         'subtype': platform['name'],
                         'url': url,
-                        'location': f"CMP Pattern: {pattern}",
+                        'location': url,
+                        'location_detail': f"CMP Pattern: {pattern}",
                         'element': 'consent platform',
                         'description': f"Using {platform['name']} consent management platform",
                         'severity': 'Info',
@@ -925,10 +928,11 @@ class WebsiteScanner:
                 findings.append({
                     'type': 'tracking_pixel',
                     'url': url,
-                    'location': f"Image Element: {src}",
+                    'location': url,
+                    'location_detail': f"Image Element: {src}",
                     'element': 'img[1x1]',
                     'description': f"Tracking pixel detected: {src}",
-                    'severity': 'High',  # Tracking pixels are high privacy risk
+                    'severity': 'High',
                     'privacy_risk': 'High',
                     'gdpr_article': 'Art. 6(1)(a), Art. 7'
                 })
@@ -984,6 +988,10 @@ class WebsiteScanner:
         # Scan page content for PII (BSN, email, phone, etc.)
         pii_findings = self._scan_content_for_pii(main_content, url)
         findings.extend(pii_findings)
+        
+        # Scan for web vulnerabilities
+        vulnerability_findings = self._scan_for_vulnerabilities(url, html_content, soup)
+        findings.extend(vulnerability_findings)
         
         # Return the page analysis results
         return {
@@ -1078,7 +1086,8 @@ class WebsiteScanner:
                     'type': 'cookie',
                     'subtype': 'high_risk_cookie',
                     'url': response.url,
-                    'location': f"Cookie: {cookie.name}",
+                    'location': response.url,
+                    'location_detail': f"Cookie: {cookie.name}",
                     'element': 'http-cookie',
                     'description': f"High-risk cookie detected: {cookie.name} - {cookie_info.get('purpose', 'Tracking/analytics')}",
                     'severity': severity,
@@ -1209,6 +1218,534 @@ class WebsiteScanner:
         
         return recommendations
     
+    def _scan_for_vulnerabilities(self, url: str, html_content: str, soup: BeautifulSoup) -> List[Dict[str, Any]]:
+        """
+        Scan page for common web vulnerabilities by analyzing HTML, forms, and scripts.
+        
+        Args:
+            url: The page URL being analyzed
+            html_content: Raw HTML content of the page
+            soup: BeautifulSoup parsed HTML object
+            
+        Returns:
+            List of vulnerability findings
+        """
+        findings = []
+        parsed_url = urlparse(url)
+        forms = soup.find_all('form')
+        scripts = soup.find_all('script')
+        links = soup.find_all('a', href=True)
+        inputs = soup.find_all('input')
+        
+        # 1. SQL Injection Detection
+        for form in forms:
+            action = form.get('action', '')
+            method = (form.get('method', 'get')).lower()
+            form_inputs = form.find_all('input')
+            text_inputs = [i for i in form_inputs if i.get('type', 'text') in ('text', 'search', 'hidden', '')]
+            form_classes = form.get('class', [])
+            form_class_str = ' '.join(form_classes) if isinstance(form_classes, list) else str(form_classes or '')
+            form_text = (action.lower() + ' ' + (form.get('id', '') or '').lower() + ' ' + form_class_str.lower())
+            search_indicators = any(
+                kw in form_text
+                for kw in ['search', 'query', 'filter', 'lookup', 'find']
+            ) if action else False
+            
+            if text_inputs and method == 'get' and search_indicators:
+                for inp in text_inputs:
+                    input_name = inp.get('name', '')
+                    if input_name and any(kw in input_name.lower() for kw in ['q', 'query', 'search', 'keyword', 'filter', 'id', 'select']):
+                        findings.append({
+                            'type': 'vulnerability',
+                            'subtype': 'sql_injection',
+                            'url': url,
+                            'location': url,
+                            'location_detail': f"Form action: {action or '(self)'} with input '{input_name}'",
+                            'element': 'form',
+                            'description': f"Potential SQL injection risk: search/query form submits user input via GET parameter '{input_name}' without apparent sanitization",
+                            'severity': 'Critical',
+                            'privacy_risk': 'Critical',
+                            'gdpr_article': 'Art. 32 - Security of processing',
+                            'vulnerability_type': 'SQL Injection',
+                            'owasp_category': 'A03:2021 - Injection',
+                            'recommendation': 'Use parameterized queries/prepared statements. Validate and sanitize all user inputs server-side.',
+                            'cwe_id': 'CWE-89'
+                        })
+                        break
+
+        if parsed_url.query:
+            sql_params = [p.split('=')[0] for p in parsed_url.query.split('&') if '=' in p]
+            suspicious_params = [p for p in sql_params if any(kw in p.lower() for kw in ['id', 'select', 'where', 'order', 'sort', 'table', 'column', 'union'])]
+            if suspicious_params:
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'sql_injection',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"URL parameters: {', '.join(suspicious_params)}",
+                    'element': 'url',
+                    'description': f"URL contains parameters with SQL-related names ({', '.join(suspicious_params)}) that may be vulnerable to injection",
+                    'severity': 'Critical',
+                    'privacy_risk': 'Critical',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'SQL Injection',
+                    'owasp_category': 'A03:2021 - Injection',
+                    'recommendation': 'Use parameterized queries. Never construct SQL from URL parameters directly.',
+                    'cwe_id': 'CWE-89'
+                })
+
+        # 2. XSS Detection
+        event_handler_attrs = ['onclick', 'onload', 'onerror', 'onmouseover', 'onfocus', 'onblur', 'onsubmit', 'onchange', 'onkeyup', 'onkeydown']
+        inline_handlers = []
+        for attr in event_handler_attrs:
+            elements_with_handler = soup.find_all(attrs={attr: True})
+            for el in elements_with_handler:
+                handler_val = el.get(attr, '')
+                if any(dangerous in handler_val.lower() for dangerous in ['eval(', 'document.cookie', 'document.write', 'innerhtml', 'location.href', 'window.location']):
+                    inline_handlers.append((attr, el.name, handler_val[:100]))
+
+        if inline_handlers:
+            for attr, tag, val in inline_handlers[:3]:
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'xss',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"Inline event handler: {attr} on <{tag}>",
+                    'element': tag,
+                    'description': f"Unsafe inline event handler '{attr}' on <{tag}> contains dangerous JavaScript operations",
+                    'severity': 'High',
+                    'privacy_risk': 'High',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'XSS (Cross-Site Scripting)',
+                    'owasp_category': 'A03:2021 - Injection',
+                    'recommendation': 'Remove inline event handlers. Use Content Security Policy (CSP) headers and sanitize all user inputs.',
+                    'cwe_id': 'CWE-79'
+                })
+
+        for script in scripts:
+            if script.string:
+                script_text = script.string
+                xss_patterns = [
+                    (r'\.innerHTML\s*=\s*[^;]*(?:location|document\.URL|document\.referrer|window\.name)', 'innerHTML assignment from user-controlled source'),
+                    (r'document\.write\s*\(\s*(?:location|document\.URL|unescape|decodeURI)', 'document.write with user-controlled input'),
+                    (r'eval\s*\(\s*(?:location|document\.URL|window\.name|decodeURI)', 'eval() with user-controlled input'),
+                ]
+                for pattern, desc in xss_patterns:
+                    if re.search(pattern, script_text, re.IGNORECASE):
+                        findings.append({
+                            'type': 'vulnerability',
+                            'subtype': 'xss',
+                            'url': url,
+                            'location': url,
+                            'location_detail': f"Script: {desc}",
+                            'element': 'script',
+                            'description': f"Potential DOM-based XSS: {desc}",
+                            'severity': 'High',
+                            'privacy_risk': 'High',
+                            'gdpr_article': 'Art. 32 - Security of processing',
+                            'vulnerability_type': 'XSS (Cross-Site Scripting)',
+                            'owasp_category': 'A03:2021 - Injection',
+                            'recommendation': 'Sanitize all user inputs before DOM insertion. Use textContent instead of innerHTML.',
+                            'cwe_id': 'CWE-79'
+                        })
+                        break
+
+        # 3. Broken Authentication
+        login_forms = [f for f in forms if any(
+            f.find('input', {'type': t}) for t in ['password']
+        )]
+        for form in login_forms:
+            csrf_input = form.find('input', {'name': re.compile(r'csrf|token|_token|authenticity_token|__RequestVerificationToken', re.I)})
+            if not csrf_input:
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'broken_authentication',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"Login form action: {form.get('action', '(self)')}",
+                    'element': 'form',
+                    'description': 'Login form missing CSRF token protection, potentially vulnerable to cross-site request forgery attacks',
+                    'severity': 'High',
+                    'privacy_risk': 'High',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'Broken Authentication',
+                    'owasp_category': 'A07:2021 - Identification and Authentication Failures',
+                    'recommendation': 'Implement CSRF tokens in all authentication forms. Use anti-forgery tokens.',
+                    'cwe_id': 'CWE-287'
+                })
+
+            password_fields = form.find_all('input', {'type': 'password'})
+            for pwd_field in password_fields:
+                if pwd_field.get('autocomplete', '').lower() not in ('off', 'new-password', 'current-password'):
+                    findings.append({
+                        'type': 'vulnerability',
+                        'subtype': 'broken_authentication',
+                        'url': url,
+                        'location': url,
+                        'location_detail': f"Password field: {pwd_field.get('name', 'unnamed')}",
+                        'element': 'input[password]',
+                        'description': 'Password field without proper autocomplete attribute may allow browser to cache credentials',
+                        'severity': 'Medium',
+                        'privacy_risk': 'Medium',
+                        'gdpr_article': 'Art. 32 - Security of processing',
+                        'vulnerability_type': 'Broken Authentication',
+                        'owasp_category': 'A07:2021 - Identification and Authentication Failures',
+                        'recommendation': 'Set autocomplete="off" or "current-password"/"new-password" on password fields.',
+                        'cwe_id': 'CWE-287'
+                    })
+                    break
+
+            if parsed_url.scheme == 'http':
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'broken_authentication',
+                    'url': url,
+                    'location': url,
+                    'location_detail': 'Login page served over HTTP',
+                    'element': 'page',
+                    'description': 'Login page served over unencrypted HTTP connection, credentials can be intercepted',
+                    'severity': 'Critical',
+                    'privacy_risk': 'Critical',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'Broken Authentication',
+                    'owasp_category': 'A07:2021 - Identification and Authentication Failures',
+                    'recommendation': 'Serve all authentication pages over HTTPS. Implement HSTS headers.',
+                    'cwe_id': 'CWE-287'
+                })
+
+        # 4. Broken Session Management
+        if 'session' in parsed_url.query.lower() or 'sid=' in parsed_url.query.lower() or 'jsessionid' in parsed_url.query.lower() or 'phpsessid' in parsed_url.query.lower():
+            findings.append({
+                'type': 'vulnerability',
+                'subtype': 'broken_session_management',
+                'url': url,
+                'location': url,
+                'location_detail': f"Session token exposed in URL: {parsed_url.query[:100]}",
+                'element': 'url',
+                'description': 'Session identifier exposed in URL parameters, vulnerable to session fixation and leakage through referrer headers',
+                'severity': 'High',
+                'privacy_risk': 'High',
+                'gdpr_article': 'Art. 32 - Security of processing',
+                'vulnerability_type': 'Broken Session Management',
+                'owasp_category': 'A07:2021 - Identification and Authentication Failures',
+                'recommendation': 'Store session tokens in cookies with Secure and HttpOnly flags. Never pass session IDs in URLs.',
+                'cwe_id': 'CWE-384'
+            })
+
+        for link in links:
+            href = link.get('href', '')
+            if any(token in href.lower() for token in ['sessionid=', 'sid=', 'jsessionid=', 'phpsessid=', 'token=']):
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'broken_session_management',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"Link with session token: {href[:100]}",
+                    'element': 'a',
+                    'description': 'Internal link contains session token in URL, risking session leakage',
+                    'severity': 'High',
+                    'privacy_risk': 'High',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'Broken Session Management',
+                    'owasp_category': 'A07:2021 - Identification and Authentication Failures',
+                    'recommendation': 'Remove session tokens from URLs. Use cookie-based session management.',
+                    'cwe_id': 'CWE-384'
+                })
+                break
+
+        # 5. Access Control Bypass
+        admin_patterns = ['/admin', '/administrator', '/wp-admin', '/cpanel', '/phpmyadmin', '/manager', '/console', '/dashboard/admin']
+        for link in links:
+            href = link.get('href', '')
+            full_url = urljoin(url, href)
+            path = urlparse(full_url).path.lower()
+            if any(pattern in path for pattern in admin_patterns):
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'access_control_bypass',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"Exposed admin link: {href}",
+                    'element': 'a',
+                    'description': f"Publicly accessible link to administrative panel found: {href}",
+                    'severity': 'Medium',
+                    'privacy_risk': 'Medium',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'Access Control Bypass',
+                    'owasp_category': 'A01:2021 - Broken Access Control',
+                    'recommendation': 'Restrict admin panel access by IP, require strong authentication, and remove public links to admin areas.',
+                    'cwe_id': 'CWE-284'
+                })
+                break
+
+        hidden_inputs = soup.find_all('input', {'type': 'hidden'})
+        for hidden in hidden_inputs:
+            name = (hidden.get('name', '') or '').lower()
+            value = (hidden.get('value', '') or '').lower()
+            if any(kw in name for kw in ['role', 'admin', 'is_admin', 'isadmin', 'privilege', 'permission', 'access_level', 'user_type']):
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'access_control_bypass',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"Hidden field: {hidden.get('name')}={hidden.get('value', '')}",
+                    'element': 'input[hidden]',
+                    'description': f"Hidden form field '{hidden.get('name')}' with role/privilege value can be manipulated client-side",
+                    'severity': 'High',
+                    'privacy_risk': 'High',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'Access Control Bypass',
+                    'owasp_category': 'A01:2021 - Broken Access Control',
+                    'recommendation': 'Never use hidden fields for access control. Enforce authorization server-side.',
+                    'cwe_id': 'CWE-284'
+                })
+
+        title_text = (soup.title.string if soup.title else '').lower()
+        if 'index of' in title_text or 'directory listing' in title_text:
+            findings.append({
+                'type': 'vulnerability',
+                'subtype': 'access_control_bypass',
+                'url': url,
+                'location': url,
+                'location_detail': 'Directory listing enabled',
+                'element': 'page',
+                'description': 'Directory listing is enabled, exposing file structure and potentially sensitive files',
+                'severity': 'Medium',
+                'privacy_risk': 'Medium',
+                'gdpr_article': 'Art. 32 - Security of processing',
+                'vulnerability_type': 'Access Control Bypass',
+                'owasp_category': 'A01:2021 - Broken Access Control',
+                'recommendation': 'Disable directory listing in web server configuration.',
+                'cwe_id': 'CWE-284'
+            })
+
+        # 6. Open URL Redirect
+        redirect_params = ['url', 'redirect', 'next', 'returnurl', 'return_url', 'goto', 'dest', 'destination', 'redir', 'redirect_uri', 'continue', 'return_to']
+        for link in links:
+            href = link.get('href', '')
+            try:
+                link_parsed = urlparse(href)
+                if link_parsed.query:
+                    params = dict(p.split('=', 1) for p in link_parsed.query.split('&') if '=' in p)
+                    for param_name in params:
+                        if param_name.lower() in redirect_params:
+                            param_val = params[param_name]
+                            if param_val.startswith('http') or param_val.startswith('//') or param_val.startswith('%2f%2f'):
+                                findings.append({
+                                    'type': 'vulnerability',
+                                    'subtype': 'open_redirect',
+                                    'url': url,
+                                    'location': url,
+                                    'location_detail': f"Link with redirect param: {param_name}={param_val[:80]}",
+                                    'element': 'a',
+                                    'description': f"Open redirect vulnerability: parameter '{param_name}' accepts external URLs",
+                                    'severity': 'Medium',
+                                    'privacy_risk': 'Medium',
+                                    'gdpr_article': 'Art. 32 - Security of processing',
+                                    'vulnerability_type': 'Open URL Redirect',
+                                    'owasp_category': 'A01:2021 - Broken Access Control',
+                                    'recommendation': 'Validate redirect URLs against a whitelist. Only allow relative redirects or known trusted domains.',
+                                    'cwe_id': 'CWE-601'
+                                })
+                                break
+            except (ValueError, AttributeError):
+                continue
+
+        # 7. Directory Traversal
+        for link in links:
+            href = link.get('href', '')
+            href_lower = href.lower()
+            if any(kw in href_lower for kw in ['file=', 'path=', 'doc=', 'document=', 'folder=', 'root=', 'pg=', 'include=', 'page=', 'template=']):
+                try:
+                    link_parsed = urlparse(href)
+                    if link_parsed.query:
+                        params = dict(p.split('=', 1) for p in link_parsed.query.split('&') if '=' in p)
+                        for param_name, param_val in params.items():
+                            if param_name.lower() in ['file', 'path', 'doc', 'document', 'folder', 'root', 'include', 'template']:
+                                if '..' in param_val or param_val.startswith('/') or '\\' in param_val:
+                                    findings.append({
+                                        'type': 'vulnerability',
+                                        'subtype': 'directory_traversal',
+                                        'url': url,
+                                        'location': url,
+                                        'location_detail': f"Path parameter: {param_name}={param_val[:80]}",
+                                        'element': 'a',
+                                        'description': f"Potential directory traversal: file path parameter '{param_name}' may allow access to arbitrary files",
+                                        'severity': 'Medium',
+                                        'privacy_risk': 'Medium',
+                                        'gdpr_article': 'Art. 32 - Security of processing',
+                                        'vulnerability_type': 'Directory Traversal',
+                                        'owasp_category': 'A01:2021 - Broken Access Control',
+                                        'recommendation': 'Validate file paths server-side. Use a whitelist of allowed files and reject path traversal sequences.',
+                                        'cwe_id': 'CWE-22'
+                                    })
+                                    break
+                except (ValueError, AttributeError):
+                    continue
+
+        for link in links:
+            href = link.get('href', '').lower()
+            if any(kw in href for kw in ['/download?', '/download/', '/getfile', '/readfile', '/fetch?', '/export?']):
+                if 'file=' in href or 'path=' in href or 'name=' in href:
+                    findings.append({
+                        'type': 'vulnerability',
+                        'subtype': 'directory_traversal',
+                        'url': url,
+                        'location': url,
+                        'location_detail': f"File download endpoint: {href[:100]}",
+                        'element': 'a',
+                        'description': 'File download endpoint with filename parameter may be vulnerable to path traversal',
+                        'severity': 'Medium',
+                        'privacy_risk': 'Medium',
+                        'gdpr_article': 'Art. 32 - Security of processing',
+                        'vulnerability_type': 'Directory Traversal',
+                        'owasp_category': 'A01:2021 - Broken Access Control',
+                        'recommendation': 'Validate file download paths against a whitelist. Never serve files based on raw user input.',
+                        'cwe_id': 'CWE-22'
+                    })
+                    break
+
+        # 8. SSRF Detection
+        for form in forms:
+            form_inputs = form.find_all('input')
+            for inp in form_inputs:
+                inp_type = (inp.get('type', '') or '').lower()
+                inp_name = (inp.get('name', '') or '').lower()
+                inp_placeholder = (inp.get('placeholder', '') or '').lower()
+                if inp_type == 'url' or any(kw in inp_name for kw in ['url', 'webhook', 'callback', 'endpoint', 'feed_url', 'import_url', 'fetch_url', 'proxy']):
+                    findings.append({
+                        'type': 'vulnerability',
+                        'subtype': 'ssrf',
+                        'url': url,
+                        'location': url,
+                        'location_detail': f"URL input field: {inp.get('name', 'unnamed')} in form action {form.get('action', '(self)')}",
+                        'element': 'input',
+                        'description': f"URL input field '{inp.get('name', '')}' may allow server-side request forgery if not properly validated",
+                        'severity': 'High',
+                        'privacy_risk': 'High',
+                        'gdpr_article': 'Art. 32 - Security of processing',
+                        'vulnerability_type': 'SSRF (Server-Side Request Forgery)',
+                        'owasp_category': 'A10:2021 - Server-Side Request Forgery',
+                        'recommendation': 'Validate and whitelist allowed URLs. Block requests to internal/private IP ranges. Use DNS resolution checks.',
+                        'cwe_id': 'CWE-918'
+                    })
+                    break
+                elif 'url' in inp_placeholder or 'webhook' in inp_placeholder:
+                    findings.append({
+                        'type': 'vulnerability',
+                        'subtype': 'ssrf',
+                        'url': url,
+                        'location': url,
+                        'location_detail': f"URL input field (by placeholder): {inp.get('name', 'unnamed')}",
+                        'element': 'input',
+                        'description': f"Input field accepting URLs (placeholder: '{inp_placeholder[:50]}') may allow SSRF attacks",
+                        'severity': 'High',
+                        'privacy_risk': 'High',
+                        'gdpr_article': 'Art. 32 - Security of processing',
+                        'vulnerability_type': 'SSRF (Server-Side Request Forgery)',
+                        'owasp_category': 'A10:2021 - Server-Side Request Forgery',
+                        'recommendation': 'Validate URLs against a whitelist. Block internal network access from user-supplied URLs.',
+                        'cwe_id': 'CWE-918'
+                    })
+                    break
+
+        # 9. RCE Detection
+        for form in forms:
+            action = (form.get('action', '') or '').lower()
+            if any(kw in action for kw in ['exec', 'execute', 'run', 'cmd', 'command', 'shell', 'system', 'ping', 'eval']):
+                findings.append({
+                    'type': 'vulnerability',
+                    'subtype': 'rce',
+                    'url': url,
+                    'location': url,
+                    'location_detail': f"Form action with command execution pattern: {action}",
+                    'element': 'form',
+                    'description': f"Form action '{action}' suggests command execution functionality that may be vulnerable to RCE",
+                    'severity': 'Critical',
+                    'privacy_risk': 'Critical',
+                    'gdpr_article': 'Art. 32 - Security of processing',
+                    'vulnerability_type': 'RCE (Remote Command Execution)',
+                    'owasp_category': 'A03:2021 - Injection',
+                    'recommendation': 'Never pass user input to system commands. Use safe APIs instead of shell commands. Implement strict input validation.',
+                    'cwe_id': 'CWE-78'
+                })
+
+        for script in scripts:
+            if script.string:
+                script_text = script.string
+                rce_patterns = [
+                    (r'eval\s*\(\s*(?:document\.|window\.|location\.|unescape|atob|String\.fromCharCode)', 'eval() with dynamic content'),
+                    (r'new\s+Function\s*\(\s*(?:document\.|window\.|location\.)', 'new Function() with dynamic content'),
+                    (r'setTimeout\s*\(\s*(?:document\.|location\.)', 'setTimeout with dynamic string execution'),
+                ]
+                for pattern, desc in rce_patterns:
+                    if re.search(pattern, script_text, re.IGNORECASE):
+                        findings.append({
+                            'type': 'vulnerability',
+                            'subtype': 'rce',
+                            'url': url,
+                            'location': url,
+                            'location_detail': f"Script: {desc}",
+                            'element': 'script',
+                            'description': f"Potential code execution vulnerability: {desc}",
+                            'severity': 'Critical',
+                            'privacy_risk': 'Critical',
+                            'gdpr_article': 'Art. 32 - Security of processing',
+                            'vulnerability_type': 'RCE (Remote Command Execution)',
+                            'owasp_category': 'A03:2021 - Injection',
+                            'recommendation': 'Avoid eval(), new Function(), and setTimeout with string arguments. Use safe alternatives.',
+                            'cwe_id': 'CWE-78'
+                        })
+                        break
+
+        # 10. Business Logic Errors
+        for form in forms:
+            hidden_inputs_in_form = form.find_all('input', {'type': 'hidden'})
+            for hidden in hidden_inputs_in_form:
+                name = (hidden.get('name', '') or '').lower()
+                if any(kw in name for kw in ['price', 'amount', 'total', 'cost', 'discount', 'rate', 'fee']):
+                    findings.append({
+                        'type': 'vulnerability',
+                        'subtype': 'business_logic',
+                        'url': url,
+                        'location': url,
+                        'location_detail': f"Hidden price field: {hidden.get('name')}={hidden.get('value', '')}",
+                        'element': 'input[hidden]',
+                        'description': f"Hidden field '{hidden.get('name')}' contains price/amount data that can be manipulated client-side",
+                        'severity': 'Medium',
+                        'privacy_risk': 'Medium',
+                        'gdpr_article': 'Art. 32 - Security of processing',
+                        'vulnerability_type': 'Business Logic Error',
+                        'owasp_category': 'A04:2021 - Insecure Design',
+                        'recommendation': 'Never trust client-side price values. Validate and calculate prices server-side from product database.',
+                        'cwe_id': 'CWE-840'
+                    })
+
+            quantity_inputs = form.find_all('input', {'type': 'number'})
+            for qty in quantity_inputs:
+                name = (qty.get('name', '') or '').lower()
+                min_val = qty.get('min')
+                if any(kw in name for kw in ['quantity', 'qty', 'count', 'amount', 'num']) and min_val is None:
+                    findings.append({
+                        'type': 'vulnerability',
+                        'subtype': 'business_logic',
+                        'url': url,
+                        'location': url,
+                        'location_detail': f"Quantity input without min constraint: {qty.get('name')}",
+                        'element': 'input[number]',
+                        'description': f"Numeric input '{qty.get('name')}' lacks minimum value constraint, allowing negative quantities",
+                        'severity': 'Medium',
+                        'privacy_risk': 'Medium',
+                        'gdpr_article': 'Art. 32 - Security of processing',
+                        'vulnerability_type': 'Business Logic Error',
+                        'owasp_category': 'A04:2021 - Insecure Design',
+                        'recommendation': 'Set min="0" or min="1" on quantity fields. Validate quantities server-side.',
+                        'cwe_id': 'CWE-840'
+                    })
+
+        return findings
+
     def _scan_content_for_pii(self, content: str, url: str) -> List[Dict[str, Any]]:
         """
         Scan page content for PII including Dutch BSN numbers with 11-proef validation.
@@ -1235,7 +1772,8 @@ class WebsiteScanner:
                         'type': 'pii_exposure',
                         'subtype': item.get('type', 'Unknown PII'),
                         'url': url,
-                        'location': 'Page Content',
+                        'location': url,
+                        'location_detail': 'Page Content',
                         'element': 'body',
                         'description': f"PII detected in page content: {item.get('type')}",
                         'severity': severity,
@@ -1267,7 +1805,8 @@ class WebsiteScanner:
                     'type': 'pii_exposure',
                     'subtype': pii_type,
                     'url': url,
-                    'location': 'Page Content',
+                    'location': url,
+                    'location_detail': 'Page Content',
                     'element': 'body',
                     'description': f"{pii_type} detected in publicly accessible page content",
                     'severity': severity,
@@ -1301,7 +1840,8 @@ class WebsiteScanner:
                     'type': 'pii_exposure',
                     'subtype': 'BSN',
                     'url': url,
-                    'location': 'Page Content',
+                    'location': url,
+                    'location_detail': 'Page Content',
                     'element': 'body',
                     'description': 'Dutch BSN (Burgerservicenummer) detected in publicly accessible page content',
                     'severity': 'Critical',
@@ -1323,7 +1863,8 @@ class WebsiteScanner:
                         'type': 'pii_exposure',
                         'subtype': 'BSN',
                         'url': url,
-                        'location': 'Page Content',
+                        'location': url,
+                        'location_detail': 'Page Content',
                         'element': 'body',
                         'description': 'Potential Dutch BSN detected (passes 11-proef validation)',
                         'severity': 'Critical',
