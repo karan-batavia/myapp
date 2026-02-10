@@ -8,7 +8,7 @@
     "active": true,
     "license_tier": "government",
     "created_at": null,
-    "last_login": null,
+    "last_login": "2026-02-10T15:49:10.130209",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -73,7 +73,7 @@
     "active": true,
     "license_tier": "government",
     "created_at": null,
-    "last_login": null,
+    "last_login": "2026-02-10T15:49:10.130209",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -86,7 +86,7 @@
     "active": true,
     "license_tier": "enterprise",
     "created_at": null,
-    "last_login": "2026-02-10T15:25:52.700650",
+    "last_login": null,
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -99,7 +99,7 @@
     "active": true,
     "license_tier": "enterprise",
     "created_at": null,
-    "last_login": "2026-02-10T15:25:52.700650",
+    "last_login": null,
     "failed_attempts": 0,
     "locked_until": null
   },
