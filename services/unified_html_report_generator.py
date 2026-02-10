@@ -131,7 +131,7 @@ class UnifiedHTMLReportGenerator:
 </head>
 <body>
     <div class="container">
-        {self._generate_header(scan_type, scan_id, formatted_timestamp, region)}
+        {self._generate_header(scan_type, scan_id, formatted_timestamp, region, scan_result.get('base_url', scan_result.get('url', scan_result.get('repo_url', ''))))}
         {self._generate_executive_summary(metrics)}
         {compliance_forecast_html}
         {scanner_content}
@@ -658,12 +658,16 @@ class UnifiedHTMLReportGenerator:
     </style>
         """
     
-    def _generate_header(self, scan_type: str, scan_id: str, timestamp: str, region: str) -> str:
+    def _generate_header(self, scan_type: str, scan_id: str, timestamp: str, region: str, target_url: str = '') -> str:
         """Generate report header."""
+        target_line = ''
+        if target_url:
+            target_line = f'<p><strong>{t_report("target", "Target")}:</strong> <a href="{target_url}" target="_blank" style="color: #e0e7ff; text-decoration: underline;">{target_url}</a></p>'
         return f"""
         <div class="header">
             <h1>🛡️ {t_report('dataGuardian_pro', 'DataGuardian Pro')} {t_report('comprehensive_report', 'Comprehensive Report')}</h1>
             <p><strong>{t_report('scan_type', 'Scan Type')}:</strong> {scan_type}</p>
+            {target_line}
             <p><strong>{t_report('scan_id', 'Scan ID')}:</strong> {scan_id[:8]}...</p>
             <p><strong>{t_report('generated_on', 'Generated')}:</strong> {timestamp}</p>
             <p><strong>{t_report('region', 'Region')}:</strong> {region}</p>

@@ -665,6 +665,7 @@
     "title": "DataGuardian Pro Rapport",
     "comprehensive_report": "Uitgebreid Rapport",
     "scan_type": "Scantype",
+    "target": "Doel",
     "scan_id": "Scan ID",
     "generated_on": "Gegenereerd op",
     "region": "Regio",
