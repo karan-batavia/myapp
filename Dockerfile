@@ -48,27 +48,51 @@ RUN useradd --create-home --shell /bin/bash dataguardian && \
     chown -R dataguardian:dataguardian /app
 USER dataguardian
 
-# Create Streamlit config
+# Create Streamlit config matching production settings
 RUN mkdir -p ~/.streamlit && \
-    echo '[server]\n\
+    printf '[server]\n\
 headless = true\n\
 address = "0.0.0.0"\n\
 port = 5000\n\
 enableCORS = false\n\
 enableXsrfProtection = false\n\
+maxUploadSize = 1000\n\
+enableStaticServing = true\n\
+fileWatcherType = "none"\n\
 \n\
 [browser]\n\
 gatherUsageStats = false\n\
+serverAddress = "dataguardianpro.nl"\n\
+serverPort = 443\n\
 \n\
 [theme]\n\
-base = "light"' > ~/.streamlit/config.toml
+primaryColor = "#4267B2"\n\
+backgroundColor = "#FFFFFF"\n\
+secondaryBackgroundColor = "#F0F2F5"\n\
+textColor = "#1E293B"\n\
+font = "sans serif"\n\
+\n\
+[global]\n\
+developmentMode = false\n\
+showWarningOnDirectExecution = false\n\
+\n\
+[logger]\n\
+level = "warning"\n\
+\n\
+[runner]\n\
+fastReruns = true\n\
+magicEnabled = true\n\
+\n\
+[client]\n\
+showErrorDetails = false\n\
+toolbarMode = "minimal"\n\
+showSidebarNavigation = false\n' > ~/.streamlit/config.toml
 
-# Expose port 5000 for production
-EXPOSE 5000
+# Expose ports
+EXPOSE 5000 5001
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/_stcore/health || exit 1
+# No HEALTHCHECK here - docker-compose.yml defines per-service healthchecks
+# For standalone: docker run --health-cmd "curl -f http://localhost:5000/_stcore/health" ...
 
 # Run application on port 5000
 CMD ["streamlit", "run", "app.py", "--server.port", "5000", "--server.address", "0.0.0.0", "--server.headless", "true"]
