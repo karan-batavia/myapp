@@ -32,6 +32,6 @@ fastReruns = true
 magicEnabled = true
 
 [client]
-showErrorDetails = true
+showErrorDetails = false
 toolbarMode = "minimal"
 showSidebarNavigation = false

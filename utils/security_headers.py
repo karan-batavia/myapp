@@ -20,6 +20,8 @@ SECURITY_HEADERS = {
     
     "X-XSS-Protection": "1; mode=block",
     
+    "X-Frame-Options": "DENY",
+    
     "Referrer-Policy": "strict-origin-when-cross-origin",
     
     "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
@@ -100,7 +102,7 @@ def get_nginx_security_headers_config() -> str:
     
     return "\n".join(config_lines)
 
-def generate_nginx_security_config(output_path: str = None) -> str:
+def generate_nginx_security_config(output_path: Optional[str] = None) -> str:
     """
     Generate Nginx security configuration file.
     
