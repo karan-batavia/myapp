@@ -4,7 +4,7 @@ import sys
 def apply_seo_template():
     try:
         import streamlit
-        streamlit_path = streamlit.__path__[0]
+        streamlit_path = list(streamlit.__path__)[0]
         index_path = os.path.join(streamlit_path, 'static', 'index.html')
         
         if not os.path.exists(index_path):
