@@ -91,8 +91,9 @@ showSidebarNavigation = false\n' > ~/.streamlit/config.toml
 # Expose ports
 EXPOSE 5000 5001
 
-# No HEALTHCHECK here - docker-compose.yml defines per-service healthchecks
-# For standalone: docker run --health-cmd "curl -f http://localhost:5000/_stcore/health" ...
+# Smart healthcheck: detects whether this is the main app (port 5000) or webhook server (port 5001)
+HEALTHCHECK --interval=30s --timeout=30s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:5000/_stcore/health 2>/dev/null || curl -f http://localhost:5001/health 2>/dev/null || exit 1
 
 # Run application on port 5000
 CMD ["streamlit", "run", "app.py", "--server.port", "5000", "--server.address", "0.0.0.0", "--server.headless", "true"]
