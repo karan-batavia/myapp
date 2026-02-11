@@ -18,17 +18,11 @@ logger = logging.getLogger(__name__)
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     
-    "X-Frame-Options": "DENY",
-    
     "X-XSS-Protection": "1; mode=block",
     
     "Referrer-Policy": "strict-origin-when-cross-origin",
     
-    "Permissions-Policy": "geolocation=(), microphone=(), camera=(), payment=()",
-    
-    "Cache-Control": "no-store, no-cache, must-revalidate, private",
-    
-    "Pragma": "no-cache",
+    "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
 }
 
 CSP_DIRECTIVES = {
@@ -66,10 +60,8 @@ def inject_security_headers_meta():
     
     security_meta = f"""
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <meta name="robots" content="noindex, nofollow">
     """
     
     st.markdown(security_meta, unsafe_allow_html=True)

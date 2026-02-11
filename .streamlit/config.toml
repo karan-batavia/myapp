@@ -9,8 +9,6 @@ enableStaticServing = true
 
 [browser]
 gatherUsageStats = false
-serverAddress = "dataguardianpro.nl"
-serverPort = 443
 
 [theme]
 primaryColor = "#4267B2"
