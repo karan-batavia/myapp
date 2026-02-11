@@ -1,21 +1,45 @@
 import os
 import sys
 
+PRERENDER_LOADING_SCREEN = '''
+      <div id="dgp-prerender" style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:800px;margin:0 auto;padding:40px 20px;color:#1a1a2e;text-align:center;">
+        <div style="margin-bottom:32px;">
+          <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;background:linear-gradient(135deg,#1a1a2e,#16213e);border-radius:16px;margin-bottom:16px;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <h1 style="font-size:28px;font-weight:700;margin:0 0 8px;color:#1a1a2e;">DataGuardian Pro</h1>
+          <p style="font-size:16px;color:#64748b;margin:0;">Enterprise Privacy &amp; GDPR Compliance Platform</p>
+        </div>
+        <div style="margin-bottom:32px;">
+          <div style="width:48px;height:48px;border:3px solid #e2e8f0;border-top-color:#1a1a2e;border-radius:50%;margin:0 auto;animation:dgp-spin 0.8s linear infinite;"></div>
+          <p style="margin-top:16px;color:#64748b;font-size:14px;">Loading secure environment...</p>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-bottom:32px;">
+          <span style="background:#f0fdf4;color:#166534;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;">GDPR 99 Articles</span>
+          <span style="background:#eff6ff;color:#1e40af;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;">EU AI Act 113 Articles</span>
+          <span style="background:#fef3c7;color:#92400e;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;">UAVG 51 Articles</span>
+          <span style="background:#f0f9ff;color:#0c4a6e;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:500;">18 AI Scanners</span>
+        </div>
+        <p style="font-size:13px;color:#94a3b8;margin:0;">Trusted by Dutch &amp; European enterprises &bull; dataguardianpro.nl</p>
+      </div>
+      <style>@keyframes dgp-spin{to{transform:rotate(360deg)}}</style>
+'''
+
 def apply_seo_template():
     try:
         import streamlit
         streamlit_path = list(streamlit.__path__)[0]
         index_path = os.path.join(streamlit_path, 'static', 'index.html')
-        
+
         if not os.path.exists(index_path):
             return
-        
+
         with open(index_path, 'r') as f:
             content = f.read()
-        
-        if 'DataGuardian Pro' in content:
+
+        if 'dgp-prerender' in content:
             return
-        
+
         content = content.replace(
             '<title>Streamlit</title>',
             '<title>DataGuardian Pro | Enterprise Privacy & GDPR Compliance Platform</title>\n'
@@ -65,7 +89,7 @@ def apply_seo_template():
             '    }\n'
             '    </script>'
         )
-        
+
         if '<style id="dgp-preload">' not in content:
             content = content.replace(
                 '</head>',
@@ -96,10 +120,17 @@ def apply_seo_template():
             '      <p>Contact us: <a href="mailto:info@dataguardianpro.nl">info@dataguardianpro.nl</a> | Visit: <a href="https://dataguardianpro.nl">dataguardianpro.nl</a></p>\n'
             '    </noscript>'
         )
-        
+
+        content = content.replace(
+            '<div id="root"></div>',
+            '<div id="root">' + PRERENDER_LOADING_SCREEN + '</div>'
+        )
+
         with open(index_path, 'w') as f:
             f.write(content)
-            
+
+        print("SEO template with pre-render loading screen applied successfully", file=sys.stderr)
+
     except Exception as e:
         print(f"SEO template application skipped: {e}", file=sys.stderr)
 
