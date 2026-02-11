@@ -4,6 +4,7 @@ address = "0.0.0.0"
 port = 5000
 enableCORS = false
 enableXsrfProtection = false
+enableWebsocketCompression = false
 maxUploadSize = 1000
 enableStaticServing = true
 

@@ -101,7 +101,7 @@ def apply_seo_template():
                 '      (function() {\n'
                 '        var fb = document.createElement("div");\n'
                 '        fb.id = "dgp-loading-fallback";\n'
-                '        fb.innerHTML = \'<div style="font-size:48px;margin-bottom:16px">\\u{1F6E1}\\uFE0F</div>\'\n'
+                '        fb.innerHTML = \'<div style="font-size:48px;margin-bottom:16px">\\uD83D\\uDEE1\\uFE0F</div>\'\n'
                 '          + \'<h2 style="color:#1e3a5f;margin:0 0 8px">DataGuardian Pro</h2>\'\n'
                 '          + \'<p style="color:#666;margin:0 0 24px">Connecting to server...</p>\'\n'
                 '          + \'<div class="spinner"></div>\'\n'
