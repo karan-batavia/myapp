@@ -447,17 +447,19 @@ except ImportError:
     STARTUP_VALIDATION_AVAILABLE = False
     logging.warning("Startup validator not available - running without validation")
 
-# Run startup validation (strict mode in production)
+# Run startup validation ONCE (cached so it doesn't re-run on every Streamlit rerun)
 if STARTUP_VALIDATION_AVAILABLE:
-    try:
-        env = os.environ.get('ENVIRONMENT', 'development').lower()
-        strict_mode = env in ('production', 'prod', 'staging')
-        validate_startup(strict_mode=strict_mode)
-        logging.info("Startup validation passed")
-    except StartupValidationError as e:
-        logging.critical(f"STARTUP VALIDATION FAILED: {e}")
-        st.error("Application startup failed due to missing critical components. Please contact support.")
-        st.stop()
+    if 'startup_validated' not in st.session_state:
+        try:
+            env = os.environ.get('ENVIRONMENT', 'development').lower()
+            strict_mode = env in ('production', 'prod', 'staging')
+            validate_startup(strict_mode=strict_mode)
+            st.session_state.startup_validated = True
+            logging.info("Startup validation passed")
+        except StartupValidationError as e:
+            logging.critical(f"STARTUP VALIDATION FAILED: {e}")
+            st.error("Application startup failed due to missing critical components. Please contact support.")
+            st.stop()
 
 # Performance optimization imports - PROTECTED
 try:
