@@ -51,8 +51,16 @@ Thumbs.db
 
 # Docker
 Dockerfile*
-docker-compose*
 .docker/
+
+# Replit-specific (not needed in production)
+.replit
+replit.md
+.pythonlibs/
+.cache/
+.local/
+.config/
+.upm/
 
 # Logs
 *.log
@@ -69,7 +77,10 @@ clone_temp_*/
 *.tmp
 *.temp
 
-# Database
+# Scan checkpoints (development artifacts)
+scan_checkpoint_*.json
+
+# Database files
 *.db
 *.sqlite
 *.sqlite3
@@ -84,19 +95,9 @@ config/production_security.env
 node_modules/
 npm-debug.log*
 
-# Documentation (exclude large files to save build space)
+# Documentation
 *.md
 docs/
-AI_MODEL_SCANNER_*.md
-NETHERLANDS_PATENT_*.md
-CODE_REVIEW_*.md
-BUDGET_*.md
-PATENT_*.md
-*_SUMMARY.md
-*_STRATEGY.md
-*_PLAN.md
-*_DESIGN.md
-*_CHECKLIST.md
 *_DIAGRAM.txt
 
 # Tests
