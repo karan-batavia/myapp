@@ -505,21 +505,33 @@ except ImportError as e:
     def show_usage_dashboard(): pass
     class LicenseIntegration: pass
 
-# Enterprise security imports - PROTECTED
-try:
-    from services.enterprise_auth_service import get_enterprise_auth_service, EnterpriseUser
-    from services.multi_tenant_service import get_multi_tenant_service, TenantTier
-    from services.encryption_service import get_encryption_service
-    ENTERPRISE_IMPORTS_OK = True
-except ImportError as e:
-    logging.warning(f"Enterprise imports failed: {e}")
-    ENTERPRISE_IMPORTS_OK = False
-    # Create fallback functions
-    def get_enterprise_auth_service(): return None
-    def get_multi_tenant_service(): return None
-    def get_encryption_service(): return None
-    class EnterpriseUser: pass
-    class TenantTier: pass
+# Enterprise security imports - DEFERRED for faster startup
+# These modules take ~260ms to import but are only needed after login
+ENTERPRISE_IMPORTS_OK = True
+
+def get_enterprise_auth_service():
+    try:
+        from services.enterprise_auth_service import get_enterprise_auth_service as _fn
+        return _fn()
+    except ImportError:
+        return None
+
+def get_multi_tenant_service():
+    try:
+        from services.multi_tenant_service import get_multi_tenant_service as _fn
+        return _fn()
+    except ImportError:
+        return None
+
+def get_encryption_service():
+    try:
+        from services.encryption_service import get_encryption_service as _fn
+        return _fn()
+    except ImportError:
+        return None
+
+class EnterpriseUser: pass
+class TenantTier: pass
 
 # Pricing system imports - PROTECTED
 try:
