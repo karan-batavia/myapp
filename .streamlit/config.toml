@@ -4,12 +4,14 @@ address = "0.0.0.0"
 port = 5000
 enableCORS = false
 enableXsrfProtection = false
-enableWebsocketCompression = false
 maxUploadSize = 1000
 enableStaticServing = true
+fileWatcherType = "none"
 
 [browser]
 gatherUsageStats = false
+serverAddress = "dataguardianpro.nl"
+serverPort = 443
 
 [theme]
 primaryColor = "#4267B2"
@@ -21,6 +23,9 @@ font = "sans serif"
 [global]
 developmentMode = false
 showWarningOnDirectExecution = false
+
+[logger]
+level = "warning"
 
 [runner]
 fastReruns = true
