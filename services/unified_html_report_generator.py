@@ -815,20 +815,98 @@ class UnifiedHTMLReportGenerator:
         """
     
     def _deduplicate_findings(self, findings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Remove duplicate findings based on article reference and description."""
-        seen = set()
+        """Remove duplicate findings based on normalized description similarity.
+        Handles cases where the same issue is reported from multiple scanners
+        with different finding types (e.g., MISSING_PET vs PET_NOT_IMPLEMENTED)."""
+        import re as _re
+        
+        def normalize_desc(desc: str) -> str:
+            desc = desc.lower().strip()
+            desc = _re.sub(r'\s+', ' ', desc)
+            desc = _re.sub(r'[^a-z0-9 ]', '', desc)
+            return desc[:80]
+        
+        def extract_core_subject(finding: Dict[str, Any]) -> str:
+            desc = finding.get('description', '').lower()
+            ftype = finding.get('type', '').lower()
+            for pet in ['synthetic_data', 'anonymization', 'pseudonymization',
+                        'federated_learning', 'differential_privacy',
+                        'homomorphic_encryption', 'secure_multiparty']:
+                if pet in desc or pet in ftype:
+                    return f'pet_{pet}'
+            
+            TOPIC_ARTICLE_MAP = {
+                'quality_management': 'article_16', 'human_oversight': 'article_14',
+                'fundamental_rights': 'article_27', 'risk_management': 'article_9',
+                'data_governance': 'article_10', 'documentation': 'article_11',
+                'logging': 'article_17', 'accuracy': 'article_15',
+                'robustness': 'article_15', 'transparency': 'article_13',
+                'conformity': 'article_19', 'gpai': 'article_51',
+                'scope_definitions': 'article_3', 'ai_literacy': 'article_4',
+                'article_2_scope': 'article_2', 'incident_reporting': 'article_73',
+                'national_authority': 'article_74', 'market_surveillance': 'article_74',
+            }
+            for topic, article in TOPIC_ARTICLE_MAP.items():
+                if topic in ftype:
+                    return f'{article}_topic'
+            
+            article_match = _re.search(r'article\s*(\d+)', desc)
+            if article_match:
+                article_num = article_match.group(1)
+                gap_keywords = ['missing', 'insufficient', 'gap', 'non-compliant',
+                                'requirement', 'requires', 'requiring', 'required',
+                                'elements', 'capabilities', 'compliance', 'detected']
+                for keyword in gap_keywords:
+                    if keyword in desc:
+                        return f'article_{article_num}_gap'
+            
+            TOPIC_DESC_MAP = {
+                'quality management': 'article_16', 'human oversight': 'article_14',
+                'fundamental rights': 'article_27', 'risk management': 'article_9',
+                'data governance': 'article_10', 'technical documentation': 'article_11',
+                'automatic logging': 'article_17', 'logging capabilities': 'article_17',
+                'accuracy': 'article_15', 'scope definitions': 'article_3',
+            }
+            gap_keywords_desc = ['missing', 'insufficient', 'gap', 'non-compliant',
+                                 'requires', 'required', 'requiring', 'elements',
+                                 'capabilities', 'detected']
+            for topic, article in TOPIC_DESC_MAP.items():
+                if topic in desc:
+                    for keyword in gap_keywords_desc:
+                        if keyword in desc:
+                            return f'{article}_gap'
+            
+            return ''
+        
+        def normalize_subject(subj: str) -> str:
+            return _re.sub(r'_(topic|gap)$', '', subj)
+        
+        seen_descriptions = set()
+        seen_subjects = set()
         deduplicated = []
         
-        for finding in findings:
-            article_ref = finding.get('article_reference', finding.get('location', ''))
+        severity_order = {'critical': 0, 'high': 1, 'medium': 2, 'low': 3, 'info': 4, 'informational': 5}
+        findings_sorted = sorted(findings, key=lambda f: severity_order.get(
+            f.get('severity', f.get('risk_level', 'medium')).lower(), 3
+        ))
+        
+        for finding in findings_sorted:
             description = finding.get('description', finding.get('title', ''))
-            finding_type = finding.get('type', '')
+            norm_desc = normalize_desc(description)
             
-            key = f"{article_ref}|{description[:100]}|{finding_type}"
+            core_subject = extract_core_subject(finding)
+            norm_subj = normalize_subject(core_subject) if core_subject else ''
             
-            if key not in seen:
-                seen.add(key)
-                deduplicated.append(finding)
+            if norm_subj and norm_subj in seen_subjects:
+                continue
+            
+            if norm_desc in seen_descriptions:
+                continue
+            
+            seen_descriptions.add(norm_desc)
+            if norm_subj:
+                seen_subjects.add(norm_subj)
+            deduplicated.append(finding)
         
         return deduplicated
     
