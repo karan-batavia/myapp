@@ -8,7 +8,7 @@
     "active": true,
     "license_tier": "government",
     "created_at": null,
-    "last_login": "2026-02-11T07:36:06.423036",
+    "last_login": "2026-02-13T10:53:59.009467",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -73,7 +73,7 @@
     "active": true,
     "license_tier": "government",
     "created_at": null,
-    "last_login": "2026-02-11T07:36:06.423036",
+    "last_login": "2026-02-13T10:53:59.009467",
     "failed_attempts": 0,
     "locked_until": null
   },
@@ -476,6 +476,19 @@
     "license_tier": "trial",
     "created_at": null,
     "last_login": "2026-02-10T15:24:53.657296",
+    "failed_attempts": 0,
+    "locked_until": null
+  },
+  "securityoffice@ilionx.com": {
+    "user_id": "186",
+    "username": "securityoffice@ilionx.com",
+    "email": "securityoffice@ilionx.com",
+    "password_hash": "$2b$12$aXfdWL1tCaaeb6XhBfGP7O5FAb7I.0XcXfdhveLzTkIYUPu7E5Q9u",
+    "role": "user",
+    "active": true,
+    "license_tier": "trial",
+    "created_at": null,
+    "last_login": null,
     "failed_attempts": 0,
     "locked_until": null
   }
