@@ -1698,12 +1698,74 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                         repo = repo.replace('.git', '')
                         
                         infra_extensions = ['.tf', '.json', '.yaml', '.yml', '.bicep', '.template']
-                        max_depth = {'Quick Scan': 1, 'Standard Scan': 2, 'Deep Scan': 3}.get(scan_depth, 2)
+                        max_files = 500
+                        api_calls_made = [0]
+                        rate_limit_hit = [False]
+                        skip_dirs = {'node_modules', '.git', 'vendor', '__pycache__', '.terraform', 'dist', 'build'}
                         
-                        def fetch_github_dir(dir_path, current_depth=0):
-                            """Recursively fetch infrastructure files from GitHub"""
+                        def fetch_via_tree_api(target_path=""):
+                            """Fetch all infrastructure files using the Git Tree API (single API call for full repo)"""
                             found_files = []
-                            if current_depth >= max_depth:
+                            api_calls_made[0] += 1
+                            tree_url = f"https://api.github.com/repos/{owner}/{repo}/git/trees/{branch}?recursive=1"
+                            try:
+                                resp = requests.get(tree_url, timeout=30, headers={'Accept': 'application/vnd.github.v3+json'})
+                                if resp.status_code == 403:
+                                    rate_limit_hit[0] = True
+                                    logger.warning(f"GitHub API rate limit hit on tree API")
+                                    return found_files
+                                if resp.status_code != 200:
+                                    logger.warning(f"Tree API returned {resp.status_code}, falling back to contents API")
+                                    return None
+                                
+                                tree_data = resp.json()
+                                tree_items = tree_data.get('tree', [])
+                                
+                                matching_files = []
+                                for item in tree_items:
+                                    if item.get('type') != 'blob':
+                                        continue
+                                    file_path = item.get('path', '')
+                                    if target_path and not file_path.startswith(target_path):
+                                        continue
+                                    path_parts = file_path.split('/')
+                                    if any(part in skip_dirs or part.startswith('.') for part in path_parts[:-1]):
+                                        continue
+                                    if any(file_path.endswith(ext) for ext in infra_extensions):
+                                        matching_files.append(file_path)
+                                
+                                status_text.text(f"Found {len(matching_files)} infrastructure files, downloading...")
+                                
+                                for file_path in matching_files[:max_files]:
+                                    if rate_limit_hit[0]:
+                                        break
+                                    download_url = f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{file_path}"
+                                    try:
+                                        file_resp = requests.get(download_url, timeout=10)
+                                        if file_resp.status_code == 200:
+                                            found_files.append({
+                                                'name': file_path,
+                                                'content': file_resp.text
+                                            })
+                                    except Exception as e:
+                                        logger.debug(f"Failed to download {file_path}: {e}")
+                                    
+                                    if len(found_files) % 20 == 0 and len(found_files) > 0:
+                                        progress_bar.progress(min(0.1 + (0.4 * len(found_files) / min(len(matching_files), max_files)), 0.5))
+                                        status_text.text(f"Downloaded {len(found_files)}/{min(len(matching_files), max_files)} files...")
+                                
+                                return found_files
+                            except requests.exceptions.Timeout:
+                                logger.warning("GitHub Tree API timeout")
+                                return None
+                            except Exception as e:
+                                logger.error(f"GitHub Tree API error: {e}")
+                                return None
+                        
+                        def fetch_github_dir(dir_path, current_depth=0, max_depth=3):
+                            """Fallback: recursively fetch infrastructure files via Contents API"""
+                            found_files = []
+                            if current_depth >= max_depth or rate_limit_hit[0]:
                                 return found_files
                             
                             url = f"https://api.github.com/repos/{owner}/{repo}/contents/{dir_path}" if dir_path else f"https://api.github.com/repos/{owner}/{repo}/contents"
@@ -1711,7 +1773,13 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                 url += f"?ref={branch}" if '?' not in url else f"&ref={branch}"
                             
                             try:
-                                resp = requests.get(url, timeout=15)
+                                api_calls_made[0] += 1
+                                resp = requests.get(url, timeout=15, headers={'Accept': 'application/vnd.github.v3+json'})
+                                
+                                if resp.status_code == 403:
+                                    rate_limit_hit[0] = True
+                                    logger.warning(f"GitHub API rate limit hit after {api_calls_made[0]} calls")
+                                    return found_files
                                 if resp.status_code != 200:
                                     return found_files
                                 
@@ -1719,7 +1787,10 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                 if not isinstance(items, list):
                                     return found_files
                                 
+                                dirs_to_recurse = []
                                 for item in items:
+                                    if len(found_files) >= max_files:
+                                        break
                                     if item.get('type') == 'file':
                                         name = item.get('name', '')
                                         if any(name.endswith(ext) for ext in infra_extensions):
@@ -1728,24 +1799,36 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                                 try:
                                                     file_resp = requests.get(file_url, timeout=10)
                                                     if file_resp.status_code == 200:
-                                                        rel_path = item.get('path', name)
                                                         found_files.append({
-                                                            'name': rel_path,
+                                                            'name': item.get('path', name),
                                                             'content': file_resp.text
                                                         })
-                                                except:
-                                                    pass
+                                                except Exception as e:
+                                                    logger.debug(f"Failed to download {name}: {e}")
                                     elif item.get('type') == 'dir' and current_depth + 1 < max_depth:
-                                        skip_dirs = {'node_modules', '.git', 'vendor', '__pycache__', '.terraform', 'dist', 'build'}
                                         dir_name = item.get('name', '')
                                         if dir_name not in skip_dirs and not dir_name.startswith('.'):
-                                            found_files.extend(fetch_github_dir(item.get('path', ''), current_depth + 1))
-                            except:
-                                pass
+                                            dirs_to_recurse.append(item.get('path', ''))
+                                
+                                for sub_dir in dirs_to_recurse:
+                                    if rate_limit_hit[0] or len(found_files) >= max_files:
+                                        break
+                                    found_files.extend(fetch_github_dir(sub_dir, current_depth + 1, max_depth))
+                            except requests.exceptions.Timeout:
+                                logger.warning(f"GitHub API timeout for {dir_path}")
+                            except Exception as e:
+                                logger.error(f"GitHub API error for {dir_path}: {e}")
                             return found_files
                         
                         start_path = target_dir if target_dir else ""
-                        infra_files = fetch_github_dir(start_path)
+                        
+                        if scan_depth == "Root Only":
+                            infra_files = fetch_github_dir(start_path, max_depth=1)
+                        else:
+                            infra_files = fetch_via_tree_api(start_path)
+                            if infra_files is None:
+                                fallback_depth = 5 if scan_depth == "Specific Directory" else 3
+                                infra_files = fetch_github_dir(start_path, max_depth=fallback_depth)
                         progress_bar.progress(0.2)
                         
                         progress_bar.progress(0.5)
@@ -1826,7 +1909,14 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                             st.session_state['last_scan_results'] = result_dict
                             st.session_state['latest_scan_type'] = 'data_sovereignty'
                         else:
-                            st.warning("No infrastructure files found in the repository. Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
+                            if rate_limit_hit[0]:
+                                st.error(f"⚠️ GitHub API rate limit reached after scanning {api_calls_made[0]} directories. "
+                                         f"Unauthenticated requests are limited to 60 per hour. "
+                                         f"Try again later or scan a specific directory instead of the full repository.")
+                            else:
+                                st.warning("No infrastructure files found in the repository. "
+                                           f"Scanned {api_calls_made[0]} directories (depth: {max_depth}). "
+                                           "Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
                             progress_bar.empty()
                             status_text.empty()
                             
