@@ -467,11 +467,32 @@ class RemediationPriorityEngine:
         return item.id
     
     def get_prioritized_remediation_plan(self) -> List[Dict[str, Any]]:
-        """Get remediation items sorted by priority"""
+        """Get remediation items sorted by priority, with duplicates consolidated"""
+        merged = {}
+        for item in self.remediation_items:
+            finding_key = item.finding.strip().lower()[:80]
+            if finding_key in merged:
+                existing = merged[finding_key]
+                existing_articles = existing.article_reference
+                new_article = item.article_reference
+                if new_article not in existing_articles:
+                    existing.article_reference = f"{existing_articles}, {new_article}"
+                if item.business_impact_score > existing.business_impact_score:
+                    existing.business_impact_score = item.business_impact_score
+                if {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}.get(item.priority.value, 4) < {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}.get(existing.priority.value, 4):
+                    existing.priority = item.priority
+            else:
+                merged[finding_key] = item
+        
+        deduplicated = list(merged.values())
+        
+        for i, item in enumerate(deduplicated):
+            item.id = f"REM-{i + 1:04d}"
+        
         sorted_items = sorted(
-            self.remediation_items,
+            deduplicated,
             key=lambda x: (
-                -x.business_impact_score,  # Higher impact first
+                -x.business_impact_score,
                 {"critical": 0, "high": 1, "medium": 2, "low": 3, "informational": 4}[x.priority.value]
             )
         )
