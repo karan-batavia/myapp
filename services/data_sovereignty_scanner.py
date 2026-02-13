@@ -2511,7 +2511,7 @@ class DataSovereigntyScanner:
                 check_name="US CLOUD Act Risk Assessment",
                 check_category="cloud_act",
                 status="warning",
-                description=f"US-based storage with {provider} (US-headquartered) - subject to CLOUD Act disclosure orders. Supplementary measures required.",
+                description=f"US-based storage with {provider_label} (US-headquartered) - subject to CLOUD Act disclosure orders. Supplementary measures required.",
                 legal_reference="US CLOUD Act (2018), CJEU Schrems II, EDPB Recommendations 01/2020",
                 recommendation="Implement supplementary measures: customer-managed encryption keys, pseudonymization, and contractual restrictions on government access"
             ))
