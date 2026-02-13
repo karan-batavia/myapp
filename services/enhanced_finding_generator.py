@@ -629,6 +629,37 @@ class EnhancedFindingGenerator:
         
         display_type = finding_type.replace('_', ' ').title() if finding_type != 'unknown' else (finding.get('pattern_name', 'Security Issue').replace('_', ' ').title())
         
+        ACRONYM_CORRECTIONS = {
+            'Pet': 'PET', 'Pii': 'PII', 'Gdpr': 'GDPR', 'Uavg': 'UAVG',
+            'Dpia': 'DPIA', 'Gpai': 'GPAI', 'Ai': 'AI', 'Eu': 'EU',
+            'Soc2': 'SOC2', 'Nis2': 'NIS2', 'Bsn': 'BSN', 'Iban': 'IBAN',
+            'Ocr': 'OCR', 'Api': 'API', 'Jwt': 'JWT', 'Tls': 'TLS',
+            'Ssl': 'SSL', 'Dpa': 'DPA', 'Bcr': 'BCR', 'Tia': 'TIA',
+            'Pci': 'PCI', 'Dss': 'DSS',
+        }
+        for wrong, correct in ACRONYM_CORRECTIONS.items():
+            display_type = display_type.replace(wrong, correct)
+        
+        is_compliant_finding = (
+            severity.lower() in ('low', 'info', 'informational') and
+            any(kw in description.lower() for kw in [
+                'implemented', 'compliant', 'documented', 'comprehensive',
+                'established', 'in place', 'configured', 'enabled',
+                'assessment implemented', 'framework per', 'marking and conformity'
+            ])
+        )
+        
+        if is_compliant_finding:
+            business_impact = f"Compliant: {description}"
+            recommendations = [ActionableRecommendation(
+                action="Maintain Current Compliance",
+                description=f"Continue maintaining: {description}",
+                implementation="Ensure ongoing monitoring and periodic review of compliance controls",
+                effort_estimate="Ongoing",
+                priority="low",
+                verification="Periodic compliance audit"
+            )]
+        
         return EnhancedFinding(
             type=finding.get('type') or finding.get('pattern_type') or 'unknown',
             subtype=finding.get('subtype') or finding.get('category') or 'generic',
