@@ -1515,12 +1515,30 @@ class UnifiedHTMLReportGenerator:
         - SOC2: TSC criteria references (attestation standard, no monetary fines)
         - NIS2: Article 34 penalties (€10M/2% or €7M/1.4%)
         - EU AI Act: Article 99 penalties (Tier 1-3)
-        - GDPR: Article 83 penalties"""
+        - GDPR: Article 83 penalties
+        Compliant findings (low severity + positive language) show compliance confirmation instead of penalties."""
         is_dutch = self.current_language == 'nl'
         finding_type = finding.get('type', '').lower()
         severity = finding.get('severity', finding.get('risk_level', 'Medium')).lower()
         article_ref = finding.get('article_reference', finding.get('location', '')).lower()
         scan_type_lower = scan_type.lower() if scan_type else ''
+        
+        description = finding.get('description', '').lower()
+        compliant_keywords = ['implemented', 'compliant', 'documented', 'comprehensive',
+                              'established', 'in place', 'configured', 'enabled',
+                              'assessment implemented', 'framework per', 'marking and conformity']
+        is_compliant = (
+            severity in ('low', 'info', 'informational') and
+            any(kw in description for kw in compliant_keywords)
+        )
+        
+        if is_compliant:
+            return f"""
+            <div class="penalty-info" style="background: #d1fae5; border-left: 4px solid #10b981; padding: 12px; margin: 10px 0; border-radius: 4px;">
+                <strong style="color: #065f46;">{"✅ Naleving Bevestigd" if is_dutch else "✅ Compliance Confirmed"}</strong>
+                <span style="color: #047857; font-weight: 600;">{"Geen boeterisico - vereisten zijn geïmplementeerd" if is_dutch else "No penalty risk - requirements are implemented"}</span>
+            </div>
+            """
         
         penalty_html = ""
         
