@@ -489,10 +489,22 @@ class DataSovereigntyScanner:
         if config_type == "generic" and detected_provider != 'Unknown':
             config_type = detected_provider.lower()
         
+        config_type_labels = {
+            "kubernetes": "Kubernetes",
+            "docker": "Docker Compose",
+            "dockerfile": "Dockerfile",
+        }
+        if config_type in config_type_labels:
+            target_label = f"{config_type_labels[config_type]} Configuration"
+        elif detected_provider != 'Unknown':
+            target_label = f"{detected_provider} Configuration"
+        else:
+            target_label = f"{config_type.upper()} Configuration"
+        
         result = SovereigntyScanResult(
             scan_id=self.scan_id,
             timestamp=datetime.now().isoformat(),
-            target_name=f"{detected_provider if detected_provider != 'Unknown' else config_type.upper()} Configuration",
+            target_name=target_label,
             region=self.region
         )
         
@@ -1431,6 +1443,33 @@ class DataSovereigntyScanner:
                     ))
                     break
         
+        image_registry_flows = {
+            r'gcr\.io/': ('US', 'Google Container Registry'),
+            r'docker\.io/': ('US', 'Docker Hub'),
+            r'ghcr\.io/': ('US', 'GitHub Container Registry'),
+            r'quay\.io/': ('US', 'Red Hat Quay'),
+            r'mcr\.microsoft\.com/': ('US', 'Microsoft Container Registry'),
+            r'public\.ecr\.aws/': ('US', 'AWS ECR Public'),
+            r'registry\.eu-central-1': ('DE', 'EU Registry'),
+            r'registry\.eu-west-1': ('IE', 'EU Registry'),
+        }
+        for pattern, (registry_country, registry_name) in image_registry_flows.items():
+            if re.search(pattern, content, re.IGNORECASE):
+                if registry_country != base_country:
+                    flow_key = (base_country, registry_country, registry_name)
+                    if flow_key not in seen_flows:
+                        seen_flows.add(flow_key)
+                        flows.append(DataFlow(
+                            source=registry_name,
+                            destination=f"{self.region} (K8s Cluster)",
+                            source_country=registry_country,
+                            destination_country=base_country,
+                            is_cross_border=True,
+                            is_eu_to_third_country=False,
+                            flow_type="container_image_pull",
+                            data_types=["container_images", "application_artifacts"]
+                        ))
+        
         return flows
     
     def _detect_kubernetes_access(self, content: str) -> List[AccessPath]:
@@ -1553,7 +1592,16 @@ class DataSovereigntyScanner:
         
         api_endpoints = re.findall(r'value\s*:\s*["\']?(https?://[^\s"\']+)["\']?', content, re.IGNORECASE)
         seen_apis = set()
+        internal_service_patterns = re.compile(
+            r'^https?://[a-z0-9-]+:\d+$|'
+            r'^https?://[a-z0-9-]+\.[a-z0-9-]+\.svc(\.cluster\.local)?|'
+            r'^https?://localhost|'
+            r'^https?://127\.0\.0\.',
+            re.IGNORECASE
+        )
         for endpoint in api_endpoints:
+            if internal_service_patterns.search(endpoint):
+                continue
             api_host = endpoint.split('/')[2] if len(endpoint.split('/')) > 2 else endpoint
             if api_host not in seen_apis:
                 seen_apis.add(api_host)
@@ -2314,29 +2362,58 @@ class DataSovereigntyScanner:
         provider = self._detect_terraform_provider(content)
         
         has_third_country = any(not loc.is_eu and not loc.is_adequacy_decision for loc in result.data_locations)
+        has_non_eu = any(not loc.is_eu for loc in result.data_locations)
         has_us_storage = any(loc.country == 'US' for loc in result.data_locations)
+        has_adequacy_only = has_non_eu and not has_third_country
+        non_eu_countries = ', '.join(set(l.country for l in result.data_locations if not l.is_eu))
+        
+        if has_third_country:
+            sccs_status = "fail"
+            sccs_desc = f"Third country storage detected ({non_eu_countries}) - EU Commission 2021 SCCs required for lawful transfers"
+            sccs_rec = "Execute EU Commission's 2021 Standard Contractual Clauses with all third-country processors"
+        elif has_adequacy_only:
+            sccs_status = "pass"
+            sccs_desc = f"Non-EU storage in adequacy countries ({non_eu_countries}) - SCCs not strictly required but recommended as supplementary safeguard"
+            sccs_rec = ""
+        else:
+            sccs_status = "pass"
+            sccs_desc = "All storage in EU/EEA - no SCCs needed"
+            sccs_rec = ""
         
         checks.append(ComplianceCheck(
             check_name="Standard Contractual Clauses (SCCs)",
             check_category="sccs",
-            status="fail" if has_third_country else "pass",
-            description=f"Third country storage detected ({', '.join(set(l.country for l in result.data_locations if not l.is_eu))}) - EU Commission 2021 SCCs required for lawful transfers" if has_third_country else "All storage in EU/EEA - no SCCs needed",
+            status=sccs_status,
+            description=sccs_desc,
             legal_reference="GDPR Article 46(2)(c)",
-            recommendation="Execute EU Commission's 2021 Standard Contractual Clauses with all third-country processors" if has_third_country else ""
+            recommendation=sccs_rec
         ))
+        
+        if has_third_country:
+            tia_status = "fail"
+            tia_desc = f"TIA mandatory per Schrems II for {provider} processing in third countries. Must assess local surveillance laws."
+            tia_rec = "Complete TIA documenting: (1) legal framework assessment, (2) supplementary technical measures, (3) ongoing monitoring plan"
+        elif has_us_storage:
+            tia_status = "warning"
+            tia_desc = f"US storage detected - TIA recommended despite EU-US Data Privacy Framework due to CLOUD Act exposure and conditional adequacy status"
+            tia_rec = "Complete TIA documenting supplementary measures for US-based processing (EDPB Recommendations 01/2020)"
+        else:
+            tia_status = "not_applicable"
+            tia_desc = "No third country transfers requiring TIA"
+            tia_rec = ""
         
         checks.append(ComplianceCheck(
             check_name="Transfer Impact Assessment (TIA)",
             check_category="tia",
-            status="fail" if has_third_country else "not_applicable",
-            description=f"TIA mandatory per Schrems II for {provider} processing in third countries. Must assess local surveillance laws." if has_third_country else "No third country transfers requiring TIA",
+            status=tia_status,
+            description=tia_desc,
             legal_reference="CJEU Schrems II (Case C-311/18), EDPB Recommendations 01/2020",
-            recommendation="Complete TIA documenting: (1) legal framework assessment, (2) supplementary technical measures, (3) ongoing monitoring plan" if has_third_country else ""
+            recommendation=tia_rec
         ))
         
-        encryption_patterns = re.findall(r'encrypt|kms|key_id|server_side_encryption|sse|cmk|customer_managed_key|key_vault|disk_encryption|google_kms|cmek|azurerm_key_vault', content_lower)
+        encryption_patterns = re.findall(r'\bencrypt(?:ion|ed)?\b|\bkms\b|\bkey_id\b|\bserver_side_encryption\b|\bsse[-_](?:s3|kms)\b|\bcmk\b|\bcustomer_managed_key\b|\bkey_vault\b|\bdisk_encryption\b|\bgoogle_kms\b|\bcmek\b|\bazurerm_key_vault\b', content_lower)
         has_encryption = len(encryption_patterns) > 0
-        has_customer_key = bool(re.search(r'kms|cmk|customer_managed_key|key_id|key_vault|disk_encryption_set|google_kms_crypto_key|cmek', content_lower))
+        has_customer_key = bool(re.search(r'\bkms\b|\bcmk\b|\bcustomer_managed_key\b|\bkey_id\b|\bkey_vault\b|\bdisk_encryption_set\b|\bgoogle_kms_crypto_key\b|\bcmek\b', content_lower))
         checks.append(ComplianceCheck(
             check_name="Encryption at Rest",
             check_category="encryption",
@@ -2346,7 +2423,7 @@ class DataSovereigntyScanner:
             recommendation="" if has_encryption else "Enable AES-256 encryption with customer-managed keys for all storage resources"
         ))
         
-        tls_patterns = re.findall(r'https|tls|ssl|certificate|acm_certificate', content_lower)
+        tls_patterns = re.findall(r'\bhttps://|\btls[_\s]|\bssl[_\s]|\bcertificate\b|\bacm_certificate\b|\bmin_tls_version\b|\bssl_enforcement\b', content_lower)
         has_tls = len(tls_patterns) > 0
         checks.append(ComplianceCheck(
             check_name="Encryption in Transit (TLS)",
@@ -2357,27 +2434,45 @@ class DataSovereigntyScanner:
             recommendation="" if has_tls else "Enforce TLS 1.2+ for all endpoints and inter-service communication"
         ))
         
-        dpa_check = "warning" if has_third_country else "pass"
+        detected_providers = set()
+        for loc in result.data_locations:
+            if loc.cloud_provider:
+                detected_providers.add(loc.cloud_provider)
+        provider_label = ', '.join(detected_providers) if detected_providers else provider
+        
+        dpa_check = "warning" if has_third_country or has_us_storage else "pass"
         checks.append(ComplianceCheck(
             check_name="Data Processing Agreement (DPA)",
             check_category="dpa",
             status=dpa_check,
-            description=f"DPA with {provider} required under GDPR Art. 28. Verify DPA covers all deployed services and regions." if has_third_country else f"DPA with {provider} should be in place for EU processing",
+            description=f"DPA with {provider_label} required under GDPR Art. 28. Verify DPA covers all deployed services and regions." if has_third_country else f"DPA with {provider_label} should be in place for EU processing" if has_non_eu else f"DPA with {provider_label} should be in place for EU processing",
             legal_reference="GDPR Article 28 (Processor Obligations)",
-            recommendation=f"Verify signed DPA with {provider} covers: data categories, processing purposes, sub-processor controls, and audit rights" if has_third_country else ""
+            recommendation=f"Verify signed DPA with {provider_label} covers: data categories, processing purposes, sub-processor controls, and audit rights" if has_third_country or has_us_storage else ""
         ))
         
-        bcr_check = "warning" if has_third_country else "not_applicable"
+        if has_third_country:
+            bcr_status = "warning"
+            bcr_desc = "BCRs may be required as additional transfer mechanism for intra-group transfers to third countries"
+            bcr_rec = "Consider BCRs for systematic intra-group transfers alongside SCCs"
+        elif has_adequacy_only:
+            bcr_status = "not_applicable"
+            bcr_desc = f"Non-EU storage in adequacy countries ({non_eu_countries}) - BCRs not required but may strengthen compliance posture"
+            bcr_rec = ""
+        else:
+            bcr_status = "not_applicable"
+            bcr_desc = "No BCRs needed - all processing within EU/EEA"
+            bcr_rec = ""
+        
         checks.append(ComplianceCheck(
             check_name="Binding Corporate Rules (BCRs)",
             check_category="bcr",
-            status=bcr_check,
-            description="BCRs may be required as additional transfer mechanism for intra-group transfers to third countries" if has_third_country else "No BCRs needed - all processing within EU/EEA",
+            status=bcr_status,
+            description=bcr_desc,
             legal_reference="GDPR Article 47 (Binding Corporate Rules)",
-            recommendation="Consider BCRs for systematic intra-group transfers alongside SCCs" if has_third_country else ""
+            recommendation=bcr_rec
         ))
         
-        retention_patterns = re.findall(r'retention|lifecycle|expiration|ttl|days\s*=', content_lower)
+        retention_patterns = re.findall(r'\bretention\b|\blifecycle_rule\b|\blifecycle_policy\b|\bexpiration\b|\bttl\b|\bretention_days\b|\bretention_period\b|\bdata_retention\b|\blifecycle\s*\{[^}]*expiration', content_lower)
         has_retention = len(retention_patterns) > 0
         checks.append(ComplianceCheck(
             check_name="Data Retention Policy",
@@ -2388,7 +2483,7 @@ class DataSovereigntyScanner:
             recommendation="" if has_retention else "Define retention periods and implement automatic data lifecycle management"
         ))
         
-        backup_patterns = re.findall(r'backup|replicat|snapshot|dr_|disaster|recovery', content_lower)
+        backup_patterns = re.findall(r'\bbackup\b|\breplication\b|\bsnapshot\b|\bdr_\w|\bdisaster[_\s]recovery\b|\brecovery_point\b|\bbackup_policy\b|\bbackup_retention\b', content_lower)
         has_backups = len(backup_patterns) > 0
         backup_in_third = has_backups and has_third_country
         checks.append(ComplianceCheck(
@@ -2400,7 +2495,7 @@ class DataSovereigntyScanner:
             recommendation="Ensure all backup and DR storage locations are within EU/EEA jurisdictions" if backup_in_third else ("Implement backup strategy with EU/EEA-only storage" if not has_backups else "")
         ))
         
-        logging_patterns = re.findall(r'cloudwatch|cloudtrail|logging|audit|monitor|log_analytics|azurerm_monitor_|application_insights|google_logging|google_monitoring|stackdriver', content_lower)
+        logging_patterns = re.findall(r'\bcloudwatch\b|\bcloudtrail\b|\blogging_service\b|\baudit_log\b|\bmonitor(?:ing)?\b|\blog_analytics\b|\bazurerm_monitor_\w|\bapplication_insights\b|\bgoogle_logging\b|\bgoogle_monitoring\b|\bstackdriver\b|\bfluentd\b|\bprometheus\b|\bgrafana\b|\belastic\w*search\b|\bsplunk\b', content_lower)
         has_logging = len(logging_patterns) > 0
         checks.append(ComplianceCheck(
             check_name="Audit Logging & Monitoring",
@@ -2450,16 +2545,12 @@ class DataSovereigntyScanner:
         return config.get('backup_locations', [])
     
     def _detect_terraform_encryption(self, content: str, enc_type: str) -> bool:
-        """Detect encryption settings in Terraform"""
+        """Detect encryption settings in Terraform/cloud config"""
+        content_lower = content.lower()
         if enc_type == "at_rest":
-            patterns = ['encrypt', 'kms', 'server_side_encryption', 'sse-s3', 'sse-kms', 'key_vault', 'disk_encryption_set', 'customer_managed_key', 'google_kms_crypto_key', 'cmek', 'azure_key_vault', 'azurerm_key_vault']
+            return bool(re.search(r'\bencrypt(?:ion|ed)?\b|\bkms\b|\bserver_side_encryption\b|\bsse[-_](?:s3|kms)\b|\bkey_vault\b|\bdisk_encryption\b|\bcustomer_managed_key\b|\bgoogle_kms_crypto_key\b|\bcmek\b|\bazurerm_key_vault\b', content_lower))
         else:
-            patterns = ['https', 'tls', 'ssl', 'certificate_arn', 'azurerm_app_service_certificate', 'google_compute_ssl_certificate', 'google_compute_managed_ssl_certificate', 'min_tls_version', 'ssl_enforcement']
-        
-        for pattern in patterns:
-            if pattern in content.lower():
-                return True
-        return False
+            return bool(re.search(r'\bhttps://|\btls[_\s]|\bssl[_\s]|\bcertificate_arn\b|\bmin_tls_version\b|\bssl_enforcement\b|\bcertificate\b', content_lower))
     
     def _detect_terraform_retention(self, content: str) -> str:
         """Detect retention policies in Terraform"""
@@ -2552,30 +2643,38 @@ class DataSovereigntyScanner:
                     'risk_score': 0.5
                 })
         
+        seen_access_findings = set()
         for access in result.access_paths:
+            accessor_label = access.accessor_name or access.accessor_type
             if not access.is_eu_access:
-                findings.append({
-                    'type': 'non_eu_access',
-                    'severity': 'high',
-                    'title': f'Non-EU Access Detected: {access.accessor_country}',
-                    'description': f'Access from non-EU country ({access.accessor_country}) with {access.privilege_level} privileges detected.',
-                    'affected_data': [access.accessor_type],
-                    'legal_reference': 'GDPR Article 44 (Transfer Restrictions)',
-                    'recommendation': 'Implement access controls to restrict non-EU access or establish legal basis',
-                    'risk_score': 0.7
-                })
+                finding_key = f"non_eu_access:{accessor_label}:{access.accessor_country}"
+                if finding_key not in seen_access_findings:
+                    seen_access_findings.add(finding_key)
+                    findings.append({
+                        'type': 'non_eu_access',
+                        'severity': 'high',
+                        'title': f'Non-EU Access Detected: {accessor_label} ({access.accessor_country})',
+                        'description': f'Access from non-EU country ({access.accessor_country}) via {accessor_label} with {access.privilege_level} privileges detected.',
+                        'affected_data': [access.accessor_type],
+                        'legal_reference': 'GDPR Article 44 (Transfer Restrictions)',
+                        'recommendation': 'Implement access controls to restrict non-EU access or establish legal basis',
+                        'risk_score': 0.7
+                    })
             
             if not access.is_monitored:
-                findings.append({
-                    'type': 'unmonitored_access',
-                    'severity': 'medium',
-                    'title': f'Unmonitored Access Path: {access.accessor_type}',
-                    'description': f'Access path for {access.accessor_type} is not being actively monitored.',
-                    'affected_data': [access.accessor_type],
-                    'legal_reference': 'GDPR Article 32 (Security of Processing)',
-                    'recommendation': 'Implement logging and monitoring for all access paths',
-                    'risk_score': 0.5
-                })
+                finding_key = f"unmonitored:{accessor_label}"
+                if finding_key not in seen_access_findings:
+                    seen_access_findings.add(finding_key)
+                    findings.append({
+                        'type': 'unmonitored_access',
+                        'severity': 'medium',
+                        'title': f'Unmonitored Access Path: {accessor_label}',
+                        'description': f'Access path for {accessor_label} is not being actively monitored.',
+                        'affected_data': [access.accessor_type],
+                        'legal_reference': 'GDPR Article 32 (Security of Processing)',
+                        'recommendation': 'Implement logging and monitoring for all access paths',
+                        'risk_score': 0.5
+                    })
         
         return findings
     
@@ -2619,7 +2718,8 @@ class DataSovereigntyScanner:
                 if check.recommendation and check.recommendation not in recommendations:
                     recommendations.append(f"{check.check_name}: {check.recommendation}")
         
-        if not result.encryption_at_rest:
+        encryption_check_passed = any(c.check_name == "Encryption at Rest" and c.status == "pass" for c in result.compliance_checks)
+        if not result.encryption_at_rest and not encryption_check_passed:
             recommendations.append("Enable encryption at rest (AES-256) for all data stores to comply with GDPR Article 32")
         
         if self.region == "Netherlands":
