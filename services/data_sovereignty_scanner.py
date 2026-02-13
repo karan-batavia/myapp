@@ -191,7 +191,7 @@ class DataSovereigntyScanner:
     
     ADEQUACY_COUNTRIES = {
         'AD', 'AR', 'CA', 'FO', 'GG', 'IL', 'IM', 'JP', 'JE', 'NZ',
-        'KR', 'CH', 'GB', 'UY'
+        'KR', 'CH', 'GB', 'UY', 'US'
     }
     
     CLOUD_ACT_RISK_PROVIDERS = {
@@ -300,7 +300,37 @@ class DataSovereigntyScanner:
         'me-west1': {'country': 'IL', 'name': 'Tel Aviv'},
         'me-central1': {'country': 'QA', 'name': 'Doha'},
         'me-central2': {'country': 'SA', 'name': 'Dammam'},
-        'africa-south1': {'country': 'ZA', 'name': 'Johannesburg'}
+        'africa-south1': {'country': 'ZA', 'name': 'Johannesburg'},
+        'fsn1': {'country': 'DE', 'name': 'Hetzner Falkenstein'},
+        'nbg1': {'country': 'DE', 'name': 'Hetzner Nuremberg'},
+        'hel1': {'country': 'FI', 'name': 'Hetzner Helsinki'},
+        'ash': {'country': 'US', 'name': 'Hetzner Ashburn'},
+        'gra': {'country': 'FR', 'name': 'OVH Gravelines'},
+        'sbg': {'country': 'FR', 'name': 'OVH Strasbourg'},
+        'rbx': {'country': 'FR', 'name': 'OVH Roubaix'},
+        'bhs': {'country': 'CA', 'name': 'OVH Beauharnois'},
+        'waw': {'country': 'PL', 'name': 'OVH Warsaw'},
+        'de1': {'country': 'DE', 'name': 'OVH Frankfurt'},
+        'uk1': {'country': 'GB', 'name': 'OVH London'},
+        'fr-par': {'country': 'FR', 'name': 'Scaleway Paris'},
+        'nl-ams': {'country': 'NL', 'name': 'Scaleway Amsterdam'},
+        'pl-waw': {'country': 'PL', 'name': 'Scaleway Warsaw'},
+        'ams2': {'country': 'NL', 'name': 'DigitalOcean Amsterdam 2'},
+        'ams3': {'country': 'NL', 'name': 'DigitalOcean Amsterdam 3'},
+        'fra1': {'country': 'DE', 'name': 'DigitalOcean Frankfurt'},
+        'lon1': {'country': 'GB', 'name': 'DigitalOcean London'},
+        'sgp1': {'country': 'SG', 'name': 'DigitalOcean Singapore'},
+        'nyc1': {'country': 'US', 'name': 'DigitalOcean New York 1'},
+        'nyc3': {'country': 'US', 'name': 'DigitalOcean New York 3'},
+        'sfo1': {'country': 'US', 'name': 'DigitalOcean San Francisco 1'},
+        'sfo3': {'country': 'US', 'name': 'DigitalOcean San Francisco 3'},
+        'ams0': {'country': 'NL', 'name': 'TransIP Amsterdam'},
+        'de-fra': {'country': 'DE', 'name': 'IONOS Frankfurt'},
+        'de-txl': {'country': 'DE', 'name': 'IONOS Berlin'},
+        'es-vit': {'country': 'ES', 'name': 'IONOS Vitoria'},
+        'gb-lhr': {'country': 'GB', 'name': 'IONOS London'},
+        'us-ewr': {'country': 'US', 'name': 'IONOS Newark'},
+        'us-las': {'country': 'US', 'name': 'IONOS Las Vegas'}
     }
     
     def __init__(self, region: str = "Netherlands"):
@@ -407,6 +437,7 @@ class DataSovereigntyScanner:
             result.data_origins = self._analyze_terraform_origins(terraform_content)
             result.legal_jurisdictions = self._analyze_legal_jurisdictions(result.data_locations)
             result.compliance_checks = self._run_terraform_compliance_checks(terraform_content, result)
+            result.compliance_checks.extend(self._run_nis2_compliance_checks(terraform_content, result))
             
             result.encryption_at_rest = self._detect_terraform_encryption(terraform_content, "at_rest")
             result.encryption_in_transit = self._detect_terraform_encryption(terraform_content, "in_transit")
@@ -474,17 +505,27 @@ class DataSovereigntyScanner:
                 result.data_locations = self._parse_gcp_config(config_content)
             elif config_type == "kubernetes":
                 result.data_locations = self._parse_kubernetes_config(config_content)
+            elif config_type == "docker":
+                result.data_locations = self._parse_docker_compose(config_content)
+            elif config_type == "dockerfile":
+                result.data_locations = self._parse_dockerfile(config_content)
             else:
                 result.data_locations = self._parse_generic_config(config_content)
             
             if not result.data_locations:
                 result.data_locations = self._parse_terraform_locations(config_content)
             
-            result.data_flows = self._detect_terraform_flows(config_content)
-            result.access_paths = self._detect_terraform_access(config_content)
-            result.data_origins = self._analyze_terraform_origins(config_content)
+            if config_type == "kubernetes":
+                result.data_flows = self._detect_kubernetes_flows(config_content)
+                result.access_paths = self._detect_kubernetes_access(config_content)
+                result.data_origins = self._analyze_kubernetes_origins(config_content)
+            else:
+                result.data_flows = self._detect_terraform_flows(config_content)
+                result.access_paths = self._detect_terraform_access(config_content)
+                result.data_origins = self._analyze_terraform_origins(config_content)
             result.legal_jurisdictions = self._analyze_legal_jurisdictions(result.data_locations)
             result.compliance_checks = self._run_terraform_compliance_checks(config_content, result)
+            result.compliance_checks.extend(self._run_nis2_compliance_checks(config_content, result))
             
             result.encryption_at_rest = self._detect_terraform_encryption(config_content, "at_rest")
             result.encryption_in_transit = self._detect_terraform_encryption(config_content, "in_transit")
@@ -732,6 +773,18 @@ class DataSovereigntyScanner:
             return 'Azure'
         elif re.search(r'provider\s+["\']?google', content_lower) or 'google_' in content_lower:
             return 'GCP'
+        elif re.search(r'provider\s+["\']?hcloud', content_lower) or 'hcloud_' in content_lower or 'hetzner' in content_lower:
+            return 'Hetzner'
+        elif re.search(r'provider\s+["\']?ovh', content_lower) or 'ovh_' in content_lower or 'ovhcloud' in content_lower:
+            return 'OVH'
+        elif re.search(r'provider\s+["\']?scaleway', content_lower) or 'scaleway_' in content_lower:
+            return 'Scaleway'
+        elif re.search(r'provider\s+["\']?digitalocean', content_lower) or 'digitalocean_' in content_lower:
+            return 'DigitalOcean'
+        elif 'transip' in content_lower:
+            return 'TransIP'
+        elif re.search(r'provider\s+["\']?ionos', content_lower) or 'ionos' in content_lower:
+            return 'IONOS'
         elif 'aws' in content_lower:
             return 'AWS'
         elif 'azure' in content_lower:
@@ -1101,26 +1154,705 @@ class DataSovereigntyScanner:
         return locations
     
     def _parse_kubernetes_config(self, content: str) -> List[DataLocation]:
-        """Parse Kubernetes YAML configuration"""
+        """Parse Kubernetes YAML configuration for data sovereignty locations.
+        
+        Detects container image origins, external service endpoints, storage classes,
+        LoadBalancer annotations, namespace region hints, ingress hostnames,
+        topology labels, and Helm chart values.
+        """
         locations = []
+        seen = set()
         
-        region_matches = re.findall(r'topology\.kubernetes\.io/region["\']?\s*[:=]\s*["\']?([^"\']+)["\']?', content)
-        zone_matches = re.findall(r'topology\.kubernetes\.io/zone["\']?\s*[:=]\s*["\']?([^"\']+)["\']?', content)
+        def _add_location(region, country, provider, service_type):
+            key = (region, country, provider, service_type)
+            if key not in seen and country != 'unknown':
+                seen.add(key)
+                locations.append(DataLocation(
+                    region=region,
+                    country=country,
+                    cloud_provider=provider,
+                    service_type=service_type,
+                    is_eu=country in self.EU_COUNTRIES,
+                    is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
+                    legal_jurisdiction=self._get_jurisdiction(country)
+                ))
         
+        region_matches = re.findall(r'topology\.kubernetes\.io/region["\']?\s*[:=]\s*["\']?([^"\'\s,}]+)["\']?', content)
+        zone_matches = re.findall(r'topology\.kubernetes\.io/zone["\']?\s*[:=]\s*["\']?([^"\'\s,}]+)["\']?', content)
         for region in region_matches + zone_matches:
             country = self._detect_country_from_region(region)
+            _add_location(region, country, 'Kubernetes', 'k8s_topology')
+        
+        image_registry_map = {
+            r'docker\.io/': ('US', 'Docker Hub'),
+            r'gcr\.io/': ('US', 'Google Container Registry'),
+            r'ghcr\.io/': ('US', 'GitHub Container Registry'),
+            r'quay\.io/': ('US', 'Red Hat Quay'),
+            r'mcr\.microsoft\.com/': ('US', 'Microsoft Container Registry'),
+            r'public\.ecr\.aws/': ('US', 'AWS ECR Public'),
+            r'registry\.k8s\.io/': ('US', 'Kubernetes Registry'),
+            r'docker\.elastic\.co/': ('US', 'Elastic Registry'),
+            r'registry\.hub\.docker\.com/': ('US', 'Docker Hub'),
+        }
+        
+        image_matches = re.findall(r'image\s*:\s*["\']?([^\s"\']+)["\']?', content)
+        for image in image_matches:
+            matched_registry = False
+            for pattern, (country, registry_name) in image_registry_map.items():
+                if re.search(pattern, image, re.IGNORECASE):
+                    _add_location(registry_name, country, registry_name, 'container_image')
+                    matched_registry = True
+                    break
             
-            locations.append(DataLocation(
-                region=region,
-                country=country,
-                cloud_provider='Kubernetes',
-                service_type='k8s_deployment',
-                is_eu=country in self.EU_COUNTRIES,
-                is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
-                legal_jurisdiction=self._get_jurisdiction(country)
-            ))
-            
+            if not matched_registry:
+                ecr_match = re.search(r'(\d+)\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com', image)
+                if ecr_match:
+                    ecr_region = ecr_match.group(2)
+                    country = self._detect_country_from_region(ecr_region)
+                    _add_location(ecr_region, country, 'AWS ECR', 'container_image')
+                
+                acr_match = re.search(r'([a-z0-9]+)\.azurecr\.io', image, re.IGNORECASE)
+                if acr_match:
+                    _add_location('Azure ACR', 'US', 'Azure Container Registry', 'container_image')
+                
+                gar_match = re.search(r'([a-z]+-[a-z0-9]+)-docker\.pkg\.dev', image)
+                if gar_match:
+                    gar_region = gar_match.group(1)
+                    country = self._detect_country_from_region(gar_region)
+                    _add_location(gar_region, country, 'Google Artifact Registry', 'container_image')
+                
+                if not ecr_match and not acr_match and not gar_match and '/' in image and '.' in image.split('/')[0]:
+                    _add_location(image.split('/')[0], 'unknown', 'Custom Registry', 'container_image')
+        
+        env_patterns = [
+            r'value\s*:\s*["\']?((?:https?://|postgres(?:ql)?://|mysql://|mongodb(?:\+srv)?://|redis://|amqp://)[^\s"\']+)["\']?',
+            r'DATABASE_URL["\']?\s*:\s*["\']?([^\s"\']+)["\']?',
+            r'REDIS_URL["\']?\s*:\s*["\']?([^\s"\']+)["\']?',
+            r'API_ENDPOINT["\']?\s*:\s*["\']?([^\s"\']+)["\']?',
+            r'ELASTICSEARCH_URL["\']?\s*:\s*["\']?([^\s"\']+)["\']?',
+        ]
+        for pat in env_patterns:
+            for endpoint in re.findall(pat, content, re.IGNORECASE):
+                for region_key, region_info in self.CLOUD_REGIONS.items():
+                    if region_key in endpoint.lower():
+                        _add_location(region_key, region_info['country'], 'External Service', 'env_endpoint')
+                        break
+                else:
+                    cloud_hints = [
+                        (r'\.rds\.amazonaws\.com', 'US', 'AWS RDS'),
+                        (r'\.cache\.amazonaws\.com', 'US', 'AWS ElastiCache'),
+                        (r'\.database\.azure\.com', 'US', 'Azure Database'),
+                        (r'\.redis\.cache\.windows\.net', 'US', 'Azure Redis'),
+                        (r'\.cloudsql\.', 'US', 'GCP Cloud SQL'),
+                    ]
+                    for hint_pat, hint_country, hint_svc in cloud_hints:
+                        if re.search(hint_pat, endpoint, re.IGNORECASE):
+                            region_in_endpoint = None
+                            for rk in self.CLOUD_REGIONS:
+                                if rk in endpoint.lower():
+                                    region_in_endpoint = rk
+                                    break
+                            if region_in_endpoint:
+                                _add_location(region_in_endpoint, self.CLOUD_REGIONS[region_in_endpoint]['country'], hint_svc, 'env_endpoint')
+                            else:
+                                _add_location(hint_svc, hint_country, hint_svc, 'env_endpoint')
+                            break
+        
+        sc_matches = re.findall(r'storageClassName\s*:\s*["\']?([^\s"\']+)["\']?', content)
+        for sc in sc_matches:
+            sc_lower = sc.lower()
+            if any(p in sc_lower for p in ['gp2', 'gp3', 'io1', 'io2', 'ebs']):
+                _add_location('AWS EBS', 'US', 'AWS', 'persistent_storage')
+            elif any(p in sc_lower for p in ['azure-disk', 'managed-premium', 'azurefile']):
+                _add_location('Azure Disk', 'US', 'Azure', 'persistent_storage')
+            elif any(p in sc_lower for p in ['pd-standard', 'pd-ssd', 'pd-balanced']):
+                _add_location('GCP PD', 'US', 'GCP', 'persistent_storage')
+            elif 'hcloud' in sc_lower:
+                _add_location('Hetzner Volume', 'DE', 'Hetzner', 'persistent_storage')
+        
+        if re.search(r'type\s*:\s*LoadBalancer', content):
+            lb_annotations = {
+                r'service\.beta\.kubernetes\.io/aws-load-balancer': ('AWS', 'US'),
+                r'service\.beta\.kubernetes\.io/azure-load-balancer': ('Azure', 'US'),
+                r'cloud\.google\.com/load-balancer': ('GCP', 'US'),
+                r'load-balancer\.hetzner\.cloud': ('Hetzner', 'DE'),
+            }
+            for ann_pat, (provider, country) in lb_annotations.items():
+                if re.search(ann_pat, content, re.IGNORECASE):
+                    _add_location(f'{provider} LB', country, provider, 'load_balancer')
+        
+        ns_region_patterns = [
+            r'namespace.*?region["\']?\s*:\s*["\']?([^"\'}\s]+)["\']?',
+            r'annotations.*?region["\']?\s*:\s*["\']?([^"\'}\s]+)["\']?',
+        ]
+        for pat in ns_region_patterns:
+            for match in re.findall(pat, content, re.IGNORECASE | re.DOTALL):
+                country = self._detect_country_from_region(match)
+                _add_location(match, country, 'Kubernetes', 'namespace_annotation')
+        
+        ingress_hosts = re.findall(r'host\s*:\s*["\']?([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})["\']?', content)
+        cdn_patterns = {
+            r'\.cloudfront\.net': ('US', 'AWS CloudFront'),
+            r'\.akamaized\.net': ('US', 'Akamai CDN'),
+            r'\.azureedge\.net': ('US', 'Azure CDN'),
+            r'\.cdn\.cloudflare\.net': ('US', 'Cloudflare CDN'),
+            r'\.fastly\.net': ('US', 'Fastly CDN'),
+        }
+        for host in ingress_hosts:
+            for cdn_pat, (cdn_country, cdn_name) in cdn_patterns.items():
+                if re.search(cdn_pat, host, re.IGNORECASE):
+                    _add_location(cdn_name, cdn_country, cdn_name, 'ingress_cdn')
+                    break
+        
+        helm_region_patterns = [
+            r'global\.region\s*:\s*["\']?([^"\'}\s]+)["\']?',
+            r'global\.cloud\.region\s*:\s*["\']?([^"\'}\s]+)["\']?',
+            r'\.Values\.global\.region["\s}]',
+            r'global:\s*\n\s+region\s*:\s*["\']?([^"\'}\s]+)["\']?',
+            r'global:\s*\n\s+cloud:\s*\n\s+region\s*:\s*["\']?([^"\'}\s]+)["\']?',
+        ]
+        for pat in helm_region_patterns:
+            for match in re.findall(pat, content, re.IGNORECASE):
+                if match:
+                    country = self._detect_country_from_region(match)
+                    _add_location(match, country, 'Helm', 'helm_global_region')
+        
+        helm_sc_matches = re.findall(
+            r'(?:persistence\.storageClass|persistence:\s*\n\s+storageClass)\s*:\s*["\']?([^\s"\']+)["\']?',
+            content, re.IGNORECASE
+        )
+        for sc in helm_sc_matches:
+            sc_lower = sc.lower()
+            if any(p in sc_lower for p in ['gp2', 'gp3', 'ebs']):
+                _add_location('AWS EBS (Helm)', 'US', 'AWS', 'helm_storage')
+            elif any(p in sc_lower for p in ['azure', 'managed']):
+                _add_location('Azure (Helm)', 'US', 'Azure', 'helm_storage')
+            elif any(p in sc_lower for p in ['pd-', 'standard']):
+                _add_location('GCP (Helm)', 'US', 'GCP', 'helm_storage')
+        
+        helm_image_repos = re.findall(
+            r'(?:image\.repository|image:\s*\n\s+repository)\s*:\s*["\']?([^\s"\']+)["\']?',
+            content, re.IGNORECASE
+        )
+        for repo in helm_image_repos:
+            for pattern, (country, registry_name) in image_registry_map.items():
+                if re.search(pattern, repo, re.IGNORECASE):
+                    _add_location(registry_name + ' (Helm)', country, registry_name, 'helm_image')
+                    break
+        
+        helm_ingress_hosts = re.findall(
+            r'(?:ingress\.hosts|ingress:\s*\n\s+hosts)\s*:\s*\n?\s*-\s*["\']?([a-zA-Z0-9.-]+)["\']?',
+            content, re.IGNORECASE
+        )
+        for host in helm_ingress_hosts:
+            for cdn_pat, (cdn_country, cdn_name) in cdn_patterns.items():
+                if re.search(cdn_pat, host, re.IGNORECASE):
+                    _add_location(cdn_name + ' (Helm)', cdn_country, cdn_name, 'helm_ingress')
+                    break
+        
+        helm_ext_db = re.findall(
+            r'(?:externalDatabase\.host|externalDatabase:\s*\n\s+host)\s*:\s*["\']?([^\s"\']+)["\']?',
+            content, re.IGNORECASE
+        )
+        for db_host in helm_ext_db:
+            for region_key, region_info in self.CLOUD_REGIONS.items():
+                if region_key in db_host.lower():
+                    _add_location(region_key, region_info['country'], 'External DB (Helm)', 'helm_external_db')
+                    break
+        
         return locations
+    
+    def _detect_kubernetes_flows(self, content: str) -> List[DataFlow]:
+        """Detect data flows from Kubernetes configurations.
+        
+        Identifies external service endpoints, database connection strings in env vars,
+        and ingress to external backends.
+        """
+        flows = []
+        base_country = self._get_country_from_region(self.region)
+        seen_flows = set()
+        
+        endpoint_patterns = [
+            r'value\s*:\s*["\']?((?:https?://|postgres(?:ql)?://|mysql://|mongodb(?:\+srv)?://|redis://|amqp://)[^\s"\']+)["\']?',
+        ]
+        for pat in endpoint_patterns:
+            for endpoint in re.findall(pat, content, re.IGNORECASE):
+                dest_country = 'unknown'
+                dest_name = endpoint[:80]
+                for region_key, region_info in self.CLOUD_REGIONS.items():
+                    if region_key in endpoint.lower():
+                        dest_country = region_info['country']
+                        dest_name = f"{region_info['name']} ({region_key})"
+                        break
+                
+                if dest_country == 'unknown':
+                    cloud_svc = [
+                        (r'\.amazonaws\.com', 'US', 'AWS Service'),
+                        (r'\.azure\.com|\.windows\.net', 'US', 'Azure Service'),
+                        (r'\.googleapis\.com', 'US', 'GCP Service'),
+                    ]
+                    for svc_pat, svc_country, svc_name in cloud_svc:
+                        if re.search(svc_pat, endpoint, re.IGNORECASE):
+                            dest_country = svc_country
+                            dest_name = svc_name
+                            break
+                
+                if dest_country != 'unknown':
+                    flow_key = (base_country, dest_country, dest_name)
+                    if flow_key not in seen_flows:
+                        seen_flows.add(flow_key)
+                        flows.append(DataFlow(
+                            source=f"{self.region} (K8s Cluster)",
+                            destination=dest_name,
+                            source_country=base_country,
+                            destination_country=dest_country,
+                            is_cross_border=dest_country != base_country,
+                            is_eu_to_third_country=(base_country in self.EU_COUNTRIES and
+                                                    dest_country not in self.EU_COUNTRIES and
+                                                    dest_country not in self.EEA_COUNTRIES and
+                                                    dest_country not in self.ADEQUACY_COUNTRIES),
+                            flow_type="k8s_external_service",
+                            data_types=["application_data"]
+                        ))
+        
+        if re.search(r'kind\s*:\s*Ingress', content, re.IGNORECASE):
+            backend_matches = re.findall(r'host\s*:\s*["\']?([a-zA-Z0-9.-]+)["\']?', content)
+            for host in backend_matches:
+                if '.' in host and not host.endswith('.local') and not host.endswith('.cluster.local'):
+                    flows.append(DataFlow(
+                        source="Internet (Ingress)",
+                        destination=f"{self.region} (K8s Cluster)",
+                        source_country="global",
+                        destination_country=base_country,
+                        is_cross_border=True,
+                        is_eu_to_third_country=False,
+                        flow_type="k8s_ingress",
+                        data_types=["user_request_data"]
+                    ))
+                    break
+        
+        return flows
+    
+    def _detect_kubernetes_access(self, content: str) -> List[AccessPath]:
+        """Detect access patterns from Kubernetes configurations.
+        
+        Identifies ServiceAccount usage, RBAC roles, network policies,
+        and ingress from internet.
+        """
+        paths = []
+        base_country = self._get_country_from_region(self.region)
+        is_eu = base_country in self.EU_COUNTRIES
+        
+        sa_matches = re.findall(r'serviceAccountName\s*:\s*["\']?([^\s"\']+)["\']?', content)
+        for sa in sa_matches:
+            paths.append(AccessPath(
+                accessor_type="ServiceAccount",
+                accessor_country=base_country,
+                privilege_level="service",
+                is_eu_access=is_eu,
+                is_monitored=True,
+                accessor_name=sa
+            ))
+        
+        if re.search(r'kind\s*:\s*(?:ClusterRole|Role)\b', content, re.IGNORECASE):
+            is_cluster_role = bool(re.search(r'kind\s*:\s*ClusterRole\b', content, re.IGNORECASE))
+            paths.append(AccessPath(
+                accessor_type="RBAC Role" if not is_cluster_role else "RBAC ClusterRole",
+                accessor_country=base_country,
+                privilege_level="admin" if is_cluster_role else "namespace",
+                is_eu_access=is_eu,
+                is_monitored=True,
+                accessor_name="Cluster RBAC"
+            ))
+        
+        if re.search(r'kind\s*:\s*NetworkPolicy', content, re.IGNORECASE):
+            paths.append(AccessPath(
+                accessor_type="NetworkPolicy",
+                accessor_country=base_country,
+                privilege_level="network",
+                is_eu_access=is_eu,
+                is_monitored=True,
+                accessor_name="K8s Network Policy"
+            ))
+        
+        if re.search(r'kind\s*:\s*Ingress', content, re.IGNORECASE):
+            paths.append(AccessPath(
+                accessor_type="Ingress",
+                accessor_country="global",
+                privilege_level="read",
+                is_eu_access=False,
+                is_monitored=bool(re.search(r'nginx\.ingress\.kubernetes\.io/enable-access-log', content, re.IGNORECASE)),
+                accessor_name="Internet Ingress"
+            ))
+        
+        if re.search(r'type\s*:\s*LoadBalancer', content):
+            paths.append(AccessPath(
+                accessor_type="LoadBalancer",
+                accessor_country="global",
+                privilege_level="read",
+                is_eu_access=False,
+                is_monitored=False,
+                accessor_name="Public LoadBalancer"
+            ))
+        
+        return paths
+    
+    def _analyze_kubernetes_origins(self, content: str) -> List[DataOrigin]:
+        """Detect data origins from Kubernetes configurations.
+        
+        Identifies container registries, external APIs referenced in env vars,
+        and mounted secrets/configmaps.
+        """
+        origins = []
+        base_country = self._get_country_from_region(self.region)
+        is_eu = base_country in self.EU_COUNTRIES
+        
+        registry_origins = {
+            r'docker\.io|registry\.hub\.docker\.com': ('Docker Hub', 'US'),
+            r'gcr\.io|pkg\.dev': ('Google Container Registry', 'US'),
+            r'ghcr\.io': ('GitHub Container Registry', 'US'),
+            r'quay\.io': ('Red Hat Quay', 'US'),
+            r'mcr\.microsoft\.com': ('Microsoft Container Registry', 'US'),
+            r'public\.ecr\.aws': ('AWS ECR Public', 'US'),
+            r'registry\.k8s\.io': ('Kubernetes Registry', 'US'),
+        }
+        
+        images = re.findall(r'image\s*:\s*["\']?([^\s"\']+)["\']?', content)
+        seen_registries = set()
+        for image in images:
+            for pat, (name, country) in registry_origins.items():
+                if re.search(pat, image, re.IGNORECASE) and name not in seen_registries:
+                    seen_registries.add(name)
+                    origins.append(DataOrigin(
+                        source_name=name,
+                        source_type="container_registry",
+                        country=country,
+                        collection_method="Container Image Pull",
+                        legal_basis="Legitimate Interest (Art. 6(1)(f))",
+                        data_categories=["application_artifacts", "container_images"],
+                        is_eu_origin=country in self.EU_COUNTRIES
+                    ))
+                    break
+            else:
+                ecr_match = re.search(r'\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com', image)
+                if ecr_match:
+                    ecr_region = ecr_match.group(1)
+                    ecr_country = self._detect_country_from_region(ecr_region)
+                    origin_name = f"AWS ECR ({ecr_region})"
+                    if origin_name not in seen_registries:
+                        seen_registries.add(origin_name)
+                        origins.append(DataOrigin(
+                            source_name=origin_name,
+                            source_type="container_registry",
+                            country=ecr_country,
+                            collection_method="Container Image Pull",
+                            legal_basis="Legitimate Interest (Art. 6(1)(f))",
+                            data_categories=["application_artifacts"],
+                            is_eu_origin=ecr_country in self.EU_COUNTRIES
+                        ))
+        
+        api_endpoints = re.findall(r'value\s*:\s*["\']?(https?://[^\s"\']+)["\']?', content, re.IGNORECASE)
+        seen_apis = set()
+        for endpoint in api_endpoints:
+            api_host = endpoint.split('/')[2] if len(endpoint.split('/')) > 2 else endpoint
+            if api_host not in seen_apis:
+                seen_apis.add(api_host)
+                api_country = 'unknown'
+                for region_key, region_info in self.CLOUD_REGIONS.items():
+                    if region_key in endpoint.lower():
+                        api_country = region_info['country']
+                        break
+                if api_country == 'unknown':
+                    api_country = base_country
+                origins.append(DataOrigin(
+                    source_name=f"External API ({api_host})",
+                    source_type="api",
+                    country=api_country,
+                    collection_method="HTTP API Call",
+                    legal_basis="Contract (Art. 6(1)(b))",
+                    data_categories=["api_data"],
+                    is_eu_origin=api_country in self.EU_COUNTRIES
+                ))
+        
+        if re.search(r'secretKeyRef|secretRef|kind\s*:\s*Secret', content, re.IGNORECASE):
+            origins.append(DataOrigin(
+                source_name="Kubernetes Secrets",
+                source_type="secret_store",
+                country=base_country,
+                collection_method="K8s Secret Mount/Ref",
+                legal_basis="Legitimate Interest (Art. 6(1)(f))",
+                data_categories=["credentials", "secrets"],
+                is_eu_origin=is_eu
+            ))
+        
+        if re.search(r'configMapKeyRef|configMapRef|kind\s*:\s*ConfigMap', content, re.IGNORECASE):
+            origins.append(DataOrigin(
+                source_name="Kubernetes ConfigMaps",
+                source_type="configuration",
+                country=base_country,
+                collection_method="K8s ConfigMap Mount/Ref",
+                legal_basis="Legitimate Interest (Art. 6(1)(f))",
+                data_categories=["configuration_data"],
+                is_eu_origin=is_eu
+            ))
+        
+        if not origins:
+            origins.append(DataOrigin(
+                source_name="Kubernetes Cluster",
+                source_type="cloud_infrastructure",
+                country=base_country,
+                collection_method="Container Orchestration",
+                legal_basis="Legitimate Interest (Art. 6(1)(f))",
+                data_categories=["operational_data"],
+                is_eu_origin=is_eu
+            ))
+        
+        return origins
+    
+    def _parse_docker_compose(self, content: str) -> List[DataLocation]:
+        """Parse docker-compose.yml for data sovereignty locations.
+        
+        Detects image origins, external volume mounts, network endpoints,
+        and environment variables with URLs/regions.
+        """
+        locations = []
+        seen = set()
+        
+        def _add(region, country, provider, service_type):
+            key = (region, country, provider, service_type)
+            if key not in seen and country != 'unknown':
+                seen.add(key)
+                locations.append(DataLocation(
+                    region=region,
+                    country=country,
+                    cloud_provider=provider,
+                    service_type=service_type,
+                    is_eu=country in self.EU_COUNTRIES,
+                    is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
+                    legal_jurisdiction=self._get_jurisdiction(country)
+                ))
+        
+        image_registry_map = {
+            r'docker\.io/': ('US', 'Docker Hub'),
+            r'gcr\.io/': ('US', 'Google Container Registry'),
+            r'ghcr\.io/': ('US', 'GitHub Container Registry'),
+            r'quay\.io/': ('US', 'Red Hat Quay'),
+            r'mcr\.microsoft\.com/': ('US', 'Microsoft Container Registry'),
+            r'public\.ecr\.aws/': ('US', 'AWS ECR Public'),
+        }
+        
+        image_matches = re.findall(r'image\s*:\s*["\']?([^\s"\']+)["\']?', content)
+        for image in image_matches:
+            for pattern, (country, registry_name) in image_registry_map.items():
+                if re.search(pattern, image, re.IGNORECASE):
+                    _add(registry_name, country, registry_name, 'docker_compose_image')
+                    break
+            else:
+                ecr_match = re.search(r'\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com', image)
+                if ecr_match:
+                    ecr_region = ecr_match.group(1)
+                    country = self._detect_country_from_region(ecr_region)
+                    _add(ecr_region, country, 'AWS ECR', 'docker_compose_image')
+        
+        env_url_patterns = [
+            r'(?:DATABASE_URL|REDIS_URL|MONGO_URL|ELASTICSEARCH_URL|API_URL|BROKER_URL)\s*[:=]\s*["\']?([^\s"\']+)["\']?',
+            r'(?:https?://|postgres(?:ql)?://|mysql://|mongodb(?:\+srv)?://|redis://|amqp://)[^\s"\']+',
+        ]
+        for pat in env_url_patterns:
+            for endpoint in re.findall(pat, content, re.IGNORECASE):
+                for region_key, region_info in self.CLOUD_REGIONS.items():
+                    if region_key in endpoint.lower():
+                        _add(region_key, region_info['country'], 'External Service', 'docker_compose_env')
+                        break
+        
+        region_env_patterns = [
+            r'(?:AWS_REGION|AWS_DEFAULT_REGION|REGION|CLOUD_REGION)\s*[:=]\s*["\']?([a-zA-Z0-9-]+)["\']?',
+        ]
+        for pat in region_env_patterns:
+            for region in re.findall(pat, content, re.IGNORECASE):
+                country = self._detect_country_from_region(region)
+                _add(region, country, 'Cloud', 'docker_compose_region')
+        
+        volume_patterns = re.findall(r'volumes\s*:\s*\n(?:\s+-\s*[^\n]+\n?)+', content, re.IGNORECASE)
+        for vol_block in volume_patterns:
+            if re.search(r'nfs|cifs|s3|azure|gcs', vol_block, re.IGNORECASE):
+                if 's3' in vol_block.lower():
+                    _add('AWS S3 Volume', 'US', 'AWS', 'docker_volume')
+                elif 'azure' in vol_block.lower():
+                    _add('Azure Volume', 'US', 'Azure', 'docker_volume')
+                elif 'gcs' in vol_block.lower():
+                    _add('GCS Volume', 'US', 'GCP', 'docker_volume')
+        
+        return locations
+    
+    def _parse_dockerfile(self, content: str) -> List[DataLocation]:
+        """Parse Dockerfile for data sovereignty locations.
+        
+        Detects FROM image origins (registry country) and ENV with region/endpoint hints.
+        """
+        locations = []
+        seen = set()
+        
+        def _add(region, country, provider, service_type):
+            key = (region, country, provider, service_type)
+            if key not in seen and country != 'unknown':
+                seen.add(key)
+                locations.append(DataLocation(
+                    region=region,
+                    country=country,
+                    cloud_provider=provider,
+                    service_type=service_type,
+                    is_eu=country in self.EU_COUNTRIES,
+                    is_adequacy_decision=country in self.ADEQUACY_COUNTRIES,
+                    legal_jurisdiction=self._get_jurisdiction(country)
+                ))
+        
+        from_images = re.findall(r'^FROM\s+([^\s]+)', content, re.MULTILINE | re.IGNORECASE)
+        image_registry_map = {
+            r'docker\.io/': ('US', 'Docker Hub'),
+            r'gcr\.io/': ('US', 'Google Container Registry'),
+            r'ghcr\.io/': ('US', 'GitHub Container Registry'),
+            r'quay\.io/': ('US', 'Red Hat Quay'),
+            r'mcr\.microsoft\.com/': ('US', 'Microsoft Container Registry'),
+            r'public\.ecr\.aws/': ('US', 'AWS ECR Public'),
+        }
+        
+        for image in from_images:
+            matched = False
+            for pattern, (country, registry_name) in image_registry_map.items():
+                if re.search(pattern, image, re.IGNORECASE):
+                    _add(registry_name, country, registry_name, 'dockerfile_from')
+                    matched = True
+                    break
+            if not matched:
+                ecr_match = re.search(r'\.dkr\.ecr\.([a-z0-9-]+)\.amazonaws\.com', image)
+                if ecr_match:
+                    ecr_region = ecr_match.group(1)
+                    country = self._detect_country_from_region(ecr_region)
+                    _add(ecr_region, country, 'AWS ECR', 'dockerfile_from')
+                elif '/' not in image or '.' not in image.split('/')[0]:
+                    _add('Docker Hub (implicit)', 'US', 'Docker Hub', 'dockerfile_from')
+        
+        env_patterns = re.findall(r'^ENV\s+(\S+)\s+(.+)$', content, re.MULTILINE | re.IGNORECASE)
+        for key, value in env_patterns:
+            key_upper = key.upper()
+            if key_upper in ('AWS_REGION', 'AWS_DEFAULT_REGION', 'REGION', 'CLOUD_REGION'):
+                country = self._detect_country_from_region(value.strip().strip('"').strip("'"))
+                _add(value.strip(), country, 'Cloud', 'dockerfile_env_region')
+            
+            value_clean = value.strip().strip('"').strip("'")
+            for region_key, region_info in self.CLOUD_REGIONS.items():
+                if region_key in value_clean.lower():
+                    _add(region_key, region_info['country'], 'Cloud', 'dockerfile_env')
+                    break
+        
+        return locations
+    
+    def _run_nis2_compliance_checks(self, content: str, result: SovereigntyScanResult) -> List[ComplianceCheck]:
+        """Run NIS2 Directive compliance checks.
+        
+        Checks incident reporting readiness, supply chain security, encryption requirements,
+        access control/authentication, business continuity, and network security monitoring
+        per the EU NIS2 Directive (Directive (EU) 2022/2555).
+        """
+        checks = []
+        content_lower = content.lower()
+        
+        has_incident_reporting = bool(re.search(
+            r'incident[_\-\s]?report|alert[_\-\s]?manager|pagerduty|opsgenie|csirt|siem|'
+            r'notification[_\-\s]?channel|slack[_\-\s]?webhook|sns[_\-\s]?topic|'
+            r'event[_\-\s]?bridge|cloud[_\-\s]?watch[_\-\s]?alarm',
+            content_lower
+        ))
+        checks.append(ComplianceCheck(
+            check_name="NIS2 Incident Reporting Readiness",
+            check_category="nis2_incident",
+            status="pass" if has_incident_reporting else "fail",
+            description="Incident reporting/alerting configuration detected" if has_incident_reporting else "No incident reporting mechanism found - NIS2 requires 24h early warning + 72h full notification to CSIRT",
+            legal_reference="NIS2 Directive Art. 23 (Incident Reporting), Art. 23(4)(a-b)",
+            recommendation="" if has_incident_reporting else "Implement automated incident alerting with 24h early warning and 72h full notification capabilities to national CSIRT"
+        ))
+        
+        has_supply_chain = bool(re.search(
+            r'dependab|renovate|snyk|trivy|grype|clair|vulnerability[_\-\s]?scan|'
+            r'sbom|software[_\-\s]?bill|supply[_\-\s]?chain|'
+            r'sub[_\-\s]?processor|third[_\-\s]?party|vendor[_\-\s]?management',
+            content_lower
+        ))
+        checks.append(ComplianceCheck(
+            check_name="NIS2 Supply Chain Security",
+            check_category="nis2_supply_chain",
+            status="pass" if has_supply_chain else "warning",
+            description="Supply chain security controls detected" if has_supply_chain else "No supply chain security controls found",
+            legal_reference="NIS2 Directive Art. 21(2)(d) (Supply Chain Security)",
+            recommendation="" if has_supply_chain else "Implement dependency scanning, SBOM generation, and third-party vendor risk assessments"
+        ))
+        
+        has_encryption = bool(re.search(
+            r'encrypt|kms|tls|ssl|certificate|aes|rsa|cmk|customer[_\-\s]?managed[_\-\s]?key|'
+            r'key[_\-\s]?vault|secret[_\-\s]?manager|hashicorp[_\-\s]?vault',
+            content_lower
+        ))
+        checks.append(ComplianceCheck(
+            check_name="NIS2 Encryption & Cryptography",
+            check_category="nis2_encryption",
+            status="pass" if has_encryption else "fail",
+            description="Encryption/cryptography measures detected" if has_encryption else "No encryption or cryptographic controls found",
+            legal_reference="NIS2 Directive Art. 21(2)(e) (Cryptography & Encryption)",
+            recommendation="" if has_encryption else "Implement encryption at rest (AES-256) and in transit (TLS 1.2+), with proper key management"
+        ))
+        
+        has_access_control = bool(re.search(
+            r'mfa|multi[_\-\s]?factor|two[_\-\s]?factor|2fa|totp|'
+            r'iam|rbac|role[_\-\s]?based|least[_\-\s]?privilege|'
+            r'identity[_\-\s]?provider|oauth|saml|oidc|sso|'
+            r'access[_\-\s]?control|access[_\-\s]?policy|'
+            r'cognito|active[_\-\s]?directory|keycloak',
+            content_lower
+        ))
+        checks.append(ComplianceCheck(
+            check_name="NIS2 Access Control & Authentication",
+            check_category="nis2_access_control",
+            status="pass" if has_access_control else "warning",
+            description="Access control and authentication mechanisms detected" if has_access_control else "No explicit MFA/RBAC/IAM configuration found",
+            legal_reference="NIS2 Directive Art. 21(2)(i) (MFA, Access Control)",
+            recommendation="" if has_access_control else "Implement MFA for all privileged access, RBAC with least-privilege principle, and centralized identity management"
+        ))
+        
+        has_continuity = bool(re.search(
+            r'backup|disaster[_\-\s]?recovery|business[_\-\s]?continuity|'
+            r'replicat|failover|auto[_\-\s]?scaling|high[_\-\s]?availability|'
+            r'snapshot|recovery[_\-\s]?point|rpo|rto|'
+            r'availability[_\-\s]?zone|multi[_\-\s]?az',
+            content_lower
+        ))
+        checks.append(ComplianceCheck(
+            check_name="NIS2 Business Continuity & Backup",
+            check_category="nis2_continuity",
+            status="pass" if has_continuity else "warning",
+            description="Business continuity/backup mechanisms detected" if has_continuity else "No backup or disaster recovery configuration found",
+            legal_reference="NIS2 Directive Art. 21(2)(c) (Business Continuity & Crisis Management)",
+            recommendation="" if has_continuity else "Implement automated backups, define RPO/RTO targets, and establish disaster recovery procedures"
+        ))
+        
+        has_monitoring = bool(re.search(
+            r'cloudwatch|cloudtrail|monitor|log[_\-\s]?analytics|'
+            r'application[_\-\s]?insights|stackdriver|datadog|'
+            r'prometheus|grafana|elastic[_\-\s]?search|kibana|'
+            r'network[_\-\s]?policy|firewall|waf|ids|ips|'
+            r'security[_\-\s]?group|nacl|nsg',
+            content_lower
+        ))
+        checks.append(ComplianceCheck(
+            check_name="NIS2 Network Security Monitoring",
+            check_category="nis2_monitoring",
+            status="pass" if has_monitoring else "warning",
+            description="Network security monitoring detected" if has_monitoring else "No network monitoring or security controls found",
+            legal_reference="NIS2 Directive Art. 21(2)(b) (Incident Handling), Art. 21(2)(g) (Network Security)",
+            recommendation="" if has_monitoring else "Deploy network monitoring (IDS/IPS), web application firewall (WAF), and centralized log analysis (SIEM)"
+        ))
+        
+        return checks
     
     def _parse_generic_config(self, content: str) -> List[DataLocation]:
         """Parse generic configuration for locations with auto-detection"""
@@ -1220,7 +1952,13 @@ class DataSovereigntyScanner:
             'stockholm': 'SE', 'milan': 'IT', 'us-': 'US', 'america': 'US',
             'virginia': 'US', 'oregon': 'US', 'ohio': 'US', 'california': 'US',
             'asia': 'SG', 'singapore': 'SG', 'tokyo': 'JP', 'sydney': 'AU',
-            'canada': 'CA', 'brazil': 'BR', 'india': 'IN', 'mumbai': 'IN'
+            'canada': 'CA', 'brazil': 'BR', 'india': 'IN', 'mumbai': 'IN',
+            'falkenstein': 'DE', 'nuremberg': 'DE', 'helsinki': 'FI',
+            'ashburn': 'US', 'gravelines': 'FR', 'strasbourg': 'FR',
+            'roubaix': 'FR', 'beauharnois': 'CA', 'warsaw': 'PL',
+            'newark': 'US', 'las vegas': 'US', 'berlin': 'DE',
+            'vitoria': 'ES', 'hetzner': 'DE', 'ovh': 'FR', 'scaleway': 'FR',
+            'digitalocean': 'US', 'transip': 'NL', 'ionos': 'DE'
         }
         
         for hint, country in country_hints.items():
@@ -1461,14 +2199,14 @@ class DataSovereigntyScanner:
                 applicable_laws = ["GDPR (via EEA)", "Local Data Protection"]
                 adequacy_status = "EEA Member State"
                 risk_level = "low"
+            elif loc.country == 'US':
+                applicable_laws = ["EU-US Data Privacy Framework", "US CLOUD Act", "CCPA/CPRA"]
+                adequacy_status = "EU-US Data Privacy Framework (Conditional)"
+                risk_level = "medium"
             elif loc.country in self.ADEQUACY_COUNTRIES:
                 applicable_laws = ["Local Data Protection Law"]
                 adequacy_status = f"EU Adequacy Decision"
-                risk_level = "medium"
-            elif loc.country == 'US':
-                applicable_laws = ["US CLOUD Act", "CCPA/CPRA", "State Laws"]
-                adequacy_status = "SCCs Required (post-Schrems II)"
-                risk_level = "high"
+                risk_level = "low"
             else:
                 applicable_laws = ["Local Data Protection Law (if any)"]
                 adequacy_status = "No Adequacy - SCCs/BCRs Required"
