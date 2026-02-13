@@ -1731,7 +1731,10 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                     path_parts = file_path.split('/')
                                     if any(part in skip_dirs or part.startswith('.') for part in path_parts[:-1]):
                                         continue
-                                    if any(file_path.endswith(ext) for ext in infra_extensions):
+                                    file_name = file_path.split('/')[-1].lower()
+                                    is_infra = any(file_path.endswith(ext) for ext in infra_extensions)
+                                    is_docker = file_name in ('dockerfile', 'docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml')
+                                    if is_infra or is_docker:
                                         matching_files.append(file_path)
                                 
                                 status_text.text(f"Found {len(matching_files)} infrastructure files, downloading...")
@@ -1839,8 +1842,20 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                             
                             all_content = "\n\n".join([f"# File: {f['name']}\n{f['content']}" for f in infra_files])
                             
-                            if any(f['name'].endswith('.tf') for f in infra_files):
+                            has_tf = any(f['name'].endswith('.tf') for f in infra_files)
+                            has_k8s = any(f['name'].endswith(('.yaml', '.yml')) for f in infra_files)
+                            has_docker = any(f['name'].lower().split('/')[-1] in ('dockerfile', 'docker-compose.yml', 'docker-compose.yaml', 'compose.yml', 'compose.yaml') for f in infra_files)
+                            
+                            if has_tf:
                                 scan_result = scanner.scan_terraform(all_content, f"{owner}/{repo}")
+                            elif has_k8s:
+                                scan_result = scanner.scan_cloud_config(all_content, "kubernetes")
+                            elif has_docker:
+                                docker_compose_content = "\n\n".join([f"# File: {f['name']}\n{f['content']}" for f in infra_files if 'compose' in f['name'].lower()])
+                                dockerfile_content = "\n\n".join([f"# File: {f['name']}\n{f['content']}" for f in infra_files if 'dockerfile' in f['name'].lower()])
+                                scan_content = docker_compose_content or dockerfile_content or all_content
+                                scan_type = "docker" if docker_compose_content else ("dockerfile" if dockerfile_content else "generic")
+                                scan_result = scanner.scan_cloud_config(scan_content, scan_type)
                             else:
                                 scan_result = scanner.scan_cloud_config(all_content, "generic")
                             
@@ -1933,12 +1948,12 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
     elif scan_mode == "Upload Configuration":
         config_type = st.selectbox(
             _('scan.data_sovereignty.config_type', 'Configuration Type'),
-            ["Terraform (.tf)", "AWS CloudFormation", "Azure ARM/Bicep", "GCP Deployment Manager", "Kubernetes YAML", "Generic JSON/YAML"]
+            ["Terraform (.tf)", "AWS CloudFormation", "Azure ARM/Bicep", "GCP Deployment Manager", "Kubernetes YAML", "Docker Compose", "Dockerfile", "Helm Values", "Generic JSON/YAML"]
         )
         
         uploaded_file = st.file_uploader(
             _('scan.data_sovereignty.upload', 'Upload configuration file'),
-            type=['tf', 'json', 'yaml', 'yml', 'bicep', 'template'],
+            type=['tf', 'json', 'yaml', 'yml', 'bicep', 'template', 'toml'],
             help=_('scan.data_sovereignty.upload_help', 'Upload infrastructure configuration files for sovereignty analysis')
         )
         
@@ -1963,6 +1978,9 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                         "Azure ARM/Bicep": "azure",
                         "GCP Deployment Manager": "gcp",
                         "Kubernetes YAML": "kubernetes",
+                        "Docker Compose": "docker",
+                        "Dockerfile": "dockerfile",
+                        "Helm Values": "kubernetes",
                         "Generic JSON/YAML": "generic"
                     }
                     
