@@ -1930,7 +1930,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                          f"Try again later or scan a specific directory instead of the full repository.")
                             else:
                                 st.warning("No infrastructure files found in the repository. "
-                                           f"Scanned {api_calls_made[0]} directories (depth: {max_depth}). "
+                                           f"Scanned {api_calls_made[0]} directories. "
                                            "Looking for: .tf, .json, .yaml, .yml, .bicep, .template")
                             progress_bar.empty()
                             status_text.empty()
