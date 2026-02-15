@@ -1676,6 +1676,11 @@ def render_landing_page():
             <span style="font-size:0.75rem;color:#555;">🔒 Protected by Dutch Patents</span>
         </div>
         """, unsafe_allow_html=True)
+        
+        if st.button(f"💰 {_('landing.view_pricing', 'View Pricing Plans')}", 
+                     use_container_width=True, key="hero_pricing_btn"):
+            st.session_state['show_landing_pricing'] = True
+            st.rerun()
     
     with hero_col2:
         st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
@@ -2150,6 +2155,31 @@ def render_landing_page():
         """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Pricing section on landing page
+    st.markdown("---")
+    st.markdown(f"""
+    <div style="text-align: center; margin: 2rem 0 1.5rem 0;">
+        <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
+            💰 {_('landing.pricing_title', 'Transparent Pricing')}
+        </h2>
+        <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
+            {_('landing.pricing_subtitle', 'Choose the plan that fits your organization — no hidden costs, cancel anytime')}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.session_state.get('show_landing_pricing', False):
+        try:
+            from components.pricing_display import show_pricing_page
+            show_pricing_page()
+        except Exception as e:
+            st.error(f"Error loading pricing: {e}")
+    else:
+        if st.button(f"👉 {_('landing.show_pricing', 'Show Pricing Plans')}", 
+                     use_container_width=True, type="primary", key="show_pricing_section_btn"):
+            st.session_state['show_landing_pricing'] = True
+            st.rerun()
     
     # Call to action section
     st.markdown("---")
