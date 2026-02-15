@@ -676,8 +676,74 @@ def show_features_comparison():
         
         st.table(features_data)
 
+def _send_contact_email(category: str, name: str, email: str, message: str) -> bool:
+    """Send contact form email to info@dataguardianpro.nl"""
+    try:
+        from services.email_service import EmailService
+        email_svc = EmailService()
+        
+        subject = f"DataGuardian Pro - {category} Inquiry from {name}"
+        html_body = f"""
+        <html>
+        <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #1565C0, #1976D2); padding: 20px; border-radius: 10px 10px 0 0;">
+                <h2 style="color: white; margin: 0;">New {category} Inquiry</h2>
+            </div>
+            <div style="padding: 20px; background: #f8f9fa; border-radius: 0 0 10px 10px;">
+                <p><strong>Category:</strong> {category}</p>
+                <p><strong>Name:</strong> {name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Message:</strong></p>
+                <div style="background: white; padding: 15px; border-radius: 8px; border-left: 4px solid #1565C0;">
+                    {message}
+                </div>
+                <p style="color: #666; font-size: 0.85rem; margin-top: 20px;">
+                    Sent from DataGuardian Pro pricing page on {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M')}
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        if email_svc.enabled:
+            return email_svc._send_email(
+                to_email="info@dataguardianpro.nl",
+                subject=subject,
+                html_body=html_body
+            )
+        else:
+            import smtplib
+            import os
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            
+            smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
+            smtp_port = int(os.getenv('SMTP_PORT', '587'))
+            username = os.getenv('EMAIL_USERNAME')
+            password = os.getenv('EMAIL_PASSWORD')
+            
+            if not username or not password:
+                logger.warning("Email credentials not configured")
+                return False
+            
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = subject
+            msg['From'] = f"DataGuardian Pro <{username}>"
+            msg['To'] = "info@dataguardianpro.nl"
+            msg.attach(MIMEText(html_body, 'html'))
+            
+            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                server.starttls()
+                server.login(username, password)
+                server.send_message(msg)
+            return True
+    except Exception as e:
+        logger.error(f"Failed to send contact email: {e}")
+        return False
+
+
 def show_contact_section():
-    """Show contact and support section"""
+    """Show contact and support section with email forms"""
     st.markdown("---")
     st.markdown("## 📞 Questions? We're Here to Help")
     
@@ -687,22 +753,53 @@ def show_contact_section():
         st.markdown("### 💬 Sales Support")
         st.markdown("Need help choosing the right plan?")
         if st.button("Contact Sales Team", key="contact_sales_main"):
-            st.session_state['contact_sales'] = True
-            st.rerun()
+            st.session_state['show_contact_form'] = 'sales'
     
     with col2:
         st.markdown("### 🔧 Technical Questions")
         st.markdown("Have technical implementation questions?")
         if st.button("Talk to Engineers", key="contact_tech"):
-            st.session_state['contact_tech'] = True
-            st.rerun()
+            st.session_state['show_contact_form'] = 'tech'
     
     with col3:
         st.markdown("### 📊 Custom Requirements")
         st.markdown("Need custom features or enterprise deployment?")
         if st.button("Request Custom Quote", key="custom_quote"):
-            st.session_state['custom_quote'] = True
-            st.rerun()
+            st.session_state['show_contact_form'] = 'custom'
+    
+    active_form = st.session_state.get('show_contact_form', None)
+    if active_form:
+        form_titles = {
+            'sales': ('💬 Sales Support Inquiry', 'Tell us about your organization and what you need...'),
+            'tech': ('🔧 Technical Question', 'Describe your technical question or implementation challenge...'),
+            'custom': ('📊 Custom Requirements', 'Describe the custom features or deployment requirements you need...')
+        }
+        title, placeholder = form_titles.get(active_form, ('Contact Us', 'Your message...'))
+        
+        st.markdown(f"### {title}")
+        with st.form(f"contact_form_{active_form}", clear_on_submit=True):
+            form_col1, form_col2 = st.columns(2)
+            with form_col1:
+                contact_name = st.text_input("Your Name *", placeholder="e.g. Jan de Vries")
+            with form_col2:
+                contact_email = st.text_input("Your Email *", placeholder="e.g. jan@company.nl")
+            contact_message = st.text_area("Your Message *", placeholder=placeholder, height=120)
+            
+            submitted = st.form_submit_button("📧 Send Message", use_container_width=True, type="primary")
+            
+            if submitted:
+                if contact_name and contact_email and contact_message:
+                    category_names = {'sales': 'Sales Support', 'tech': 'Technical Question', 'custom': 'Custom Requirements'}
+                    category = category_names.get(active_form, 'General')
+                    
+                    success = _send_contact_email(category, contact_name, contact_email, contact_message)
+                    if success:
+                        st.success("Your message has been sent successfully! Our team will get back to you within 24 hours.")
+                        st.session_state['show_contact_form'] = None
+                    else:
+                        st.warning(f"Email delivery is being configured. Please email us directly at **info@dataguardianpro.nl** with your inquiry.")
+                else:
+                    st.error("Please fill in all required fields (name, email, and message).")
 
 def handle_tier_selection(tier: PricingTier, billing_cycle: BillingCycle):
     """Handle when user selects a pricing tier"""
