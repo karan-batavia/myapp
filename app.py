@@ -2279,7 +2279,7 @@ def render_landing_page():
     st.markdown(f"""
     <div id="free-scan" style="text-align: center; margin: 3rem 0 1rem 0;">
         <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
-            {_('landing.contact_title', 'Interested in a Free Scan? Get in Touch')}
+            {_('landing.contact_title', 'Interested in Free Scan?')}
         </h2>
         <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
             {_('landing.contact_subtitle', 'Fill in the form below and our team will contact you to discuss how DataGuardian Pro can help your organization.')}
