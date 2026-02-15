@@ -1681,23 +1681,40 @@ def render_landing_page():
         """, unsafe_allow_html=True)
         
         st.markdown(f"""
-        <a href="#pricing-plans" style="
-            display: block;
-            text-align: center;
-            background: linear-gradient(135deg, #1565C0, #1976D2);
-            color: white;
-            padding: 0.7rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-top: 0.5rem;
-            box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(21,101,192,0.4)'" 
-           onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 8px rgba(21,101,192,0.3)'">
-            💰 {_('landing.view_pricing', 'View Pricing Plans')}
-        </a>
+        <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap;">
+            <a href="#free-scan" style="
+                flex: 1;
+                text-align: center;
+                background: linear-gradient(135deg, #4CAF50, #43A047);
+                color: white;
+                padding: 0.7rem 1.5rem;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1rem;
+                box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(76,175,80,0.4)'" 
+               onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 8px rgba(76,175,80,0.3)'">
+                🚀 {_('landing.try_free_scan', 'Try Free Scan')}
+            </a>
+            <a href="#pricing-plans" style="
+                flex: 1;
+                text-align: center;
+                background: linear-gradient(135deg, #1565C0, #1976D2);
+                color: white;
+                padding: 0.7rem 1.5rem;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 1rem;
+                box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+                transition: transform 0.2s, box-shadow 0.2s;
+            " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(21,101,192,0.4)'" 
+               onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 8px rgba(21,101,192,0.3)'">
+                💰 {_('landing.view_pricing', 'View Pricing Plans')}
+            </a>
+        </div>
         """, unsafe_allow_html=True)
     
     with hero_col2:
@@ -2260,9 +2277,9 @@ def render_landing_page():
     
     # Interest / Contact Form Section
     st.markdown(f"""
-    <div id="contact-form" style="text-align: center; margin: 3rem 0 1rem 0;">
+    <div id="free-scan" style="text-align: center; margin: 3rem 0 1rem 0;">
         <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
-            {_('landing.contact_title', 'Interested? Get in Touch')}
+            {_('landing.contact_title', 'Interested in a Free Scan? Get in Touch')}
         </h2>
         <p style="font-size: 1.1rem; color: #666; max-width: 700px; margin: 0 auto;">
             {_('landing.contact_subtitle', 'Fill in the form below and our team will contact you to discuss how DataGuardian Pro can help your organization.')}
