@@ -1677,10 +1677,25 @@ def render_landing_page():
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button(f"💰 {_('landing.view_pricing', 'View Pricing Plans')}", 
-                     use_container_width=True, key="hero_pricing_btn"):
-            st.session_state['show_landing_pricing'] = True
-            st.rerun()
+        st.markdown(f"""
+        <a href="#pricing-plans" style="
+            display: block;
+            text-align: center;
+            background: linear-gradient(135deg, #1565C0, #1976D2);
+            color: white;
+            padding: 0.7rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            box-shadow: 0 2px 8px rgba(21, 101, 192, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        " onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 12px rgba(21,101,192,0.4)'" 
+           onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 2px 8px rgba(21,101,192,0.3)'">
+            💰 {_('landing.view_pricing', 'View Pricing Plans')}
+        </a>
+        """, unsafe_allow_html=True)
     
     with hero_col2:
         st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
@@ -2159,7 +2174,7 @@ def render_landing_page():
     # Pricing section on landing page
     st.markdown("---")
     st.markdown(f"""
-    <div style="text-align: center; margin: 2rem 0 1.5rem 0;">
+    <div id="pricing-plans" style="text-align: center; margin: 2rem 0 1.5rem 0;">
         <h2 style="color: #1B2559; font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem;">
             💰 {_('landing.pricing_title', 'Transparent Pricing')}
         </h2>
@@ -2169,17 +2184,11 @@ def render_landing_page():
     </div>
     """, unsafe_allow_html=True)
     
-    if st.session_state.get('show_landing_pricing', False):
-        try:
-            from components.pricing_display import show_pricing_page
-            show_pricing_page()
-        except Exception as e:
-            st.error(f"Error loading pricing: {e}")
-    else:
-        if st.button(f"👉 {_('landing.show_pricing', 'Show Pricing Plans')}", 
-                     use_container_width=True, type="primary", key="show_pricing_section_btn"):
-            st.session_state['show_landing_pricing'] = True
-            st.rerun()
+    try:
+        from components.pricing_display import show_pricing_page
+        show_pricing_page()
+    except Exception as e:
+        st.error(f"Error loading pricing: {e}")
     
     # Call to action section
     st.markdown("---")
