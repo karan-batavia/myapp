@@ -1661,6 +1661,9 @@ def render_landing_page():
             <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1B2559;white-space:nowrap;">⚡ Save Hours Per Audit</span>
             <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#4CAF50;white-space:nowrap;">🎯 Never Miss a Violation</span>
             <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#1565C0;white-space:nowrap;">🇪🇺 Dutch Data Sovereignty</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#795548;white-space:nowrap;">👤 No Expertise Needed</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#FF9800;white-space:nowrap;">⚙️ No Setup Required</span>
+            <span style="background:#f0f4f8;padding:0.35rem 0.7rem;border-radius:20px;font-size:0.75rem;color:#E91E63;white-space:nowrap;">🔐 Enterprise Grade Security</span>
         </div>
         """, unsafe_allow_html=True)
         
