@@ -6,10 +6,10 @@
 
 PLATFORM SUMMARY
 --------------------------------------------------------------------------------
-DataGuardianPro offers 18 specialized scanners covering GDPR (99 articles),
-EU AI Act 2025 (113 articles), Netherlands UAVG (51 articles), SOC2, NIS2,
-and PCI-DSS compliance. All scans are processed with EU data residency,
-zero data retention, and hash-only verification.
+DataGuardianPro offers 13 user-facing scanners plus 5 backend analysis modules
+covering GDPR, EU AI Act 2025, Netherlands UAVG, SOC2, NIS2, and PCI-DSS
+compliance. All scans are processed with EU data residency, zero data
+retention, and hash-only verification.
 
 
 ================================================================================
@@ -18,7 +18,7 @@ zero data retention, and hash-only verification.
 PURPOSE: EU AI Act 2025 compliance assessment for AI systems
 
 CAPABILITIES:
-  - Full coverage of all 113 EU AI Act articles
+  - EU AI Act article coverage across all chapters (Articles 1-113)
   - AI risk level classification (Prohibited, High-Risk, Limited, Minimal)
   - Bias and fairness auditing
   - Transparency and explainability assessment
@@ -29,7 +29,7 @@ CAPABILITIES:
   - GPAI (General-Purpose AI) model requirements check
 
 UNIQUENESS:
-  - Only scanner on the market covering ALL 113 EU AI Act articles
+  - Broad EU AI Act article coverage with grouped analysis for all chapters
   - Intelligent deduplication reduces noise by 58%
   - Compliant findings get green "Compliance Confirmed" badges
   - Netherlands-specific AP Guidelines integration
@@ -305,110 +305,20 @@ UNIQUENESS:
 
 
 ================================================================================
-14. REPOSITORY SCANNER (Banking/Financial Sector)
+BACKEND ANALYSIS MODULES (not user-facing scanners)
 ================================================================================
-PURPOSE: Code repository compliance for banking and financial sector
+The following modules provide backend analysis capabilities used internally
+by the platform or accessible through admin/specialized workflows:
 
-CAPABILITIES:
-  - PCI-DSS v4.0 compliance scanning
-  - GDPR and UAVG compliance for code repositories
-  - Hardcoded PII detection (IBAN, BSN with 11-proef, PAN/credit card)
-  - Secrets exposure detection (API keys, tokens, passwords)
-  - PII logging violation detection
-  - Weak encryption detection
-  - Secure coding validation
-  - Git history scanning (commits, branches, tags)
-  - Audit-ready HTML report generation with risk scoring
-
-UNIQUENESS:
-  - Purpose-built for banking sector compliance requirements
-  - PCI-DSS v4.0 coverage is essential for payment processors
-  - Git history scanning catches secrets in past commits
-  - BSN 11-proef validation prevents false positives
-  - Security: URL validation, branch sanitization, XSS prevention
-
-
-================================================================================
-15. ADVANCED AI SCANNER
-================================================================================
-PURPOSE: Deep AI system analysis with enhanced finding generation
-
-CAPABILITIES:
-  - Enhanced finding generation with business impact assessment
-  - AI Act traceability engine mapping findings to specific articles
-  - Privacy-Enhancing Technology (PET) validation
-  - Compliance forecast with trend analysis
-  - Remediation priority ranking
-  - Cost-of-non-compliance estimation
-  - Region-specific compliance rules (NL, DE, FR, BE)
-
-UNIQUENESS:
-  - Generates actionable business impact assessments, not just technical findings
-  - Traceability engine links every finding to specific EU AI Act articles
-  - Compliance forecasting predicts future compliance trajectory
-  - Cost estimation helps build business case for remediation
-
-
-================================================================================
-16. GDPR COMPLIANCE SCANNER
-================================================================================
-PURPOSE: Comprehensive GDPR article-by-article compliance verification
-
-CAPABILITIES:
-  - Full 99 GDPR article coverage across 11 chapters
-  - Netherlands UAVG 51 article coverage
-  - BSN processing rules validation
-  - AP Guidelines 2024-2025 compliance
-  - Telecommunicatiewet requirements
-  - Data subject rights implementation check
-  - Consent management validation
-  - Data retention policy compliance
-  - Cross-border transfer safeguards assessment
-
-UNIQUENESS:
-  - 100% GDPR coverage (most tools cover 60-70% of articles)
-  - 100% Netherlands UAVG coverage (unique to DataGuardianPro)
-  - AP (Autoriteit Persoonsgegevens) Guidelines 2024-2025 integrated
-  - BSN-specific processing rules as required by Dutch law
-
-
-================================================================================
-17. DOMAIN SCANNER
-================================================================================
-PURPOSE: Domain-level security and privacy configuration analysis
-
-CAPABILITIES:
-  - DNS configuration analysis
-  - SSL/TLS certificate validation
-  - Email security (SPF, DKIM, DMARC) verification
-  - Domain registration privacy check
-  - Subdomain enumeration
-  - Security header analysis
-
-UNIQUENESS:
-  - Quick, non-intrusive domain-level assessment
-  - Identifies email security gaps that lead to phishing/spoofing
-  - Checks for GDPR-relevant domain registration privacy
-
-
-================================================================================
-18. EU AI ACT CALCULATOR
-================================================================================
-PURPOSE: EU AI Act 2025 risk classification wizard
-
-CAPABILITIES:
-  - 4-step guided wizard for AI system classification
-  - Risk level determination (Prohibited, High-Risk, Limited, Minimal)
-  - Netherlands-specific requirements and guidance
-  - Compliance obligation mapping based on risk level
-  - Timeline awareness (Feb 2025, Aug 2025, Aug 2026, Aug 2027 deadlines)
-  - Actionable next steps per risk classification
-
-UNIQUENESS:
-  - Interactive wizard makes EU AI Act accessible to non-experts
-  - Provides specific compliance obligations based on classification result
-  - Netherlands-focused guidance aligned with Dutch implementation
-  - Free tool to help organizations understand their obligations
+  - Advanced AI Scanner: Enhanced finding generation with business impact
+    assessment, AI Act traceability engine, compliance forecasting
+  - GDPR Compliance Scanner: GDPR and UAVG compliance verification module
+    with BSN processing rules, AP Guidelines, and Telecommunicatiewet checks
+  - Domain Scanner: Domain-level DNS, SSL/TLS, SPF/DKIM/DMARC analysis
+  - Repository Scanner: Banking-sector code repository compliance (PCI-DSS,
+    IBAN, BSN with 11-proef, secrets exposure, Git history scanning)
+  - EU AI Act Calculator: 4-step guided wizard for AI risk classification
+    with Netherlands-specific guidance and compliance timeline tracking
 
 
 ================================================================================
@@ -416,15 +326,15 @@ PLATFORM-WIDE UNIQUE DIFFERENTIATORS
 ================================================================================
 
 1. NETHERLANDS FOCUS
-   - Only platform with 100% UAVG coverage (51 articles)
+   - Extensive UAVG compliance coverage with BSN processing rules
    - BSN 11-proef validation built into all relevant scanners
    - AP Guidelines 2024-2025 integrated
    - Exact Online integration (Dutch accounting software)
    - iDEAL and SEPA payment support
 
 2. COMPREHENSIVE COVERAGE
-   - 18 specialized scanners in one unified platform
-   - GDPR (99 articles) + EU AI Act (113 articles) + UAVG (51 articles)
+   - 13 user-facing scanners + 5 backend modules in one unified platform
+   - GDPR + EU AI Act + UAVG compliance scanning
    - SOC2, NIS2, PCI-DSS v4.0 coverage
    - No other platform covers this breadth
 
@@ -456,14 +366,19 @@ PLATFORM-WIDE UNIQUE DIFFERENTIATORS
 ================================================================================
 PRICING TIERS
 ================================================================================
-  - Trial:        Free (3 scans)
-  - Starter:      EUR 99/month
-  - Professional: EUR 299/month
-  - Enterprise:   EUR 799/month
-  - Government:   Custom pricing
+  - Free Trial:                Free (3 scans)
+  - Startup Essential:         EUR 59/month  (1-25 employees)
+  - Professional Plus:         EUR 99/month  (15-50 employees)
+  - Growth Professional:       EUR 179/month (25-100 employees) *Most Popular*
+  - Scale Professional:        EUR 499/month (100-500 employees)
+  - Salesforce Premium:        EUR 699/month (50-250 employees, CRM integration)
+  - SAP Enterprise:            EUR 999/month (100-500+ employees, ERP integration)
+  - Enterprise Ultimate:       EUR 1,399/month (200+ employees, all connectors)
+  - Government License:        EUR 15,000 one-time (on-premises deployment)
 
-  All plans include: iDEAL support, 30-day money-back guarantee,
-  EU data residency, and GDPR-compliant data handling.
+  All plans include: iDEAL support, 14-day free trial, 30-day money-back
+  guarantee, EU data residency, and GDPR-compliant data handling.
+  Annual billing saves 2 months (pay for 10, get 12).
 
 
 ================================================================================
