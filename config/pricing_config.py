@@ -76,11 +76,11 @@ def can_view_scan_results() -> bool:
     """Check if free user can still view scan results (max 3)"""
     if not is_free_user():
         return True  # Paid users have unlimited views
-    return get_free_user_scan_count() < 3
+    return get_free_user_scan_count() < FREE_USER_MAX_SCANS
 
 
 # ============ FREE USER SCAN LIMITS ============
-FREE_USER_MAX_SCANS = 3
+FREE_USER_MAX_SCANS = 1
 
 def get_free_user_scans_performed() -> int:
     """Get number of scans performed by free user (persisted in database)"""

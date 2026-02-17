@@ -366,7 +366,7 @@ PLATFORM-WIDE UNIQUE DIFFERENTIATORS
 ================================================================================
 PRICING TIERS
 ================================================================================
-  - Free Trial:                Free (3 scans)
+  - Free Trial:                Free (1 scan)
   - Startup Essential:         EUR 59/month  (1-25 employees)
   - Professional Plus:         EUR 99/month  (15-50 employees)
   - Growth Professional:       EUR 179/month (25-100 employees) *Most Popular*

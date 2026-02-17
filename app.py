@@ -1294,7 +1294,7 @@ def render_freemium_registration():
                         if success:
                             try:
                                 user_service.update_user(user_id, {
-                                    'metadata': {'free_scans_remaining': 3, 'trial_started': True}
+                                    'metadata': {'free_scans_remaining': 1, 'trial_started': True}
                                 })
                             except Exception:
                                 pass
@@ -1305,7 +1305,7 @@ def render_freemium_registration():
                                 'user_id': user_id,
                                 'user_role': 'user',
                                 'license_tier': 'trial',
-                                'free_scans_remaining': 3,
+                                'free_scans_remaining': 1,
                                 'subscription_plan': 'trial',
                                 'show_registration': False
                             })
@@ -1546,19 +1546,19 @@ def render_landing_page():
                                             default_scans = 3 if tier == 'trial' else 0
                                             st.session_state.free_scans_remaining = metadata.get('free_scans_remaining', default_scans)
                                         except:
-                                            st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
+                                            st.session_state.free_scans_remaining = 1 if tier == 'trial' else 0
                                     else:
-                                        st.session_state.free_scans_remaining = 3 if tier == 'trial' else 0
+                                        st.session_state.free_scans_remaining = 1 if tier == 'trial' else 0
                                 else:
                                     st.session_state.license_tier = 'trial'
-                                    st.session_state.free_scans_remaining = 3
+                                    st.session_state.free_scans_remaining = 1
                             else:
                                 st.session_state.license_tier = 'trial'
-                                st.session_state.free_scans_remaining = 3
+                                st.session_state.free_scans_remaining = 1
                         except Exception as e:
                             logging.error(f"Error loading license tier: {e}")
                             st.session_state.license_tier = 'trial'
-                            st.session_state.free_scans_remaining = 3
+                            st.session_state.free_scans_remaining = 1
                         
                         # Track successful login
                         try:
