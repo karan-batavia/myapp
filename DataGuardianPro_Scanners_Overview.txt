@@ -1,0 +1,472 @@
+================================================================================
+               DATAGUARDIAN PRO - SCANNER CAPABILITIES OVERVIEW
+              Enterprise Privacy Compliance Intelligence Platform
+================================================================================
+
+
+PLATFORM SUMMARY
+--------------------------------------------------------------------------------
+DataGuardianPro offers 18 specialized scanners covering GDPR (99 articles),
+EU AI Act 2025 (113 articles), Netherlands UAVG (51 articles), SOC2, NIS2,
+and PCI-DSS compliance. All scans are processed with EU data residency,
+zero data retention, and hash-only verification.
+
+
+================================================================================
+1. AI MODEL SCANNER
+================================================================================
+PURPOSE: EU AI Act 2025 compliance assessment for AI systems
+
+CAPABILITIES:
+  - Full coverage of all 113 EU AI Act articles
+  - AI risk level classification (Prohibited, High-Risk, Limited, Minimal)
+  - Bias and fairness auditing
+  - Transparency and explainability assessment
+  - Privacy-Enhancing Technology (PET) validation
+  - Human oversight mechanism evaluation
+  - Quality management system assessment
+  - Compliance roadmap generation with phased timeline
+  - GPAI (General-Purpose AI) model requirements check
+
+UNIQUENESS:
+  - Only scanner on the market covering ALL 113 EU AI Act articles
+  - Intelligent deduplication reduces noise by 58%
+  - Compliant findings get green "Compliance Confirmed" badges
+  - Netherlands-specific AP Guidelines integration
+  - Phased implementation timeline tracking (Feb 2025 - Aug 2027)
+  - Maximum penalty tracking: up to EUR 35M or 7% global turnover
+
+
+================================================================================
+2. DATA SOVEREIGNTY SCANNER
+================================================================================
+PURPOSE: Cross-border data transfer and jurisdictional compliance analysis
+
+CAPABILITIES:
+  - AWS, Azure, and GCP infrastructure configuration analysis
+  - Cross-border data transfer detection
+  - Legal jurisdiction mapping per data location
+  - Schrems II compliance verification
+  - US CLOUD Act risk assessment
+  - Non-EU access point identification
+  - Third-country processor detection
+  - Sovereignty risk scoring with actionable recommendations
+  - Terraform, CloudFormation, ARM/Bicep, Kubernetes YAML scanning
+  - GitHub repository scanning via Git Tree API (single API call)
+
+UNIQUENESS:
+  - Specifically designed for EU/Netherlands data sovereignty requirements
+  - European cloud providers (Hetzner, OVH, Scaleway) recognized as safe
+  - US classified as medium risk due to CLOUD Act despite EU-US DPF adequacy
+  - Supports Docker, Dockerfile, Helm, and generic config analysis
+  - Real-time GitHub repository scanning with fallback to Contents API
+
+
+================================================================================
+3. ENTERPRISE CONNECTOR SCANNER
+================================================================================
+PURPOSE: Automated PII discovery across enterprise platforms
+
+CAPABILITIES:
+  - Microsoft 365 integration (SharePoint, OneDrive, Exchange, Teams)
+  - Google Workspace integration (Drive, Gmail, Calendar)
+  - Exact Online integration (Dutch accounting software)
+  - SAP integration for ERP data scanning
+  - Salesforce integration for CRM data scanning
+  - One-click OAuth2 platform connection
+  - Automatic data discovery without manual file uploads
+  - Continuous monitoring capability
+  - Advanced OAuth2 token refresh and API rate limiting
+
+UNIQUENESS:
+  - Only privacy scanner with native Exact Online support (Dutch market)
+  - Covers the full Dutch enterprise software stack (SAP, Salesforce, Exact)
+  - OAuth2 token management handles automatic refresh
+  - API rate limiting prevents platform throttling
+
+
+================================================================================
+4. GDPR CODE SCANNER
+================================================================================
+PURPOSE: Source code privacy violation and credential exposure detection
+
+CAPABILITIES:
+  - Hardcoded secret and credential detection
+  - Dutch BSN (Burgerservicenummer) auto-detection with 11-proef validation
+  - IBAN number detection
+  - PII pattern matching in source code
+  - GDPR violation alerts for data handling issues
+  - Full Git repository scanning
+  - Support for 50+ programming languages
+  - Smart file selection with scan depth presets (Quick/Standard/Deep/Enterprise)
+
+UNIQUENESS:
+  - BSN detection uses official Dutch 11-proef validation algorithm
+  - Netherlands-specific PII patterns (BSN, Dutch phone numbers, postcodes)
+  - Directory sampling ensures broad coverage across entire codebase
+  - Scan depth presets from 50 files (Quick) to 2000 files (Enterprise)
+
+
+================================================================================
+5. DOCUMENT SCANNER
+================================================================================
+PURPOSE: Automated PII detection in business documents
+
+CAPABILITIES:
+  - Process 100+ document formats (PDF, Word, Excel, PowerPoint, etc.)
+  - Smart text extraction with PyPDF2 and Textract
+  - AI-powered risk level classification
+  - Bulk processing support for large document sets
+  - Contract and HR file analysis
+  - Automatic PII categorization (names, addresses, financial data, etc.)
+  - Fraud detection using ChatGPT pattern analysis
+  - Statistical anomaly analysis for document authenticity
+
+UNIQUENESS:
+  - AI-powered fraud detection integrated into document scanning
+  - Metadata forensics for document authenticity verification
+  - Supports Dutch-language document analysis
+  - Professional UI with detailed finding reports
+
+
+================================================================================
+6. IMAGE SCANNER (OCR)
+================================================================================
+PURPOSE: Visual PII detection in images and scanned documents
+
+CAPABILITIES:
+  - Face detection in photographs
+  - ID card and passport recognition
+  - OCR text extraction from scanned documents (pytesseract)
+  - Hidden EXIF metadata analysis (GPS coordinates, device info)
+  - Photo library batch scanning
+  - Embedded text detection in images
+  - OpenCV-powered image processing
+
+UNIQUENESS:
+  - Combines face detection, OCR, and metadata analysis in one scan
+  - Detects PII that text-based scanners completely miss
+  - EXIF metadata can reveal location data, device identifiers
+  - Supports all major image formats (JPEG, PNG, TIFF, BMP, etc.)
+
+
+================================================================================
+7. DATABASE SCANNER
+================================================================================
+PURPOSE: Database-level PII discovery and compliance assessment
+
+CAPABILITIES:
+  - Support for all major databases (PostgreSQL, MySQL, SQL Server, etc.)
+  - Column-level PII detection (names, emails, phone numbers, etc.)
+  - Data retention policy compliance checking
+  - Encryption validation for sensitive columns
+  - Unprotected field identification
+  - Schema-level analysis without extracting actual data
+  - Connection pooling for production database safety
+
+UNIQUENESS:
+  - Non-intrusive scanning that never extracts or stores actual data
+  - Column naming pattern analysis identifies PII without reading rows
+  - Retention policy validation against GDPR requirements
+  - Supports encrypted connection verification
+
+
+================================================================================
+8. WEBSITE SCANNER
+================================================================================
+PURPOSE: Website privacy compliance auditing
+
+CAPABILITIES:
+  - Cookie consent audit (banner presence, opt-out functionality)
+  - Hidden tracker identification (analytics, advertising, social)
+  - Dark pattern detection in consent flows
+  - Privacy policy completeness analysis
+  - GDPR Article 13/14 information requirements check
+  - Intelligent crawling with configurable depth and page limits
+  - Netherlands AP (Autoriteit Persoonsgegevens) compliance readiness
+
+UNIQUENESS:
+  - Dark pattern detection is rare among privacy tools
+  - Intelligent crawling strategy adapts to site structure
+  - Netherlands AP guidelines specifically integrated
+  - Checks for Dutch-specific requirements (Telecommunicatiewet)
+
+
+================================================================================
+9. DPIA SCANNER (Data Protection Impact Assessment)
+================================================================================
+PURPOSE: GDPR Article 35 DPIA compliance with guided wizard
+
+CAPABILITIES:
+  - 5-step guided wizard interface
+  - Automated risk scoring based on processing activities
+  - Regulator-ready documentation output
+  - Netherlands UAVG-specific requirements
+  - Export to PDF/Word for submission to authorities
+  - Processing activity categorization
+  - Residual risk assessment after mitigations
+  - Data flow mapping support
+
+UNIQUENESS:
+  - Only automated DPIA tool with Netherlands UAVG compliance built-in
+  - Guided wizard makes DPIA accessible to non-privacy-experts
+  - Output format accepted by Dutch Autoriteit Persoonsgegevens
+  - Reduces DPIA completion time from weeks to hours
+
+
+================================================================================
+10. SOC2 & NIS2 SCANNER
+================================================================================
+PURPOSE: Security framework compliance for cloud infrastructure
+
+CAPABILITIES:
+  - SOC2 Type II Trust Services Criteria (TSC) mapping
+  - EU NIS2 Directive compliance checking
+  - AWS, Azure, and GCP cloud configuration analysis
+  - Security control verification
+  - Audit evidence export for external auditors
+  - Infrastructure-as-code scanning (Terraform, CloudFormation)
+  - Network security configuration assessment
+
+UNIQUENESS:
+  - Combined SOC2 + NIS2 scanning in a single tool
+  - NIS2 is specifically required for EU essential/important entities
+  - Generates audit-ready evidence packages
+  - Maps findings directly to SOC2 TSC criteria numbers
+
+
+================================================================================
+11. API SCANNER
+================================================================================
+PURPOSE: API endpoint privacy and security testing
+
+CAPABILITIES:
+  - REST API endpoint scanning
+  - GraphQL API support
+  - PII exposure detection in API responses
+  - Authentication weakness testing
+  - Authorization bypass detection
+  - Rate limiting verification
+  - Automated reporting with remediation guidance
+  - Header security analysis (CORS, CSP, etc.)
+
+UNIQUENESS:
+  - Focuses specifically on PII exposure (not general security)
+  - Tests for GDPR-specific API violations (excessive data exposure)
+  - GraphQL introspection analysis for data model exposure
+  - Validates API responses against data minimization principle
+
+
+================================================================================
+12. SUSTAINABILITY SCANNER
+================================================================================
+PURPOSE: Cloud infrastructure sustainability and cost optimization
+
+CAPABILITIES:
+  - Terraform, CloudFormation, ARM/Bicep configuration analysis
+  - GCP Deployment Manager file scanning
+  - Kubernetes YAML and Docker file analysis
+  - Oversized instance detection
+  - Missing auto-scaling identification
+  - Carbon footprint estimation
+  - Cost optimization recommendations
+  - Resource right-sizing suggestions
+  - Green IT certification readiness assessment
+
+UNIQUENESS:
+  - Only compliance platform with integrated sustainability scanning
+  - Scans infrastructure-as-code, not live environments (safe/non-intrusive)
+  - Aligns with EU Corporate Sustainability Reporting Directive (CSRD)
+  - Combines cost savings with environmental impact metrics
+
+
+================================================================================
+13. AUDIO/VIDEO SCANNER (Deepfake Detection)
+================================================================================
+PURPOSE: Synthetic media detection and EU AI Act compliance
+
+CAPABILITIES:
+  - Audio deepfake detection (MP3, WAV, FLAC, M4A)
+  - Video deepfake detection (MP4, AVI, MOV, MKV)
+  - Voice cloning identification via spectral analysis
+  - Face swap detection with frame consistency analysis
+  - AI-generated content identification
+  - Metadata forensics for media files
+  - EU AI Act 2025 compliance flagging for synthetic media
+  - Authenticity scoring with confidence levels
+  - Comprehensive HTML reports with visual analysis
+
+UNIQUENESS:
+  - Only privacy platform with integrated deepfake detection
+  - EU AI Act 2025 specifically requires synthetic media disclosure
+  - Combines audio AND video analysis in one scanner
+  - Media authenticity scoring helps organizations verify content
+  - Patent-pending technology (Octrooicentrum Nederland)
+
+
+================================================================================
+14. REPOSITORY SCANNER (Banking/Financial Sector)
+================================================================================
+PURPOSE: Code repository compliance for banking and financial sector
+
+CAPABILITIES:
+  - PCI-DSS v4.0 compliance scanning
+  - GDPR and UAVG compliance for code repositories
+  - Hardcoded PII detection (IBAN, BSN with 11-proef, PAN/credit card)
+  - Secrets exposure detection (API keys, tokens, passwords)
+  - PII logging violation detection
+  - Weak encryption detection
+  - Secure coding validation
+  - Git history scanning (commits, branches, tags)
+  - Audit-ready HTML report generation with risk scoring
+
+UNIQUENESS:
+  - Purpose-built for banking sector compliance requirements
+  - PCI-DSS v4.0 coverage is essential for payment processors
+  - Git history scanning catches secrets in past commits
+  - BSN 11-proef validation prevents false positives
+  - Security: URL validation, branch sanitization, XSS prevention
+
+
+================================================================================
+15. ADVANCED AI SCANNER
+================================================================================
+PURPOSE: Deep AI system analysis with enhanced finding generation
+
+CAPABILITIES:
+  - Enhanced finding generation with business impact assessment
+  - AI Act traceability engine mapping findings to specific articles
+  - Privacy-Enhancing Technology (PET) validation
+  - Compliance forecast with trend analysis
+  - Remediation priority ranking
+  - Cost-of-non-compliance estimation
+  - Region-specific compliance rules (NL, DE, FR, BE)
+
+UNIQUENESS:
+  - Generates actionable business impact assessments, not just technical findings
+  - Traceability engine links every finding to specific EU AI Act articles
+  - Compliance forecasting predicts future compliance trajectory
+  - Cost estimation helps build business case for remediation
+
+
+================================================================================
+16. GDPR COMPLIANCE SCANNER
+================================================================================
+PURPOSE: Comprehensive GDPR article-by-article compliance verification
+
+CAPABILITIES:
+  - Full 99 GDPR article coverage across 11 chapters
+  - Netherlands UAVG 51 article coverage
+  - BSN processing rules validation
+  - AP Guidelines 2024-2025 compliance
+  - Telecommunicatiewet requirements
+  - Data subject rights implementation check
+  - Consent management validation
+  - Data retention policy compliance
+  - Cross-border transfer safeguards assessment
+
+UNIQUENESS:
+  - 100% GDPR coverage (most tools cover 60-70% of articles)
+  - 100% Netherlands UAVG coverage (unique to DataGuardianPro)
+  - AP (Autoriteit Persoonsgegevens) Guidelines 2024-2025 integrated
+  - BSN-specific processing rules as required by Dutch law
+
+
+================================================================================
+17. DOMAIN SCANNER
+================================================================================
+PURPOSE: Domain-level security and privacy configuration analysis
+
+CAPABILITIES:
+  - DNS configuration analysis
+  - SSL/TLS certificate validation
+  - Email security (SPF, DKIM, DMARC) verification
+  - Domain registration privacy check
+  - Subdomain enumeration
+  - Security header analysis
+
+UNIQUENESS:
+  - Quick, non-intrusive domain-level assessment
+  - Identifies email security gaps that lead to phishing/spoofing
+  - Checks for GDPR-relevant domain registration privacy
+
+
+================================================================================
+18. EU AI ACT CALCULATOR
+================================================================================
+PURPOSE: EU AI Act 2025 risk classification wizard
+
+CAPABILITIES:
+  - 4-step guided wizard for AI system classification
+  - Risk level determination (Prohibited, High-Risk, Limited, Minimal)
+  - Netherlands-specific requirements and guidance
+  - Compliance obligation mapping based on risk level
+  - Timeline awareness (Feb 2025, Aug 2025, Aug 2026, Aug 2027 deadlines)
+  - Actionable next steps per risk classification
+
+UNIQUENESS:
+  - Interactive wizard makes EU AI Act accessible to non-experts
+  - Provides specific compliance obligations based on classification result
+  - Netherlands-focused guidance aligned with Dutch implementation
+  - Free tool to help organizations understand their obligations
+
+
+================================================================================
+PLATFORM-WIDE UNIQUE DIFFERENTIATORS
+================================================================================
+
+1. NETHERLANDS FOCUS
+   - Only platform with 100% UAVG coverage (51 articles)
+   - BSN 11-proef validation built into all relevant scanners
+   - AP Guidelines 2024-2025 integrated
+   - Exact Online integration (Dutch accounting software)
+   - iDEAL and SEPA payment support
+
+2. COMPREHENSIVE COVERAGE
+   - 18 specialized scanners in one unified platform
+   - GDPR (99 articles) + EU AI Act (113 articles) + UAVG (51 articles)
+   - SOC2, NIS2, PCI-DSS v4.0 coverage
+   - No other platform covers this breadth
+
+3. ENTERPRISE-GRADE SECURITY
+   - EU data residency (Netherlands hosting)
+   - Zero data retention, hash-only verification
+   - No training on customer data
+   - Patent-pending deepfake detection technology
+
+4. ACTIONABLE INTELLIGENCE
+   - AI-powered risk analysis with business impact assessment
+   - Compliance forecasting with trend analysis
+   - Cost-of-non-compliance estimation
+   - Remediation priority ranking with timelines
+
+5. EASE OF USE
+   - No expertise required to run scans
+   - No setup or installation needed (SaaS)
+   - Guided wizards for complex assessments (DPIA, AI Act)
+   - Professional HTML/PDF reports ready for auditors
+
+6. REPORT GENERATION
+   - Audit-ready HTML and PDF reports
+   - Compliance certificates
+   - Multi-language support (English/Dutch)
+   - Regulator-ready documentation format
+
+
+================================================================================
+PRICING TIERS
+================================================================================
+  - Trial:        Free (3 scans)
+  - Starter:      EUR 99/month
+  - Professional: EUR 299/month
+  - Enterprise:   EUR 799/month
+  - Government:   Custom pricing
+
+  All plans include: iDEAL support, 30-day money-back guarantee,
+  EU data residency, and GDPR-compliant data handling.
+
+
+================================================================================
+  DataGuardianPro B.V. | Netherlands | info@dataguardianpro.nl
+  Making AI safer, more transparent, and sustainable.
+================================================================================
