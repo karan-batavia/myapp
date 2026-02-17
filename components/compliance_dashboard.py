@@ -563,8 +563,8 @@ def _render_competitive_analysis():
     # Market advantages
     st.markdown("""
     **Key Competitive Advantages:**
-    - 🏆 **Only platform with 100% GDPR coverage (99/99 articles)**
-    - 🚀 **Complete EU AI Act 2025 implementation (ahead of market)**
+    - 🏆 **Comprehensive GDPR compliance coverage across all chapters**
+    - 🚀 **Broad EU AI Act 2025 implementation (ahead of market)**
     - 🇳🇱 **Native Netherlands UAVG specialization (BSN validation, AP compliance)**
     - 💰 **76-84% cost savings vs OneTrust/TrustArc**
     - ⚡ **Advanced features competitors lack (real-time monitoring, predictive compliance)**

@@ -7825,7 +7825,7 @@ def render_model_analysis_interface(region: str, username: str):
     
     # Important notice about comprehensive coverage  
     st.success(_('scan.ai_model_coverage_notice',
-        "**🎯 Comprehensive EU AI Act 2025 Coverage (90%+, All 113 Articles) for ALL Input Methods:**\n"
+        "**🎯 Comprehensive EU AI Act 2025 Coverage (All Chapters, Articles 1-113) for ALL Input Methods:**\n"
         "- 🔗 **Model Repository**: Automatically clones repository, detects model files (.pt, .h5, .pkl, etc.), and performs full comprehensive analysis\n"
         "- 📤 **Upload Model File**: Full 12-phase analysis covering all EU AI Act requirements including Annex III, transparency, provider obligations, conformity, GPAI, post-market surveillance, AI literacy, enforcement, governance, and Netherlands-specific UAVG compliance\n"
         "- 📁 **Model Path**: Full comprehensive coverage when model file exists locally\n\n"
