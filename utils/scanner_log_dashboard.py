@@ -331,7 +331,7 @@ class ScannerLogDashboard:
                 )
             
             with col4:
-                if st.button("🔄 Refresh", use_container_width=True):
+                if st.button("🔄 Refresh", width="stretch"):
                     st.rerun()
         
         st.divider()
@@ -415,7 +415,7 @@ class ScannerLogDashboard:
                 df = pd.DataFrame(perf_data)
                 st.dataframe(
                     df, 
-                    use_container_width=True,
+                    width="stretch",
                     hide_index=True,
                     column_config={
                         "Scanner": st.column_config.TextColumn("Scanner Type", width="medium"),
@@ -457,7 +457,7 @@ class ScannerLogDashboard:
                         color_continuous_scale='Blues'
                     )
                     fig_ops.update_layout(height=400)
-                    st.plotly_chart(fig_ops, use_container_width=True)
+                    st.plotly_chart(fig_ops, width="stretch")
                 
                 with col2:
                     # Error rate chart
@@ -484,7 +484,7 @@ class ScannerLogDashboard:
                         }
                         )
                         fig_errors.update_layout(height=400)
-                        st.plotly_chart(fig_errors, use_container_width=True)
+                        st.plotly_chart(fig_errors, width="stretch")
     
     def _show_activity_timeline(self, hours: int, scanner_filter: str, level_filter: str):
         """Show scanner activity timeline"""
@@ -529,7 +529,7 @@ class ScannerLogDashboard:
         
         with col2:
             st.markdown("<br>", unsafe_allow_html=True)  # Spacing
-            export_logs = st.button("📥 Export Logs", use_container_width=True)
+            export_logs = st.button("📥 Export Logs", width="stretch")
         
         # Get filtered logs
         logs = self.analyzer.get_scanner_logs(hours, scanner_filter, level_filter)

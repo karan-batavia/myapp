@@ -117,7 +117,7 @@ def render_history_page():
         
         if history_data:
             df = pd.DataFrame(history_data)
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             st.subheader("Export Options")
             
@@ -181,13 +181,13 @@ def render_history_trends(scans_data):
                 fig1 = go.Figure()
                 fig1.add_trace(go.Scatter(x=dates, y=pii_counts, mode='lines+markers', name='PII Found'))
                 fig1.update_layout(title='PII Detection Trend', xaxis_title='Date', yaxis_title='PII Count')
-                st.plotly_chart(fig1, use_container_width=True)
+                st.plotly_chart(fig1, width="stretch")
             
             with col2:
                 fig2 = go.Figure()
                 fig2.add_trace(go.Scatter(x=dates, y=compliance_scores, mode='lines+markers', name='Compliance', line=dict(color='green')))
                 fig2.update_layout(title='Compliance Score Trend', xaxis_title='Date', yaxis_title='Score (%)')
-                st.plotly_chart(fig2, use_container_width=True)
+                st.plotly_chart(fig2, width="stretch")
         
     except ImportError:
         st.info("Install plotly for trend charts: pip install plotly")

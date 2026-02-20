@@ -129,13 +129,13 @@ def render_compliance_dashboard(current_username: Optional[str] = None):
         # Timeline chart
         st.write("#### Compliance Score Timeline")
         timeline_chart = manager.create_score_timeline_chart(days=90)
-        st.plotly_chart(timeline_chart, use_container_width=True)
+        st.plotly_chart(timeline_chart, width="stretch")
     
     with col2:
         # Component radar chart
         st.write("#### Component Analysis")
         radar_chart = manager.create_component_radar_chart()
-        st.plotly_chart(radar_chart, use_container_width=True)
+        st.plotly_chart(radar_chart, width="stretch")
     
     # Enhanced regulatory compliance section
     _render_enhanced_regulatory_section()
@@ -558,7 +558,7 @@ def _render_competitive_analysis():
         height=400
     )
     
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
     
     # Market advantages
     st.markdown("""

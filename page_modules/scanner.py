@@ -213,7 +213,7 @@ def render_scanner_interface():
             st.error("⚠️ **Free trial limit reached!** You've used all 3 free scans.")
             st.info("🔓 Upgrade to a paid plan for unlimited scanning capabilities.")
             
-            if st.button("🚀 View Pricing Plans", use_container_width=True, key="upgrade_scan_limit"):
+            if st.button("🚀 View Pricing Plans", width="stretch", key="upgrade_scan_limit"):
                 st.session_state['show_pricing'] = True
                 st.rerun()
             return  # Block access to scanner
@@ -1637,7 +1637,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
             'Data Sovereignty Scanner is available for Enterprise and Government license tiers only.'))
         st.info("🔓 " + _('scan.data_sovereignty.upgrade', 
             'Upgrade to Enterprise or Government tier to access cross-border transfer analysis.'))
-        if st.button("🚀 View Enterprise Plans", use_container_width=True, key="upgrade_sovereignty"):
+        if st.button("🚀 View Enterprise Plans", width="stretch", key="upgrade_sovereignty"):
             st.session_state['show_pricing'] = True
             st.rerun()
         return
@@ -1679,7 +1679,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
             )
         
         if st.button("🔍 " + _('scan.data_sovereignty.analyze', 'Analyze Sovereignty'), 
-                     use_container_width=True, type="primary", key="run_sovereignty_github"):
+                     width="stretch", type="primary", key="run_sovereignty_github"):
             if github_url and github_url.startswith("https://github.com"):
                 try:
                     import requests
@@ -1903,7 +1903,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                                 data=html_report,
                                 file_name=f"sovereignty_report_{owner}_{repo}.html",
                                 mime="text/html",
-                                use_container_width=True,
+                                width="stretch",
                                 key="download_sovereignty_github"
                             )
                             
@@ -1958,7 +1958,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
         )
         
         if st.button("🔍 " + _('scan.data_sovereignty.analyze', 'Analyze Sovereignty'), 
-                     use_container_width=True, type="primary", key="run_sovereignty_scan"):
+                     width="stretch", type="primary", key="run_sovereignty_scan"):
             if uploaded_file:
                 try:
                     from services.data_sovereignty_scanner import DataSovereigntyScanner
@@ -2034,7 +2034,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                         data=html_report,
                         file_name=f"sovereignty_report_{scan_result.scan_id}.html",
                         mime="text/html",
-                        use_container_width=True
+                        width="stretch"
                     )
                     
                     result_dict = {
@@ -2104,7 +2104,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                     integrations.append({'source': source, 'destination': dest})
         
         if st.button("🔍 " + _('scan.data_sovereignty.analyze', 'Analyze Sovereignty'), 
-                     use_container_width=True, type="primary", key="run_sovereignty_manual"):
+                     width="stretch", type="primary", key="run_sovereignty_manual"):
             if locations:
                 try:
                     from services.data_sovereignty_scanner import DataSovereigntyScanner
@@ -2136,7 +2136,7 @@ def render_data_sovereignty_scanner_interface(region: str, username: str):
                         data=html_report,
                         file_name=f"sovereignty_report_{scan_result.scan_id}.html",
                         mime="text/html",
-                        use_container_width=True
+                        width="stretch"
                     )
                     
                 except Exception as e:
@@ -2229,7 +2229,7 @@ def render_document_scanner_interface(region: str, username: str):
     if uploaded_files:
         st.success(f"✅ {len(uploaded_files)} documents ready for scanning")
         
-        if st.button("🚀 Start Document Scan", type="primary", use_container_width=True):
+        if st.button("🚀 Start Document Scan", type="primary", width="stretch"):
             execute_document_scan(region, username, uploaded_files)
 
 def execute_document_scan(region, username, uploaded_files):
@@ -4224,7 +4224,7 @@ def display_enterprise_scan_results(scan_results: dict, connector_name: str):
                 data=html_report,
                 file_name=f"enterprise_connector_{connector_name.lower().replace(' ', '_')}_report_{datetime.now().strftime('%Y%m%d_%H%M')}.html",
                 mime="text/html",
-                use_container_width=True
+                width="stretch"
             )
         else:
             st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
@@ -4370,7 +4370,7 @@ def render_code_scanner_interface(region: str, username: str):
         generate_remediation = st.checkbox("Generate remediation", value=True)
     
     # Start scan button
-    if st.button("🚀 Start Code Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start Code Scan", type="primary", width="stretch"):
         # Check trial scan limits
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
@@ -5393,7 +5393,7 @@ def display_scan_results(scan_results):
             
             # Display enhanced table
             styled_df = findings_df.style.map(highlight_risk, subset=['Severity'])
-            st.dataframe(styled_df, use_container_width=True, height=400)
+            st.dataframe(styled_df, width="stretch", height=400)
             
             # Additional metrics for sustainability scanner
             if scan_results.get("scan_type") == "Comprehensive Sustainability Scanner":
@@ -5486,14 +5486,14 @@ def display_scan_results(scan_results):
                             data=pdf_content,
                             file_name=f"gdpr_report_{datetime.now().strftime(FILENAME_DATE_FORMAT)}.pdf",
                             mime="application/pdf",
-                            use_container_width=True,
+                            width="stretch",
                             help="Download comprehensive PDF compliance report"
                         )
                     else:
                         st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     st.error(f"Error generating PDF report: {str(e)}")
-                    st.button("📥 PDF Report (Error)", disabled=True, use_container_width=True)
+                    st.button("📥 PDF Report (Error)", disabled=True, width="stretch")
             
             with col2:
                 # Generate HTML report and provide download button
@@ -5517,14 +5517,14 @@ def display_scan_results(scan_results):
                             data=html_content,
                             file_name=f"gdpr_report_{datetime.now().strftime(FILENAME_DATE_FORMAT)}.html",
                             mime="text/html",
-                            use_container_width=True,
+                            width="stretch",
                             help="Download interactive HTML compliance report"
                         )
                     else:
                         st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
                 except Exception as e:
                     st.error(f"Error generating HTML report: {str(e)}")
-                    st.button("📥 HTML Report (Error)", disabled=True, use_container_width=True)
+                    st.button("📥 HTML Report (Error)", disabled=True, width="stretch")
         else:
             st.info("🔄 Please run a scan first to generate reports.")
     else:
@@ -5591,7 +5591,7 @@ def render_image_scanner_interface(region: str, username: str):
     if uploaded_files:
         st.success(f"✅ {len(uploaded_files)} images ready for scanning")
         
-        if st.button("🚀 Start Image Scan", type="primary", use_container_width=True):
+        if st.button("🚀 Start Image Scan", type="primary", width="stretch"):
             # Check trial scan limits
             allowed, message = check_and_decrement_trial_scans()
             if not allowed:
@@ -6120,7 +6120,7 @@ def render_database_scanner_interface(region: str, username: str):
             if any(pattern in host.lower() for pattern in cloud_patterns):
                 st.success("☁️ **Cloud database detected** - SSL will be automatically enabled for secure connection")
     
-    if st.button("🚀 Start Database Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start Database Scan", type="primary", width="stretch"):
         # Check trial scan limits
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
@@ -6518,7 +6518,7 @@ def render_api_scanner_interface(region: str, username: str):
     # Endpoints to scan
     endpoints = st.text_area("Endpoints (one per line)", placeholder="/users\n/api/v1/customers\n/data")
     
-    if st.button("🚀 Start API Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start API Scan", type="primary", width="stretch"):
         # Check trial scan limits
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
@@ -7302,7 +7302,7 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
                     data=html_report,
                     file_name=f"api-security-report-{scan_results['scan_id']}.html",
                     mime="text/html",
-                    use_container_width=True
+                    width="stretch"
                 )
             else:
                 st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
@@ -7316,7 +7316,7 @@ def execute_api_scan(region, username, base_url, endpoints, timeout):
                     data=json_report,
                     file_name=f"api-security-report-{scan_results['scan_id']}.json",
                     mime="application/json",
-                    use_container_width=True
+                    width="stretch"
                 )
             else:
                 st.info("🔒 Report downloads available for paid subscribers. Upgrade to download reports.")
@@ -7963,7 +7963,7 @@ def render_model_analysis_interface(region: str, username: str):
     has_model_path = model_path and model_path.strip()
     scan_enabled = has_uploaded_model or has_repo_url or has_model_path
     
-    if st.button(_('scan.ai_model_start_analysis', "🚀 Start AI Model Analysis"), type="primary", use_container_width=True, disabled=not scan_enabled):
+    if st.button(_('scan.ai_model_start_analysis', "🚀 Start AI Model Analysis"), type="primary", width="stretch", disabled=not scan_enabled):
         if not scan_enabled:
             st.error(_('scan.ai_model_no_input_error', "❌ Please provide at least one of: uploaded model file, repository URL, or model path."))
             return
@@ -8567,7 +8567,7 @@ def render_soc2_scanner_interface(region: str, username: str):
     """, unsafe_allow_html=True)
     
     # Scan button
-    if st.button("🚀 Start SOC2 & NIS2 Compliance Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start SOC2 & NIS2 Compliance Scan", type="primary", width="stretch"):
         # Check trial scan limits
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
@@ -8996,7 +8996,7 @@ def render_website_scanner_interface(region: str, username: str):
             check_https = st.checkbox("HTTPS Security Check", value=True)
             multilingual = st.checkbox("Dutch/English Detection", value=True)
     
-    if st.button("🚀 Start GDPR Compliance Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start GDPR Compliance Scan", type="primary", width="stretch"):
         # Check trial scan limits
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
@@ -10024,7 +10024,7 @@ def render_sustainability_scanner_interface(region: str, username: str):
     # Default to Netherlands region for emissions calculation (no user selection needed)
     emissions_region = "eu-west-1 (Netherlands)"
     
-    if st.button("🚀 Start Comprehensive Sustainability Scan", type="primary", use_container_width=True):
+    if st.button("🚀 Start Comprehensive Sustainability Scan", type="primary", width="stretch"):
         # Check trial scan limits
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
@@ -10429,7 +10429,7 @@ def execute_sustainability_scan(region, username, scan_params):
             'CO₂ (kg/month)': [round(breakdown_data['compute']['co2'], 2), round(breakdown_data['storage']['co2'], 2),
                               round(breakdown_data['networking']['co2'], 2), round(breakdown_data['code_inefficiency']['co2'], 2)]
             })
-            st.dataframe(breakdown_df, use_container_width=True)
+            st.dataframe(breakdown_df, width="stretch")
         
         # Quick wins section
         st.subheader("⚡ Quick Wins")
@@ -12024,7 +12024,7 @@ def render_audio_video_scanner_interface(region: str, username: str):
         value=_('audio_video_scanner.sensitivity_high', 'high')
     )
     
-    if st.button(f"🚀 {_('audio_video_scanner.start_scan', 'Start Deepfake Detection Scan')}", type="primary", use_container_width=True):
+    if st.button(f"🚀 {_('audio_video_scanner.start_scan', 'Start Deepfake Detection Scan')}", type="primary", width="stretch"):
         allowed, message = check_and_decrement_trial_scans()
         if not allowed:
             st.error(f"⚠️ {message}")

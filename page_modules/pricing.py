@@ -103,7 +103,7 @@ def _render_fallback_pricing():
             for feature in plan["features"]:
                 st.write(f"✓ {feature}")
             
-            if st.button(f"Select {plan['name']}", key=f"select_{plan['name']}", use_container_width=True):
+            if st.button(f"Select {plan['name']}", key=f"select_{plan['name']}", width="stretch"):
                 _handle_plan_selection(plan['name'])
             
             st.markdown("---")
@@ -196,7 +196,7 @@ def _render_fallback_upgrade():
     with col2:
         agree_privacy = st.checkbox("I agree to the Privacy Policy")
     
-    if st.button("Complete Upgrade", type="primary", use_container_width=True):
+    if st.button("Complete Upgrade", type="primary", width="stretch"):
         if agree_terms and agree_privacy:
             try:
                 from components.pricing_display import create_stripe_checkout

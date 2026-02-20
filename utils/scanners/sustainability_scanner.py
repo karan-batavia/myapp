@@ -1607,7 +1607,7 @@ def run_cloud_resources_scan():
     # Scan button
     col1, col2 = st.columns([3, 1])
     with col1:
-        scan_button = st.button("Scan Cloud Resources", type="primary", use_container_width=True)
+        scan_button = st.button("Scan Cloud Resources", type="primary", width="stretch")
     with col2:
         st.write("")  # Empty space for alignment
     
@@ -1756,7 +1756,7 @@ def run_github_repo_scan():
     # Scan button
     scan_col1, scan_col2 = st.columns([3, 1])
     with scan_col1:
-        scan_button = st.button("Scan GitHub Repository", type="primary", use_container_width=True, key="github_repo_scan_button")
+        scan_button = st.button("Scan GitHub Repository", type="primary", width="stretch", key="github_repo_scan_button")
     with scan_col2:
         st.write("")  # Empty space for alignment
     
@@ -2034,7 +2034,7 @@ def run_code_analysis_scan():
     col1, col2 = st.columns([3, 1])
     with col1:
         button_label = "Analyze GitHub Repository" if source_type == "GitHub Repository" else "Analyze Uploaded Files"
-        scan_button = st.button(button_label, type="primary", use_container_width=True, key="code_analysis_scan_button")
+        scan_button = st.button(button_label, type="primary", width="stretch", key="code_analysis_scan_button")
     with col2:
         st.write("")  # Empty space for alignment
     
@@ -2413,7 +2413,7 @@ def display_carbon_footprint_overview(scan_results):
         )
         fig.update_traces(textposition='inside', textinfo='percent+label')
         fig.update_layout(height=400)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         
         # Environmental Impact Comparison - formatted exactly as requested
         st.subheader("🌍 Environmental Impact Comparison")
@@ -2508,7 +2508,7 @@ def display_code_intelligence_analysis(scan_results):
             
             if import_data:
                 df_imports = pd.DataFrame(import_data)
-                st.dataframe(df_imports, use_container_width=True)
+                st.dataframe(df_imports, width="stretch")
                 
                 st.subheader("🛠️ Action Steps")
                 st.write("**Immediate Actions:**")
@@ -2542,7 +2542,7 @@ unimport --remove-all src/
             
             if dead_code_data:
                 df_dead = pd.DataFrame(dead_code_data)
-                st.dataframe(df_dead, use_container_width=True)
+                st.dataframe(df_dead, width="stretch")
                 
                 st.subheader("🛠️ Action Steps")
                 st.write("**Verification Process:**")
@@ -2577,7 +2577,7 @@ vulture src/
             
             if dup_data:
                 df_dups = pd.DataFrame(dup_data)
-                st.dataframe(df_dups, use_container_width=True)
+                st.dataframe(df_dups, width="stretch")
                 
                 st.subheader("🛠️ Action Steps")
                 st.write("**Resolution Commands:**")
@@ -2617,7 +2617,7 @@ poetry lock
             
             if model_data:
                 df_models = pd.DataFrame(model_data)
-                st.dataframe(df_models, use_container_width=True)
+                st.dataframe(df_models, width="stretch")
                 
                 # Model optimization visualization
                 fig = px.bar(
@@ -2628,7 +2628,7 @@ poetry lock
                     color_discrete_sequence=['#FF6B6B']
                 )
                 fig.update_layout(height=400)
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
                 
                 st.subheader("🛠️ Optimization Strategies")
                 st.write("**Model Compression Techniques:**")
@@ -2929,7 +2929,7 @@ def display_cloud_sustainability_report(scan_results):
                 })
             
             region_df = pd.DataFrame(region_analysis)
-            st.dataframe(region_df, use_container_width=True)
+            st.dataframe(region_df, width="stretch")
             
             # Visualization
             col1, col2 = st.columns(2)
@@ -2943,7 +2943,7 @@ def display_cloud_sustainability_report(scan_results):
                     color_discrete_sequence=px.colors.qualitative.Set3
                 )
                 fig_pie.update_traces(textposition='inside', textinfo='percent+label')
-                st.plotly_chart(fig_pie, use_container_width=True)
+                st.plotly_chart(fig_pie, width="stretch")
             
             with col2:
                 # Bar chart for region emissions
@@ -2957,7 +2957,7 @@ def display_cloud_sustainability_report(scan_results):
                     color_continuous_scale='Reds'
                 )
                 fig_bar.update_layout(height=350)
-                st.plotly_chart(fig_bar, use_container_width=True)
+                st.plotly_chart(fig_bar, width="stretch")
         
         # Environmental impact context
         st.subheader("🌱 Environmental Impact Context")
@@ -3015,7 +3015,7 @@ def display_cloud_sustainability_report(scan_results):
         ]
         
         carbon_rec_df = pd.DataFrame(carbon_recommendations)
-        st.dataframe(carbon_rec_df, use_container_width=True)
+        st.dataframe(carbon_rec_df, width="stretch")
     
     # Findings section
     st.subheader("Findings")
@@ -3133,7 +3133,7 @@ def display_github_sustainability_report(scan_results):
             )
             fig1.update_traces(textposition='inside', textinfo='percent+label')
             fig1.update_layout(height=300)
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, width="stretch")
         
         with col2:
             # Lines by language pie chart
@@ -3146,7 +3146,7 @@ def display_github_sustainability_report(scan_results):
             )
             fig2.update_traces(textposition='inside', textinfo='percent+label')
             fig2.update_layout(height=300)
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width="stretch")
     
     # Code duplication details
     duplication_data = scan_results.get('code_duplication', {})
@@ -3177,7 +3177,7 @@ def display_github_sustainability_report(scan_results):
             }
         ))
         fig.update_layout(height=250)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         
         # Display top duplication instances if available
         if duplication_instances:
@@ -3320,7 +3320,7 @@ def display_code_analysis_report(scan_results):
             )
             fig1.update_traces(textposition='inside', textinfo='percent+label')
             fig1.update_layout(height=300)
-            st.plotly_chart(fig1, use_container_width=True)
+            st.plotly_chart(fig1, width="stretch")
         
         with col2:
             # Lines by language pie chart
@@ -3333,7 +3333,7 @@ def display_code_analysis_report(scan_results):
             )
             fig2.update_traces(textposition='inside', textinfo='percent+label')
             fig2.update_layout(height=300)
-            st.plotly_chart(fig2, use_container_width=True)
+            st.plotly_chart(fig2, width="stretch")
     
     # Findings section
     st.subheader("Findings")

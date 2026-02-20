@@ -14,16 +14,16 @@ from datetime import datetime, timedelta
 from services.visitor_tracker import get_visitor_tracker, VisitorEventType
 from typing import Dict, Any
 
-def safe_plotly_chart(fig, use_container_width=True, fallback_data=None, fallback_title=""):
+def safe_plotly_chart(fig, width="stretch", fallback_data=None, fallback_title=""):
     """Safely render Plotly chart with fallback to table on error"""
     try:
         import plotly.express as px
         import plotly.graph_objects as go
-        st.plotly_chart(fig, use_container_width=use_container_width)
+        st.plotly_chart(fig, width=width)
     except Exception as e:
         if fallback_data:
             st.caption(f"📊 {fallback_title}")
-            st.dataframe(pd.DataFrame(fallback_data), use_container_width=True)
+            st.dataframe(pd.DataFrame(fallback_data), width="stretch")
         else:
             st.warning(f"Chart unavailable: {str(e)[:50]}")
 
@@ -115,10 +115,10 @@ def render_visitor_analytics_dashboard():
                 color_discrete_map={'Success': '#00D26A', 'Failure': '#FF4B4B'}
             )
             fig_login.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_login, use_container_width=True)
+            st.plotly_chart(fig_login, width="stretch")
         except Exception:
             st.caption(f"Login Attempts ({login_total} total)")
-            st.dataframe(pd.DataFrame(login_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(login_data), width="stretch", hide_index=True)
         
         # Registration attempts breakdown
         st.markdown("### 👥 User Registrations")
@@ -138,10 +138,10 @@ def render_visitor_analytics_dashboard():
                 color_discrete_map={'Success': '#00D26A', 'Failure': '#FF4B4B'}
             )
             fig_reg.update_traces(textposition='inside', textinfo='percent+label')
-            st.plotly_chart(fig_reg, use_container_width=True)
+            st.plotly_chart(fig_reg, width="stretch")
         except Exception:
             st.caption(f"Registration Attempts ({reg_total} total)")
-            st.dataframe(pd.DataFrame(reg_data), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(reg_data), width="stretch", hide_index=True)
     
     with col2:
         st.markdown("### 📄 Top Pages Visited")
@@ -162,9 +162,9 @@ def render_visitor_analytics_dashboard():
                     title="Most Visited Pages"
                 )
                 fig_pages.update_layout(yaxis={'categoryorder': 'total ascending'})
-                st.plotly_chart(fig_pages, use_container_width=True)
+                st.plotly_chart(fig_pages, width="stretch")
             except Exception:
-                st.dataframe(pd.DataFrame(pages_df), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(pages_df), width="stretch", hide_index=True)
         else:
             st.info("No page view data available yet")
         
@@ -186,9 +186,9 @@ def render_visitor_analytics_dashboard():
                     title="Top Referrers"
                 )
                 fig_refs.update_layout(yaxis={'categoryorder': 'total ascending'})
-                st.plotly_chart(fig_refs, use_container_width=True)
+                st.plotly_chart(fig_refs, width="stretch")
             except Exception:
-                st.dataframe(pd.DataFrame(referrers_df), use_container_width=True, hide_index=True)
+                st.dataframe(pd.DataFrame(referrers_df), width="stretch", hide_index=True)
         else:
             st.info("No referrer data available yet")
     
@@ -246,7 +246,7 @@ def render_visitor_analytics_dashboard():
         # Display as clean table with country names and flags
         df = pd.DataFrame(countries_df)
         df = df.sort_values('Visitors', ascending=False)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
     
     # Visitor Sessions section
     st.markdown("### 👤 Visitor Sessions")
@@ -285,7 +285,7 @@ def render_visitor_analytics_dashboard():
                 'Total Actions': session.get('total_events', 0)
             })
         
-        st.dataframe(sessions_data, use_container_width=True)
+        st.dataframe(sessions_data, width="stretch")
     else:
         st.info("No visitor session data available yet")
     
@@ -318,7 +318,7 @@ def render_visitor_analytics_dashboard():
                 'Status': '✅ Success' if event.get('success', True) else '❌ Failed'
             })
         
-        st.dataframe(events_data, use_container_width=True)
+        st.dataframe(events_data, width="stretch")
     else:
         st.info("No recent events recorded yet")
     

@@ -49,7 +49,7 @@ def display_soc2_findings(scan_results):
                 return ''
             
             styled_df = findings_df.style.map(highlight_risk_in_table, subset=['Risk'])
-            st.dataframe(styled_df, use_container_width=True)
+            st.dataframe(styled_df, width="stretch")
             
             # Show detailed violation breakdown by category
             st.markdown("### Detailed Violation Analysis")
@@ -151,7 +151,7 @@ def display_soc2_findings(scan_results):
                 
                 # Create dataframe
                 df = pd.DataFrame(criteria_data)
-                st.dataframe(df, use_container_width=True)
+                st.dataframe(df, width="stretch")
                 
                 # Summary for this category
                 statuses = [details.get("status", "not_assessed") for details in category_criteria.values()]

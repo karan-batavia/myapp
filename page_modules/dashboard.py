@@ -233,7 +233,7 @@ def _render_recent_activity(recent_scans, username):
     
     if activity_data:
         df = pd.DataFrame(activity_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
 
 def _render_quick_actions():
@@ -245,20 +245,20 @@ def _render_quick_actions():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("🔍 New Scan", use_container_width=True):
+        if st.button("🔍 New Scan", width="stretch"):
             st.session_state['start_new_scan'] = True
             st.rerun()
     
     with col2:
-        if st.button("📊 View Results", use_container_width=True):
+        if st.button("📊 View Results", width="stretch"):
             st.session_state['view_detailed_results'] = True
             st.rerun()
     
     with col3:
-        if st.button("📋 Scan History", use_container_width=True):
+        if st.button("📋 Scan History", width="stretch"):
             st.session_state['view_history'] = True
             st.rerun()
     
     with col4:
-        if st.button("📈 Reports", use_container_width=True):
+        if st.button("📈 Reports", width="stretch"):
             st.info("Generate comprehensive compliance reports from the Results page.")

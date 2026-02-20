@@ -202,12 +202,12 @@ def _render_billing_settings():
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🚀 Upgrade Plan", use_container_width=True):
+        if st.button("🚀 Upgrade Plan", width="stretch"):
             st.session_state['show_upgrade'] = True
             st.rerun()
     
     with col2:
-        if st.button("📜 View Invoices", use_container_width=True):
+        if st.button("📜 View Invoices", width="stretch"):
             st.info("Invoice history will be displayed here.")
 
 
@@ -331,7 +331,7 @@ def _render_gdpr_privacy_settings():
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("📥 Export All My Data", use_container_width=True):
+        if st.button("📥 Export All My Data", width="stretch"):
             with st.spinner("Preparing your data export..."):
                 try:
                     from services.results_aggregator import ResultsAggregator
@@ -372,7 +372,7 @@ def _render_gdpr_privacy_settings():
     )
     
     if confirm_delete:
-        if st.button("🗑️ Delete All My Data", type="primary", use_container_width=True):
+        if st.button("🗑️ Delete All My Data", type="primary", width="stretch"):
             with st.spinner("Processing deletion request..."):
                 try:
                     from services.results_aggregator import ResultsAggregator

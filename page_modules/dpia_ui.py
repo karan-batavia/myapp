@@ -113,7 +113,7 @@ def show_project_info_step(region: str, username: str):
     # Validation and navigation
     col1, col2 = st.columns([1, 1])
     with col2:
-        if st.button("Next Step →", type="primary", use_container_width=True):
+        if st.button("Next Step →", type="primary", width="stretch"):
             if project_name and data_controller and processing_purpose:
                 st.session_state.dpia_responses.update({
                     'project_name': project_name,
@@ -181,11 +181,11 @@ def show_data_types_step(region: str, username: str):
     # Navigation
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("← Previous", use_container_width=True):
+        if st.button("← Previous", width="stretch"):
             st.session_state.dpia_step = 1
             st.rerun()
     with col2:
-        if st.button("Next Step →", type="primary", use_container_width=True):
+        if st.button("Next Step →", type="primary", width="stretch"):
             st.session_state.dpia_responses.update({
                 'personal_data': personal_data,
                 'sensitive_data': sensitive_data,
@@ -246,11 +246,11 @@ def show_risk_factors_step(region: str, username: str):
     # Navigation
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("← Previous", use_container_width=True):
+        if st.button("← Previous", width="stretch"):
             st.session_state.dpia_step = 2
             st.rerun()
     with col2:
-        if st.button("Next Step →", type="primary", use_container_width=True):
+        if st.button("Next Step →", type="primary", width="stretch"):
             st.session_state.dpia_responses.update({
                 'large_scale': large_scale,
                 'automated_decisions': automated_decisions,
@@ -311,11 +311,11 @@ def show_safeguards_step(region: str, username: str):
     # Navigation
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("← Previous", use_container_width=True):
+        if st.button("← Previous", width="stretch"):
             st.session_state.dpia_step = 3
             st.rerun()
     with col2:
-        if st.button("Next Step →", type="primary", use_container_width=True):
+        if st.button("Next Step →", type="primary", width="stretch"):
             st.session_state.dpia_responses.update({
                 'encryption': encryption,
                 'access_controls': access_controls,
@@ -354,11 +354,11 @@ def show_review_submit_step(region: str, username: str):
     # Navigation and submission
     col1, col2 = st.columns([1, 1])
     with col1:
-        if st.button("← Previous", use_container_width=True):
+        if st.button("← Previous", width="stretch"):
             st.session_state.dpia_step = 4
             st.rerun()
     with col2:
-        if st.button("🚀 Generate DPIA Report", type="primary", use_container_width=True):
+        if st.button("🚀 Generate DPIA Report", type="primary", width="stretch"):
             execute_enhanced_dpia_scan(region, username, st.session_state.dpia_responses)
 
 def calculate_dpia_risk(responses):
@@ -745,7 +745,7 @@ def display_enhanced_dpia_results(scan_results):
                 data=html_report,
                 file_name=f"dpia-report-{scan_results['scan_id']}.html",
                 mime="text/html",
-                use_container_width=True
+                width="stretch"
             )
         
         with col2:
@@ -756,7 +756,7 @@ def display_enhanced_dpia_results(scan_results):
                 data=json_report,
                 file_name=f"dpia-data-{scan_results['scan_id']}.json",
                 mime="application/json",
-                use_container_width=True
+                width="stretch"
             )
     
     # Success message

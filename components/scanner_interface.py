@@ -536,7 +536,7 @@ def render_scan_submission():
     st.markdown("---")
     
     # Scan submission with real execution
-    if st.button(_("scan.start_scan", "🚀 Start Scan"), type="primary", use_container_width=True):
+    if st.button(_("scan.start_scan", "🚀 Start Scan"), type="primary", width="stretch"):
         scan_type = st.session_state.get('scan_type')
         region = st.session_state.get('region', 'Netherlands')
         username = st.session_state.get('username', 'anonymous')
@@ -858,11 +858,11 @@ def display_code_scan_results(scan_results):
     col1, col2 = st.columns(2)
     
     with col1:
-        if st.button("📄 Download PDF Report", use_container_width=True):
+        if st.button("📄 Download PDF Report", width="stretch"):
             st.info("PDF report generation will be available in the next update.")
     
     with col2:
-        if st.button("🌐 Download HTML Report", use_container_width=True):
+        if st.button("🌐 Download HTML Report", width="stretch"):
             st.info("HTML report generation will be available in the next update.")
 
 def display_findings_by_risk(findings, risk_level):

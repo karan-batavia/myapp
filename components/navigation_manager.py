@@ -44,7 +44,7 @@ def create_modern_sidebar_nav(nav_options, icon_map=None):
     selected_nav = None
     for option in nav_options:
         icon = icon_map.get(option, "•")
-        if st.sidebar.button(f"{icon} {option}", use_container_width=True, key=f"nav_{option}"):
+        if st.sidebar.button(f"{icon} {option}", width="stretch", key=f"nav_{option}"):
             selected_nav = option
             st.session_state.selected_nav = option
     

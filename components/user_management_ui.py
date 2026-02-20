@@ -124,7 +124,7 @@ def render_user_list(ums):
         })
     
     df = pd.DataFrame(user_data)
-    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.dataframe(df, width="stretch", hide_index=True)
     
     # User actions
     st.markdown("---")
@@ -293,7 +293,7 @@ def render_user_usage(user: Dict, ums):
             {"Scanner": k.replace('_', ' ').title(), "Count": v}
             for k, v in scanner_data.items()
         ])
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
     else:
         st.info("No scanner usage this month")
     
@@ -305,7 +305,7 @@ def render_user_usage(user: Dict, ums):
             {"Feature": k.replace('_', ' ').title(), "Count": v}
             for k, v in feature_data.items()
         ])
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
 
 
 def render_user_billing(user: Dict, ums):
@@ -501,7 +501,7 @@ def render_usage_billing(ums):
             })
         
         df = pd.DataFrame(billing_data)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
     else:
         st.info("Click 'Generate Billing Report' to see usage and billing data for all users.")
 
@@ -541,7 +541,7 @@ def render_user_statistics(ums):
                 {"Role": k.replace('_', ' ').title(), "Count": v}
                 for k, v in role_data.items()
             ])
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
         else:
             st.info("No users found")
     
@@ -553,7 +553,7 @@ def render_user_statistics(ums):
                 {"Tier": k.title(), "Count": v, "Price": f"€{TIER_LIMITS.get(k, {}).get('price_monthly', 0)}/mo"}
                 for k, v in tier_data.items()
             ])
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
         else:
             st.info("No users found")
     
@@ -578,7 +578,7 @@ def render_user_statistics(ums):
     
     if revenue_breakdown:
         df = pd.DataFrame(revenue_breakdown)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df, width="stretch", hide_index=True)
         
         col1, col2, col3 = st.columns(3)
         with col1:

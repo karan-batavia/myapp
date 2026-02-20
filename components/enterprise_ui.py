@@ -211,7 +211,7 @@ def show_permission_matrix():
         matrix_data.append(row)
     
     if st.checkbox("Show detailed permission matrix"):
-        st.dataframe(matrix_data, use_container_width=True)
+        st.dataframe(matrix_data, width="stretch")
 
 def show_enterprise_connectors():
     """Display enterprise connector management"""

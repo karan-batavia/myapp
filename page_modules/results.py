@@ -33,7 +33,7 @@ def render_results_page():
             st.error("⚠️ **Free trial limit reached!** You've viewed 3 scan results.")
             st.info("🔓 Upgrade to a paid plan for unlimited scan result views and report downloads.")
             
-            if st.button("🚀 View Pricing Plans", use_container_width=True):
+            if st.button("🚀 View Pricing Plans", width="stretch"):
                 st.session_state['show_pricing'] = True
                 st.rerun()
             return
@@ -115,7 +115,7 @@ def render_results_page():
                 format_func=lambda x: f"{recent_scans[x].get('scan_id', 'N/A')[:12]} - {recent_scans[x].get('scan_type', 'N/A').title()} ({recent_scans[x].get('timestamp', 'N/A')[:10] if recent_scans[x].get('timestamp') else 'N/A'})"
             )
             
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             if selected_scan is not None:
                 st.markdown("---")
@@ -204,7 +204,7 @@ def _render_download_options(scan_data):
         st.info("🔓 Upgrade to any paid plan to download PDF, HTML, and JSON reports. You can still view scan results on screen.")
         
         # Show upgrade button
-        if st.button("🚀 View Pricing Plans", use_container_width=True):
+        if st.button("🚀 View Pricing Plans", width="stretch"):
             st.session_state['show_pricing'] = True
             st.rerun()
         return
@@ -212,7 +212,7 @@ def _render_download_options(scan_data):
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        if st.button("📄 Download PDF Report", use_container_width=True):
+        if st.button("📄 Download PDF Report", width="stretch"):
             try:
                 from services.report_generator import ReportGenerator
                 generator = ReportGenerator()
@@ -229,7 +229,7 @@ def _render_download_options(scan_data):
                 st.error("PDF generation temporarily unavailable.")
     
     with col2:
-        if st.button("📊 Download HTML Report", use_container_width=True):
+        if st.button("📊 Download HTML Report", width="stretch"):
             try:
                 from services.unified_html_report_generator import generate_unified_html_report
                 html_data = generate_unified_html_report(scan_data.get('result', scan_data))
@@ -245,7 +245,7 @@ def _render_download_options(scan_data):
                 st.error("HTML generation temporarily unavailable.")
     
     with col3:
-        if st.button("📋 Download JSON Data", use_container_width=True):
+        if st.button("📋 Download JSON Data", width="stretch"):
             import json
             json_data = json.dumps(scan_data, indent=2, default=str)
             

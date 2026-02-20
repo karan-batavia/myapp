@@ -161,7 +161,7 @@ def render_soc2_scan_button(key_prefix: str = "") -> bool:
         return st.button(
             f"🛡️ {_('scan.soc2_scan_button', 'Start SOC2 Compliance Scan')}",
             type="primary",
-            use_container_width=True,
+            width="stretch",
             key=f"{key_prefix}_soc2_scan_button",
             help="Start comprehensive SOC2 compliance scanning for your repository"
         )
@@ -181,7 +181,7 @@ def render_soc2_action_buttons(scan_results: Dict[str, Any], key_prefix: str = "
         if st.button(f"📄 {_('scan.soc2_pdf_report', 'Generate PDF Report')}", 
                      type="primary", 
                      key=f"{key_prefix}_soc2_pdf_button", 
-                     use_container_width=True):
+                     width="stretch"):
             # Check if user can download (paid users only)
             from config.pricing_config import can_download_reports
             if not can_download_reports():
@@ -210,7 +210,7 @@ def render_soc2_action_buttons(scan_results: Dict[str, Any], key_prefix: str = "
     with action_col2:
         if st.button(f"🔄 {_('scan.soc2_new_scan', 'New SOC2 Scan')}", 
                      key=f"{key_prefix}_soc2_new_scan", 
-                     use_container_width=True):
+                     width="stretch"):
             # Clear session state for new scan
             for key in list(st.session_state.keys()):
                 if 'soc2' in key.lower():
@@ -221,7 +221,7 @@ def render_soc2_action_buttons(scan_results: Dict[str, Any], key_prefix: str = "
     with action_col3:
         if st.button(f"📊 {_('scan.soc2_view_dashboard', 'View in Dashboard')}", 
                      key=f"{key_prefix}_soc2_view_dashboard", 
-                     use_container_width=True):
+                     width="stretch"):
             # Store results in history and redirect to dashboard
             if 'scan_history' not in st.session_state:
                 st.session_state.scan_history = []

@@ -240,11 +240,11 @@ def render_original_login_tabs():
     tab1, tab2 = st.columns(2)
     
     with tab1:
-        if st.button(_("sidebar.sign_in"), key="tab_login", use_container_width=True):
+        if st.button(_("sidebar.sign_in"), key="tab_login", width="stretch"):
             st.session_state.active_tab = "login"
     
     with tab2:
-        if st.button(_("sidebar.create_account"), key="tab_register", use_container_width=True):
+        if st.button(_("sidebar.create_account"), key="tab_register", width="stretch"):
             st.session_state.active_tab = "register"
     
     # Default to login tab if not set

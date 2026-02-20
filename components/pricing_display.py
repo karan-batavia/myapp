@@ -785,7 +785,7 @@ def show_contact_section():
                 contact_email = st.text_input("Your Email *", placeholder="e.g. jan@company.nl")
             contact_message = st.text_area("Your Message *", placeholder=placeholder, height=120)
             
-            submitted = st.form_submit_button("📧 Send Message", use_container_width=True, type="primary")
+            submitted = st.form_submit_button("📧 Send Message", width="stretch", type="primary")
             
             if submitted:
                 if contact_name and contact_email and contact_message:

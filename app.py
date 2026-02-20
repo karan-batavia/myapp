@@ -366,7 +366,7 @@ if st.session_state.get('payment_just_completed'):
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🔐 Go to Login", key="payment_success_login", type="primary", use_container_width=True):
+        if st.button("🔐 Go to Login", key="payment_success_login", type="primary", width="stretch"):
             st.session_state['show_login'] = True
             st.rerun()
     
@@ -409,7 +409,7 @@ if st.session_state.get('payment_pending'):
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        if st.button("🔄 Check Payment Status", key="check_payment_status", type="primary", use_container_width=True):
+        if st.button("🔄 Check Payment Status", key="check_payment_status", type="primary", width="stretch"):
             _pending_session_id = st.session_state.get('payment_session_id')
             if _pending_session_id:
                 try:
@@ -1718,7 +1718,7 @@ def render_landing_page():
         """, unsafe_allow_html=True)
     
     with hero_col2:
-        st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", use_container_width=True)
+        st.image("attached_assets/stock_images/business_professiona_05ddcbe6.jpg", width="stretch")
         
         st.markdown("""
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.75rem;">
@@ -2040,7 +2040,7 @@ def render_landing_page():
         
         with img_col:
             try:
-                st.image(scanner.get('image', ''), use_container_width=True)
+                st.image(scanner.get('image', ''), width="stretch")
             except:
                 st.markdown(f"""
                 <div style="
@@ -2314,7 +2314,7 @@ def render_landing_page():
         )
         submitted = st.form_submit_button(
             _('landing.contact_submit', 'Submit Interest'),
-            use_container_width=True,
+            width="stretch",
             type="primary"
         )
 
@@ -4058,7 +4058,7 @@ def render_dashboard():
                 # Sort by date and time descending (most recent first)
                 activity_data.sort(key=lambda x: f"{x['Date']} {x['Time']}", reverse=True)
                 df = pd.DataFrame(activity_data)
-                st.dataframe(df, use_container_width=True, hide_index=True)
+                st.dataframe(df, width="stretch", hide_index=True)
                 
                 st.success(f"✅ Showing {len(activity_data)} recent scan(s) - Updated in real-time")
                 
@@ -4547,7 +4547,7 @@ def render_results_page():
                 format_func=lambda x: f"{recent_scans[x].get('scan_id', 'N/A')[:12]} - {recent_scans[x].get('scan_type', 'N/A').title()} ({recent_scans[x].get('timestamp', 'N/A')[:10]})"
             )
             
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             # Detailed scan view
             if selected_scan is not None:
@@ -4673,7 +4673,7 @@ def render_history_page():
         
         if history_data:
             df = pd.DataFrame(history_data)
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
             
             # Export options
             st.subheader("Export Options")
@@ -4909,7 +4909,7 @@ def render_history_trends(scans_data):
                 hovermode='x unified'
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("Not enough data points for trend analysis")
             

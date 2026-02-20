@@ -251,7 +251,7 @@ class LogDashboard:
                     'Total Findings': data['total_findings']
                 })
             
-            st.dataframe(perf_data, use_container_width=True)
+            st.dataframe(perf_data, width="stretch")
         else:
             st.info("No scanner performance data available for the selected time range.")
         

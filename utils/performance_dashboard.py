@@ -262,7 +262,7 @@ class PerformanceDashboard:
                 font={'color': '#374151'}
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             
             # Session metrics
             st.markdown('<p class="section-title">👥 Active Sessions</p>', unsafe_allow_html=True)
@@ -316,7 +316,7 @@ class PerformanceDashboard:
                 )]
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
             
             # Cache stats grid
             col1, col2 = st.columns(2)
@@ -397,11 +397,11 @@ class PerformanceDashboard:
                     coloraxis_showscale=False
                 )
                 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
                 
                 # Data table
                 with st.expander("View Details"):
-                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    st.dataframe(df, width="stretch", hide_index=True)
             else:
                 st.success("✅ No slow functions detected")
                 
@@ -457,10 +457,10 @@ class PerformanceDashboard:
                     margin=dict(l=20, r=20, t=40, b=20)
                 )
                 
-                st.plotly_chart(fig, use_container_width=True)
+                st.plotly_chart(fig, width="stretch")
                 
                 with st.expander("View Details"):
-                    st.dataframe(df, use_container_width=True, hide_index=True)
+                    st.dataframe(df, width="stretch", hide_index=True)
             else:
                 st.success("✅ No performance bottlenecks detected")
                 
