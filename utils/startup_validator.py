@@ -185,28 +185,40 @@ class StartupValidator:
             return False, error_msg
     
     def _validate_database_connection(self) -> Tuple[bool, Optional[str]]:
-        """Validate database connection is available."""
-        try:
-            database_url = os.environ.get('DATABASE_URL')
-            if not database_url:
-                self.validation_results['database_status'] = 'not_configured'
-                error_msg = "DATABASE_URL not configured"
-                logger.warning(error_msg)
-                return False, error_msg
-            
-            import psycopg2
-            conn = psycopg2.connect(database_url)
-            conn.close()
-            
-            self.validation_results['database_status'] = 'connected'
-            logger.info("Database connection validated")
-            return True, None
-            
-        except Exception as e:
-            self.validation_results['database_status'] = 'error'
-            error_msg = f"Database validation failed: {e}"
-            logger.error(error_msg)
+        """Validate database connection is available with retry for cold-start endpoints."""
+        import time
+        database_url = os.environ.get('DATABASE_URL')
+        if not database_url:
+            self.validation_results['database_status'] = 'not_configured'
+            error_msg = "DATABASE_URL not configured"
+            logger.warning(error_msg)
             return False, error_msg
+
+        max_retries = 3
+        retry_delay = 2
+        last_error = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                import psycopg2
+                conn = psycopg2.connect(database_url, connect_timeout=10)
+                conn.close()
+
+                self.validation_results['database_status'] = 'connected'
+                logger.info("Database connection validated")
+                return True, None
+
+            except Exception as e:
+                last_error = e
+                if attempt < max_retries:
+                    logger.warning(f"Database connection attempt {attempt}/{max_retries} failed, retrying in {retry_delay}s: {e}")
+                    time.sleep(retry_delay)
+                    retry_delay *= 2
+
+        self.validation_results['database_status'] = 'error'
+        error_msg = f"Database validation failed after {max_retries} attempts: {last_error}"
+        logger.error(error_msg)
+        return False, error_msg
     
     def get_status_report(self) -> dict:
         """Get detailed validation status report."""
