@@ -88,151 +88,155 @@ class ConformityAssessmentReadiness:
 
 
 # Complete EU AI Act Article Definitions (All 113 Articles)
+# Based on Regulation (EU) 2024/1689 - Official Journal, 12 July 2024
 EU_AI_ACT_ARTICLES = {
-    # Chapter I: General Provisions
+    # Title I: General Provisions (Articles 1-4)
     1: {"title": "Subject matter", "chapter": "I - General Provisions", "category": "scope", "mandatory": True},
     2: {"title": "Scope", "chapter": "I - General Provisions", "category": "scope", "mandatory": True},
     3: {"title": "Definitions", "chapter": "I - General Provisions", "category": "scope", "mandatory": True},
     4: {"title": "AI literacy", "chapter": "I - General Provisions", "category": "governance", "mandatory": True},
-    
-    # Chapter II: Prohibited AI Practices
+
+    # Title II: Prohibited AI Practices (Article 5)
     5: {"title": "Prohibited AI practices", "chapter": "II - Prohibited Practices", "category": "prohibition", "mandatory": True},
-    
-    # Chapter III: High-Risk AI Systems - Section 1
+
+    # Title III: High-Risk AI Systems
+    # Chapter 1 - Classification (Articles 6-7)
     6: {"title": "Classification rules for high-risk AI systems", "chapter": "III - High-Risk AI", "category": "classification", "mandatory": True},
     7: {"title": "Amendments to Annex III", "chapter": "III - High-Risk AI", "category": "classification", "mandatory": False},
-    
-    # Section 2: Requirements
+
+    # Chapter 2 - Requirements (Articles 8-15)
     8: {"title": "Compliance with requirements", "chapter": "III - High-Risk AI", "category": "requirements", "mandatory": True},
     9: {"title": "Risk management system", "chapter": "III - High-Risk AI", "category": "requirements", "mandatory": True},
     10: {"title": "Data and data governance", "chapter": "III - High-Risk AI", "category": "data", "mandatory": True},
     11: {"title": "Technical documentation", "chapter": "III - High-Risk AI", "category": "documentation", "mandatory": True},
     12: {"title": "Record-keeping", "chapter": "III - High-Risk AI", "category": "documentation", "mandatory": True},
-    13: {"title": "Transparency and provision of information", "chapter": "III - High-Risk AI", "category": "transparency", "mandatory": True},
+    13: {"title": "Transparency and provision of information to deployers", "chapter": "III - High-Risk AI", "category": "transparency", "mandatory": True},
     14: {"title": "Human oversight", "chapter": "III - High-Risk AI", "category": "oversight", "mandatory": True},
     15: {"title": "Accuracy, robustness and cybersecurity", "chapter": "III - High-Risk AI", "category": "technical", "mandatory": True},
-    
-    # Section 3: Obligations of providers and deployers
-    16: {"title": "Obligations of providers - Quality management", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
-    17: {"title": "Automatic logging system", "chapter": "III - High-Risk AI", "category": "technical", "mandatory": True},
-    18: {"title": "Accessibility requirements", "chapter": "III - High-Risk AI", "category": "requirements", "mandatory": True},
-    19: {"title": "Conformity assessment", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
-    20: {"title": "Automatically generated logs", "chapter": "III - High-Risk AI", "category": "documentation", "mandatory": True},
-    21: {"title": "Cooperation with competent authorities", "chapter": "III - High-Risk AI", "category": "governance", "mandatory": True},
-    22: {"title": "Authorized representatives", "chapter": "III - High-Risk AI", "category": "governance", "mandatory": False},
+
+    # Chapter 3 - Obligations of providers and deployers (Articles 16-27)
+    16: {"title": "Obligations of providers of high-risk AI systems", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
+    17: {"title": "Quality management system", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
+    18: {"title": "Documentation keeping", "chapter": "III - High-Risk AI", "category": "documentation", "mandatory": True},
+    19: {"title": "Automatically generated logs", "chapter": "III - High-Risk AI", "category": "documentation", "mandatory": True},
+    20: {"title": "Corrective actions and duty of information", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
+    21: {"title": "Cooperation with competent authorities", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
+    22: {"title": "Authorised representatives of providers", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": False},
     23: {"title": "Obligations of importers", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": False},
     24: {"title": "Obligations of distributors", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": False},
     25: {"title": "Responsibilities along the AI value chain", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
-    26: {"title": "Obligations of deployers - Human oversight", "chapter": "III - High-Risk AI", "category": "oversight", "mandatory": True},
+    26: {"title": "Obligations of deployers of high-risk AI systems", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
     27: {"title": "Fundamental rights impact assessment", "chapter": "III - High-Risk AI", "category": "rights", "mandatory": True},
-    28: {"title": "Registration obligations", "chapter": "III - High-Risk AI", "category": "registration", "mandatory": True},
-    29: {"title": "Deployers of high-risk AI systems", "chapter": "III - High-Risk AI", "category": "obligations", "mandatory": True},
-    
-    # Section 4: Notifying authorities and notified bodies
-    30: {"title": "Notifying authorities", "chapter": "III - High-Risk AI", "category": "governance", "mandatory": False},
-    31: {"title": "Application of a conformity assessment body", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    32: {"title": "Notification procedure", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    33: {"title": "Requirements for notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    34: {"title": "Subsidiaries and subcontracting", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    35: {"title": "Identification numbers and lists", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    36: {"title": "Changes to notifications", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+
+    # Notifying authorities and notified bodies (Articles 28-35)
+    28: {"title": "Notifying authorities", "chapter": "III - High-Risk AI", "category": "governance", "mandatory": False},
+    29: {"title": "Application of a conformity assessment body for notification", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    30: {"title": "Notification procedure", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    31: {"title": "Identification numbers and lists of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    32: {"title": "Changes to notifications", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    33: {"title": "Obligations of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    34: {"title": "Subsidiaries of and subcontracting by notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    35: {"title": "Operational obligations of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+
+    # Standards and conformity assessment (Articles 36-49)
+    36: {"title": "Conformity assessment rules", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
     37: {"title": "Challenge to competence of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
     38: {"title": "Coordination of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    39: {"title": "Conformity assessment bodies in third countries", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    
-    # Section 5: Standards, conformity assessment
+    39: {"title": "Conformity assessment bodies of third countries", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
     40: {"title": "Harmonised standards", "chapter": "III - High-Risk AI", "category": "standards", "mandatory": False},
     41: {"title": "Common specifications", "chapter": "III - High-Risk AI", "category": "standards", "mandatory": False},
-    42: {"title": "Presumption of conformity", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
-    43: {"title": "Conformity assessment procedures", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
-    44: {"title": "Certificates", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
-    45: {"title": "Information obligations of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    46: {"title": "Derogation from conformity assessment procedure", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
-    47: {"title": "EU declaration of conformity", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
-    48: {"title": "CE marking", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
+    42: {"title": "Conformity assessment of high-risk AI systems", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
+    43: {"title": "Certificates", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
+    44: {"title": "Information obligations of notified bodies", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    45: {"title": "Derogation from conformity assessment procedure", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": False},
+    46: {"title": "EU declaration of conformity", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
+    47: {"title": "CE marking of conformity", "chapter": "III - High-Risk AI", "category": "conformity", "mandatory": True},
+    48: {"title": "Document retention", "chapter": "III - High-Risk AI", "category": "documentation", "mandatory": True},
     49: {"title": "Registration", "chapter": "III - High-Risk AI", "category": "registration", "mandatory": True},
-    
-    # Chapter IV: Transparency for certain AI systems
-    50: {"title": "Transparency obligations for certain AI systems", "chapter": "IV - Transparency", "category": "transparency", "mandatory": True},
-    
-    # Chapter V: General-purpose AI models
-    51: {"title": "Classification of GPAI models", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
-    52: {"title": "Procedure for classification of GPAI models", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
-    53: {"title": "Obligations for providers of GPAI models", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
-    54: {"title": "Authorised representatives of GPAI providers", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": False},
-    55: {"title": "Obligations for providers of GPAI models with systemic risk", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
+
+    # Title IV: Transparency obligations (Article 50)
+    50: {"title": "Transparency obligations for providers and deployers of certain AI systems", "chapter": "IV - Transparency", "category": "transparency", "mandatory": True},
+
+    # Title V: General-purpose AI models (Articles 51-56)
+    51: {"title": "Classification of general-purpose AI models with systemic risk", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
+    52: {"title": "Procedure for classification", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
+    53: {"title": "Obligations for providers of general-purpose AI models", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
+    54: {"title": "Authorised representatives of providers of general-purpose AI models", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": False},
+    55: {"title": "Obligations for providers of general-purpose AI models with systemic risk", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": True},
     56: {"title": "Codes of practice", "chapter": "V - GPAI Models", "category": "gpai", "mandatory": False},
-    
-    # Chapter VI: Measures in support of innovation
+
+    # Title VI: Measures in support of innovation (Articles 57-61)
     57: {"title": "AI regulatory sandboxes", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
-    58: {"title": "Detailed arrangements for AI regulatory sandboxes", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
-    59: {"title": "Further processing of personal data for sandboxes", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
+    58: {"title": "Detailed arrangements for and functioning of AI regulatory sandboxes", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
+    59: {"title": "Further processing of personal data in AI regulatory sandboxes", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
     60: {"title": "Testing of high-risk AI systems in real world conditions", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
-    61: {"title": "Informed consent for real world testing", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
-    62: {"title": "Measures for providers and deployers (SMEs)", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
-    63: {"title": "Derogations for specific operators", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
-    
-    # Chapter VII: Governance (Articles 64-68)
-    64: {"title": "AI Office", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
-    65: {"title": "European Artificial Intelligence Board", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
-    66: {"title": "Composition of the Board", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
-    67: {"title": "Tasks of the Board", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
-    68: {"title": "Advisory forum", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
-    
-    # Chapter VIII: Market Surveillance (Articles 69-75)
-    69: {"title": "Scientific panel of independent experts", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": False},
-    70: {"title": "National competent authorities", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": True},
-    71: {"title": "Powers of national competent authorities", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": True},
-    72: {"title": "Market surveillance and control", "chapter": "VIII - Market Surveillance", "category": "surveillance", "mandatory": True},
-    73: {"title": "EU database for high-risk AI systems", "chapter": "VIII - Market Surveillance", "category": "registration", "mandatory": True},
-    74: {"title": "Post-market monitoring by providers", "chapter": "VIII - Market Surveillance", "category": "monitoring", "mandatory": True},
-    75: {"title": "Reporting of serious incidents", "chapter": "VIII - Market Surveillance", "category": "monitoring", "mandatory": True},
-    
-    # Chapter IX: Penalties (Articles 76-85)
-    76: {"title": "Market surveillance authorities", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    77: {"title": "Powers of market surveillance authorities", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    78: {"title": "Confidentiality", "chapter": "IX - Penalties", "category": "governance", "mandatory": True},
-    79: {"title": "Procedure at national level concerning AI systems presenting risk", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    80: {"title": "Union safeguard procedure", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    81: {"title": "Compliant AI systems which present a risk", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    82: {"title": "Formal non-compliance", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    83: {"title": "Codes of conduct for voluntary application", "chapter": "IX - Penalties", "category": "governance", "mandatory": False},
-    84: {"title": "Guidelines from the Commission", "chapter": "IX - Penalties", "category": "governance", "mandatory": False},
-    85: {"title": "Penalties", "chapter": "IX - Penalties", "category": "enforcement", "mandatory": True},
-    
-    # Chapter X: Delegation (Articles 86-92)
-    86: {"title": "Administrative fines on Union institutions", "chapter": "X - Delegation", "category": "enforcement", "mandatory": True},
-    87: {"title": "Exercise of delegation", "chapter": "X - Delegation", "category": "governance", "mandatory": False},
-    88: {"title": "Committee procedure", "chapter": "X - Delegation", "category": "governance", "mandatory": False},
-    89: {"title": "Amendment to Regulation (EC) No 300/2008", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
-    90: {"title": "Amendment to Regulation (EU) No 167/2013", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
-    91: {"title": "Amendment to Regulation (EU) No 168/2013", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
-    92: {"title": "Amendment to Directive 2014/90/EU", "chapter": "X - Delegation", "category": "amendments", "mandatory": False},
-    
-    # Chapter XI: Committee (Articles 93-99)
-    93: {"title": "Amendment to Directive (EU) 2016/797", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
-    94: {"title": "Amendment to Regulation (EU) 2018/858", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
-    95: {"title": "Amendment to Regulation (EU) 2018/1139", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
-    96: {"title": "Amendment to Regulation (EU) 2019/2144", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
-    97: {"title": "Amendment to Directive (EU) 2020/1828", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
-    98: {"title": "Amendment to Directive (EU) 2022/2555", "chapter": "XI - Committee", "category": "amendments", "mandatory": False},
-    99: {"title": "AI systems already placed on market or in service", "chapter": "XI - Committee", "category": "transition", "mandatory": True},
-    
-    # Chapter XII: Final Provisions (Articles 100-113)
-    100: {"title": "Evaluation and review", "chapter": "XII - Final Provisions", "category": "governance", "mandatory": True},
-    101: {"title": "Entry into force", "chapter": "XII - Final Provisions", "category": "transition", "mandatory": True},
-    102: {"title": "Application dates", "chapter": "XII - Final Provisions", "category": "transition", "mandatory": True},
-    103: {"title": "Addressees", "chapter": "XII - Final Provisions", "category": "scope", "mandatory": True},
-    104: {"title": "Annexes - Annex I (Harmonisation legislation)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    105: {"title": "Annexes - Annex II (List of Union harmonisation legislation)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    106: {"title": "Annexes - Annex III (High-risk AI systems)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    107: {"title": "Annexes - Annex IV (Technical documentation)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    108: {"title": "Annexes - Annex V (EU declaration of conformity)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    109: {"title": "Annexes - Annex VI (Conformity assessment procedure)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    110: {"title": "Annexes - Annex VII (Conformity based on QMS)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    111: {"title": "Annexes - Annex VIII (Information for registration)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": True},
-    112: {"title": "Annexes - Annex IX (Union legislation on large-scale IT)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": False},
-    113: {"title": "Annexes - Annex X (Union legislation on financial services)", "chapter": "XII - Final Provisions", "category": "annexes", "mandatory": False},
+    61: {"title": "Measures for small-scale providers and start-ups", "chapter": "VI - Innovation", "category": "innovation", "mandatory": False},
+
+    # Title VII: Governance (Articles 62-68)
+    62: {"title": "European Artificial Intelligence Board", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
+    63: {"title": "Structure of the Board", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
+    64: {"title": "Tasks of the Board", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
+    65: {"title": "Advisory forum", "chapter": "VII - Governance", "category": "governance", "mandatory": False},
+    66: {"title": "National competent authorities", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
+    67: {"title": "National competent authorities for general-purpose AI models", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
+    68: {"title": "Designation of national competent authorities", "chapter": "VII - Governance", "category": "governance", "mandatory": True},
+
+    # Title VIII: EU Database (Articles 69-71)
+    69: {"title": "Codes of conduct for non-high-risk AI systems", "chapter": "VIII - EU Database", "category": "governance", "mandatory": False},
+    70: {"title": "Market surveillance authorities", "chapter": "VIII - EU Database", "category": "surveillance", "mandatory": True},
+    71: {"title": "EU database for high-risk AI systems", "chapter": "VIII - EU Database", "category": "registration", "mandatory": True},
+
+    # Title IX: Post-market monitoring, information sharing, market surveillance (Articles 72-84)
+    72: {"title": "Post-market monitoring by providers", "chapter": "IX - Post-Market Monitoring", "category": "monitoring", "mandatory": True},
+    73: {"title": "Reporting of serious incidents", "chapter": "IX - Post-Market Monitoring", "category": "monitoring", "mandatory": True},
+    74: {"title": "Market surveillance and control of AI systems", "chapter": "IX - Post-Market Monitoring", "category": "surveillance", "mandatory": True},
+    75: {"title": "Mutual assistance, market surveillance and control of general-purpose AI systems", "chapter": "IX - Post-Market Monitoring", "category": "surveillance", "mandatory": True},
+    76: {"title": "Supervision of testing in real world conditions", "chapter": "IX - Post-Market Monitoring", "category": "surveillance", "mandatory": False},
+    77: {"title": "Powers of authorities protecting fundamental rights", "chapter": "IX - Post-Market Monitoring", "category": "rights", "mandatory": True},
+    78: {"title": "Confidentiality", "chapter": "IX - Post-Market Monitoring", "category": "governance", "mandatory": True},
+    79: {"title": "Procedure at national level for AI systems presenting a risk", "chapter": "IX - Post-Market Monitoring", "category": "enforcement", "mandatory": True},
+    80: {"title": "Procedure for dealing with AI systems classified as presenting a risk at national level", "chapter": "IX - Post-Market Monitoring", "category": "enforcement", "mandatory": True},
+    81: {"title": "Union safeguard procedure", "chapter": "IX - Post-Market Monitoring", "category": "enforcement", "mandatory": True},
+    82: {"title": "Compliant AI systems which present a risk", "chapter": "IX - Post-Market Monitoring", "category": "enforcement", "mandatory": True},
+    83: {"title": "Formal non-compliance", "chapter": "IX - Post-Market Monitoring", "category": "enforcement", "mandatory": True},
+    84: {"title": "Union AI market surveillance and enforcement of general-purpose AI models", "chapter": "IX - Post-Market Monitoring", "category": "enforcement", "mandatory": True},
+
+    # Title X: Codes of conduct and guidelines (Articles 85-86)
+    85: {"title": "Codes of conduct for voluntary application", "chapter": "X - Codes of Conduct", "category": "governance", "mandatory": False},
+    86: {"title": "Guidelines from the Commission", "chapter": "X - Codes of Conduct", "category": "governance", "mandatory": False},
+
+    # Title XI: Delegation of power and committee procedure (Articles 87-88)
+    87: {"title": "Exercise of the delegation", "chapter": "XI - Delegation", "category": "governance", "mandatory": False},
+    88: {"title": "Committee procedure", "chapter": "XI - Delegation", "category": "governance", "mandatory": False},
+
+    # Title XII: Penalties (Articles 89-98)
+    89: {"title": "Amendment to Regulation (EC) No 300/2008", "chapter": "XII - Penalties", "category": "amendments", "mandatory": False},
+    90: {"title": "Amendment to Regulation (EU) No 167/2013", "chapter": "XII - Penalties", "category": "amendments", "mandatory": False},
+    91: {"title": "Amendment to Regulation (EU) No 168/2013", "chapter": "XII - Penalties", "category": "amendments", "mandatory": False},
+    92: {"title": "Amendment to Directive 2014/90/EU", "chapter": "XII - Penalties", "category": "amendments", "mandatory": False},
+    93: {"title": "Penalties", "chapter": "XII - Penalties", "category": "enforcement", "mandatory": True},
+    94: {"title": "Administrative fines on providers of general-purpose AI models", "chapter": "XII - Penalties", "category": "enforcement", "mandatory": True},
+    95: {"title": "Administrative fines on Union institutions, bodies, offices and agencies", "chapter": "XII - Penalties", "category": "enforcement", "mandatory": True},
+    96: {"title": "Right to lodge a complaint with a market surveillance authority", "chapter": "XII - Penalties", "category": "rights", "mandatory": True},
+    97: {"title": "Right to explanation of individual decision-making", "chapter": "XII - Penalties", "category": "rights", "mandatory": True},
+    98: {"title": "Reporting of infringements and protection of reporting persons", "chapter": "XII - Penalties", "category": "enforcement", "mandatory": True},
+
+    # Title XIII: Final Provisions (Articles 99-113)
+    99: {"title": "AI systems already placed on the market or put into service", "chapter": "XIII - Final Provisions", "category": "transition", "mandatory": True},
+    100: {"title": "Amendment to Regulation (EC) No 300/2008", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    101: {"title": "Amendment to Regulation (EU) No 167/2013", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    102: {"title": "Amendment to Regulation (EU) No 168/2013", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    103: {"title": "Amendment to Directive 2014/90/EU", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    104: {"title": "Amendment to Directive (EU) 2016/797", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    105: {"title": "Amendment to Regulation (EU) 2018/858", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    106: {"title": "Amendment to Regulation (EU) 2018/1139", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    107: {"title": "Amendment to Regulation (EU) 2019/2144", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    108: {"title": "Amendment to Directive (EU) 2020/1828", "chapter": "XIII - Final Provisions", "category": "amendments", "mandatory": False},
+    109: {"title": "Transitional provisions for operators of large-scale IT systems", "chapter": "XIII - Final Provisions", "category": "transition", "mandatory": True},
+    110: {"title": "Transitional provisions for high-risk AI systems that are safety components", "chapter": "XIII - Final Provisions", "category": "transition", "mandatory": True},
+    111: {"title": "Transitional provisions for general-purpose AI models", "chapter": "XIII - Final Provisions", "category": "transition", "mandatory": True},
+    112: {"title": "Evaluation and review", "chapter": "XIII - Final Provisions", "category": "governance", "mandatory": True},
+    113: {"title": "Entry into force and application", "chapter": "XIII - Final Provisions", "category": "transition", "mandatory": True},
 }
 
 
@@ -272,13 +276,13 @@ class AIActTraceabilityMatrix:
     def get_applicable_articles(self) -> List[int]:
         """Get list of applicable articles based on risk level"""
         if self.risk_level == "high_risk":
-            return list(range(1, 103))  # Most articles applicable
+            return list(range(1, 50)) + [50, 62, 66, 67, 68, 70, 71, 72, 73, 74, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 93, 96, 97, 99, 109, 110, 112, 113]
         elif self.risk_level == "limited_risk":
-            return [1, 2, 3, 4, 5, 50, 64, 65, 70, 71, 72, 87, 99, 100, 101, 102, 103]
+            return [1, 2, 3, 4, 5, 50, 62, 66, 68, 70, 71, 85, 86, 87, 88, 93, 96, 97, 99, 112, 113]
         elif self.risk_level == "minimal_risk":
-            return [1, 2, 3, 4, 5, 50, 83, 84, 99, 100, 101, 102, 103]
+            return [1, 2, 3, 4, 5, 50, 85, 86, 93, 96, 97, 99, 112, 113]
         else:  # GPAI
-            return [1, 2, 3, 4, 5, 51, 52, 53, 54, 55, 56, 64, 65, 70, 71, 72, 87, 99, 100, 101, 102, 103]
+            return [1, 2, 3, 4, 5, 51, 52, 53, 54, 55, 56, 62, 66, 67, 68, 70, 75, 84, 85, 86, 87, 88, 93, 94, 96, 97, 99, 111, 112, 113]
     
     def calculate_overall_compliance(self) -> Dict[str, Any]:
         """Calculate overall compliance metrics"""
