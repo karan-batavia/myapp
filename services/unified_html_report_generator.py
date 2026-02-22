@@ -3091,9 +3091,21 @@ class UnifiedHTMLReportGenerator:
         # Generate enhanced sections (traceability, remediation, conformity)
         enhanced_sections = self._generate_enhanced_ai_act_sections(scan_result, compliance_score)
         
+        scanned_url = scan_result.get('repository_url', scan_result.get('model_source', scan_result.get('scan_location', '')))
+        scanned_url_html = ''
+        if scanned_url:
+            url_label = 'Gescande URL' if is_dutch else 'Scanned URL'
+            scanned_url_html = f"""
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px 16px; margin-bottom: 15px;">
+                    <strong style="color: #0369a1;">{url_label}:</strong>
+                    <a href="{scanned_url}" target="_blank" rel="noopener noreferrer" style="color: #0284c7; word-break: break-all;">{scanned_url}</a>
+                </div>
+            """
+        
         return f"""
         <div class="scanner-specific">
             <h2>🤖 {t_report('ai_model_compliance', 'AI Model Compliance')}</h2>
+            {scanned_url_html}
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{model_framework}</div>

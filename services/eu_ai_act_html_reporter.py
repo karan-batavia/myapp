@@ -60,7 +60,8 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
             'tier_1_violations': 'Tier 1 (Prohibited)',
             'tier_2_violations': 'Tier 2 (High-Risk)',
             'tier_3_violations': 'Tier 3 (Incorrect Info to Authorities)',
-            'article_checklist': 'Article Compliance Checklist'
+            'article_checklist': 'Article Compliance Checklist',
+            'scanned_url': 'Scanned URL'
         },
         'nl': {
             'title': 'EU AI-wet Nalevingsrapport',
@@ -102,7 +103,8 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
             'tier_1_violations': 'Niveau 1 (Verboden)',
             'tier_2_violations': 'Niveau 2 (Hoog-Risico)',
             'tier_3_violations': 'Niveau 3 (Onjuiste Info aan Autoriteiten)',
-            'article_checklist': 'Artikel Naleving Checklist'
+            'article_checklist': 'Artikel Naleving Checklist',
+            'scanned_url': 'Gescande URL'
         }
     }
     
@@ -113,6 +115,7 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
     model_framework = scan_result.get('model_framework', 'Unknown')
     model_type = scan_result.get('model_type', 'AI Model')
     file_name = scan_result.get('file_name', 'Unknown')
+    scanned_url = scan_result.get('repository_url', scan_result.get('model_source', scan_result.get('scan_location', '')))
     
     risk_counts = scan_result.get('risk_counts', {'low': 0, 'medium': 0, 'high': 0, 'critical': 0})
     
@@ -209,6 +212,7 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
                 
                 <div class="card">
                     <h3>{t['model_info']}</h3>
+                    {f'<p><strong>{t["scanned_url"]}:</strong> <a href="{scanned_url}" target="_blank" rel="noopener noreferrer" style="color: var(--primary); word-break: break-all;">{scanned_url}</a></p>' if scanned_url else ''}
                     <p><strong>{t['framework']}:</strong> {model_framework}</p>
                     <p><strong>{t['model_type']}:</strong> {model_type}</p>
                     <p><strong>{t['file_name']}:</strong> {file_name}</p>
