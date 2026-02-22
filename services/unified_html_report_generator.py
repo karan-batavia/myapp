@@ -893,6 +893,7 @@ class UnifiedHTMLReportGenerator:
         for finding in findings_sorted:
             description = finding.get('description', finding.get('title', ''))
             norm_desc = normalize_desc(description)
+            location = finding.get('location', finding.get('file', ''))
             
             core_subject = extract_core_subject(finding)
             norm_subj = normalize_subject(core_subject) if core_subject else ''
@@ -900,10 +901,17 @@ class UnifiedHTMLReportGenerator:
             if norm_subj and norm_subj in seen_subjects:
                 continue
             
-            if norm_desc in seen_descriptions:
-                continue
+            location_desc_key = f"{norm_desc}|{location}" if location else norm_desc
             
-            seen_descriptions.add(norm_desc)
+            if location:
+                if location_desc_key in seen_descriptions:
+                    continue
+            else:
+                if norm_desc in seen_descriptions:
+                    continue
+            
+            seen_descriptions.add(location_desc_key)
+            seen_descriptions.add(norm_desc) if not location else None
             if norm_subj:
                 seen_subjects.add(norm_subj)
             deduplicated.append(finding)
