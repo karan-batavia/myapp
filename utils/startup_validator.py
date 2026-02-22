@@ -162,27 +162,45 @@ class StartupValidator:
                 logger.debug(f"Optional module unavailable: {description}")
     
     def _validate_redis_connection(self) -> Tuple[bool, Optional[str]]:
-        """Validate Redis is available and connected."""
-        try:
-            from utils.redis_cache import get_cache
-            cache = get_cache()
-            
-            if cache and cache.redis_client:
-                cache.redis_client.ping()
-                self.validation_results['redis_status'] = 'connected'
-                logger.info("Redis connection validated")
-                return True, None
-            else:
-                self.validation_results['redis_status'] = 'fallback_mode'
-                error_msg = "Redis not connected - running in fallback mode (not suitable for production scale)"
-                logger.warning(error_msg)
-                return False, error_msg
-                
-        except Exception as e:
-            self.validation_results['redis_status'] = 'error'
-            error_msg = f"Redis validation failed: {e}"
-            logger.error(error_msg)
-            return False, error_msg
+        """Validate Redis is available and connected, with retry for container cold-start."""
+        import time
+        max_retries = 5
+        retry_delay = 2
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                from utils.redis_cache import get_cache
+                cache = get_cache()
+
+                if cache and cache.redis_client:
+                    cache.redis_client.ping()
+                    self.validation_results['redis_status'] = 'connected'
+                    logger.info("Redis connection validated")
+                    return True, None
+                else:
+                    if attempt < max_retries:
+                        logger.warning(f"Redis not ready (attempt {attempt}/{max_retries}), retrying in {retry_delay}s...")
+                        time.sleep(retry_delay)
+                        retry_delay = min(retry_delay * 2, 10)
+                        continue
+                    self.validation_results['redis_status'] = 'fallback_mode'
+                    error_msg = "Redis not connected - running in fallback mode (not suitable for production scale)"
+                    logger.warning(error_msg)
+                    return False, error_msg
+
+            except Exception as e:
+                if attempt < max_retries:
+                    logger.warning(f"Redis connection attempt {attempt}/{max_retries} failed, retrying in {retry_delay}s: {e}")
+                    time.sleep(retry_delay)
+                    retry_delay = min(retry_delay * 2, 10)
+                else:
+                    self.validation_results['redis_status'] = 'error'
+                    error_msg = f"Redis validation failed after {max_retries} attempts: {e}"
+                    logger.error(error_msg)
+                    return False, error_msg
+
+        self.validation_results['redis_status'] = 'error'
+        return False, "Redis validation failed after all retries"
     
     def _validate_database_connection(self) -> Tuple[bool, Optional[str]]:
         """Validate database connection is available with retry for cold-start endpoints."""
@@ -194,7 +212,7 @@ class StartupValidator:
             logger.warning(error_msg)
             return False, error_msg
 
-        max_retries = 3
+        max_retries = 5
         retry_delay = 2
         last_error = None
 
