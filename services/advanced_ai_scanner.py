@@ -228,16 +228,16 @@ class AdvancedAIScanner:
         # Phase 6: Articles 51-55 - Complete GPAI Requirements
         complete_gpai_compliance = self._assess_complete_gpai_requirements(basic_analysis, model_metadata)
         
-        # Phase 7: Articles 85-87 - Post-Market Monitoring
+        # Phase 7: Articles 72-73 - Post-Market Monitoring
         post_market_monitoring = self._assess_post_market_monitoring(model_metadata)
         
         # Phase 8: Article 4 - AI Literacy
         ai_literacy = self._assess_ai_literacy(model_metadata)
         
-        # Phase 9: Articles 88-94 - Enforcement & Rights
+        # Phase 9: Articles 93-98 - Enforcement, Penalties & Rights
         enforcement_rights = self._assess_enforcement_and_rights(model_metadata)
         
-        # Phase 10: Articles 60-75 - Governance Structures
+        # Phase 10: Articles 62-68 - Governance Structures
         governance_structures = self._assess_governance_compliance(model_metadata)
         
         # ========================================================================
@@ -259,13 +259,13 @@ class AdvancedAIScanner:
         # Phase 15: Article 15 - Accuracy, Robustness, Cybersecurity
         accuracy_robustness_article_15 = self._assess_accuracy_robustness_article_15(model_metadata)
         
-        # Phase 16: Articles 29-35 - Fundamental Rights Impact Assessment
+        # Phase 16: Articles 26-27 - Deployer Obligations & Fundamental Rights Impact Assessment
         fundamental_rights_articles_29_35 = self._assess_fundamental_rights_articles_29_35(model_metadata)
         
         # Phase 17: Article 73 - Incident Reporting
         incident_reporting_article_73 = self._assess_incident_reporting_article_73(model_metadata)
         
-        # Phase 18: Articles 70-72 - National Authority Compliance
+        # Phase 18: Articles 66-70 - National Authority Compliance
         national_authority_articles_70_72 = self._assess_national_authority_articles_70_72(model_metadata)
         
         # Generate comprehensive findings (NOW WITH 90%+ EXPANDED COVERAGE)
@@ -2105,8 +2105,8 @@ class AdvancedAIScanner:
     
     def _assess_conformity_assessment(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Articles 38-46: Conformity assessment, CE marking, and registration
-        Critical for market readiness
+        Articles 40-49: Conformity assessment, CE marking, and registration
+        Per Regulation (EU) 2024/1689 final text
         """
         conformity_status = {
             # Article 40 - Harmonised standards
@@ -2117,36 +2117,36 @@ class AdvancedAIScanner:
                 'description': 'Compliance with harmonised EU standards creates presumption of conformity'
             },
             
-            # Article 41-43 - Conformity assessment procedures
+            # Article 42 - Conformity assessment procedures
             'conformity_assessment_procedure': {
-                'article': 'Articles 41-43',
-                'procedure_type': metadata.get('conformity_procedure', ''),  # 'internal', 'third_party', 'notified_body'
+                'article': 'Article 42',
+                'procedure_type': metadata.get('conformity_procedure', ''),
                 'completed': metadata.get('conformity_assessment_completed', False),
                 'notified_body': metadata.get('notified_body_id', None),
                 'description': 'Formal conformity assessment procedure required for high-risk AI'
             },
             
-            # Article 44 - EU Declaration of Conformity
+            # Article 46 - EU Declaration of Conformity
             'eu_declaration_of_conformity': {
-                'article': 'Article 44',
+                'article': 'Article 46',
                 'completed': metadata.get('eu_declaration_completed', False),
                 'declaration_number': metadata.get('declaration_number', ''),
                 'date_issued': metadata.get('declaration_date', ''),
                 'description': 'Formal declaration that AI system meets all applicable requirements'
             },
             
-            # Article 45 - CE Marking
+            # Article 47 - CE Marking
             'ce_marking': {
-                'article': 'Article 45',
+                'article': 'Article 47',
                 'affixed': metadata.get('ce_marking_affixed', False),
                 'visible': metadata.get('ce_marking_visible', False),
                 'legible': metadata.get('ce_marking_legible', True),
                 'description': 'CE marking indicates conformity with EU requirements'
             },
             
-            # Article 46 - Registration
+            # Article 49 - Registration
             'eu_database_registration': {
-                'article': 'Article 46',
+                'article': 'Article 49',
                 'registered': metadata.get('registered_in_eu_database', False),
                 'registration_number': metadata.get('eu_registration_number', ''),
                 'database_url': 'https://ec.europa.eu/ai-database',
@@ -2817,39 +2817,43 @@ class AdvancedAIScanner:
     
     def _assess_national_authority_articles_70_72(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Articles 70-72: National Competent Authorities and Market Surveillance
+        Articles 66-70: National Competent Authorities and Market Surveillance
+        Per Regulation (EU) 2024/1689 final text:
+        - Article 66: National competent authorities
+        - Article 70: Designation and tasks of market surveillance authorities
+        - Article 74: Market surveillance and control
         Netherlands-specific: Autoriteit Persoonsgegevens (AP)
         """
         national_authority = {
-            'articles': ['Article 70', 'Article 71', 'Article 72'],
+            'articles': ['Article 66', 'Article 70', 'Article 74'],
             'title': 'National Authority Compliance',
             'requirements': []
         }
         
-        # Article 70 - Designation of national authorities
+        # Article 66 - National competent authorities
         knows_authority = metadata.get('national_authority_identified', False)
         national_authority['requirements'].append({
-            'sub_article': '70(1)',
+            'sub_article': '66(1)',
             'requirement': 'Identify relevant national competent authority',
             'compliant': knows_authority,
             'evidence_required': ['Authority contact details', 'Registration with authority'],
             'netherlands_authority': 'Autoriteit Persoonsgegevens (AP)'
         })
         
-        # Article 71 - Powers of market surveillance authorities
+        # Article 70 - Market surveillance authorities
         has_surveillance_cooperation = metadata.get('market_surveillance_cooperation', False)
         national_authority['requirements'].append({
-            'sub_article': '71(1)',
+            'sub_article': '70(1)',
             'requirement': 'Cooperate with market surveillance authorities',
             'compliant': has_surveillance_cooperation,
             'evidence_required': ['Cooperation agreement', 'Information sharing procedure']
         })
         
-        # Article 72 - Powers regarding high-risk AI
+        # Article 74 - Market surveillance and control
         has_high_risk_compliance = metadata.get('high_risk_authority_compliance', False)
         national_authority['requirements'].append({
-            'sub_article': '72(1)',
-            'requirement': 'Provide access to documentation and source code',
+            'sub_article': '74(1)',
+            'requirement': 'Provide access to documentation and source code upon request',
             'compliant': has_high_risk_compliance,
             'evidence_required': ['Access procedure', 'Documentation repository']
         })
@@ -2869,10 +2873,10 @@ class AdvancedAIScanner:
     
     def _assess_governance_compliance(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Articles 60-75: Governance structures, AI Office, national authorities
-        Institutional compliance framework
+        Articles 62-68: Governance structures, AI Board, AI Office, national authorities
+        Per Regulation (EU) 2024/1689 final text
         """
-        # Articles 60-62 - AI Office interaction
+        # Articles 62-64 - European AI Board and AI Office interaction
         ai_office_compliance = {
             'ai_office_aware': metadata.get('ai_office_awareness', False),
             'gpai_reporting_to_office': metadata.get('gpai_reports_to_ai_office', False),
@@ -3417,9 +3421,9 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
     findings = scan_results.get('findings', [])
     compliance_score = scan_results.get('compliance_score', 0)
     
-    # Map findings to article assessments (expanded to match actual finding types)
+    # Map findings to article assessments per Regulation (EU) 2024/1689 final text
     article_mapping = {
-        # Core article mappings
+        # Core article mappings (final regulation numbering)
         'risk classification': [6],
         'risk management': [9],
         'data governance': [10],
@@ -3428,21 +3432,21 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
         'transparency': [13, 50],
         'human oversight': [14, 26],
         'accuracy': [15],
-        'quality management': [16],
-        'logging': [17, 20],
-        'conformity assessment': [19, 43],
-        'fundamental rights': [27, 29],
-        'gpai': [51, 52, 53, 54, 55],
-        'post-market': [74, 75],
-        'penalties': [87, 88],
+        'quality management': [16, 17],
+        'logging': [12, 19],
+        'conformity assessment': [42, 43],
+        'fundamental rights': [27],
+        'gpai': [51, 53, 55],
+        'post-market': [72, 73],
+        'penalties': [93, 94],
         # Extended mappings for actual finding types from scanner
-        'ai act fundamental': [27, 29],
+        'ai act fundamental': [27],
         'ai act accountability': [14, 15],
-        'ai act gpai': [51, 52, 53, 54, 55],
+        'ai act gpai': [51, 53, 55],
         'ai act risk': [6, 9],
-        'ai act quality': [16],
-        'ai act automatic logging': [17, 20],
-        'ai act logging': [17, 20],
+        'ai act quality': [16, 17],
+        'ai act automatic logging': [12, 19],
+        'ai act logging': [12, 19],
         'license': [53],
         'opt-out': [53],
         'documentation': [11],
@@ -3461,22 +3465,26 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
         'ai_governance': [16, 17],
         'annex_iii_high_risk': [6],
         'transparency_article_50': [50],
-        'provider_obligations': [16, 17],
+        'provider_obligations': [16, 17, 18],
         'deployer_obligations': [26, 27],
-        'conformity_assessment': [19, 43],
-        'gpai_compliance': [51, 52, 53, 54, 55],
+        'conformity_assessment': [42, 43],
+        'gpai_compliance': [51, 53, 55],
         'post_market_monitoring': [72, 73],
         'ai_literacy': [4],
-        'enforcement_readiness': [74, 75],
-        'governance_structures': [16],
+        'enforcement_readiness': [74, 84],
+        'governance_structures': [16, 17],
         'risk_management_gap': [9],
         'data_governance_gap': [10],
         'documentation_gap': [11],
         'human_oversight_gap': [14, 26],
         'accuracy_robustness_gap': [15],
-        'fundamental_rights_gap': [27, 29],
+        'fundamental_rights_gap': [27],
         'incident_reporting_gap': [73],
-        'national_authority_gap': [74],
+        'national_authority_gap': [70],
+        'registration': [49],
+        'ce_marking': [47],
+        'corrective_action': [20],
+        'deployer': [26],
     }
     
     # Process each finding
@@ -3511,7 +3519,7 @@ def generate_enhanced_compliance_report(scan_results: Dict[str, Any],
                         priority=priority,
                         impact_score=95.0 if severity == 'Critical' else 80.0 if severity == 'High' else 60.0,
                         effort_hours=8.0 if severity == 'Critical' else 4.0 if severity == 'High' else 2.0,
-                        deadline="2025-08-02" if article_num in [51, 52, 53, 54, 55] else "2026-08-02"
+                        deadline="2025-08-02" if article_num in [51, 53, 55] else "2026-08-02"
                     )
         
         # If no category matched but it's a significant finding, add to general remediation
