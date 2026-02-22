@@ -114,20 +114,18 @@ class EnhancedFindingGenerator:
                  "Establish quality management, maintain technical documentation, ensure CE marking compliance", "4-8 hours"),
             17: ("Implement Quality Management System", "Establish QMS per Article 17 requirements",
                  "Create policies, design controls, risk management procedures, post-market monitoring", "16-40 hours"),
-            26: ("Register AI System", "Complete EU database registration per Article 26",
+            26: ("Fulfill Deployer Obligations", "Implement deployer requirements per Article 26",
+                 "Use system per instructions, assign human oversight, ensure input data quality, maintain logs", "8-16 hours"),
+            27: ("Conduct Fundamental Rights Impact Assessment", "Complete FRIA per Article 27",
+                 "Assess impact on fundamental rights, document findings, implement safeguards for affected persons", "8-16 hours"),
+            49: ("Register AI System", "Complete EU database registration per Article 49",
                  "Prepare registration data, submit to EU AI database before market placement", "2-4 hours"),
-            27: ("Document Deployer Obligations", "Implement deployer requirements per Article 27",
-                 "Assign human oversight, ensure appropriate use, maintain input data records", "4-8 hours"),
-            29: ("Assign Human Oversight", "Designate competent oversight personnel per Article 29",
-                 "Train oversight personnel, document competencies, establish intervention procedures", "4-8 hours"),
-            50: ("Prepare Model Documentation", "Create GPAI model documentation per Article 50",
-                 "Document training methodology, compute resources, copyright policy, capabilities summary", "8-16 hours"),
-            51: ("Implement Copyright Compliance", "Establish training data copyright policy per Article 51",
-                 "Document data sources, implement opt-out mechanisms, maintain training data records", "4-8 hours"),
-            52: ("Ensure Transparency for GPAI", "Implement GPAI transparency measures per Article 52",
-                 "Create model cards, document limitations, provide integration guidelines", "4-8 hours"),
-            53: ("Prepare Systemic Risk Assessment", "Document systemic risk evaluation per Article 53",
-                 "Assess systemic risks, implement mitigation measures, prepare for stress testing", "16-40 hours"),
+            50: ("Implement Transparency Obligations", "Meet transparency requirements per Article 50",
+                 "Disclose AI interaction to users, label AI-generated content, mark deepfakes, disclose emotion recognition", "4-8 hours"),
+            53: ("Fulfill GPAI Provider Obligations", "Meet all GPAI provider requirements per Article 53",
+                 "Maintain technical documentation (Annex XI), provide downstream info (Annex XII), copyright policy, training data summary", "8-16 hours"),
+            55: ("Assess Systemic Risk Obligations", "Meet systemic risk requirements per Article 55",
+                 "Conduct model evaluations, adversarial testing, track serious incidents, ensure cybersecurity", "16-40 hours"),
         }
         
         if article_num in article_recommendations:
@@ -711,11 +709,11 @@ class EnhancedFindingGenerator:
                 )
             elif 'fundamental rights' in finding_type:
                 return (
-                    "EU AI Act Article 29 requires consideration of fundamental rights impact for high-risk AI systems.",
-                    ['EU AI Act Article 29 - Fundamental Rights Impact Assessment'],
+                    "EU AI Act Article 27 requires a fundamental rights impact assessment before deploying high-risk AI systems.",
+                    ['EU AI Act Article 27 - Fundamental Rights Impact Assessment'],
                     ['Conduct fundamental rights assessment', 'Document impact on individuals', 'Implement safeguards'],
                     "AI systems affecting fundamental rights require documented impact assessments and mitigation measures",
-                    [ActionableRecommendation(action="Conduct Fundamental Rights Assessment", description="Assess AI impact on fundamental rights per Article 29", implementation="Document potential impacts on privacy, non-discrimination, due process", effort_estimate="4-8 hours", priority=severity, verification="Legal review of assessment")]
+                    [ActionableRecommendation(action="Conduct Fundamental Rights Assessment", description="Assess AI impact on fundamental rights per Article 27", implementation="Document potential impacts on privacy, non-discrimination, due process", effort_estimate="4-8 hours", priority=severity, verification="Legal review of assessment")]
                 )
             elif 'data governance' in finding_type:
                 return (
@@ -1105,14 +1103,34 @@ class EnhancedFindingGenerator:
         elif 'high_risk' in finding_lower or 'biometric' in finding_lower:
             return 'EU AI Act Articles 6-15 - High-Risk AI Requirements (Penalty: €15M or 3% turnover)'
         elif 'gpai' in finding_lower or 'foundation' in finding_lower or 'general_purpose' in finding_lower:
-            return 'EU AI Act Articles 51-55 - GPAI Model Obligations (Penalty: €15M or 3% turnover)'
-        elif 'human_oversight' in finding_lower:
+            return 'EU AI Act Articles 53-55 - GPAI Model Obligations (Penalty: €15M or 3% turnover)'
+        elif 'human_oversight' in finding_lower or 'oversight' in finding_lower:
             return 'EU AI Act Article 14 - Human Oversight (Penalty: €15M or 3% turnover)'
         elif 'data_governance' in finding_lower or 'training_data' in finding_lower:
             return 'EU AI Act Article 10 - Data Governance (Penalty: €15M or 3% turnover)'
-        elif 'risk_management' in finding_lower and 'ai' in finding_lower:
+        elif 'risk_management' in finding_lower or 'risk management' in finding_lower:
             return 'EU AI Act Article 9 - Risk Management (Penalty: €15M or 3% turnover)'
-        elif 'ai_act' in finding_lower or 'ai model' in finding_lower:
+        elif 'transparency' in finding_lower or 'deepfake' in finding_lower or 'emotion_recognition' in finding_lower:
+            return 'EU AI Act Article 50 - Transparency Obligations (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['accuracy', 'robustness', 'adversarial']):
+            return 'EU AI Act Article 15 - Accuracy, Robustness and Cybersecurity (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['incident', 'reporting', 'malfunction']):
+            return 'EU AI Act Article 73 - Reporting of Serious Incidents (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['deployer', 'deployment']):
+            return 'EU AI Act Article 26 - Deployer Obligations (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['fundamental rights', 'fria', 'rights impact']):
+            return 'EU AI Act Article 27 - Fundamental Rights Impact Assessment (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['technical documentation', 'documentation gap']):
+            return 'EU AI Act Article 11 - Technical Documentation (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['record', 'logging', 'log_keeping', 'traceability']):
+            return 'EU AI Act Article 12 - Record-Keeping (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['quality management', 'qms']):
+            return 'EU AI Act Article 17 - Quality Management System (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['post_market', 'monitoring', 'lifecycle']):
+            return 'EU AI Act Article 72 - Post-Market Monitoring (Penalty: €15M or 3% turnover)'
+        elif any(term in finding_lower for term in ['pet', 'privacy_enhancing', 'differential_privacy', 'federated', 'homomorphic']):
+            return 'EU AI Act Article 10 - Data Governance & Privacy-Enhancing Technologies (Penalty: €15M or 3% turnover)'
+        elif 'ai_act' in finding_lower or 'ai model' in finding_lower or 'ai system' in finding_lower:
             return 'EU AI Act - General Requirements (Penalty: €15M or 3% turnover)'
         
         # Default to GDPR for general findings (not AI-specific)

@@ -1394,9 +1394,9 @@ class AdvancedAIScanner:
             if not gpai.get('overall_gpai_compliant'):
                 issues = []
                 if not gpai['article_52_compliance']['all_met']:
-                    issues.append(f"Article 52: {100-gpai['article_52_compliance']['percentage']:.0f}% non-compliant")
+                    issues.append(f"Article 53: {100-gpai['article_52_compliance']['percentage']:.0f}% non-compliant")
                 if gpai.get('systemic_risk_model') and not gpai['article_53_compliance']['all_met']:
-                    issues.append(f"Article 53 (Systemic Risk): {100-gpai['article_53_compliance']['percentage']:.0f}% non-compliant")
+                    issues.append(f"Article 55 (Systemic Risk): {100-gpai['article_53_compliance']['percentage']:.0f}% non-compliant")
                 
                 findings.append({
                     'type': 'gpai_compliance',
@@ -2201,10 +2201,10 @@ class AdvancedAIScanner:
         model_size_mb = model_analysis.get('model_size_mb', 0)
         parameters_count = model_analysis.get('parameters_count', 0)
         
-        # Article 51 - Classification
+        # Article 51 - Classification of GPAI with systemic risk
         systemic_risk = parameters_count > 10**9 or model_size_mb > 10000
         
-        # Article 52 - Provider obligations for all GPAI
+        # Article 53 - Obligations for ALL GPAI model providers (stored as article_52 key for backward compat)
         article_52_requirements = {
             'technical_documentation_annex_xi': metadata.get('annex_xi_documentation', False),
             'transparency_information_annex_xii': metadata.get('annex_xii_information', False),
@@ -2212,7 +2212,7 @@ class AdvancedAIScanner:
             'training_data_summary_published': metadata.get('training_data_summary', False)
         }
         
-        # Article 53 - Additional obligations for systemic risk GPAI
+        # Article 55 - Additional obligations for systemic risk GPAI (stored as article_53 key for backward compat)
         article_53_requirements = {}
         if systemic_risk:
             article_53_requirements = {
@@ -2222,9 +2222,9 @@ class AdvancedAIScanner:
                 'cybersecurity_protection': metadata.get('cybersecurity_adequate', False)
             }
         
-        # Articles 54-56 - Codes of Practice compliance
+        # Articles 55-56 - Codes of Practice compliance
         codes_of_practice = {
-            'article_54_code_adherence': metadata.get('follows_code_of_practice', False),
+            'article_55_code_adherence': metadata.get('follows_code_of_practice', False),
             'article_56_detailed_code_compliance': metadata.get('detailed_code_compliance', False),
             'alternative_compliance_demonstrated': metadata.get('alternative_compliance_path', False)
         }
@@ -2254,21 +2254,21 @@ class AdvancedAIScanner:
     
     def _assess_post_market_monitoring(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Articles 85-87: Post-market monitoring, incident reporting, and malfunctions
-        Essential for lifecycle compliance
+        Articles 72-73: Post-market monitoring and serious incident reporting
+        Per Regulation (EU) 2024/1689 final text
         """
-        # Article 85 - Post-market monitoring plan
+        # Article 72 - Post-market monitoring plan
         monitoring_plan = {
-            'article': 'Article 85',
+            'article': 'Article 72',
             'plan_established': metadata.get('post_market_monitoring_plan', False),
             'data_collection': metadata.get('monitoring_data_collected', False),
             'performance_analysis': metadata.get('performance_analyzed', False),
             'plan_updated_regularly': metadata.get('plan_updated', False)
         }
         
-        # Article 86/87 - Serious incident reporting
+        # Article 73 - Serious incident reporting
         incident_reporting = {
-            'article': 'Articles 86-87',
+            'article': 'Article 73',
             'reporting_system_established': metadata.get('incident_reporting_system', False),
             'fifteen_day_reporting_procedure': metadata.get('15_day_reporting_procedure', False),
             'incidents_documented': metadata.get('incidents_documented', []),
@@ -2695,59 +2695,61 @@ class AdvancedAIScanner:
     
     def _assess_fundamental_rights_articles_29_35(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Articles 29-35: Fundamental Rights Impact Assessment (FRIA)
-        Required for high-risk AI systems affecting fundamental rights
+        Articles 26-27: Deployer Obligations & Fundamental Rights Impact Assessment (FRIA)
+        Per Regulation (EU) 2024/1689 final text:
+        - Article 26: Obligations of deployers of high-risk AI systems
+        - Article 27: Fundamental rights impact assessment for high-risk AI systems
         """
         fria = {
-            'articles': ['Article 29', 'Article 30', 'Article 31', 'Article 32', 'Article 33', 'Article 34', 'Article 35'],
-            'title': 'Fundamental Rights Impact Assessment',
+            'articles': ['Article 26', 'Article 27'],
+            'title': 'Deployer Obligations & Fundamental Rights Impact Assessment',
             'requirements': []
         }
         
-        # Article 29 - Obligations of deployers
+        # Article 26(1) - Deployers must use system according to instructions
         has_deployer_obligations = metadata.get('deployer_obligations_met', False)
         fria['requirements'].append({
-            'sub_article': '29(1)',
-            'requirement': 'Deployers must use system according to instructions',
+            'sub_article': '26(1)',
+            'requirement': 'Deployers must use system according to instructions for use',
             'compliant': has_deployer_obligations,
             'evidence_required': ['Deployment policy', 'Usage guidelines']
         })
         
-        # Article 29(2) - Human oversight assignment
+        # Article 26(2) - Human oversight assignment
         has_oversight_assignment = metadata.get('oversight_persons_assigned', False)
         fria['requirements'].append({
-            'sub_article': '29(2)',
-            'requirement': 'Assign human oversight to competent persons',
+            'sub_article': '26(2)',
+            'requirement': 'Assign human oversight to natural persons with necessary competence, training, and authority',
             'compliant': has_oversight_assignment,
             'evidence_required': ['Oversight role assignment', 'Training records']
         })
         
-        # Article 29(4) - FRIA before deployment (for public bodies)
+        # Article 27(1) - FRIA before deployment (for public bodies and certain private deployers)
         is_public_deployment = metadata.get('public_body_deployment', False)
         has_fria = metadata.get('fundamental_rights_assessment', False)
         fria['requirements'].append({
-            'sub_article': '29(4)',
-            'requirement': 'Conduct FRIA before deployment (public bodies)',
+            'sub_article': '27(1)',
+            'requirement': 'Conduct fundamental rights impact assessment before deployment',
             'compliant': has_fria or not is_public_deployment,
             'evidence_required': ['FRIA report', 'Rights analysis'] if is_public_deployment else ['N/A - not public body']
         })
         
-        # Article 29(6) - Inform affected persons
+        # Article 26(11) - Inform affected persons
         has_notification_process = metadata.get('affected_persons_notification', False)
         fria['requirements'].append({
-            'sub_article': '29(6)',
-            'requirement': 'Inform natural persons about AI decision making',
+            'sub_article': '26(11)',
+            'requirement': 'Inform natural persons subject to AI-assisted decisions',
             'compliant': has_notification_process,
             'evidence_required': ['Notification procedure', 'Information disclosure']
         })
         
-        # Article 35 - Accessibility for persons with disabilities
+        # Article 26(7) - Inform workers before workplace deployment
         has_accessibility = metadata.get('accessibility_measures', False)
         fria['requirements'].append({
-            'sub_article': '35',
-            'requirement': 'Ensure accessibility for persons with disabilities',
+            'sub_article': '26(7)',
+            'requirement': 'Inform workers and their representatives before workplace deployment',
             'compliant': has_accessibility,
-            'evidence_required': ['Accessibility assessment', 'WCAG compliance']
+            'evidence_required': ['Worker notification records', 'Representative consultation']
         })
         
         compliant_count = sum(1 for r in fria['requirements'] if r['compliant'])
