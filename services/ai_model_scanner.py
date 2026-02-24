@@ -171,6 +171,167 @@ class AIModelScanner:
         """Return the coverage report from the last scan."""
         return self._coverage_report
 
+    def _detect_ai_components(self, repo_path: str) -> Dict[str, Any]:
+        """
+        Detect whether a repository contains actual AI/ML components.
+        Analyzes dependencies, file types, and code patterns to determine
+        if the EU AI Act applies to this project.
+        
+        Returns:
+            Dict with 'is_ai_system' bool, 'confidence' float, 'evidence' list,
+            and 'ai_category' string.
+        """
+        evidence = []
+        ai_score = 0
+        
+        ai_libraries = {
+            'python': [
+                'tensorflow', 'torch', 'pytorch', 'keras', 'sklearn', 'scikit-learn',
+                'transformers', 'huggingface', 'openai', 'langchain', 'llama',
+                'xgboost', 'lightgbm', 'catboost', 'fastai', 'paddlepaddle',
+                'mxnet', 'caffe', 'theano', 'jax', 'flax', 'optax',
+                'stable-baselines', 'gym', 'gymnasium', 'ray', 'mlflow',
+                'wandb', 'onnx', 'onnxruntime', 'tflite', 'mediapipe',
+                'spacy', 'nltk', 'gensim', 'sentence-transformers',
+                'diffusers', 'accelerate', 'datasets', 'tokenizers',
+                'prophet', 'statsmodels', 'auto-sklearn', 'autokeras',
+                'deepspeed', 'fairseq', 'detectron2', 'mmdetection',
+                'opencv-python', 'torchvision', 'torchaudio',
+            ],
+            'javascript': [
+                'tensorflow', '@tensorflow/tfjs', 'brain.js', 'ml5',
+                'onnxruntime-web', 'transformers', '@huggingface',
+                'openai', 'langchain', '@langchain',
+            ],
+        }
+        
+        model_extensions = {'.pt', '.pth', '.h5', '.keras', '.pkl', '.pickle',
+                          '.onnx', '.pb', '.tflite', '.safetensors', '.bin',
+                          '.model', '.joblib', '.pmml', '.mar', '.savedmodel'}
+        
+        ai_code_patterns = [
+            'import tensorflow', 'import torch', 'import keras',
+            'from sklearn', 'from transformers', 'import openai',
+            'model.fit(', 'model.train(', 'model.predict(',
+            'nn.Module', 'nn.Linear', 'nn.Conv2d',
+            'tf.keras', 'Sequential(', 'model.compile(',
+            'ChatCompletion', 'Embedding(', 'tokenizer(',
+            'AutoModel', 'AutoTokenizer', 'pipeline(',
+            'classifier(', 'regressor(', 'clustering(',
+            'train_test_split', 'cross_val_score',
+            'backpropagation', 'gradient_descent',
+            'neural_network', 'deep_learning',
+            'reinforcement_learning', 'agent.learn',
+        ]
+        
+        ai_config_patterns = [
+            'model_name', 'model_path', 'checkpoint',
+            'num_epochs', 'learning_rate', 'batch_size',
+            'hidden_layers', 'activation_function',
+            'optimizer', 'loss_function', 'training_data',
+        ]
+        
+        try:
+            requirements_files = ['requirements.txt', 'setup.py', 'setup.cfg', 
+                                 'pyproject.toml', 'Pipfile', 'environment.yml',
+                                 'package.json', 'Cargo.toml']
+            
+            for req_file in requirements_files:
+                req_path = os.path.join(repo_path, req_file)
+                if os.path.exists(req_path):
+                    try:
+                        with open(req_path, 'r', errors='ignore') as f:
+                            content = f.read().lower()
+                        
+                        lang = 'javascript' if req_file == 'package.json' else 'python'
+                        for lib in ai_libraries.get(lang, []) + ai_libraries.get('python', []):
+                            if lib.lower() in content:
+                                evidence.append(f"AI library '{lib}' found in {req_file}")
+                                ai_score += 15
+                    except Exception:
+                        pass
+            
+            model_file_count = 0
+            ai_code_hits = 0
+            ai_config_hits = 0
+            files_checked = 0
+            max_files_to_check = 200
+            
+            for root, dirs, files in os.walk(repo_path):
+                if '.git' in root or 'node_modules' in root or '__pycache__' in root:
+                    continue
+                
+                for file in files:
+                    ext = os.path.splitext(file)[1].lower()
+                    
+                    if ext in model_extensions:
+                        model_file_count += 1
+                        evidence.append(f"Model file found: {file}")
+                        ai_score += 20
+                    
+                    if files_checked < max_files_to_check and ext in ('.py', '.js', '.ts', '.ipynb', '.yaml', '.yml', '.toml', '.json', '.cfg'):
+                        try:
+                            full_path = os.path.join(root, file)
+                            if os.path.getsize(full_path) > 1_000_000:
+                                continue
+                            with open(full_path, 'r', errors='ignore') as f:
+                                file_content = f.read()
+                            
+                            for pattern in ai_code_patterns:
+                                if pattern.lower() in file_content.lower():
+                                    ai_code_hits += 1
+                                    if ai_code_hits <= 5:
+                                        evidence.append(f"AI code pattern '{pattern}' in {file}")
+                                    ai_score += 5
+                                    break
+                            
+                            for pattern in ai_config_patterns:
+                                if pattern in file_content.lower():
+                                    ai_config_hits += 1
+                                    if ai_config_hits <= 3:
+                                        evidence.append(f"AI config pattern '{pattern}' in {file}")
+                                    ai_score += 2
+                                    break
+                            
+                            files_checked += 1
+                        except Exception:
+                            pass
+            
+            if model_file_count > 0:
+                evidence.append(f"Total model files: {model_file_count}")
+            
+        except Exception as e:
+            logging.warning(f"AI detection analysis error: {e}")
+        
+        ai_score = min(ai_score, 100)
+        is_ai = ai_score >= 20
+        
+        if ai_score >= 60:
+            ai_category = 'AI/ML System'
+            confidence = min(ai_score / 100, 0.99)
+        elif ai_score >= 35:
+            ai_category = 'AI-Adjacent (uses some AI components)'
+            confidence = ai_score / 100
+        elif ai_score >= 20:
+            ai_category = 'Minimal AI Components'
+            confidence = ai_score / 100
+        else:
+            ai_category = 'Not an AI System'
+            confidence = 1.0 - (ai_score / 100)
+        
+        result = {
+            'is_ai_system': is_ai,
+            'confidence': round(confidence, 2),
+            'ai_score': ai_score,
+            'ai_category': ai_category,
+            'evidence': evidence[:10],
+            'model_files_found': model_file_count if 'model_file_count' in dir() else 0,
+            'ai_code_patterns_found': ai_code_hits if 'ai_code_hits' in dir() else 0,
+        }
+        
+        logging.info(f"AI detection result: is_ai={is_ai}, score={ai_score}, category={ai_category}")
+        return result
+
     def _parallel_compliance_check(self, content: str, metadata: Optional[Dict[str, Any]] = None, source_file: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Run EU AI Act compliance checks in parallel batches for faster processing.
@@ -374,6 +535,9 @@ class AIModelScanner:
                     'lines_analyzed': scan_result.get('lines_analyzed', 0),
                 }
                 
+                # Track AI detection result for later use
+                ai_detection_result = None
+                
                 advanced_scanner = AdvancedAIScanner(region=self.region)
                 
                 # Determine how to provide model file to advanced scanner based on source
@@ -436,20 +600,23 @@ class AIModelScanner:
                             except Exception as selector_err:
                                 logging.warning(f"SmartFileSelector repo scan failed, continuing with model files only: {selector_err}")
 
+                        # Run AI component detection on cloned repo
+                        ai_detection_result = self._detect_ai_components(temp_repo_dir)
+                        model_metadata['ai_detection'] = ai_detection_result
+                        scan_result['ai_detection'] = ai_detection_result
+                        
                         if model_files:
-                            # Use the first model file found (or largest if multiple)
-                            if len(model_files) > 1:
-                                # Sort by file size, use largest
-                                model_files.sort(key=lambda x: os.path.getsize(x), reverse=True)
-                            
                             temp_file_path = model_files[0]
+                            if len(model_files) > 1:
+                                model_files.sort(key=lambda x: os.path.getsize(x), reverse=True)
+                                temp_file_path = model_files[0]
+                            
                             model_metadata['analysis_type'] = 'repository_cloned_file'
                             model_metadata['model_file_count'] = len(model_files)
                             model_metadata['model_file_name'] = os.path.basename(temp_file_path)
-                            model_metadata['repository_path'] = temp_repo_dir  # Store for cleanup
+                            model_metadata['repository_path'] = temp_repo_dir
                             logging.info(f"Found {len(model_files)} model file(s), analyzing: {os.path.basename(temp_file_path)}")
                         else:
-                            # No model files found - fall back to metadata analysis
                             logging.warning(f"No model files found in repository, using metadata analysis")
                             with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='_repo_metadata.json') as tmp:
                                 import json
@@ -464,7 +631,7 @@ class AIModelScanner:
                                 json.dump(repo_metadata, tmp)
                                 temp_file_path = tmp.name
                                 model_metadata['analysis_type'] = 'repository_metadata_fallback'
-                                model_metadata['repository_path'] = temp_repo_dir  # Store for cleanup
+                                model_metadata['repository_path'] = temp_repo_dir
                         
                     except subprocess.TimeoutExpired:
                         logging.error("Repository cloning timed out after 60 seconds")
@@ -507,65 +674,130 @@ class AIModelScanner:
                         temp_file_path = tmp.name
                         model_metadata['analysis_type'] = 'generic'
                 
-                # Call comprehensive scanner with full Phase 1-10 coverage
-                logging.info(f"Calling AdvancedAIScanner for {model_source} with analysis type: {model_metadata.get('analysis_type')}")
-                comprehensive_results = advanced_scanner.scan_ai_model_comprehensive(
-                    model_file=temp_file_path,
-                    model_metadata=model_metadata
-                )
+                # Check if AI components were detected - skip full AI Act assessment for non-AI repos
+                skip_ai_act = False
+                if ai_detection_result and not ai_detection_result.get('is_ai_system', True):
+                    skip_ai_act = True
+                    logging.info(f"Repository classified as '{ai_detection_result.get('ai_category', 'Not an AI System')}' - skipping EU AI Act compliance assessment")
                 
-                # Clean up temporary files and cloned repositories
-                if temp_file_path and model_source != "Model Path":
-                    # Clean up temp metadata file if created
-                    if 'metadata' in model_metadata.get('analysis_type', '') and os.path.exists(temp_file_path):
-                        try:
-                            os.unlink(temp_file_path)
-                        except OSError:
-                            pass
+                if skip_ai_act:
+                    # Non-AI repository: provide clear classification without AI Act findings
+                    repo_url = scan_result.get('repository_url', '')
                     
-                    # Clean up cloned repository directory if exists
+                    # Remove any AI Act findings that were added in earlier phases
+                    non_ai_findings = []
+                    for f in scan_result.get('findings', []):
+                        f_type = f.get('type', '').upper()
+                        f_cat = f.get('category', '').upper()
+                        if ('AI_ACT' in f_type or 'AI ACT' in f_cat or 
+                            'EU_AI_ACT' in f_type or 'GPAI' in f_type or
+                            'BIAS' in f_type or 'EXPLAINABILITY' in f_type or
+                            'FUNDAMENTAL_RIGHTS' in f_type):
+                            continue
+                        non_ai_findings.append(f)
+                    
+                    scan_result['findings'] = non_ai_findings
+                    
+                    # Add informational finding about classification
+                    scan_result['findings'].insert(0, {
+                        'type': 'AI_CLASSIFICATION',
+                        'category': 'System Classification',
+                        'description': f"This repository has been analyzed and classified as '{ai_detection_result.get('ai_category', 'Not an AI System')}'. "
+                                      f"No AI/ML models, training code, or AI framework dependencies were detected. "
+                                      f"EU AI Act (Regulation 2024/1689) obligations do not apply to non-AI software. "
+                                      f"Detection confidence: {ai_detection_result.get('confidence', 0):.0%}.",
+                        'risk_level': 'info',
+                        'location': repo_url,
+                        'article_reference': 'N/A - Not an AI System',
+                    })
+                    
+                    # Keep any general data privacy / licensing findings
+                    scan_result.update({
+                        'ai_act_compliance': 'Not Applicable - Not an AI System',
+                        'compliance_score': 100,
+                        'ai_model_compliance': 100,
+                        'overall_risk_score': 0,
+                        'ai_act_risk_level': 'Not Applicable',
+                        'ai_act_compliance_score': 100,
+                        'model_framework': ai_detection_result.get('ai_category', 'Not an AI System'),
+                        'model_type': 'Software Repository (Non-AI)',
+                        'ai_classification': ai_detection_result,
+                        'coverage_version': 'N/A - EU AI Act does not apply',
+                    })
+                    
+                    # Clean up cloned repo
                     if model_source in ["Repository URL", "Model Repository"]:
                         repo_path = model_metadata.get('repository_path', '')
                         if repo_path and os.path.exists(repo_path):
                             try:
                                 import shutil
                                 shutil.rmtree(repo_path)
-                                logging.info(f"Cleaned up cloned repository: {repo_path}")
-                            except Exception as cleanup_error:
-                                logging.warning(f"Failed to cleanup repository: {cleanup_error}")
-                
-                # Merge comprehensive findings with existing findings
-                if comprehensive_results.get('findings'):
-                    scan_result["findings"].extend(comprehensive_results.get('findings', []))
-                
-                # Update with comprehensive AI Act metrics
-                scan_result.update({
-                    'ai_act_compliance': comprehensive_results.get('ai_act_compliance', {}).get('risk_category', 'Assessment Complete'),
-                    'compliance_score': comprehensive_results.get('compliance_score', 85),
-                    'ai_model_compliance': comprehensive_results.get('compliance_score', 85),
-                    'overall_risk_score': comprehensive_results.get('overall_risk_score', 50),
-                    'ai_act_risk_level': comprehensive_results.get('ai_act_compliance', {}).get('risk_category', 'Minimal Risk'),
-                    'ai_act_compliance_score': comprehensive_results.get('compliance_score', 85),
+                            except Exception:
+                                pass
+                    if temp_file_path and 'metadata' in model_metadata.get('analysis_type', ''):
+                        try:
+                            os.unlink(temp_file_path)
+                        except OSError:
+                            pass
+                else:
+                    # AI system detected - run full EU AI Act compliance assessment
+                    logging.info(f"Calling AdvancedAIScanner for {model_source} with analysis type: {model_metadata.get('analysis_type')}")
+                    comprehensive_results = advanced_scanner.scan_ai_model_comprehensive(
+                        model_file=temp_file_path,
+                        model_metadata=model_metadata
+                    )
                     
-                    # Expanded EU AI Act coverage (Phases 2-10)
-                    'annex_iii_classification': comprehensive_results.get('annex_iii_classification'),
-                    'transparency_compliance': comprehensive_results.get('transparency_compliance_article_50'),
-                    'provider_deployer_obligations': comprehensive_results.get('provider_deployer_obligations_articles_16_27'),
-                    'conformity_assessment': comprehensive_results.get('conformity_assessment_articles_38_46'),
-                    'gpai_compliance': comprehensive_results.get('complete_gpai_compliance_articles_52_56'),
-                    'post_market_monitoring': comprehensive_results.get('post_market_monitoring_articles_85_87'),
-                    'ai_literacy': comprehensive_results.get('ai_literacy_article_4'),
-                    'enforcement_rights': comprehensive_results.get('enforcement_rights_articles_88_94'),
-                    'governance_structures': comprehensive_results.get('governance_structures_articles_60_75'),
+                    # Clean up temporary files and cloned repositories
+                    if temp_file_path and model_source != "Model Path":
+                        if 'metadata' in model_metadata.get('analysis_type', '') and os.path.exists(temp_file_path):
+                            try:
+                                os.unlink(temp_file_path)
+                            except OSError:
+                                pass
+                        
+                        if model_source in ["Repository URL", "Model Repository"]:
+                            repo_path = model_metadata.get('repository_path', '')
+                            if repo_path and os.path.exists(repo_path):
+                                try:
+                                    import shutil
+                                    shutil.rmtree(repo_path)
+                                    logging.info(f"Cleaned up cloned repository: {repo_path}")
+                                except Exception as cleanup_error:
+                                    logging.warning(f"Failed to cleanup repository: {cleanup_error}")
                     
-                    # Coverage statistics
-                    'articles_covered': comprehensive_results.get('articles_covered', []),
-                    'coverage_version': comprehensive_results.get('coverage_version', '2.0 - Expanded Coverage'),
-                    'recommendations': comprehensive_results.get('recommendations', []),
-                    'model_framework': comprehensive_results.get('model_analysis', {}).get('framework', model_metadata['framework']),
-                })
-                
-                logging.info(f"AdvancedAIScanner integration successful for {model_source}: {len(comprehensive_results.get('findings', []))} findings added")
+                    # Merge comprehensive findings with existing findings
+                    if comprehensive_results.get('findings'):
+                        scan_result["findings"].extend(comprehensive_results.get('findings', []))
+                    
+                    # Update with comprehensive AI Act metrics
+                    scan_result.update({
+                        'ai_act_compliance': comprehensive_results.get('ai_act_compliance', {}).get('risk_category', 'Assessment Complete'),
+                        'compliance_score': comprehensive_results.get('compliance_score', 85),
+                        'ai_model_compliance': comprehensive_results.get('compliance_score', 85),
+                        'overall_risk_score': comprehensive_results.get('overall_risk_score', 50),
+                        'ai_act_risk_level': comprehensive_results.get('ai_act_compliance', {}).get('risk_category', 'Minimal Risk'),
+                        'ai_act_compliance_score': comprehensive_results.get('compliance_score', 85),
+                        'ai_classification': ai_detection_result,
+                        
+                        # Expanded EU AI Act coverage (Phases 2-10)
+                        'annex_iii_classification': comprehensive_results.get('annex_iii_classification'),
+                        'transparency_compliance': comprehensive_results.get('transparency_compliance_article_50'),
+                        'provider_deployer_obligations': comprehensive_results.get('provider_deployer_obligations_articles_16_27'),
+                        'conformity_assessment': comprehensive_results.get('conformity_assessment_articles_38_46'),
+                        'gpai_compliance': comprehensive_results.get('complete_gpai_compliance_articles_52_56'),
+                        'post_market_monitoring': comprehensive_results.get('post_market_monitoring_articles_85_87'),
+                        'ai_literacy': comprehensive_results.get('ai_literacy_article_4'),
+                        'enforcement_rights': comprehensive_results.get('enforcement_rights_articles_88_94'),
+                        'governance_structures': comprehensive_results.get('governance_structures_articles_60_75'),
+                        
+                        # Coverage statistics
+                        'articles_covered': comprehensive_results.get('articles_covered', []),
+                        'coverage_version': comprehensive_results.get('coverage_version', '2.0 - Expanded Coverage'),
+                        'recommendations': comprehensive_results.get('recommendations', []),
+                        'model_framework': comprehensive_results.get('model_analysis', {}).get('framework', model_metadata['framework']),
+                    })
+                    
+                    logging.info(f"AdvancedAIScanner integration successful for {model_source}: {len(comprehensive_results.get('findings', []))} findings added")
                 
             except Exception as advanced_error:
                 logging.warning(f"Advanced AI scanner integration failed for {model_source}: {advanced_error}")

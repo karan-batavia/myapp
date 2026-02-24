@@ -129,6 +129,9 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
         compliance_status = t['non_compliant']
         status_color = '#ef4444'
     
+    ai_classification = scan_result.get('ai_classification', {})
+    is_non_ai = ai_classification.get('is_ai_system') == False if ai_classification else False
+    
     ai_act_findings = [f for f in findings if 'AI_ACT' in f.get('type', '') or 'AI Act' in f.get('category', '')]
     
     articles_covered = _calculate_articles_covered(ai_act_findings)
@@ -137,6 +140,86 @@ def generate_eu_ai_act_html_report(scan_result: Dict[str, Any], language: str = 
     chapter_coverage = _get_chapter_coverage(ai_act_findings)
     
     penalty_risk = _calculate_penalty_risk(ai_act_findings)
+    
+    if is_non_ai:
+        non_ai_label = 'Niet van Toepassing - Geen AI-systeem' if language == 'nl' else 'Not Applicable - Not an AI System'
+        non_ai_detail = ('Dit project bevat geen AI/ML-componenten. De EU AI Act (Verordening 2024/1689) '
+                        'is niet van toepassing op niet-AI software.') if language == 'nl' else (
+                        'This repository contains no AI/ML components. The EU AI Act (Regulation 2024/1689) '
+                        'does not apply to non-AI software.')
+        ai_category = ai_classification.get('ai_category', 'Not an AI System')
+        evidence_list = ai_classification.get('evidence', [])
+        evidence_html = ''
+        if evidence_list:
+            items = ''.join(f'<li style="padding:3px 0;">{e}</li>' for e in evidence_list[:5])
+            evidence_html = f'<ul style="margin:10px 0;padding-left:20px;color:#64748b;">{items}</ul>'
+        
+        html = f'''
+    <!DOCTYPE html>
+    <html lang="{language}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{t['title']} - DataGuardian Pro</title>
+        <style>
+            * {{ margin: 0; padding: 0; box-sizing: border-box; }}
+            body {{ font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.6; }}
+            .container {{ max-width: 900px; margin: 0 auto; padding: 2rem; }}
+            .header {{ background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 2rem; border-radius: 12px; margin-bottom: 2rem; }}
+            .header h1 {{ font-size: 2rem; margin-bottom: 0.5rem; }}
+            .header p {{ opacity: 0.9; }}
+            .card {{ background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1.5rem; }}
+            .badge {{ display: inline-block; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 600; }}
+            .footer {{ text-align: center; padding: 2rem; color: #64748b; font-size: 0.875rem; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>{t['title']}</h1>
+                <p>{t['subtitle']} - {t['generated_on']} {datetime.now().strftime('%Y-%m-%d %H:%M')}</p>
+            </div>
+            <div class="card" style="border-left: 5px solid #10b981;">
+                <h2 style="color: #059669; margin-bottom: 1rem;">&#x2705; {non_ai_label}</h2>
+                <p style="font-size: 1.1rem; margin-bottom: 1rem;">{non_ai_detail}</p>
+                <div style="margin: 1rem 0;">
+                    <span class="badge" style="background: #ecfdf5; color: #059669;">{ai_category}</span>
+                    <span class="badge" style="background: #f0f9ff; color: #0284c7; margin-left: 0.5rem;">
+                        {"Betrouwbaarheid" if language == 'nl' else "Confidence"}: {ai_classification.get('confidence', 0):.0%}
+                    </span>
+                </div>
+                {f'<p style="margin-top:1rem;"><strong>{"Gescande URL" if language == "nl" else "Scanned URL"}:</strong> <a href="{scanned_url}" target="_blank" style="color: #0284c7; word-break: break-all;">{scanned_url}</a></p>' if scanned_url else ''}
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 1rem;">{"Analyse Details" if language == 'nl' else "Analysis Details"}</h3>
+                <p><strong>{"Classificatie" if language == 'nl' else "Classification"}:</strong> {ai_category}</p>
+                <p><strong>{t['model_type']}:</strong> {model_type}</p>
+                <p><strong>{"Bestanden Gescand" if language == 'nl' else "Files Scanned"}:</strong> {scan_result.get('files_scanned', 0)}</p>
+                <p><strong>AI Score:</strong> {ai_classification.get('ai_score', 0)}/100 ({"drempel" if language == 'nl' else "threshold"}: 20)</p>
+                {evidence_html}
+                <p style="margin-top: 1rem; color: #64748b; font-size: 0.9rem;">
+                    {"De scanner heeft geen AI/ML-bibliotheken, modelbestanden of AI-codepatronen gedetecteerd in dit project." if language == 'nl' else
+                     "The scanner detected no AI/ML libraries, model files, or AI code patterns in this project."}
+                </p>
+            </div>
+            <div class="card" style="background: #f0f9ff; border: 1px solid #bae6fd;">
+                <h3 style="color: #0369a1; margin-bottom: 0.5rem;">{"Wat betekent dit?" if language == 'nl' else "What does this mean?"}</h3>
+                <p>{"De EU AI Act (Verordening 2024/1689) is van toepassing op AI-systemen zoals gedefinieerd in Artikel 3(1). "
+                    "Dit project voldoet niet aan die definitie en is daarom vrijgesteld van AI Act verplichtingen. "
+                    "Algemene gegevensbescherming (AVG/UAVG) en licentie-vereisten kunnen nog steeds van toepassing zijn." if language == 'nl' else
+                    "The EU AI Act (Regulation 2024/1689) applies to AI systems as defined in Article 3(1). "
+                    "This project does not meet that definition and is therefore exempt from AI Act obligations. "
+                    "General data protection (GDPR) and licensing requirements may still apply."}</p>
+            </div>
+            <div class="footer">
+                <p>DataGuardian Pro - Enterprise Privacy Compliance Platform</p>
+                <p>EU AI Act Classification Assessment</p>
+            </div>
+        </div>
+    </body>
+    </html>
+        '''
+        return html
     
     html = f'''
     <!DOCTYPE html>
