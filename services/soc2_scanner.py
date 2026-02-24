@@ -991,7 +991,7 @@ DOCKER_RISK_PATTERNS = {
         "Configure HEALTHCHECK instruction for container monitoring",
         "availability"
     ),
-    r"(?<!HEALTHCHECK\s.*)CMD": (
+    r"^\s*CMD\b": (
         "Missing HEALTHCHECK instruction",
         "low",
         "Add HEALTHCHECK instruction for container health monitoring",

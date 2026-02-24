@@ -96,6 +96,9 @@ class UsageAnalytics:
                 error_message=error_message
             )
             
+            event_type_str = event.event_type.value if hasattr(event.event_type, 'value') else str(event.event_type)
+            event_type_log = event_type.value if hasattr(event_type, 'value') else str(event_type)
+            
             with self.lock:
                 conn = sqlite3.connect(self.db_file)
                 cursor = conn.cursor()
@@ -106,7 +109,7 @@ class UsageAnalytics:
                      region, feature, details, duration_ms, success, error_message)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    event.event_id, event.event_type.value, event.timestamp.isoformat(),
+                    event.event_id, event_type_str, event.timestamp.isoformat(),
                     event.user_id, event.session_id, event.scanner_type, event.region,
                     event.feature, json.dumps(event.details) if event.details else None,
                     event.duration_ms, event.success, event.error_message
@@ -115,7 +118,7 @@ class UsageAnalytics:
                 conn.commit()
                 conn.close()
                 
-                logger.info(f"Usage event tracked: {event_type.value} for user {user_id}")
+                logger.info(f"Usage event tracked: {event_type_log} for user {user_id}")
                 return True
                 
         except Exception as e:

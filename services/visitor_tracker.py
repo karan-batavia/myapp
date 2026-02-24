@@ -113,11 +113,20 @@ class VisitorTracker:
     
     @contextmanager
     def _get_connection(self):
-        """Get database connection from pool with automatic release"""
+        """Get database connection from pool with automatic release and SSL reconnect."""
         conn = None
         try:
             if self._pool:
                 conn = self._pool.getconn()
+                # Detect and replace stale/broken SSL connections
+                try:
+                    conn.cursor().execute("SELECT 1")
+                except Exception:
+                    try:
+                        self._pool.putconn(conn, close=True)
+                    except Exception:
+                        pass
+                    conn = psycopg2.connect(self.db_url)
             elif self.db_url:
                 conn = psycopg2.connect(self.db_url)
             yield conn
