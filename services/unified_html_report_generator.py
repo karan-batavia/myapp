@@ -72,6 +72,11 @@ class UnifiedHTMLReportGenerator:
         # Format timestamp based on language
         formatted_timestamp = self._format_timestamp(timestamp)
         
+        # Check for non-AI classification - return minimal report
+        ai_classification = scan_result.get('ai_classification', {})
+        if ai_classification and ai_classification.get('is_ai_system') == False:
+            return self._generate_non_ai_report(scan_result, scan_type, scan_id, formatted_timestamp, region, ai_classification)
+        
         suppressed_types = {'Semantic Analysis: Syntax Error'}
         original_findings = scan_result.get('findings', [])
         severity_priority = {'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1}
@@ -153,6 +158,64 @@ class UnifiedHTMLReportGenerator:
         
         return html_content.strip()
     
+    def _generate_non_ai_report(self, scan_result: Dict, scan_type: str, scan_id: str, 
+                                formatted_timestamp: str, region: str, ai_classification: Dict) -> str:
+        """Generate a brief, minimal report for repositories classified as non-AI systems."""
+        lang = self.current_language
+        is_nl = lang == 'nl'
+        
+        scanned_url = scan_result.get('repository_url', scan_result.get('model_source', scan_result.get('scan_location', '')))
+        ai_category = ai_classification.get('ai_category', 'Not an AI System')
+        ai_score = ai_classification.get('ai_score', 0)
+        confidence = ai_classification.get('confidence', 0)
+        
+        title = 'Niet van Toepassing - Geen AI-systeem' if is_nl else 'Not Applicable - Not an AI System'
+        subtitle = ('Dit project bevat geen AI/ML-componenten. EU AI Act verplichtingen zijn niet van toepassing.' if is_nl 
+                   else 'This repository contains no AI/ML components. EU AI Act obligations do not apply.')
+        
+        url_html = ''
+        if scanned_url:
+            url_label = 'Gescande URL' if is_nl else 'Scanned URL'
+            url_html = f'<p style="margin-top:12px;"><strong>{url_label}:</strong> <a href="{scanned_url}" style="color:#0284c7;word-break:break-all;">{scanned_url}</a></p>'
+        
+        return f"""<!DOCTYPE html>
+<html lang="{lang}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DataGuardian Pro - {scan_type} {"Rapport" if is_nl else "Report"}</title>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'Segoe UI',system-ui,sans-serif;background:#f0fdf4;color:#1e293b;line-height:1.6;padding:2rem}}
+.wrap{{max-width:700px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}}
+.hdr{{background:#059669;color:#fff;padding:1.5rem 2rem}}
+.hdr h1{{font-size:1.5rem;margin-bottom:.25rem}}
+.hdr p{{opacity:.9;font-size:.95rem}}
+.body{{padding:2rem}}
+.badge{{display:inline-block;padding:.4rem .8rem;border-radius:9999px;font-weight:600;font-size:.85rem}}
+.ftr{{text-align:center;padding:1rem 2rem;color:#94a3b8;font-size:.8rem;border-top:1px solid #e2e8f0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+<h1>DataGuardian Pro</h1>
+<p>{scan_type} {"Rapport" if is_nl else "Report"} &mdash; {scan_id} &mdash; {formatted_timestamp}</p>
+</div>
+<div class="body">
+<h2 style="color:#059669;margin-bottom:.75rem;">&#x2705; {title}</h2>
+<p style="margin-bottom:1rem;">{subtitle}</p>
+<span class="badge" style="background:#ecfdf5;color:#059669;">{ai_category}</span>
+<span class="badge" style="background:#f0f9ff;color:#0284c7;margin-left:.5rem;">AI Score: {ai_score}/100</span>
+{url_html}
+</div>
+<div class="ftr">
+<p>DataGuardian Pro &mdash; Enterprise Privacy Compliance Platform</p>
+</div>
+</div>
+</body>
+</html>"""
+
     def _format_timestamp(self, timestamp: str) -> str:
         """Format timestamp based on current language."""
         try:
