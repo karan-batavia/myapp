@@ -10110,275 +10110,199 @@ def execute_sustainability_scan(region, username, scan_params):
             "recommendations": []
         }
         
-        # Phase 1: Resource Detection and Analysis
-        status.text("🔍 Phase 1: Detecting unused resources and zombie infrastructure...")
+        # Phase 1: Real Repository Analysis
+        status.text("🔍 Phase 1: Cloning repository and analyzing real code...")
         progress_bar.progress(20)
-        time.sleep(1)
-        
-        # Simulate comprehensive resource analysis
-        unused_resources = [
-            {
-                'type': 'ZOMBIE_VM',
-                'resource_id': 'vm-idle-prod-01',
-                'resource_type': 'Virtual Machine',
-                'region': 'eu-west-1 (Netherlands)',
-                'cpu_utilization': 2.3,
-                'memory_utilization': 15.7,
-                'last_activity': '2024-12-15T10:30:00Z',
-                'estimated_monthly_cost': 145.99,
-                'co2_emissions_kg_month': 29.8,
-                'severity': 'Critical',
-                'recommendation': 'Terminate or downsize - 98% idle for 3 weeks'
-            },
-            {
-                'type': 'ORPHANED_STORAGE',
-                'resource_id': 'vol-snapshot-backup-2023',
-                'resource_type': 'EBS Snapshot',
-                'region': 'eu-west-1 (Netherlands)',
-                'size_gb': 500,
-                'age_days': 425,
-                'estimated_monthly_cost': 25.50,
-                'co2_emissions_kg_month': 5.2,
-                'severity': 'High',
-                'recommendation': 'Delete old snapshot - original volume deleted 14 months ago'
-            },
-            {
-                'type': 'UNUSED_CONTAINER',
-                'resource_id': 'container-staging-legacy',
-                'resource_type': 'Container Instance',
-                'region': 'eu-west-1',
-                'cpu_reserved': 1.0,
-                'memory_reserved_mb': 2048,
-                'last_deployment': '2024-10-01T14:22:00Z',
-                'estimated_monthly_cost': 67.33,
-                'co2_emissions_kg_month': 11.4,
-                'severity': 'High',
-                'recommendation': 'Remove unused staging container - no deployments in 3 months'
-            }
-        ]
-        
-        # Phase 2: Code Bloat and Dead Code Analysis
-        status.text("📊 Phase 2: Analyzing code bloat and identifying dead code...")
-        progress_bar.progress(40)
-        time.sleep(1)
-        
-        code_bloat_findings = [
-            {
-                'type': 'DEAD_CODE',
-                'file': 'src/legacy/old_authentication.py',
-                'lines': 247,
-                'functions': 12,
-                'unused_functions': ['legacy_login', 'old_hash_password', 'deprecated_session'],
-                'estimated_energy_waste': '0.8 kWh/month',
-                'co2_impact': '0.4 kg CO₂e/month',
-                'severity': 'Medium',
-                'recommendation': 'Remove 247 lines of dead code - functions never called'
-            },
-            {
-                'type': 'UNUSED_DEPENDENCIES',
-                'file': 'package.json',
-                'unused_packages': ['moment', 'lodash-es', 'bootstrap-4'],
-                'bundle_size_reduction': '245 KB',
-                'estimated_energy_saving': '1.2 kWh/month',
-                'co2_saving': '0.6 kg CO₂e/month',
-                'severity': 'Medium',
-                'recommendation': 'Remove 3 unused dependencies - reduce bundle size by 245KB'
-            },
-            {
-                'type': 'INEFFICIENT_ALGORITHM',
-                'file': 'src/data/processing.py',
-                'function': 'process_large_dataset',
-                'complexity': 'O(n²)',
-                'suggested_complexity': 'O(n log n)',
-                'estimated_energy_waste': '15.5 kWh/month',
-                'co2_impact': '7.8 kg CO₂e/month',
-                'severity': 'Critical',
-                'recommendation': 'Optimize algorithm - reduce complexity from O(n²) to O(n log n)'
-            }
-        ]
-        
+
+        repo_url = scan_params.get('repo_url', '')
+        real_scan_result = None
+
+        if repo_url:
+            try:
+                from services.cloud_resources_scanner import GithubRepositoryScanner
+
+                github_scanner = GithubRepositoryScanner(
+                    repo_url=repo_url,
+                    branch='main',
+                    scan_depth='standard'
+                )
+                real_scan_result = github_scanner.scan_repository()
+            except Exception as _e:
+                st.warning(f"Could not clone repository ({_e}). Generating report from available metadata.")
+
+        file_stats = (real_scan_result or {}).get('code_stats', {})
+        unused_imports = (real_scan_result or {}).get('unused_imports', [])
+        large_files = (real_scan_result or {}).get('large_files', [])
+        real_findings = (real_scan_result or {}).get('findings', [])
+        real_recommendations = (real_scan_result or {}).get('recommendations', [])
+        real_sustainability_score = (real_scan_result or {}).get('sustainability_score', 75)
+
+        total_files = file_stats.get('total_files', 0)
+        total_size_mb = file_stats.get('total_size_mb', 0)
+
+        # Phase 2: Code analysis summary
+        status.text("📊 Phase 2: Analysing code efficiency patterns...")
+        progress_bar.progress(70)
+
         # Phase 3: Emissions Calculation with Regional Mapping
         status.text("🌍 Phase 3: Calculating CO₂ emissions with regional factors...")
-        progress_bar.progress(60)
-        time.sleep(1)
-        
-        # Regional emissions factors (kg CO₂e per kWh) - Netherlands focused
+        progress_bar.progress(75)
+
         regional_factors = {
-            'eu-west-1': 0.2956,  # Netherlands - mixed renewable grid
-            'eu-central-1': 0.3686,  # Germany - mixed grid
-            'us-east-1': 0.4532,  # Virginia - mixed grid
-            'us-west-2': 0.0245,  # Oregon - hydroelectric
-            'ap-southeast-1': 0.4480,  # Singapore - mixed grid
-            'ap-northeast-1': 0.4692   # Tokyo - mixed grid
+            'eu-west-1': 0.2956,
+            'eu-central-1': 0.3686,
+            'us-east-1': 0.4532,
+            'us-west-2': 0.0245,
+            'ap-southeast-1': 0.4480,
+            'ap-northeast-1': 0.4692
         }
-        
-        # Extract region code from the selected region
+
         selected_region = scan_results.get('emissions_region', 'eu-west-1 (Netherlands)')
         region_code = selected_region.split(' ')[0] if '(' in selected_region else selected_region
-        emissions_factor = regional_factors.get(region_code, 0.2956)  # Default to Netherlands factor
-        
-        # Calculate total emissions
-        total_energy_consumption = 156.8  # kWh/month from all resources
-        total_co2_emissions = total_energy_consumption * emissions_factor
-        
+        emissions_factor = regional_factors.get(region_code, 0.2956)
+
+        # Calculate energy from real metrics
+        storage_energy = round(total_size_mb * 0.05, 2)
+        cicd_energy = round(total_files * 0.002, 2)
+        inefficiency_energy = round(len(unused_imports) * 0.01, 2)
+        networking_energy = round(max(5.0, total_size_mb * 0.02), 2)
+        total_energy_consumption = round(storage_energy + cicd_energy + inefficiency_energy + networking_energy, 1)
+        total_co2_emissions = round(total_energy_consumption * emissions_factor, 2)
+
         emissions_data = {
-            'total_co2_kg_month': round(total_co2_emissions, 2),
+            'total_co2_kg_month': total_co2_emissions,
             'total_energy_kwh_month': total_energy_consumption,
             'emissions_factor': emissions_factor,
             'region': scan_results['emissions_region'],
             'breakdown': {
-                'compute': {'energy': 89.4, 'co2': 89.4 * emissions_factor},
-                'storage': {'energy': 23.7, 'co2': 23.7 * emissions_factor},
-                'networking': {'energy': 12.3, 'co2': 12.3 * emissions_factor},
-                'code_inefficiency': {'energy': 31.4, 'co2': 31.4 * emissions_factor}
+                'compute': {'energy': cicd_energy, 'co2': round(cicd_energy * emissions_factor, 2)},
+                'storage': {'energy': storage_energy, 'co2': round(storage_energy * emissions_factor, 2)},
+                'networking': {'energy': networking_energy, 'co2': round(networking_energy * emissions_factor, 2)},
+                'code_inefficiency': {'energy': inefficiency_energy, 'co2': round(inefficiency_energy * emissions_factor, 2)}
             }
         }
-        
-        # Phase 4: Sustainability Recommendations
+
+        # Phase 4: Recommendations from real findings
         status.text("💡 Phase 4: Generating sustainability recommendations...")
-        progress_bar.progress(80)
-        time.sleep(1)
-        
-        sustainability_recommendations = [
-            {
-                'category': 'Quick Wins',
-                'impact': 'High',
+        progress_bar.progress(85)
+
+        sustainability_recommendations = []
+        for rec in real_recommendations[:3]:
+            actions = rec.get('steps', [rec.get('description', '')])
+            sustainability_recommendations.append({
+                'category': rec.get('title', 'Optimization'),
+                'impact': rec.get('impact', 'Medium'),
+                'effort': rec.get('priority', 'Medium'),
+                'actions': actions if actions else ['Review and implement recommendation'],
+                'total_savings': str(rec.get('savings_potential', 'Variable')),
+                'cost_savings': '€0/month'
+            })
+
+        if not sustainability_recommendations:
+            sustainability_recommendations.append({
+                'category': 'Code Quality',
+                'impact': 'Low',
                 'effort': 'Low',
-                'actions': [
-                    'Terminate vm-idle-prod-01 (saves 29.8 kg CO₂e/month)',
-                    'Delete orphaned snapshots (saves 5.2 kg CO₂e/month)',
-                    'Remove unused npm packages (saves 0.6 kg CO₂e/month)'
-                ],
-                'total_savings': '35.6 kg CO₂e/month',
-                'cost_savings': '€238.82/month'
-            },
-            {
-                'category': 'Code Optimization',
-                'impact': 'High',
-                'effort': 'Medium',
-                'actions': [
-                    'Optimize processing algorithm O(n²) → O(n log n)',
-                    'Remove 247 lines of dead code',
-                    'Implement lazy loading for large datasets'
-                ],
-                'total_savings': '8.8 kg CO₂e/month',
-                'performance_gain': '67% faster processing'
-            },
-            {
-                'category': 'Regional Migration',
-                'impact': 'Medium',
-                'effort': 'High',
-                'actions': [
-                    'Migrate workloads from us-east-1 to us-west-2',
-                    'Leverage Oregon\'s renewable energy grid',
-                    'Reduce emissions factor from 0.45 to 0.02 kg CO₂e/kWh'
-                ],
-                'total_savings': '67.3 kg CO₂e/month',
-                'migration_cost': '€2,400 one-time'
-            }
-        ]
-        
+                'actions': ['No significant sustainability issues detected in this repository'],
+                'total_savings': 'Minimal',
+                'cost_savings': '€0/month'
+            })
+
         # Phase 5: Compile comprehensive results
         status.text("📋 Phase 5: Compiling comprehensive sustainability report...")
         progress_bar.progress(100)
-        time.sleep(1)
-        
-        # Add all findings to scan results
+
+        # Convert real findings to unified sustainability format
+        severity_map = {'high': 'High', 'medium': 'Medium', 'low': 'Low', 'critical': 'Critical'}
         all_findings = []
-        
-        # Add resource findings with detailed information
-        for resource in unused_resources:
+        for f in real_findings:
+            details = f.get('details', {})
+            severity = severity_map.get(str(f.get('risk_level', '')).lower(), 'Medium')
+            affected = (details.get('large_files_count') or details.get('unused_imports_count') or
+                        details.get('large_files_count') or 1)
             all_findings.append({
-                'type': resource['type'],
-                'severity': resource['severity'],
-                'file': f"{resource['resource_type']}: {resource['resource_id']}",
-                'line': f"Region: {resource['region']}",
-                'location': f"{resource['region']} / {resource['resource_id']}",
-                'description': f"{resource['recommendation']} | Cost: €{resource['estimated_monthly_cost']:.2f}/month | CO₂: {resource['co2_emissions_kg_month']:.1f} kg/month",
-                'resource_details': resource,
-                'category': 'Resource Optimization',
-                'impact': f"€{resource['estimated_monthly_cost']:.2f}/month waste",
-                'action_required': resource['recommendation'],
-                'environmental_impact': f"{resource['co2_emissions_kg_month']:.1f} kg CO₂e/month"
+                'type': str(f.get('type', 'ANALYSIS')).upper().replace(' ', '_'),
+                'severity': severity,
+                'file': f.get('type', 'Repository'),
+                'line': f"Location: {f.get('location', repo_url)}",
+                'location': f.get('location', repo_url),
+                'description': f.get('description', ''),
+                'category': f.get('category', 'Code Efficiency'),
+                'impact': f"Items affected: {affected}",
+                'action_required': f.get('description', ''),
+                'environmental_impact': f"{round(total_energy_consumption * 0.1, 1)} kWh/month estimated"
             })
-        
-        # Add code bloat findings with comprehensive details
-        for code_issue in code_bloat_findings:
-            if code_issue['type'] == 'DEAD_CODE':
-                file_info = f"{code_issue['file']} ({code_issue['lines']} lines, {code_issue['functions']} functions)"
-                line_info = f"Functions: {', '.join(code_issue['unused_functions'])}"
-                description = f"{code_issue['recommendation']} | Energy waste: {code_issue['estimated_energy_waste']} | CO₂ impact: {code_issue['co2_impact']}"
-                location_info = code_issue['file']
-            elif code_issue['type'] == 'UNUSED_DEPENDENCIES':
-                file_info = f"{code_issue['file']} (Package manifest)"
-                line_info = f"Packages: {', '.join(code_issue['unused_packages'])}"
-                description = f"{code_issue['recommendation']} | Bundle reduction: {code_issue['bundle_size_reduction']} | Energy saving: {code_issue['estimated_energy_saving']}"
-                location_info = code_issue['file']
-            elif code_issue['type'] == 'INEFFICIENT_ALGORITHM':
-                file_info = f"{code_issue['file']} (Function: {code_issue['function']})"
-                line_info = f"Complexity: {code_issue['complexity']} → {code_issue['suggested_complexity']}"
-                description = f"{code_issue['recommendation']} | Energy waste: {code_issue['estimated_energy_waste']} | CO₂ impact: {code_issue['co2_impact']}"
-                location_info = f"{code_issue['file']}:{code_issue['function']}()"
-            else:
-                file_info = code_issue['file']
-                line_info = "Analysis location"
-                description = code_issue['recommendation']
-                location_info = code_issue['file']
-            
+
+        # For large files, add individual findings
+        for lf in large_files[:10]:
+            size_mb = lf.get('size_mb', 0)
+            fname = lf.get('path', lf.get('name', 'unknown'))
             all_findings.append({
-                'type': code_issue['type'],
-                'severity': code_issue['severity'],
-                'file': file_info,
-                'line': line_info,
-                'location': location_info,
-                'description': description,
-                'code_details': code_issue,
+                'type': 'LARGE_FILE',
+                'severity': 'High' if size_mb > 50 else 'Medium',
+                'file': fname,
+                'line': f"Size: {size_mb:.2f} MB",
+                'location': fname,
+                'description': f"Large file ({size_mb:.2f} MB) increases clone time and CI/CD energy consumption",
+                'category': 'Storage Efficiency',
+                'impact': f"{size_mb:.2f} MB",
+                'action_required': 'Move to Git LFS or cloud storage',
+                'environmental_impact': f"{round(size_mb * 0.05 * emissions_factor, 3)} kg CO₂e/month"
+            })
+
+        # For unused imports, add a summary finding
+        if unused_imports:
+            sample = [f"{ui.get('file', '?')}:{ui.get('import', '?')}" for ui in unused_imports[:5]]
+            all_findings.append({
+                'type': 'UNUSED_IMPORTS',
+                'severity': 'Low',
+                'file': f"{len(unused_imports)} files",
+                'line': f"Sample: {', '.join(sample)}",
+                'location': repo_url,
+                'description': f"Found {len(unused_imports)} unused imports across Python files",
                 'category': 'Code Efficiency',
-                'impact': code_issue.get('estimated_energy_waste', 'Energy impact calculated'),
-                'action_required': code_issue['recommendation'],
-                'environmental_impact': code_issue.get('co2_impact', 'CO₂ impact calculated')
+                'impact': f"{len(unused_imports)} imports",
+                'action_required': 'Run autoflake or pylint to remove unused imports',
+                'environmental_impact': f"{round(inefficiency_energy * emissions_factor, 3)} kg CO₂e/month"
             })
-        
-        # Update scan results with comprehensive metrics
+
+        # Update scan results
         scan_results['findings'] = all_findings
         scan_results['emissions'] = emissions_data
         scan_results['resources'] = {
-            'unused_resources': len(unused_resources),
-            'total_waste_cost': sum(r['estimated_monthly_cost'] for r in unused_resources),
-            'total_waste_co2': sum(r['co2_emissions_kg_month'] for r in unused_resources)
+            'unused_resources': 0,
+            'total_waste_cost': 0,
+            'total_waste_co2': 0
         }
         scan_results['code_analysis'] = {
-            'dead_code_lines': sum(c.get('lines', 0) for c in code_bloat_findings if c['type'] == 'DEAD_CODE'),
-            'unused_dependencies': sum(len(c.get('unused_packages', [])) for c in code_bloat_findings if c['type'] == 'UNUSED_DEPENDENCIES'),
-            'inefficient_algorithms': len([c for c in code_bloat_findings if c['type'] == 'INEFFICIENT_ALGORITHM'])
+            'dead_code_lines': 0,
+            'unused_dependencies': len(unused_imports),
+            'inefficient_algorithms': 0
         }
         scan_results['recommendations'] = sustainability_recommendations
-        
-        # Add comprehensive scanning metrics
-        scan_results['files_scanned'] = 156  # Realistic number of files analyzed
-        scan_results['lines_analyzed'] = 45720  # Total lines of code analyzed
-        scan_results['repositories_analyzed'] = 3 if scan_params['source_type'] == 'Repository URL' else 0
-        scan_results['cloud_resources_analyzed'] = len(unused_resources)
-        scan_results['dependencies_analyzed'] = 47  # Total dependencies checked
-        scan_results['algorithms_analyzed'] = 23  # Functions/algorithms analyzed
+
+        scan_results['files_scanned'] = total_files
+        scan_results['lines_analyzed'] = file_stats.get('total_lines', total_files * 30)
+        scan_results['repositories_analyzed'] = 1 if repo_url else 0
+        scan_results['cloud_resources_analyzed'] = 0
+        scan_results['dependencies_analyzed'] = len(unused_imports)
+        scan_results['algorithms_analyzed'] = 0
         scan_results['total_findings'] = len(all_findings)
         scan_results['critical_findings'] = len([f for f in all_findings if f['severity'] == 'Critical'])
         scan_results['high_findings'] = len([f for f in all_findings if f['severity'] == 'High'])
         scan_results['medium_findings'] = len([f for f in all_findings if f['severity'] == 'Medium'])
         scan_results['low_findings'] = len([f for f in all_findings if f['severity'] == 'Low'])
-        
-        # Calculate overall metrics
-        sustainability_score = 45  # Out of 100 - based on findings severity
+
+        sustainability_score = real_sustainability_score
         scan_results['metrics'] = {
             'sustainability_score': sustainability_score,
-            'total_co2_reduction_potential': 111.7,  # kg CO₂e/month
-            'total_cost_savings_potential': 3638.82,  # €/month
-            'quick_wins_available': 3,
-            'code_bloat_index': 23  # % of codebase that's bloated
+            'total_co2_reduction_potential': round(total_co2_emissions * 0.3, 2),
+            'total_cost_savings_potential': 0,
+            'quick_wins_available': len(sustainability_recommendations),
+            'code_bloat_index': min(100, len(unused_imports) // 2)
         }
-        
-        # Set compliance score for reports (sustainability score maps to compliance)
-        scan_results['compliance_score'] = sustainability_score + 25  # Offset for reasonable display (70%)
+
+        scan_results['compliance_score'] = min(100, sustainability_score + 10)
         
         # Display comprehensive results
         status.text("✅ Comprehensive sustainability analysis complete!")
@@ -10471,7 +10395,7 @@ def execute_sustainability_scan(region, username, scan_params):
             username=username,
             scanner_type=ScannerType.SUSTAINABILITY,
             findings_count=findings_count,
-            files_scanned=len(code_bloat_findings) + len(unused_resources),
+            files_scanned=total_files,
             compliance_score=scan_results.get('compliance_score', 75),
             duration_ms=scan_duration,
             region=region,
@@ -10483,8 +10407,8 @@ def execute_sustainability_scan(region, username, scan_params):
                 'emissions_region': scan_params.get('emissions_region', 'us-east-1'),
                 'total_co2_savings': quick_wins['total_savings'],
                 'cost_savings': quick_wins['cost_savings'],
-                'unused_resources': len(unused_resources),
-                'code_issues': len(code_bloat_findings)
+                'unused_resources': 0,
+                'code_issues': len(all_findings)
             }
         )
         
@@ -10494,7 +10418,7 @@ def execute_sustainability_scan(region, username, scan_params):
             aggregator = ResultsAggregator()
             
             scan_results['scan_type'] = 'Sustainability Scanner'
-            scan_results['file_count'] = len(code_bloat_findings) + len(unused_resources)
+            scan_results['file_count'] = total_files
             # Sustainability scans don't detect PII - use 0 for PII count, use findings for issues
             scan_results['total_pii_found'] = 0  # Not a PII scanner
             scan_results['high_risk_count'] = high_risk_count  # Environmental/efficiency issues
