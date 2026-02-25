@@ -145,7 +145,7 @@ class UnifiedHTMLReportGenerator:
 </head>
 <body>
     <div class="container">
-        {self._generate_header(scan_type, scan_id, formatted_timestamp, region, scan_result.get('base_url', scan_result.get('url', scan_result.get('repo_url', ''))))}
+        {self._generate_header(scan_type, scan_id, formatted_timestamp, region, scan_result.get('base_url', scan_result.get('url', scan_result.get('repo_url', scan_result.get('scan_location', scan_result.get('repository_url', ''))))))}
         {executive_summary}
         {compliance_forecast_html}
         {scanner_content}
@@ -788,27 +788,35 @@ body{{font-family:'Segoe UI',system-ui,sans-serif;background:#f0fdf4;color:#1e29
         
         co2_monthly = emissions_data.get('total_co2_kg_month', 0)
         energy_kwh = emissions_data.get('total_energy_kwh_month', 0)
-        cost_savings = resources_data.get('total_waste_cost', 0) + metrics_data.get('total_cost_savings_potential', 0)
         sustainability_score = scan_result.get('sustainability_score', metrics_data.get('sustainability_score', 0))
         co2_reduction = metrics_data.get('total_co2_reduction_potential', 0)
-        unused_resources = resources_data.get('unused_resources', 0)
         
-        import re
-        if not co2_monthly or not energy_kwh:
-            for finding in scan_result.get('findings', []):
-                desc = finding.get('description', '') or finding.get('context', '')
-                co2_match = re.search(r'CO₂[:\s]*([\d.]+)\s*kg', desc)
-                kwh_match = re.search(r'([\d.]+)\s*kWh', desc)
-                cost_match = re.search(r'Cost:\s*€?([\d,.]+)/month', desc)
-                if co2_match:
-                    co2_monthly += float(co2_match.group(1))
-                if kwh_match:
-                    energy_kwh += float(kwh_match.group(1))
-                if cost_match:
-                    try:
-                        cost_savings += float(cost_match.group(1).replace(',', '.'))
-                    except ValueError:
-                        pass
+        # Parse monthly cost from findings - same logic as scanner-specific section so both match
+        import re as _re
+        total_monthly_cost = 0.0
+        for finding in scan_result.get('findings', []):
+            desc = finding.get('description', '') or finding.get('context', '')
+            if not co2_monthly:
+                co2_m = _re.search(r'CO₂[:\s]*([\d.]+)\s*kg', desc)
+                kwh_m = _re.search(r'([\d.]+)\s*kWh', desc)
+                if co2_m:
+                    co2_monthly += float(co2_m.group(1))
+                if kwh_m:
+                    energy_kwh += float(kwh_m.group(1))
+            cost_m = _re.search(r'Cost:\s*€?([\d,.]+)/month', desc)
+            if cost_m:
+                try:
+                    total_monthly_cost += float(cost_m.group(1).replace(',', '.'))
+                except ValueError:
+                    pass
+        
+        # Unified savings: prefer findings-based total, fall back to stored data fields
+        if total_monthly_cost > 0:
+            cost_savings = total_monthly_cost * 12
+            savings_note = 'year' if not is_dutch else 'jaar'
+        else:
+            cost_savings = resources_data.get('total_waste_cost', 0) + metrics_data.get('total_cost_savings_potential', 0)
+            savings_note = 'year' if not is_dutch else 'jaar'
         
         score_class = self._get_score_class(sustainability_score)
         
@@ -817,16 +825,24 @@ body{{font-family:'Segoe UI',system-ui,sans-serif;background:#f0fdf4;color:#1e29
         issues_label = 'Optimalisatiemogelijkheden' if is_dutch else 'Optimization Opportunities'
         energy_label = 'Energieverbruik' if is_dutch else 'Energy Consumption'
         co2_label = 'CO₂ Uitstoot/Maand' if is_dutch else 'CO₂ Emissions/Month'
-        savings_label = 'Mogelijke Kostenbesparing' if is_dutch else 'Potential Cost Savings'
+        savings_label = ('Potentiële Jaarlijkse Besparing' if is_dutch else 'Potential Annual Savings')
         summary_title = 'Energie & Duurzaamheid Overzicht' if is_dutch else 'Energy & Sustainability Overview'
         
         co2_display = f"{co2_monthly:.1f} kg" if co2_monthly else ('N/B' if is_dutch else 'N/A')
         energy_display = f"{energy_kwh:.1f} kWh" if energy_kwh else ('N/B' if is_dutch else 'N/A')
         cost_display = f"€{cost_savings:,.2f}" if cost_savings else ('N/B' if is_dutch else 'N/A')
         
+        # Scanned URL
+        scanned_url = scan_result.get('repo_url', scan_result.get('scan_location', scan_result.get('url', '')))
+        url_label = 'Gescande URL' if is_dutch else 'Scanned URL'
+        url_html = (f'<p style="margin-top:8px;font-size:.9em;"><strong>{url_label}:</strong> '
+                    f'<a href="{scanned_url}" style="color:#2e7d32;word-break:break-all;">{scanned_url}</a></p>'
+                    if scanned_url else '')
+        
         return f"""
         <div class="summary" style="border-left: 5px solid #2e7d32;">
             <h2>🌱 {summary_title}</h2>
+            {url_html}
             <div class="metrics-grid">
                 <div class="metric-card">
                     <div class="metric-value">{metrics.get('files_scanned', 0):,}</div>
