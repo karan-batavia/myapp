@@ -10212,14 +10212,17 @@ def execute_sustainability_scan(region, username, scan_params):
         status.text("📋 Phase 5: Compiling comprehensive sustainability report...")
         progress_bar.progress(100)
 
-        # Convert real findings to unified sustainability format
+        # Build per-finding results from real scanned data
         severity_map = {'high': 'High', 'medium': 'Medium', 'low': 'Low', 'critical': 'Critical'}
         all_findings = []
+
+        # Include repo-level findings from the scanner (e.g. "Large Repository" size warning)
+        # but skip summary-level "Large Files" and "Unused Imports" — those get added per-file below
+        skip_types = {'large files', 'unused imports'}
         for f in real_findings:
-            details = f.get('details', {})
+            if str(f.get('type', '')).lower() in skip_types:
+                continue
             severity = severity_map.get(str(f.get('risk_level', '')).lower(), 'Medium')
-            affected = (details.get('large_files_count') or details.get('unused_imports_count') or
-                        details.get('large_files_count') or 1)
             all_findings.append({
                 'type': str(f.get('type', 'ANALYSIS')).upper().replace(' ', '_'),
                 'severity': severity,
@@ -10228,17 +10231,19 @@ def execute_sustainability_scan(region, username, scan_params):
                 'location': f.get('location', repo_url),
                 'description': f.get('description', ''),
                 'category': f.get('category', 'Code Efficiency'),
-                'impact': f"Items affected: {affected}",
+                'impact': f.get('description', ''),
                 'action_required': f.get('description', ''),
                 'environmental_impact': f"{round(total_energy_consumption * 0.1, 1)} kWh/month estimated"
             })
 
-        # For large files, add individual findings with real cost estimates
-        # Cost model: €0.005/MB/month (cloud storage €0.023/GB + CI/CD bandwidth at 50 clones/month)
+        # Per-file large file findings — key is 'file' in _find_large_files() output
+        # Cost model: €0.005/MB/month = cloud storage (€0.023/GB) + CI/CD bandwidth (50 clones/month)
         total_large_file_cost = 0.0
         for lf in large_files[:10]:
             size_mb = lf.get('size_mb', 0)
-            fname = lf.get('path', lf.get('name', 'unknown'))
+            fname = lf.get('file', lf.get('path', lf.get('name', 'unknown')))
+            file_category = lf.get('category', 'Other')
+            specific_rec = lf.get('recommendation') or 'Move to Git LFS or external cloud storage'
             file_monthly_cost = round(size_mb * 0.005, 2)
             total_large_file_cost += file_monthly_cost
             co2_per_file = round(size_mb * 0.05 * emissions_factor, 3)
@@ -10246,37 +10251,45 @@ def execute_sustainability_scan(region, username, scan_params):
                 'type': 'LARGE_FILE',
                 'severity': 'High' if size_mb > 50 else 'Medium',
                 'file': fname,
-                'line': f"Size: {size_mb:.2f} MB",
+                'line': f"Size: {size_mb:.2f} MB | Type: {file_category}",
                 'location': fname,
                 'description': (
-                    f"Large file ({size_mb:.2f} MB) slows clone and CI/CD operations"
+                    f"{fname} ({size_mb:.2f} MB, {file_category})"
                     f" | Cost: €{file_monthly_cost:.2f}/month | CO₂: {co2_per_file} kg/month"
                 ),
                 'category': 'Storage Efficiency',
                 'impact': f"€{file_monthly_cost:.2f}/month",
-                'action_required': 'Move to Git LFS or external cloud storage',
+                'action_required': specific_rec,
                 'environmental_impact': f"{co2_per_file} kg CO₂e/month"
             })
 
-        # Unused imports: small CI overhead (€0.01/import/month for extra build time)
-        import_monthly_cost = round(len(unused_imports) * 0.01, 2)
+        # Per-file unused import findings — grouped by source file
+        import_monthly_cost = 0.0
         if unused_imports:
-            sample = [f"{ui.get('file', '?')}:{ui.get('import', '?')}" for ui in unused_imports[:5]]
-            all_findings.append({
-                'type': 'UNUSED_IMPORTS',
-                'severity': 'Low',
-                'file': f"{len(unused_imports)} files",
-                'line': f"Sample: {', '.join(sample)}",
-                'location': repo_url,
-                'description': (
-                    f"Found {len(unused_imports)} unused imports across Python files"
-                    f" | Cost: €{import_monthly_cost:.2f}/month | CO₂: {round(inefficiency_energy * emissions_factor, 3)} kg/month"
-                ),
-                'category': 'Code Efficiency',
-                'impact': f"€{import_monthly_cost:.2f}/month",
-                'action_required': 'Run autoflake or pylint to remove unused imports',
-                'environmental_impact': f"{round(inefficiency_energy * emissions_factor, 3)} kg CO₂e/month"
-            })
+            from collections import defaultdict
+            imports_by_file = defaultdict(list)
+            for ui in unused_imports:
+                imports_by_file[ui.get('file', 'unknown')].append(ui.get('import', '?'))
+            for fpath, imports in list(imports_by_file.items())[:15]:
+                file_cost = round(len(imports) * 0.01, 2)
+                import_monthly_cost += file_cost
+                co2 = round(len(imports) * 0.01 * emissions_factor, 4)
+                preview = ', '.join(imports[:4]) + ('...' if len(imports) > 4 else '')
+                all_findings.append({
+                    'type': 'UNUSED_IMPORTS',
+                    'severity': 'Low',
+                    'file': fpath,
+                    'line': f"Unused: {preview}",
+                    'location': fpath,
+                    'description': (
+                        f"{fpath}: {len(imports)} unused import(s) — {preview}"
+                        f" | Cost: €{file_cost:.2f}/month | CO₂: {co2} kg/month"
+                    ),
+                    'category': 'Code Efficiency',
+                    'impact': f"€{file_cost:.2f}/month",
+                    'action_required': f"Remove: {', '.join(imports[:5])}",
+                    'environmental_impact': f"{co2} kg CO₂e/month"
+                })
 
         total_monthly_cost_savings = round(total_large_file_cost + import_monthly_cost, 2)
 
