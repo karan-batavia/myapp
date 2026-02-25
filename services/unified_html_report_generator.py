@@ -855,16 +855,19 @@ body{{font-family:'Segoe UI',system-ui,sans-serif;background:#f0fdf4;color:#1e29
                 <div class="metric-card">
                     <div class="metric-value" style="color: #d32f2f;">{co2_display}</div>
                     <div class="metric-label">{co2_label}</div>
+                    <div style="font-size:11px;color:#9ca3af;margin-top:4px;">estimated</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-value" style="color: #e65100;">{energy_display}</div>
                     <div class="metric-label">{energy_label}</div>
+                    <div style="font-size:11px;color:#9ca3af;margin-top:4px;">estimated</div>
                 </div>
             </div>
             <div class="metrics-grid" style="margin-top: 15px;">
                 <div class="metric-card">
                     <div class="metric-value" style="color: #2e7d32;">{cost_display}</div>
                     <div class="metric-label">{savings_label}</div>
+                    <div style="font-size:11px;color:#9ca3af;margin-top:4px;">estimated</div>
                 </div>
             </div>
             <div class="compliance-score {score_class}">
@@ -2398,6 +2401,13 @@ body{{font-family:'Segoe UI',system-ui,sans-serif;background:#f0fdf4;color:#1e29
             savings_summary += """
                 <p style="margin-top: 15px; padding: 10px; background: #fff3e0; border-radius: 6px; color: #e65100; font-size: 0.9em;">
                     💡 <strong>Quick Win:</strong> Addressing the critical and high-priority issues first can achieve up to 80% of these savings with minimal effort.
+                </p>
+                <p style="margin-top: 8px; padding: 10px; background: #f1f5f9; border-radius: 6px; color: #64748b; font-size: 0.82em; line-height: 1.5;">
+                    <strong>⚠️ Estimation methodology:</strong> Energy and cost figures are <em>model-based estimates</em>, not direct measurements.
+                    Energy = CI/CD build cost (files × 0.002 kWh/month) + storage (size_MB × 0.05 kWh/month) + networking (baseline 5 kWh/month).
+                    CO₂ uses the Netherlands grid factor (0.2956 kg CO₂e/kWh, ENTSO-E 2024).
+                    Cost savings = cloud storage + CI/CD bandwidth at 50 clones/month (€0.005/MB/month per large file; €0.01/unused import/month).
+                    Actual figures depend on your infrastructure, clone frequency, and CI/CD platform pricing.
                 </p>
             </div>
             """
