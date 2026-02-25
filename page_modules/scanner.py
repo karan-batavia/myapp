@@ -10119,9 +10119,9 @@ def execute_sustainability_scan(region, username, scan_params):
 
         if repo_url:
             try:
-                from services.cloud_resources_scanner import GithubRepositoryScanner
+                from services.cloud_resources_scanner import GithubRepoSustainabilityScanner
 
-                github_scanner = GithubRepositoryScanner(
+                github_scanner = GithubRepoSustainabilityScanner(
                     repo_url=repo_url,
                     branch='main',
                     scan_depth='standard'
