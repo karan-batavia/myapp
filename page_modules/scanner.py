@@ -10100,6 +10100,8 @@ def execute_sustainability_scan(region, username, scan_params):
             "analysis_type": scan_params['analysis_type'],
             "source_type": scan_params['source_type'],
             "emissions_region": scan_params.get('emissions_region', 'us-east-1'),
+            "scan_location": scan_params.get('repo_url', ''),
+            "repo_url": scan_params.get('repo_url', ''),
             "findings": [],
             "metrics": {},
             "emissions": {},
