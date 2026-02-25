@@ -10288,6 +10288,8 @@ def execute_sustainability_scan(region, username, scan_params):
             'total_waste_cost': total_monthly_cost_savings,
             'total_waste_co2': round(total_co2_emissions * 0.3, 2)
         }
+        # Note: total_cost_savings_potential must be 0 here to avoid double-counting
+        # in the report generator which sums total_waste_cost + total_cost_savings_potential
         scan_results['code_analysis'] = {
             'dead_code_lines': 0,
             'unused_dependencies': len(unused_imports),
@@ -10311,7 +10313,7 @@ def execute_sustainability_scan(region, username, scan_params):
         scan_results['metrics'] = {
             'sustainability_score': sustainability_score,
             'total_co2_reduction_potential': round(total_co2_emissions * 0.3, 2),
-            'total_cost_savings_potential': total_monthly_cost_savings,
+            'total_cost_savings_potential': 0,
             'quick_wins_available': len(sustainability_recommendations),
             'code_bloat_index': min(100, len(unused_imports) // 2)
         }
